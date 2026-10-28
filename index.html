@@ -428,6 +428,31 @@ select[size]{padding:4px}
 .claimed{margin-top:6px;font-family:var(--font-cond);font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ok);font-size:.85rem}
 .role{display:flex;align-items:center;gap:10px}
 .me-link{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--ink);font-weight:700;text-transform:none;letter-spacing:0;padding:3px 10px 3px 3px;border-radius:999px;background:rgba(255,255,255,.07)}
+.badge{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--live);color:#fff;font-size:.72rem;font-weight:800;margin-left:4px}
+.social{display:grid;grid-template-columns:320px minmax(0,1fr);gap:24px;align-items:start}
+.social-side{display:flex;flex-direction:column;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}
+.social-side h3{font-family:var(--font-cond);text-transform:uppercase;letter-spacing:.08em;font-size:.9rem;color:var(--muted);margin-top:8px}
+.urow{display:flex;align-items:center;gap:10px}
+.urow-main{display:flex;flex-direction:column;min-width:0;flex:1}
+.urow-main a{text-decoration:none}
+.frow{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:10px;text-decoration:none;font-weight:600}
+.frow:hover,.frow.on{background:var(--accent-soft)}
+.social-main{background:var(--surface);border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column;min-height:420px;overflow:hidden}
+.thread-head{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.thread{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:8px;max-height:60vh;min-height:300px}
+.bubble{max-width:75%;align-self:flex-start;background:var(--surface-2);border-radius:14px 14px 14px 4px;padding:8px 12px}
+.bubble.me{align-self:flex-end;background:color-mix(in srgb,var(--t1) 22%,var(--surface-2));border-radius:14px 14px 4px 14px}
+.bubble p{margin:0;white-space:pre-wrap;word-break:break-word}
+.bubble time{display:block;font-size:.7rem;color:var(--muted);margin-top:2px}
+.msgform{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line)}
+.msgform input{flex:1}
+.qrow{display:grid;grid-template-columns:1fr 190px auto 30px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line-soft)}
+.qrow .qopts{grid-column:1 / -1}
+#qrows{display:flex;flex-direction:column}
+.appform{display:flex;flex-direction:column;gap:12px;max-width:640px}
+.appcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.ans{display:flex;flex-direction:column;gap:2px}.ans span{font-size:.8rem}.ans p{margin:0;white-space:pre-wrap}
+@media (max-width:860px){.social{grid-template-columns:1fr}.qrow{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
@@ -605,10 +630,10 @@ function pronounsOf(p){return p&&p.pronouns?String(p.pronouns):"";}
 function updateRole(){const el=document.getElementById("role");if(!el)return;
   if(!S.me){el.innerHTML=`<button class="btn sm primary" data-act="login">Se connecter avec Discord</button>`;return;}
   const mp=myPlayer();const pr=S.profile||{};
-  el.innerHTML=`${mp?`<a href="#joueur-${esc(mp.id)}" class="me-link">${ava(mp,"xs")}<span>${esc(mp.pseudo)}</span></a>`:`<span class="me-link">${pr.avatar_url?`<img class="avatar xs" src="${esc(pr.avatar_url)}" alt="">`:""}<span>${esc(pr.discord_name||"Connecté")}</span></span>`}${S.isAdmin?`<a class="btn sm ghost" href="#admin">Admin</a>`:S.isHost?"<span>Host</span>":""}<button class="btn sm ghost" data-act="logout">Déconnexion</button>`;}
+  el.innerHTML=`${mp?`<a href="#joueur-${esc(mp.id)}" class="me-link">${ava(mp,"xs")}<span>${esc(mp.pseudo)}</span></a>`:`<span class="me-link">${pr.avatar_url?`<img class="avatar xs" src="${esc(pr.avatar_url)}" alt="">`:""}<span>${esc(pr.discord_name||"Connecté")}</span></span>`}<a class="btn sm ghost" href="#social">Messages${(S.unread+socialPending())?` <b class="badge">${S.unread+socialPending()}</b>`:""}</a>${S.isAdmin?`<a class="btn sm ghost" href="#admin">Admin</a>`:S.isHost?"<span>Host</span>":""}<button class="btn sm ghost" data-act="logout">Déconnexion</button>`;}
 /* ---------- Supabase ---------- */
 const CFG=window.ORG_CENTRAL_CONFIG||{};
-const sb=(window.supabase&&CFG.supabaseUrl&&!/XXXX/.test(CFG.supabaseUrl))?window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseAnonKey):null;
+const sb=(window.supabase&&CFG.supabaseUrl&&!/XXXX/.test(CFG.supabaseUrl))?window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseAnonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:"pkce",storageKey:"org-central-auth",storage:(()=>{try{localStorage.setItem("__t","1");localStorage.removeItem("__t");return localStorage;}catch(e){return undefined;}})()}}):null;
 S.isAdmin=false;S.hostOrgs=new Set();S.isHost=false;S.profile=null;S.myClaims=[];
 function sbErr(e){const m=(e&&e.message)||String(e);const x=new Error(/row-level security|permission|42501/i.test(m)?"Tu n'as pas le droit de faire ça (réservé aux hosts de cette ORG ou à l'admin).":m);x.code=e&&e.code;return x;}
 async function fetchAll(table){let out=[],from=0;for(;;){const {data,error}=await sb.from(table).select("id,data").range(from,from+999);if(error)throw sbErr(error);out=out.concat(data);if(data.length<1000)break;from+=1000;}return out;}
@@ -640,17 +665,27 @@ async function loadAuth(){
     const {data:cl}=await sb.from("claims").select("player_id,status").eq("user_id",S.me);S.myClaims=cl||[];
   }
   S.canEdit=S.isHost;
+  try{await loadSocial();}catch(e){console.warn(e);}
 }
 function canOrg(orgId){return S.isAdmin||(!!orgId&&S.hostOrgs.has(orgId));}
-async function login(){await sb.auth.signInWithOAuth({provider:"discord",options:{redirectTo:location.origin+location.pathname}});}
+async function login(){try{sessionStorage.setItem("oc-after-login",location.hash||"");}catch(e){}await sb.auth.signInWithOAuth({provider:"discord",options:{redirectTo:location.origin+location.pathname}});}
 async function logout(){await sb.auth.signOut();await loadAuth();render();}
 
 /* ---------- démarrage ---------- */
 async function init(){
   if(!sb){app.innerHTML=`<div class="unavailable"><h2>Configuration manquante</h2><p>Renseigne l'adresse et la clé Supabase dans <code>config.js</code>.</p></div>`;return;}
   db=makeDb();
+  try{const {data}=await sb.auth.getSession();if(data&&data.session){try{const back=sessionStorage.getItem("oc-after-login");if(back){sessionStorage.removeItem("oc-after-login");if(!location.hash||/access_token/.test(location.hash))history.replaceState(null,"",location.pathname+back);}}catch(e){}}}catch(e){}
   try{await loadAuth();}catch(e){console.warn(e);}
-  sb.auth.onAuthStateChange(async(ev)=>{if(ev==="SIGNED_IN"||ev==="SIGNED_OUT"){await loadAuth();render();}});
+  let lastUid=S.me;
+  sb.auth.onAuthStateChange((ev,session)=>{
+    const uid=session&&session.user?session.user.id:null;
+    if(uid===lastUid&&ev!=="SIGNED_OUT")return;
+    lastUid=uid;
+    setTimeout(async()=>{try{await loadAuth();}catch(e){console.warn(e);}render();},0);
+  });
+  if(/[?&]code=/.test(location.search)||/access_token=/.test(location.hash)){const h=/access_token=/.test(location.hash)?"":location.hash;history.replaceState(null,"",location.pathname+h);}
+  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")sb.auth.getSession();});
   updateRole();
   COLS.forEach(c=>{
     db.collection(c).onSnapshot(snap=>{
@@ -683,14 +718,15 @@ function render(){
     case "joueur":html=pagePlayer(id);break;
     case "annonces":html=pageNews();break;
     case "admin":html=pageAdmin();break;
+    case "social":html=pageSocial(id);break;
     default:html=pageHome();
   }
   const keepFocus=document.activeElement&&document.activeElement.id==="search";
   app.innerHTML=html;
   bindSearch(page);bindSearchBox(document.getElementById("hsearch"));
-  themeFor(page,id);updateRole();
+  themeFor(page,id);updateRole();if(page==="social")bindSocial();
   if(keepFocus){const s=document.getElementById("search");if(s){s.focus();s.setSelectionRange(s.value.length,s.value.length);}}
-  const title={orgs:"ORGs",saisons:"Saisons",joueurs:"Joueurs",annonces:"Annonces",palmares:"Palmarès"}[page];
+  const title={social:"Amis & messages",orgs:"ORGs",saisons:"Saisons",joueurs:"Joueurs",annonces:"Annonces",palmares:"Palmarès"}[page];
   document.title=title?title+" · ORG-Central":"ORG-Central";
   lastPage=h;
 }
@@ -1294,6 +1330,7 @@ function splitForm(p){
 function playerActions(p){
   const mine=S.me&&p.ownerUid===S.me;const pend=S.myClaims.some(c=>c.player_id===p.id&&c.status==="pending");
   const b=[];
+  if(p.ownerUid&&S.me&&p.ownerUid!==S.me)b.push(friendButtons(p.ownerUid));
   if(S.isHost||mine)b.push(`<button class="btn" data-act="edit-player" data-id="${esc(p.id)}">Modifier</button>`);
   if(S.me&&!p.ownerUid&&!myPlayer())b.push(pend?`<span class="btn ghost" aria-disabled="true">Demande envoyée</span>`:`<button class="btn primary" data-act="claim" data-id="${esc(p.id)}">C'est moi</button>`);
   if(!S.me&&!p.ownerUid)b.push(`<button class="btn ghost" data-act="login">C'est moi ? Connecte-toi</button>`);
@@ -1360,32 +1397,175 @@ async function claimDecision(pid,u,ok){
     toast(ok?"Demande validée":"Demande refusée");loadAdmin();
   }catch(e){toast(errMsg(e),true);}
 }
-function signupBlock(s){
-  if(s.status!=="inscriptions")return "";
-  setTimeout(()=>loadSignups(s),0);
-  return `<section class="block"><div class="block-head"><h2>Inscriptions</h2></div><div id="signups"><p class="muted">Chargement…</p></div></section>`;
+
+/* ---------- amis & messages ---------- */
+S.friends=[];S.profiles={};S.unread=0;let MSG_CH=null;
+function curRoute(){const h=decodeURIComponent(location.hash.slice(1))||"accueil";const i=h.indexOf("-");return {page:i<0?h:h.slice(0,i),id:i<0?"":h.slice(i+1)};}
+function linkedPlayer(uid){return S.players.find(p=>p.ownerUid&&p.ownerUid===uid);}
+function userName(uid){const p=linkedPlayer(uid);if(p)return p.pseudo;const pr=S.profiles[uid];return pr?(pr.discord_name||"Joueur"):"Joueur";}
+function userAva(uid,size){const p=linkedPlayer(uid);if(p&&p.avatar)return ava(p,size);const pr=S.profiles[uid];return pr&&pr.avatar_url?`<img class="avatar ${size}" src="${esc(pr.avatar_url)}" alt="">`:`<span class="avatar ${size}" aria-hidden="true">${esc(initials(userName(uid)))}</span>`;}
+function friendState(uid){const r=S.friends.find(f=>(f.requester===S.me&&f.addressee===uid)||(f.requester===uid&&f.addressee===S.me));
+  if(!r)return "none";if(r.status==="accepted")return "friends";return r.requester===S.me?"sent":"received";}
+async function loadSocial(){
+  S.friends=[];S.unread=0;if(!S.me)return;
+  const [fr,pr,un]=await Promise.all([
+    sb.from("friendships").select("*").or(`requester.eq.${S.me},addressee.eq.${S.me}`),
+    sb.from("profiles").select("id,discord_name,avatar_url"),
+    sb.from("messages").select("id",{count:"exact",head:true}).eq("recipient",S.me).is("read_at",null)]);
+  S.friends=fr.data||[];S.profiles={};(pr.data||[]).forEach(p=>S.profiles[p.id]=p);S.unread=un.count||0;
+  if(!MSG_CH){MSG_CH=sb.channel("social-"+S.me)
+    .on("postgres_changes",{event:"INSERT",schema:"public",table:"messages",filter:"recipient=eq."+S.me},m=>onIncoming(m.new))
+    .on("postgres_changes",{event:"*",schema:"public",table:"friendships"},async()=>{await loadSocial();updateRole();if(curRoute().page==="social")render();})
+    .subscribe();}
 }
+function socialPending(){return S.friends.filter(f=>f.addressee===S.me&&f.status==="pending").length;}
+async function onIncoming(m){
+  const r=curRoute();
+  if(r.page==="social"&&r.id===m.sender){loadThread(m.sender);}
+  else{S.unread++;toast("Nouveau message de "+userName(m.sender));updateRole();}
+}
+async function friendAction(act,uid){
+  let res;
+  if(act==="add")res=await sb.from("friendships").insert({requester:S.me,addressee:uid});
+  if(act==="accept")res=await sb.from("friendships").update({status:"accepted"}).eq("requester",uid).eq("addressee",S.me);
+  if(act==="remove")res=await sb.from("friendships").delete().or(`and(requester.eq.${S.me},addressee.eq.${uid}),and(requester.eq.${uid},addressee.eq.${S.me})`);
+  if(res&&res.error){toast(sbErr(res.error).message,true);return;}
+  toast({add:"Demande d'ami envoyée",accept:"Vous êtes maintenant amis",remove:"C'est fait"}[act]);
+  await loadSocial();updateRole();render();
+}
+function friendButtons(uid){
+  if(!S.me||!uid||uid===S.me)return "";
+  const st=friendState(uid);
+  if(st==="friends")return `<a class="btn primary" href="#social-${esc(uid)}">Envoyer un message</a><button class="btn ghost" data-act="fr-remove" data-u="${esc(uid)}">Retirer des amis</button>`;
+  if(st==="sent")return `<button class="btn ghost" data-act="fr-remove" data-u="${esc(uid)}">Annuler la demande d'ami</button>`;
+  if(st==="received")return `<button class="btn primary" data-act="fr-accept" data-u="${esc(uid)}">Accepter la demande d'ami</button>`;
+  return `<button class="btn" data-act="fr-add" data-u="${esc(uid)}">Ajouter en ami</button>`;
+}
+function userRow(uid,extra){return `<div class="urow">${userAva(uid,"sm-img")}<div class="urow-main">${linkedPlayer(uid)?`<a href="#joueur-${esc(linkedPlayer(uid).id)}"><b>${esc(userName(uid))}</b></a>`:`<b>${esc(userName(uid))}</b>`}${S.profiles[uid]&&linkedPlayer(uid)?`<small class="muted">${esc(S.profiles[uid].discord_name||"")}</small>`:""}</div><span class="actions">${extra}</span></div>`;}
+function pageSocial(id){
+  if(!S.me)return `<div class="empty"><h2>Amis et messages</h2><p class="muted">Connecte-toi avec Discord pour ajouter des amis et discuter.</p><button class="btn primary" data-act="login">Se connecter avec Discord</button></div>`;
+  const other=f=>f.requester===S.me?f.addressee:f.requester;
+  const friends=S.friends.filter(f=>f.status==="accepted").map(other).sort((a,b)=>userName(a).localeCompare(userName(b),"fr"));
+  const rec=S.friends.filter(f=>f.status==="pending"&&f.addressee===S.me).map(f=>f.requester);
+  const sent=S.friends.filter(f=>f.status==="pending"&&f.requester===S.me).map(f=>f.addressee);
+  const open=id&&friendState(id)==="friends"?id:"";
+  if(open)setTimeout(()=>loadThread(open),0);
+  return `<div class="page-head" style="margin-top:0"><h1>Amis &amp; messages</h1></div>
+  <div class="social">
+    <aside class="social-side">
+      <div class="field"><label class="flabel" for="f-usearch">Ajouter un ami</label><input id="f-usearch" placeholder="Pseudo ou nom Discord" autocomplete="off"></div>
+      <div id="ures"></div>
+      ${rec.length?`<h3>Demandes reçues</h3>${rec.map(u=>userRow(u,`<button class="btn sm primary" data-act="fr-accept" data-u="${esc(u)}">Accepter</button><button class="btn sm ghost" data-act="fr-remove" data-u="${esc(u)}">Refuser</button>`)).join("")}`:""}
+      <h3>Amis (${friends.length})</h3>
+      ${friends.length?friends.map(u=>`<a class="frow${u===open?" on":""}" href="#social-${esc(u)}">${userAva(u,"sm-img")}<span>${esc(userName(u))}</span></a>`).join(""):`<p class="muted">Pas encore d'amis. Cherche un pseudo ci-dessus ou clique sur « Ajouter en ami » sur une fiche joueur.</p>`}
+      ${sent.length?`<h3>Demandes envoyées</h3>${sent.map(u=>userRow(u,`<button class="btn sm ghost" data-act="fr-remove" data-u="${esc(u)}">Annuler</button>`)).join("")}`:""}
+    </aside>
+    <section class="social-main">${open?`<div class="thread-head">${userAva(open,"sm-img")}<b>${esc(userName(open))}</b></div><div id="thread" class="thread"><p class="muted">Chargement…</p></div>
+      <form id="msgform" class="msgform"><input id="f-msg" maxlength="2000" placeholder="Écris un message…" autocomplete="off" aria-label="Message"><button class="btn primary" type="submit">Envoyer</button></form>`
+      :`<div class="empty"><p class="muted">${id?"Vous devez être amis pour discuter.":"Choisis un ami pour discuter."}</p></div>`}</section>
+  </div>`;
+}
+function bindSocial(){
+  const q=document.getElementById("f-usearch");
+  if(q&&!q._b){q._b=1;q.addEventListener("input",()=>{const n=norm(q.value);const box=document.getElementById("ures");
+    if(n.length<2){box.innerHTML="";return;}
+    const list=Object.keys(S.profiles).filter(u=>u!==S.me&&(norm(userName(u)).includes(n)||norm((S.profiles[u]||{}).discord_name).includes(n))).slice(0,8);
+    box.innerHTML=list.length?list.map(u=>userRow(u,friendButtons(u).replace(/class="btn( primary| ghost)?"/g,'class="btn sm$1"'))).join(""):`<p class="muted">Personne trouvé. La personne doit s'être connectée au moins une fois.</p>`;});}
+  const f=document.getElementById("msgform");
+  if(f&&!f._b){f._b=1;f.addEventListener("submit",async e=>{e.preventDefault();const inp=document.getElementById("f-msg");const body=inp.value.trim();if(!body)return;
+    const to=curRoute().id;inp.value="";const {error}=await sb.from("messages").insert({sender:S.me,recipient:to,body});
+    if(error){toast(sbErr(error).message,true);inp.value=body;return;}loadThread(to);});}
+}
+async function loadThread(uid){
+  const box=document.getElementById("thread");if(!box)return;
+  const {data,error}=await sb.from("messages").select("*").or(`and(sender.eq.${S.me},recipient.eq.${uid}),and(sender.eq.${uid},recipient.eq.${S.me})`).order("created_at",{ascending:true}).limit(500);
+  if(error){box.innerHTML=`<p class="muted">${esc(sbErr(error).message)}</p>`;return;}
+  box.innerHTML=(data||[]).length?data.map(m=>`<div class="bubble${m.sender===S.me?" me":""}"><p>${esc(m.body)}</p><time>${new Date(m.created_at).toLocaleString("fr-FR",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}</time></div>`).join(""):`<p class="muted">Aucun message. Dis bonjour !</p>`;
+  box.scrollTop=box.scrollHeight;
+  if((data||[]).some(m=>m.recipient===S.me&&!m.read_at)){
+    await sb.from("messages").update({read_at:new Date().toISOString()}).eq("sender",uid).eq("recipient",S.me).is("read_at",null);
+    const {count}=await sb.from("messages").select("id",{count:"exact",head:true}).eq("recipient",S.me).is("read_at",null);S.unread=count||0;updateRole();
+  }
+}
+
+/* ---------- candidatures personnalisées ---------- */
+function appsOf(s){const a=(s&&s.applications)||{};return {open:!!a.open,intro:a.intro||"",questions:Array.isArray(a.questions)?a.questions:[]};}
+async function toggleApps(s){
+  const a=appsOf(s);a.open=!a.open;
+  if(a.open&&!a.questions.length)a.questions=defaultQuestions();
+  const upd={applications:a,updatedAt:nowIso()};if(a.open&&s.status==="annoncee")upd.status="inscriptions";
+  try{await db.doc("seasons/"+s.id).update(upd);toast(a.open?"Candidatures ouvertes":"Candidatures fermées");}catch(e){toast(errMsg(e),true);}
+}
+function defaultQuestions(){return [{id:uid("q"),label:"Pseudo Discord",type:"text",required:true,options:""},{id:uid("q"),label:"Pourquoi veux-tu participer ?",type:"long",required:false,options:""},{id:uid("q"),label:"Tes disponibilités",type:"text",required:false,options:""}];}
+function appFormEditor(s){
+  if(!s)return;const a=appsOf(s);const qs=(a.questions.length?a.questions:defaultQuestions()).map(q=>Object.assign({},q));
+  const rows=()=>qs.length?qs.map((q,i)=>`<div class="qrow" data-i="${i}">
+    <input data-k="label" id="q-l-${i}" value="${esc(q.label)}" maxlength="120" placeholder="Question" aria-label="Question ${i+1}">
+    <select data-k="type" id="q-t-${i}" aria-label="Type de réponse ${i+1}">${[["text","Réponse courte"],["long","Réponse longue"],["choice","Choix dans une liste"]].map(([v,l])=>`<option value="${v}"${q.type===v?" selected":""}>${l}</option>`).join("")}</select>
+    <label class="chk"><input type="checkbox" data-k="required"${q.required?" checked":""}> Obligatoire</label>
+    <button type="button" class="icon-btn" data-rm="${i}" aria-label="Supprimer la question">×</button>
+    ${q.type==="choice"?`<input data-k="options" id="q-o-${i}" class="qopts" value="${esc(q.options||"")}" placeholder="Choix séparés par des virgules (ex : Oui, Non, Peut-être)" aria-label="Choix possibles ${i+1}">`:""}
+  </div>`).join(""):`<p class="muted">Aucune question.</p>`;
+  openModal({title:"Formulaire de candidature · "+seasonName(s),wide:true,body:`
+    ${field("Texte d'introduction",area("intro",a.intro,'rows="3" maxlength="1500" placeholder="Règles, dates, ce qu\'on attend des joueurs…"'))}
+    <div id="qrows">${rows()}</div>
+    <div><button type="button" class="btn sm" id="qadd">+ Ajouter une question</button></div>
+    <p class="hint">Les candidatures ne sont visibles que par les hosts de l'ORG. Ouvre-les ou ferme-les avec le bouton sur la page de la saison.</p>`,
+    onMount:form=>{
+      const box=form.querySelector("#qrows");const redraw=()=>{box.innerHTML=rows();};
+      const upd=e=>{const r=e.target.closest(".qrow");if(!r||!e.target.dataset.k)return;const q=qs[Number(r.dataset.i)];const k=e.target.dataset.k;
+        q[k]=e.target.type==="checkbox"?e.target.checked:e.target.value;if(k==="type")redraw();};
+      box.addEventListener("input",e=>{if(e.target.dataset.k!=="type")upd(e);});box.addEventListener("change",upd);
+      box.addEventListener("click",e=>{const b=e.target.closest("[data-rm]");if(b){qs.splice(Number(b.dataset.rm),1);redraw();}});
+      form.querySelector("#qadd").addEventListener("click",()=>{qs.push({id:uid("q"),label:"",type:"text",required:false,options:""});redraw();const l=box.querySelector(".qrow:last-child input");if(l)l.focus();});
+    },
+    onSave:async f=>{
+      const clean=qs.filter(q=>q.label.trim()).map(q=>({id:q.id||uid("q"),label:q.label.trim(),type:q.type,required:!!q.required,options:q.type==="choice"?String(q.options||""):""}));
+      const cur=appsOf(season(s.id)||s);
+      await db.doc("seasons/"+s.id).update({applications:{open:cur.open,intro:vals(f).intro||"",questions:clean},updatedAt:nowIso()});
+      toast("Formulaire enregistré");
+    }});
+}
+function signupBlock(s){
+  const a=appsOf(s);const host=canOrg(s.orgId);
+  if(!a.open&&!host)return "";
+  setTimeout(()=>loadSignups(s),0);
+  return `<section class="block"><div class="block-head"><h2>Candidatures</h2>${a.open?'<span class="chip st-ins">Ouvertes</span>':'<span class="chip st-done">Fermées</span>'}${host?`<span class="actions"><button class="btn sm" data-act="appform" data-id="${esc(s.id)}">Modifier le formulaire</button><button class="btn sm ${a.open?"ghost":"primary"}" data-act="apptoggle" data-id="${esc(s.id)}">${a.open?"Fermer les candidatures":"Ouvrir les candidatures"}</button></span>`:""}</div><div id="signups"><p class="muted">Chargement…</p></div></section>`;
+}
+function answerHtml(qs,ans){return qs.map(q=>`<div class="ans"><span class="muted">${esc(q.label)}</span><p>${esc((ans||{})[q.id]||"—")}</p></div>`).join("");}
 async function loadSignups(s){
   const box=document.getElementById("signups");if(!box)return;
-  if(!S.me){box.innerHTML=`<p>Connecte-toi avec Discord pour t'inscrire.</p><button class="btn primary" data-act="login">Se connecter avec Discord</button>`;return;}
+  const a=appsOf(s);const host=canOrg(s.orgId);let h="";
+  if(a.intro&&a.open)h+=`<p class="desc">${esc(a.intro)}</p>`;
+  if(!S.me){if(a.open)h+=`<p>Connecte-toi avec Discord pour candidater.</p><button class="btn primary" data-act="login">Se connecter avec Discord</button>`;box.innerHTML=h;return;}
   const {data:rows}=await sb.from("signups").select("*").eq("season_id",s.id).order("created_at");
   const mine=(rows||[]).find(r=>r.user_id===S.me);
-  let h=mine?`<p>Tu es inscrit·e (${{pending:"en attente",accepted:"accepté·e",refused:"refusé·e"}[mine.status]}).</p><button class="btn ghost" data-act="unsign" data-id="${esc(s.id)}">Se désinscrire</button>`
-    :`<div class="field"><label class="flabel" for="f-sumsg">Message pour le host (facultatif)</label><input id="f-sumsg" maxlength="200" placeholder="Dispos, pseudo en jeu…"></div><button class="btn primary" data-act="sign" data-id="${esc(s.id)}">S'inscrire à cette saison</button>`;
-  if(canOrg(s.orgId)){
-    const {data:profs}=await sb.from("profiles").select("id,discord_name,avatar_url").in("id",(rows||[]).map(r=>r.user_id).concat(["00000000-0000-0000-0000-000000000000"]));
-    const pn=id=>{const p=(profs||[]).find(x=>x.id===id);return p?p.discord_name:"?";};
-    h+=`<h3 style="margin-top:18px">Inscrits (${(rows||[]).length}${s.slots?" / "+esc(s.slots)+" places":""})</h3>${(rows||[]).length?`<div class="table-wrap"><table><thead><tr><th>Compte</th><th>Message</th><th>Statut</th><th></th></tr></thead><tbody>${rows.map(r=>`<tr><td>${esc(pn(r.user_id))}</td><td>${esc(r.message||"")}</td><td>${{pending:"En attente",accepted:"Accepté·e",refused:"Refusé·e"}[r.status]}</td><td><span class="actions"><button class="btn sm primary" data-act="su-ok" data-s="${esc(s.id)}" data-u="${esc(r.user_id)}">Accepter</button><button class="btn sm ghost" data-act="su-no" data-s="${esc(s.id)}" data-u="${esc(r.user_id)}">Refuser</button></span></td></tr>`).join("")}</tbody></table></div>`:`<p class="muted">Personne pour l'instant.</p>`}`;
+  if(mine)h+=`<div class="notice"><p>Ta candidature : <b>${{pending:"en attente",accepted:"acceptée",refused:"refusée"}[mine.status]}</b></p><button class="btn sm ghost" data-act="unsign" data-id="${esc(s.id)}">Retirer ma candidature</button></div>`;
+  else if(a.open){
+    h+=`<form id="appform" class="appform">${a.questions.map(q=>{const idq="ans-"+q.id;const lab=`<label class="flabel" for="${idq}">${esc(q.label)}${q.required?" *":""}</label>`;
+      const inpt=q.type==="long"?`<textarea id="${idq}" data-q="${esc(q.id)}" rows="4" maxlength="2000"${q.required?" data-req=\"1\"":""}></textarea>`
+        :q.type==="choice"?`<select id="${idq}" data-q="${esc(q.id)}"${q.required?" data-req=\"1\"":""}><option value="">—</option>${String(q.options||"").split(",").map(x=>x.trim()).filter(Boolean).map(o=>`<option>${esc(o)}</option>`).join("")}</select>`
+        :`<input id="${idq}" data-q="${esc(q.id)}" maxlength="300"${q.required?" data-req=\"1\"":""}>`;
+      return `<div class="field">${lab}${inpt}</div>`;}).join("")}<p class="ferr" id="apperr"></p><button class="btn primary" type="submit">Envoyer ma candidature</button></form>`;
   }
-  box.innerHTML=h;
+  if(host){
+    h+=`<h3 style="margin-top:18px">Candidatures reçues (${(rows||[]).length}${s.slots?" · "+esc(s.slots)+" places":""})</h3>`+((rows||[]).length?rows.map(r=>`<div class="appcard"><div class="urow">${userAva(r.user_id,"sm-img")}<div class="urow-main"><b>${esc(userName(r.user_id))}</b><small class="muted">${{pending:"En attente",accepted:"Acceptée",refused:"Refusée"}[r.status]} · ${new Date(r.created_at).toLocaleDateString("fr-FR")}</small></div><span class="actions"><button class="btn sm primary" data-act="su-ok" data-s="${esc(s.id)}" data-u="${esc(r.user_id)}">Accepter</button><button class="btn sm ghost" data-act="su-no" data-s="${esc(s.id)}" data-u="${esc(r.user_id)}">Refuser</button></span></div>${answerHtml(a.questions,r.answers)}${r.message?`<div class="ans"><span class="muted">Message</span><p>${esc(r.message)}</p></div>`:""}</div>`).join(""):`<p class="muted">Aucune candidature pour l'instant.</p>`);
+  }
+  box.innerHTML=h||`<p class="muted">Les candidatures sont fermées.</p>`;
+  const f=document.getElementById("appform");
+  if(f)f.addEventListener("submit",async e=>{e.preventDefault();const ans={};let miss=null;
+    f.querySelectorAll("[data-q]").forEach(el=>{const v=el.value.trim();ans[el.dataset.q]=v;if(el.dataset.req&&!v&&!miss)miss=el;});
+    if(miss){document.getElementById("apperr").textContent="Réponds aux questions obligatoires (*).";miss.focus();return;}
+    const {error}=await sb.from("signups").insert({season_id:s.id,user_id:S.me,answers:ans});
+    if(error){document.getElementById("apperr").textContent=sbErr(error).message;return;}
+    toast("Candidature envoyée");loadSignups(season(s.id)||s);});
 }
 async function signAction(sid,act,u){
-  const s=season(sid);let r;
-  if(act==="sign")r=await sb.from("signups").insert({season_id:sid,user_id:S.me,message:(document.getElementById("f-sumsg")||{}).value||""});
+  let r;
   if(act==="unsign")r=await sb.from("signups").delete().eq("season_id",sid).eq("user_id",S.me);
   if(act==="ok"||act==="no")r=await sb.from("signups").update({status:act==="ok"?"accepted":"refused"}).eq("season_id",sid).eq("user_id",u);
   if(r&&r.error)toast(sbErr(r.error).message,true);else toast("C'est noté");
-  if(s)loadSignups(s);
+  const s=season(sid);if(s)loadSignups(s);
 }
 
 /* ---------- suppressions ---------- */
@@ -1418,7 +1598,7 @@ document.addEventListener("click",e=>{
     "new-season":()=>seasonForm(null,b.dataset.org),"edit-season":()=>seasonForm(season(id)),"del-season":()=>delSeason(id),
     "cast":()=>castEditor(season(id)),"awards":()=>awardsEditor(season(id)),
     "filter":()=>{S.f[b.dataset.k]=b.dataset.v;render();},"opal":()=>{S.f.opal=b.dataset.v;render();},"votes":()=>votesEditor(season(id)),
-    "new-player":()=>playerForm(),"edit-player":()=>playerForm(player(id)),"del-player":()=>delPlayer(id),"merge-player":()=>mergeForm(player(id)),"claim":()=>claimPlayer(id,true),"login":()=>login(),"logout":()=>logout(),"claim-ok":()=>claimDecision(b.dataset.p,b.dataset.u,true),"claim-no":()=>claimDecision(b.dataset.p,b.dataset.u,false),"sign":()=>signAction(id,"sign"),"unsign":()=>signAction(id,"unsign"),"su-ok":()=>signAction(b.dataset.s,"ok",b.dataset.u),"su-no":()=>signAction(b.dataset.s,"no",b.dataset.u),"unclaim":()=>claimPlayer(id,false),"split-player":()=>splitForm(player(id)),
+    "new-player":()=>playerForm(),"edit-player":()=>playerForm(player(id)),"del-player":()=>delPlayer(id),"merge-player":()=>mergeForm(player(id)),"claim":()=>claimPlayer(id,true),"login":()=>login(),"fr-add":()=>friendAction("add",b.dataset.u),"fr-accept":()=>friendAction("accept",b.dataset.u),"fr-remove":()=>friendAction("remove",b.dataset.u),"appform":()=>appFormEditor(season(id)),"apptoggle":()=>toggleApps(season(id)),"logout":()=>logout(),"claim-ok":()=>claimDecision(b.dataset.p,b.dataset.u,true),"claim-no":()=>claimDecision(b.dataset.p,b.dataset.u,false),"unsign":()=>signAction(id,"unsign"),"su-ok":()=>signAction(b.dataset.s,"ok",b.dataset.u),"su-no":()=>signAction(b.dataset.s,"no",b.dataset.u),"unclaim":()=>claimPlayer(id,false),"split-player":()=>splitForm(player(id)),
     "new-news":()=>newsForm(null,b.dataset.org),"edit-news":()=>newsForm(newsItem(id)),"del-news":()=>delNews(id),
     "clear-examples":clearExamples
   };
