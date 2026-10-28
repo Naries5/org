@@ -1338,6 +1338,7 @@ function swapRefs(s,from,to){
   return hit?{cast,awards,rounds,updatedAt:nowIso()}:null;
 }
 function mergeForm(keep){
+  if(!S.isAdmin){toast("Seul l'admin peut fusionner des fiches.",true);return;}
   if(!keep)return;
   const others=()=>[...S.players].filter(p=>p.id!==keep.id).sort((a,b)=>String(a.pseudo).localeCompare(String(b.pseudo),"fr"));
   const opt=p=>{const n=historyOf(p.id).length;return `<option value="${esc(p.id)}">${esc(pLabel(p))} · ${n} saison${n>1?"s":""}</option>`;};
@@ -1365,6 +1366,7 @@ function mergeForm(keep){
     }});
 }
 function splitForm(p){
+  if(!S.isAdmin){toast("Seul l'admin peut séparer des fiches.",true);return;}
   if(!p)return;const h=historyOf(p.id);
   if(h.length<2){toast("Ce joueur n'a qu'une participation, rien à séparer.",true);return;}
   openModal({title:"Séparer "+p.pseudo,saveLabel:"Créer la nouvelle fiche",body:`
@@ -1393,7 +1395,7 @@ function playerActions(p){
   if(S.me&&!p.ownerUid&&!myPlayer())b.push(pend?`<span class="btn ghost" aria-disabled="true">Demande envoyée</span>`:`<button class="btn primary" data-act="claim" data-id="${esc(p.id)}">C'est moi</button>`);
   if(!S.me&&!p.ownerUid)b.push(`<button class="btn ghost" data-act="login">C'est moi ? Connecte-toi</button>`);
   if(mine)b.push(`<button class="btn ghost" data-act="unclaim" data-id="${esc(p.id)}">Ce n'est pas moi</button>`);
-  if(S.isHost)b.push(`<button class="btn" data-act="merge-player" data-id="${esc(p.id)}">Fusionner avec…</button><button class="btn" data-act="split-player" data-id="${esc(p.id)}">Séparer…</button>`);
+  if(S.isAdmin)b.push(`<button class="btn" data-act="merge-player" data-id="${esc(p.id)}">Fusionner avec…</button><button class="btn" data-act="split-player" data-id="${esc(p.id)}">Séparer…</button>`);
   if(S.isAdmin)b.push(`<button class="btn danger" data-act="del-player" data-id="${esc(p.id)}">Supprimer</button>`);
   return b.length?`<div class="actions">${b.join("")}</div>`:"";
 }
@@ -1413,7 +1415,7 @@ function normName(x){return String(x||"").normalize("NFD").replace(/[\u0300-\u03
 async function importRankings(j,log){
   const idx=new Map();S.players.forEach(p=>{[p.pseudo,...aliasesOf(p)].forEach(n=>{const k=normName(n);if(k&&!idx.has(k))idx.set(k,p.id);});});
   const created=[],missing=[],newRows=[];let done=0;const t=nowIso();
-  const resolve=c=>{for(const n of [c.pseudo,...(c.also||[])]){const k=normName(n);if(idx.has(k))return idx.get(k);}const pid=uid("p");idx.set(normName(c.pseudo),pid);created.push(c.pseudo);newRows.push({id:pid,data:{pseudo:c.pseudo,bio:"",discord:"",avatar:"",createdAt:t,updatedAt:t},updated_at:t});return pid;};
+  const resolve=c=>{if(c.playerId&&player(c.playerId))return c.playerId;if(!normName(c.pseudo))return null;for(const n of [c.pseudo,...(c.also||[])]){const k=normName(n);if(idx.has(k))return idx.get(k);}const pid=uid("p");idx.set(normName(c.pseudo),pid);created.push(c.pseudo);newRows.push({id:pid,data:{pseudo:c.pseudo,bio:"",discord:"",avatar:"",createdAt:t,updatedAt:t},updated_at:t});return pid;};
   const plan=(j.seasons||[]).map(it=>{const se=season(it.id);if(!se)return {it,se,ids:[],aw:[]};
     const ids=(it.cast||[]).map(resolve);
     const castIdx=new Map();(it.cast?ids:(se.cast||[]).map(c=>c.playerId)).forEach(pid=>{const p=player(pid);const c=(it.cast||[])[ids.indexOf(pid)];[p&&p.pseudo,...(p?aliasesOf(p):[]),c&&c.pseudo,...((c&&c.also)||[])].forEach(n=>{const k=normName(n);if(k&&!castIdx.has(k))castIdx.set(k,pid);});});
@@ -1424,10 +1426,11 @@ async function importRankings(j,log){
   for(let i=0;i<newRows.length;i+=200){const {error}=await sb.from("players").insert(newRows.slice(i,i+200));if(error)throw sbErr(error);log("Nouveaux joueurs : "+Math.min(i+200,newRows.length)+" / "+newRows.length);}
   for(const {it,se,ids,aw} of plan){
     if(!se){missing.push(it.id);continue;}
+    if(Array.isArray(it.cast)&&!it.cast.length&&(se.cast||[]).length){missing.push(it.id+" (casting vide ignoré)");continue;}
     if(!it.cast){const upd={updatedAt:t};if(it.awards)upd.awards=aw;await db.doc("seasons/"+se.id).update(upd);done++;log("Saisons mises à jour : "+done+" / "+(j.seasons||[]).length);continue;}
     const old={};(se.cast||[]).forEach(c=>old[c.playerId]=c);
     const cast=[];
-    for(let k=0;k<(it.cast||[]).length;k++){const c=it.cast[k];const pid=ids[k];
+    for(let k=0;k<(it.cast||[]).length;k++){const c=it.cast[k];const pid=ids[k];if(!pid)continue;
       if(cast.some(x=>x.playerId===pid))continue;
       const o=old[pid]||{};
       cast.push(Object.assign({team:"",team2:"",team3:""},o,{playerId:pid,place:c.place==null?null:Number(c.place),note:c.note!=null?c.note:(o.note||"")}));
@@ -1441,8 +1444,15 @@ async function importRankings(j,log){
   if(makeDb._reload&&makeDb._reload.players)makeDb._reload.players();
   return {done,created,missing};
 }
+async function exportAll(){
+  const out={type:"org-central-sauvegarde",date:new Date().toISOString()};
+  for(const c of ["orgs","seasons","players","news"]){out[c]={};(await fetchAll(c)).forEach(r=>{out[c][r.id]=r.data;});}
+  const b=new Blob([JSON.stringify(out)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);
+  a.download="org-central-sauvegarde-"+new Date().toISOString().slice(0,16).replace(/[:T]/g,"-")+".json";document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},2000);
+}
 async function importExport(file,log){
   const j=JSON.parse(await file.text());
+  log("Sauvegarde automatique avant import…");try{await exportAll();}catch(e){throw new Error("Sauvegarde impossible, import annulé : "+errMsg(e));}
   if(j&&j.type==="org-central-classements"){const r=await importRankings(j,log);log(`Classements importés : ${r.done} saison(s).`+(r.created.length?` Nouveaux joueurs (${r.created.length}) : ${r.created.join(", ")}.`:" Aucun nouveau joueur.")+(r.missing.length?` Saisons introuvables : ${r.missing.join(", ")}.`:""));return -1;}
   if(!j||!j.orgs||!j.seasons||!j.players)throw new Error("Ce fichier n'est pas un export ORG-Central.");
   const up=async v=>{if(typeof v!=="string"||!v.startsWith("data:image/"))return v||"";const b=await dataUrlToBlob(v);const ext=(b.type.split("/")[1]||"png").replace("jpeg","jpg");const path="import/"+uid("i")+"."+ext;
@@ -1465,7 +1475,7 @@ function pageAdmin(){
   return `<section class="block"><div class="block-head"><h1>Administration</h1></div>
   <section class="block"><div class="block-head"><h2>Demandes « C'est moi »</h2></div><div id="adm-claims"><p class="muted">Chargement…</p></div></section>
   <section class="block"><div class="block-head"><h2>Comptes et rôles</h2></div><p class="hint">Un <b>host</b> peut créer des joueurs et modifier uniquement les ORGs cochées. Un <b>admin</b> peut tout faire.</p><div id="adm-users"><p class="muted">Chargement…</p></div></section>
-  <section class="block"><div class="block-head"><h2>Importer des données</h2></div><p class="hint">Choisis le fichier <b>org-central-export.json</b> téléchargé depuis l'ancien site. Les éléments déjà présents avec le même identifiant sont remplacés. Tu peux aussi y mettre un fichier de <b>classements</b> préparé par Claude : il remplit les castings et crée seulement les joueurs qui n'existent pas encore.</p><input type="file" id="f-import" accept="application/json,.json"><p id="imp-log" class="muted">${esc(S.impLog||"")}</p></section></section>`;
+  <section class="block"><div class="block-head"><h2>Importer des données</h2></div><p class="hint">Choisis le fichier <b>org-central-export.json</b> téléchargé depuis l'ancien site. Les éléments déjà présents avec le même identifiant sont remplacés. Tu peux aussi y mettre un fichier de <b>classements</b> préparé par Claude : il remplit les castings et crée seulement les joueurs qui n'existent pas encore.</p><p><button class="btn" data-act="export-all">Télécharger une sauvegarde complète</button></p><input type="file" id="f-import" accept="application/json,.json"><p id="imp-log" class="muted">${esc(S.impLog||"")}</p></section></section>`;
 }
 async function loadAdmin(){
   const box1=document.getElementById("adm-claims"),box2=document.getElementById("adm-users");if(!box1)return;
@@ -1691,7 +1701,7 @@ document.addEventListener("click",e=>{
   const A={
     "new-org":()=>orgForm(),"pic-org":()=>picForm("org",org(id)),"pic-player":()=>picForm("player",player(id)),"pic-season":()=>picForm("season",season(id)),"edit-org":()=>orgForm(org(id)),"del-org":()=>delOrg(id),
     "new-season":()=>seasonForm(null,b.dataset.org),"edit-season":()=>seasonForm(season(id)),"del-season":()=>delSeason(id),
-    "cast":()=>castEditor(season(id)),"slooks":()=>seasonLooksEditor(season(id)),"awards":()=>awardsEditor(season(id)),
+    "cast":()=>castEditor(season(id)),"export-all":async()=>{try{await exportAll();toast("Sauvegarde téléchargée");}catch(e){toast(errMsg(e),true);}},"slooks":()=>seasonLooksEditor(season(id)),"awards":()=>awardsEditor(season(id)),
     "filter":()=>{S.f[b.dataset.k]=b.dataset.v;render();},"opal":()=>{S.f.opal=b.dataset.v;render();},"votes":()=>votesEditor(season(id)),
     "new-player":()=>playerForm(),"new-mine":()=>{if(myPlayer()){location.hash="joueur-"+myPlayer().id;return;}playerForm(null,true);},"edit-player":()=>playerForm(player(id)),"del-player":()=>delPlayer(id),"merge-player":()=>mergeForm(player(id)),"claim":()=>claimPlayer(id,true),"login":()=>login(),"fr-add":()=>friendAction("add",b.dataset.u),"fr-accept":()=>friendAction("accept",b.dataset.u),"fr-remove":()=>friendAction("remove",b.dataset.u),"appform":()=>appFormEditor(season(id)),"apptoggle":()=>toggleApps(season(id)),"logout":()=>logout(),"claim-ok":()=>claimDecision(b.dataset.p,b.dataset.u,true),"claim-no":()=>claimDecision(b.dataset.p,b.dataset.u,false),"unsign":()=>signAction(id,"unsign"),"su-ok":()=>signAction(b.dataset.s,"ok",b.dataset.u),"su-no":()=>signAction(b.dataset.s,"no",b.dataset.u),"unclaim":()=>claimPlayer(id,false),"split-player":()=>splitForm(player(id)),
     "new-news":()=>newsForm(null,b.dataset.org),"edit-news":()=>newsForm(newsItem(id)),"del-news":()=>delNews(id),
