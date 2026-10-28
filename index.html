@@ -541,7 +541,7 @@ select[size]{padding:4px}
 .nw p{margin:0;color:color-mix(in srgb,var(--ink) 85%,transparent);white-space:pre-line;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
 .nw .actions{margin-top:auto}
 @media (max-width:600px){.cal-i{flex-wrap:wrap}.cal-rel{order:-1;margin-left:auto}}
-.jr{display:flex;flex-direction:column;gap:2px;max-height:620px;overflow:auto;padding-right:6px}
+.jr{display:flex;flex-direction:column;gap:2px}
 .jr-day{font-family:var(--font-cond);text-transform:uppercase;letter-spacing:.08em;font-size:.8rem;color:var(--t1);margin:12px 0 4px;position:sticky;top:0;background:var(--bg,#140a10);padding:4px 0;z-index:1}
 .jr-i{display:flex;gap:12px;align-items:flex-start;padding:9px 10px;border-radius:10px}.jr-i:hover{background:rgba(255,255,255,.04)}
 .jr-dot{flex:none;width:10px;height:10px;border-radius:50%;margin-top:6px;background:var(--muted)}.jr-add .jr-dot{background:#3ddc84}.jr-upd .jr-dot{background:var(--t1)}.jr-del .jr-dot{background:#ff4d6d}
@@ -761,7 +761,7 @@ function pronounsOf(p){return p&&p.pronouns?String(p.pronouns):"";}
 function updateRole(){const el=document.getElementById("role");if(!el)return;
   if(!S.me){el.innerHTML=`<button class="btn sm primary" data-act="login">Se connecter avec Discord</button>`;return;}
   const mp=myPlayer();const pr=S.profile||{};
-  el.innerHTML=`${mp?`<a href="#joueur-${esc(mp.id)}" class="me-link" title="Mon profil">${ava(mp,"xs")}<span>${esc(mp.pseudo)}</span></a>`:`<a href="#moi" class="me-link" title="Mon profil">${pr.avatar_url?`<img class="avatar xs" src="${esc(pr.avatar_url)}" alt="">`:""}<span>${esc(pr.discord_name||"Mon profil")}</span></a>`}<a class="btn sm ghost" href="#social">Messages${(S.unread+socialPending())?` <b class="badge">${S.unread+socialPending()}</b>`:""}</a>${S.isAdmin?`<a class="btn sm ghost" href="#admin">Admin</a>`:S.isHost?"<span>Host</span>":""}<button class="btn sm ghost" data-act="logout">Déconnexion</button>`;}
+  el.innerHTML=`${mp?`<a href="#joueur-${esc(mp.id)}" class="me-link" title="Mon profil">${ava(mp,"xs")}<span>${esc(mp.pseudo)}</span></a>`:`<a href="#moi" class="me-link" title="Mon profil">${pr.avatar_url?`<img class="avatar xs" src="${esc(pr.avatar_url)}" alt="">`:""}<span>${esc(pr.discord_name||"Mon profil")}</span></a>`}<a class="btn sm ghost" href="#social">Messages${(S.unread+socialPending())?` <b class="badge">${S.unread+socialPending()}</b>`:""}</a>${(S.isOwner?`<a class="btn sm ghost" href="#journal">Journal</a>`:"")+(S.isAdmin?`<a class="btn sm ghost" href="#admin">Admin</a>`:S.isHost?"<span>Host</span>":"")}<button class="btn sm ghost" data-act="logout">Déconnexion</button>`;}
 /* ---------- Supabase ---------- */
 const CFG=window.ORG_CENTRAL_CONFIG||{};
 const sb=(window.supabase&&CFG.supabaseUrl&&!/XXXX/.test(CFG.supabaseUrl))?window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseAnonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:"pkce",storageKey:"org-central-auth",storage:(()=>{try{localStorage.setItem("__t","1");localStorage.removeItem("__t");return localStorage;}catch(e){return undefined;}})()}}):null;
@@ -795,6 +795,7 @@ async function loadAuth(){
     const {data:h}=await sb.from("org_hosts").select("org_id").eq("user_id",S.me);(h||[]).forEach(x=>S.hostOrgs.add(x.org_id));
     const {data:cl}=await sb.from("claims").select("player_id,status").eq("user_id",S.me);S.myClaims=cl||[];
   }
+  S.isOwner=false;if(S.me){try{const {data:own}=await sb.rpc("is_owner");S.isOwner=own===true;}catch(e){}}
   S.canEdit=S.isHost;
   try{await loadSocial();}catch(e){console.warn(e);}
 }
@@ -850,6 +851,7 @@ function render(){
     case "moi":{const mp=myPlayer();if(mp){location.replace("#joueur-"+mp.id);return;}location.replace("#joueurs");return;}
     case "annonces":html=pageNews();break;
     case "admin":html=pageAdmin();break;
+    case "journal":html=pageJournal();break;
     case "social":html=pageSocial(id);break;
     default:html=pageHome();
   }
@@ -1690,7 +1692,6 @@ function pageAdmin(){
   setTimeout(loadAdmin,0);
   return `<section class="block"><div class="block-head"><h1>Administration</h1></div>
   <section class="block"><div class="block-head"><h2>Demandes « C'est moi »</h2></div><div id="adm-claims"><p class="muted">Chargement…</p></div></section>
-  <section class="block"><div class="block-head"><h2>Journal des modifications</h2><span class="actions"><select id="log-f" class="search" style="max-width:200px" aria-label="Filtrer le journal"><option value="">Tout</option><option value="seasons">Saisons</option><option value="players">Joueurs</option><option value="orgs">ORGs</option><option value="news">Annonces</option><option value="claims">Demandes « C'est moi »</option><option value="signups">Candidatures</option><option value="profiles,org_hosts">Comptes et hosts</option></select><button class="btn sm ghost" id="log-r">Actualiser</button></span></div><div id="adm-log"><p class="muted">Chargement…</p></div></section>
   <section class="block"><div class="block-head"><h2>Comptes et rôles</h2></div><p class="hint">Un <b>host</b> peut créer des joueurs et modifier uniquement les ORGs cochées. Un <b>admin</b> peut tout faire.</p><div id="adm-users"><p class="muted">Chargement…</p></div></section>
   <section class="block"><div class="block-head"><h2>Importer des données</h2></div><p class="hint">Choisis le fichier <b>org-central-export.json</b> téléchargé depuis l'ancien site. Les éléments déjà présents avec le même identifiant sont remplacés. Tu peux aussi y mettre un fichier de <b>classements</b> préparé par Claude : il remplit les castings et crée seulement les joueurs qui n'existent pas encore.</p><p><button class="btn" data-act="export-all">Télécharger une sauvegarde complète</button></p><input type="file" id="f-import" accept="application/json,.json"><p id="imp-log" class="muted">${esc(S.impLog||"")}</p></section></section>`;
 }
@@ -1698,11 +1699,17 @@ let ADM_PROFS=[];
 const LOG_FIELDS={cast:"casting / classement",rounds:"tableau des votes",awards:"awards",teams:"tribus",logo:"logo",title:"thème",status:"statut",start:"date de début",end:"date de fin",number:"numéro",customName:"nom affiché",description:"description",applications:"candidatures",signup:"lien d'inscription",slots:"places",period:"période",
   pseudo:"pseudo",avatar:"photo",bio:"bio",pronouns:"pronoms",aliases:"autres pseudos",discord:"Discord",ownerUid:"compte relié",precision:"précision",name:"nom",hosts:"hosts",format:"format",platform:"plateforme",tag:"sigle",seasonWord:"nom des saisons",numbering:"numérotation",founded:"création",
   body:"texte",date:"date",orgId:"ORG",role:"rôle",discord_name:"pseudo Discord",avatar_url:"avatar",answers:"réponses",message:"message"};
+function pageJournal(){
+  if(!S.isOwner)return `<div class="empty"><h2>Page privée</h2><p class="muted">Cette page est réservée au propriétaire du site.</p></div>`;
+  setTimeout(async()=>{if(!ADM_PROFS.length){const {data}=await sb.from("profiles").select("*");ADM_PROFS=data||[];}
+    loadLog();const lf=document.getElementById("log-f"),lr=document.getElementById("log-r");if(lf&&!lf._b){lf._b=1;lf.addEventListener("change",loadLog);lr.addEventListener("click",loadLog);}},0);
+  return `<section class="block"><div class="block-head"><h1>Journal</h1><span class="actions"><select id="log-f" class="search" style="max-width:200px" aria-label="Filtrer le journal"><option value="">Tout</option><option value="seasons">Saisons</option><option value="players">Joueurs</option><option value="orgs">ORGs</option><option value="news">Annonces</option><option value="claims">Demandes « C'est moi »</option><option value="signups">Candidatures</option><option value="profiles,org_hosts">Comptes et hosts</option></select><button class="btn sm ghost" id="log-r">Actualiser</button></span></div><div id="adm-log"><p class="muted">Chargement…</p></div></section>`;
+}
 async function loadLog(){
   const box=document.getElementById("adm-log");if(!box)return;const f=(document.getElementById("log-f")||{}).value||"";
   let q=sb.from("audit_log").select("*").order("at",{ascending:false}).limit(250);if(f)q=q.in("tbl",f.split(","));
   const {data,error}=await q;
-  if(error){box.innerHTML=`<p class="muted">Journal indisponible : lance le fichier <b>update-4-journal.sql</b> dans Supabase. (${esc(error.message)})</p>`;return;}
+  if(error){box.innerHTML=`<p class="muted">Journal indisponible : lance les fichiers <b>update-4-journal.sql</b> puis <b>update-5-journal-prive.sql</b> dans Supabase. (${esc(error.message)})</p>`;return;}
   if(!data.length){box.innerHTML=`<p class="muted">Aucune modification enregistrée pour l'instant.</p>`;return;}
   const who=u=>{if(!u)return `<span class="muted">Système</span>`;const p=ADM_PROFS.find(x=>x.id===u);const pl=linkedPlayer(u);const nm=pl?pl.pseudo:(p&&p.discord_name)||"Compte inconnu";
     return `<span class="who">${pl&&avatarOf(pl)?ava(pl,"xs"):p&&p.avatar_url?`<img class="avatar xs" src="${esc(p.avatar_url)}" alt="">`:""}${pl?`<a href="#joueur-${esc(pl.id)}">${esc(nm)}</a>`:esc(nm)}</span>`;};
@@ -1731,8 +1738,7 @@ async function loadAdmin(){
     try{const n=await importExport(f,m=>{lg.textContent=m;});if(n>=0)lg.textContent="Import terminé ("+n+" images).";toast("Import terminé");}catch(e){lg.textContent="Erreur : "+errMsg(e);}fi.disabled=false;});}
   const [{data:claims},{data:profs},{data:hosts}]=await Promise.all([sb.from("claims").select("*").eq("status","pending"),sb.from("profiles").select("*").order("created_at"),sb.from("org_hosts").select("*")]);
   const pn=id=>{const p=(profs||[]).find(x=>x.id===id);return p?(p.discord_name||"?"):"?";};
-  ADM_PROFS=profs||[];loadLog();
-  const lf=document.getElementById("log-f"),lr=document.getElementById("log-r");if(lf&&!lf._b){lf._b=1;lf.addEventListener("change",loadLog);lr.addEventListener("click",loadLog);}
+  ADM_PROFS=profs||[];
   box1.innerHTML=(claims||[]).length?`<div class="table-wrap"><table><thead><tr><th>Compte Discord</th><th>Fiche demandée</th><th></th></tr></thead><tbody>${claims.map(c=>`<tr><td>${esc(pn(c.user_id))}</td><td><a href="#joueur-${esc(c.player_id)}">${esc(pName(c.player_id))}</a></td><td><span class="actions"><button class="btn sm primary" data-act="claim-ok" data-p="${esc(c.player_id)}" data-u="${esc(c.user_id)}">Valider</button><button class="btn sm ghost" data-act="claim-no" data-p="${esc(c.player_id)}" data-u="${esc(c.user_id)}">Refuser</button></span></td></tr>`).join("")}</tbody></table></div>`:`<p class="muted">Aucune demande en attente.</p>`;
   const orgsSorted=[...S.orgs].sort((a,b)=>String(a.name).localeCompare(String(b.name),"fr"));
   box2.innerHTML=`<div class="table-wrap"><table><thead><tr><th>Compte</th><th>Rôle</th><th>ORGs hostées</th></tr></thead><tbody>${(profs||[]).map(u=>`<tr><td><span class="who">${u.avatar_url?`<img class="avatar xs" src="${esc(u.avatar_url)}" alt="">`:""}${esc(u.discord_name||"?")}</span></td>
