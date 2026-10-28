@@ -904,7 +904,7 @@ function pageSeason(id){
     ["Statut",chip(s.status)],["Dates",dateRange(s)],["Format",FORMATS[o.format]||""],["Joueurs",cast.length?String(cast.length):(s.slots?esc(s.slots)+" places":"")],
     ["Vainqueur",by(1)],["2e",by(2)],["3e",by(3)],["Précédente",prv?`<a href="#saison-${esc(prv.id)}">${esc(seasonShort(prv))}</a>`:""],["Suivante",nxt?`<a href="#saison-${esc(nxt.id)}">${esc(seasonShort(nxt))}</a>`:""]],"pic-season",s.id);
   return `<div class="crumbs"><a href="#orgs">ORGs</a><span>/</span><a href="#org-${esc(o.id||"")}">${esc(o.name)}</a><span>/</span><span>${esc(seasonShort(s))}</span></div>
-  <div class="page-head"><div><p class="eyebrow">${esc(o.name)} · ${esc(seasonShort(s))}</p><h1>${esc(s.title||seasonShort(s))}</h1></div>${edit(`<div class="actions"><button class="btn" data-act="edit-season" data-id="${esc(s.id)}">Modifier</button><button class="btn danger" data-act="del-season" data-id="${esc(s.id)}">Supprimer</button></div>`)}</div>
+  <div class="page-head"><div><p class="eyebrow">${esc(o.name)} · ${esc(seasonShort(s))}</p><h1>${esc(s.title||seasonShort(s))}</h1></div>${edit(`<div class="actions">${appsOf(s).open?"":`<button class="btn" data-act="apptoggle" data-id="${esc(s.id)}">Ouvrir les candidatures</button>`}<button class="btn" data-act="edit-season" data-id="${esc(s.id)}">Modifier</button><button class="btn danger" data-act="del-season" data-id="${esc(s.id)}">Supprimer</button></div>`)}</div>
   <div class="wiki"><div class="wiki-main">
   ${s.description?`<p class="desc">${esc(s.description)}</p>`:""}
   ${s.status==="inscriptions"&&signup?`<a class="btn cta" href="${esc(signup)}" target="_blank" rel="noopener">Lien d'inscription externe ↗</a>`:""}${signupBlock(s)}
@@ -1557,7 +1557,7 @@ function appFormEditor(s){
 }
 function signupBlock(s){
   const a=appsOf(s);const host=canOrg(s.orgId);
-  if(!a.open&&!host)return "";
+  if(!a.open)return "";
   setTimeout(()=>loadSignups(s),0);
   return `<section class="block"><div class="block-head"><h2>Candidatures</h2>${a.open?'<span class="chip st-ins">Ouvertes</span>':'<span class="chip st-done">Fermées</span>'}${host?`<span class="actions"><button class="btn sm" data-act="appform" data-id="${esc(s.id)}">Modifier le formulaire</button><button class="btn sm ${a.open?"ghost":"primary"}" data-act="apptoggle" data-id="${esc(s.id)}">${a.open?"Fermer les candidatures":"Ouvrir les candidatures"}</button></span>`:""}</div><div id="signups"><p class="muted">Chargement…</p></div></section>`;
 }
