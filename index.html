@@ -741,7 +741,7 @@ function hueColors(src,cb){
     if(order[0][0]>0){const h1=order[0][1]*15+7;const o2=order.find(([v,i])=>v>order[0][0]*.15&&Math.min(Math.abs(i-order[0][1]),24-Math.abs(i-order[0][1]))>=4);const h2=o2?o2[1]*15+7:(h1+150)%360;
       r={t1:`hsl(${h1} 88% 64%)`,t2:`hsl(${h2} 85% 62%)`};}
   }catch(e){r=null;}themeCache[src]=r;cb(r);};
-  im.onerror=()=>{themeCache[src]=null;cb(null);};im.src=src;
+  im.onerror=()=>{themeCache[src]=null;cb(null);};if(/^https?:/.test(src)){im.crossOrigin="anonymous";im.src=src+(src.includes("?")?"&":"?")+"cors=1";}else im.src=src;
 }
 function setTheme(v){
   const root=document.documentElement.style;const u=imgSrc(v);
