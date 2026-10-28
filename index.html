@@ -427,6 +427,11 @@ select[size]{padding:4px}
 .pronouns{display:inline-block;margin-top:8px;font-family:var(--font-cond);font-weight:700;font-size:.95rem;letter-spacing:.06em;text-transform:lowercase;padding:2px 12px;border-radius:999px;background:var(--accent-soft);color:var(--t1)}
 .claimed{margin-top:6px;font-family:var(--font-cond);font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ok);font-size:.85rem}
 .role{display:flex;align-items:center;gap:10px}
+.pcard{position:relative;display:flex}.pcard>.card{flex:1;padding-bottom:40px}
+.claim-mini{position:absolute;right:10px;bottom:10px;font-family:var(--font-cond);font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:.78rem;padding:4px 10px;border-radius:999px;border:0;cursor:pointer;background:var(--gold,#f5c518);color:#111}
+.claim-mini:hover{filter:brightness(1.1)}.claim-mini.sent{background:rgba(255,255,255,.12);color:var(--ink);cursor:default}.claim-mini.mine{background:var(--ok);color:#111;cursor:default}
+.claim-banner{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:0 0 16px;padding:14px 18px;border-radius:14px;background:rgba(245,197,24,.1);border:1px solid rgba(245,197,24,.35)}
+.claim-banner p{margin:4px 0 0;color:var(--muted,#bbb)}.claim-banner a{color:inherit}
 .me-link{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--ink);font-weight:700;text-transform:none;letter-spacing:0;padding:3px 10px 3px 3px;border-radius:999px;background:rgba(255,255,255,.07)}
 .badge{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--live);color:#fff;font-size:.72rem;font-weight:800;margin-left:4px}
 .social{display:grid;grid-template-columns:320px minmax(0,1fr);gap:24px;align-items:start}
@@ -630,7 +635,7 @@ function pronounsOf(p){return p&&p.pronouns?String(p.pronouns):"";}
 function updateRole(){const el=document.getElementById("role");if(!el)return;
   if(!S.me){el.innerHTML=`<button class="btn sm primary" data-act="login">Se connecter avec Discord</button>`;return;}
   const mp=myPlayer();const pr=S.profile||{};
-  el.innerHTML=`${mp?`<a href="#joueur-${esc(mp.id)}" class="me-link">${ava(mp,"xs")}<span>${esc(mp.pseudo)}</span></a>`:`<span class="me-link">${pr.avatar_url?`<img class="avatar xs" src="${esc(pr.avatar_url)}" alt="">`:""}<span>${esc(pr.discord_name||"Connecté")}</span></span>`}<a class="btn sm ghost" href="#social">Messages${(S.unread+socialPending())?` <b class="badge">${S.unread+socialPending()}</b>`:""}</a>${S.isAdmin?`<a class="btn sm ghost" href="#admin">Admin</a>`:S.isHost?"<span>Host</span>":""}<button class="btn sm ghost" data-act="logout">Déconnexion</button>`;}
+  el.innerHTML=`${mp?`<a href="#joueur-${esc(mp.id)}" class="me-link" title="Mon profil">${ava(mp,"xs")}<span>${esc(mp.pseudo)}</span></a>`:`<a href="#moi" class="me-link" title="Mon profil">${pr.avatar_url?`<img class="avatar xs" src="${esc(pr.avatar_url)}" alt="">`:""}<span>${esc(pr.discord_name||"Mon profil")}</span></a>`}<a class="btn sm ghost" href="#social">Messages${(S.unread+socialPending())?` <b class="badge">${S.unread+socialPending()}</b>`:""}</a>${S.isAdmin?`<a class="btn sm ghost" href="#admin">Admin</a>`:S.isHost?"<span>Host</span>":""}<button class="btn sm ghost" data-act="logout">Déconnexion</button>`;}
 /* ---------- Supabase ---------- */
 const CFG=window.ORG_CENTRAL_CONFIG||{};
 const sb=(window.supabase&&CFG.supabaseUrl&&!/XXXX/.test(CFG.supabaseUrl))?window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseAnonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:"pkce",storageKey:"org-central-auth",storage:(()=>{try{localStorage.setItem("__t","1");localStorage.removeItem("__t");return localStorage;}catch(e){return undefined;}})()}}):null;
@@ -716,6 +721,7 @@ function render(){
     case "saison":html=pageSeason(id);break;
     case "joueurs":html=pagePlayers();break;
     case "joueur":html=pagePlayer(id);break;
+    case "moi":{const mp=myPlayer();if(mp){location.replace("#joueur-"+mp.id);return;}location.replace("#joueurs");return;}
     case "annonces":html=pageNews();break;
     case "admin":html=pageAdmin();break;
     case "social":html=pageSocial(id);break;
@@ -745,7 +751,23 @@ function orgCard(o){
 }
 function playerCard(p){
   const h=historyOf(p.id);const wins=h.filter(x=>Number(x.c.place)===1).length;const aw=awardsOf(p.id).length;
-  return `<a class="card" href="#joueur-${esc(p.id)}" style="align-items:center">${ava(p,"md")}<div class="card-body"><h3>${esc(p.pseudo)}${p.precision?` <small class="muted">(${esc(p.precision)})</small>`:""}</h3><p class="meta">${h.length} saison${h.length>1?"s":""}${wins?` · ${wins} victoire${wins>1?"s":""}`:""}${aw?` · ${aw} award${aw>1?"s":""}`:""}</p></div></a>`;
+  const card=`<a class="card" href="#joueur-${esc(p.id)}" style="align-items:center">${ava(p,"md")}<div class="card-body"><h3>${esc(p.pseudo)}${p.precision?` <small class="muted">(${esc(p.precision)})</small>`:""}</h3><p class="meta">${h.length} saison${h.length>1?"s":""}${wins?` · ${wins} victoire${wins>1?"s":""}`:""}${aw?` · ${aw} award${aw>1?"s":""}`:""}</p></div></a>`;
+  const c=claimChip(p);return c?`<div class="pcard">${card}${c}</div>`:card;
+}
+function canClaim(){return !!S.me&&!myPlayer();}
+function claimPending(id){return S.myClaims.some(c=>c.player_id===id&&c.status==="pending");}
+function claimChip(p){
+  if(p.ownerUid){return S.me&&p.ownerUid===S.me?`<span class="claim-mini mine">Toi</span>`:"";}
+  if(!canClaim())return "";
+  if(claimPending(p.id))return `<span class="claim-mini sent">Demande envoyée</span>`;
+  if(S.myClaims.some(c=>c.status==="pending"))return "";
+  return false?`<span class="claim-mini sent">Demande envoyée</span>`:`<button type="button" class="claim-mini" data-act="claim" data-id="${esc(p.id)}">C'est moi</button>`;
+}
+function claimBanner(){
+  if(!S.me){return `<div class="claim-banner"><div><b>Tu as joué dans une ORG ?</b><p>Connecte-toi avec Discord, cherche ton pseudo et clique « C'est moi » pour récupérer ta fiche.</p></div><button class="btn primary" data-act="login">Se connecter</button></div>`;}
+  if(myPlayer())return "";
+  const pend=S.myClaims.filter(c=>c.status==="pending").map(c=>player(c.player_id)).filter(Boolean);
+  return `<div class="claim-banner"><div><b>Ton compte n'est relié à aucune fiche</b><p>${pend.length?`Demande en attente pour <a href="#joueur-${esc(pend[0].id)}">${esc(pend[0].pseudo)}</a>, un admin va la valider.`:`Cherche ton pseudo ci-dessous et clique « C'est moi ». Tu n'as jamais été casté ? Crée ta fiche.`}</p></div>${pend.length?"":`<button class="btn" data-act="new-mine">Créer ma fiche</button>`}</div>`;
 }
 function newsHtml(n,showOrg){
   const o=n.orgId?org(n.orgId):null;
@@ -756,8 +778,8 @@ function seasonBlock(title,list,empty){
 }
 
 /* ---------- pages ---------- */
-function infobox(img,title,rows,picAct,picId){
-  const im=picAct&&S.canEdit?`<button type="button" class="ib-img picbtn" data-act="${picAct}" data-id="${esc(picId)}" aria-label="Changer l'image">${img}<span class="pb-l">Changer l'image</span></button>`:`<div class="ib-img">${img}</div>`;
+function infobox(img,title,rows,picAct,picId,canPic){
+  const im=picAct&&(S.canEdit||canPic)?`<button type="button" class="ib-img picbtn" data-act="${picAct}" data-id="${esc(picId)}" aria-label="Changer l'image">${img}<span class="pb-l">Changer l'image</span></button>`:`<div class="ib-img">${img}</div>`;
   return `<aside class="infobox"><div class="ib-title">${esc(title)}</div>${im}<dl>${rows.filter(r=>r&&r[1]!==""&&r[1]!=null).map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl></aside>`;
 }
 function bigImg(v,label){const u=imgSrc(v);return u?`<img src="${esc(u)}" alt="">`:`<span class="ib-ph">${esc(initials(label))}</span>`;}
@@ -922,7 +944,8 @@ function votesTable(s){
 
 function pagePlayers(){
   return `<section class="block"><div class="block-head"><h1>Joueurs</h1><span class="count">${S.players.length}</span>${edit(`<span class="actions"><button class="btn primary" data-act="new-player">+ Nouveau joueur</button></span>`)}</div>
-  <div class="toolbar"><input id="search" class="search" type="search" placeholder="Rechercher un pseudo" aria-label="Rechercher un joueur" value="${esc(S.q.joueurs)}"></div>
+  ${claimBanner()}
+  <div class="toolbar"><input id="search" class="search" type="search" placeholder="${canClaim()?"Cherche ton pseudo":"Rechercher un pseudo"}" aria-label="Rechercher un joueur" value="${esc(S.q.joueurs)}"></div>
   <div id="list">${S.players.length?playerListHtml():`<div class="empty"><p class="muted">Aucun joueur pour l'instant.</p>${edit(`<button class="btn primary" data-act="new-player">+ Ajouter un joueur</button>`)}</div>`}</div></section>`;
 }
 
@@ -933,7 +956,7 @@ function pagePlayer(id){
   const aw=awardsOf(p.id);const totalVotes=h.reduce((n,x)=>n+votesAgainst(p.id,x.s),0);
   const orgsPlayed=[...new Set(h.map(x=>x.s.orgId))].map(org).filter(Boolean);
   const rows=h.map(({s,c})=>{const o=org(s.orgId)||{};const sa=(s.awards||[]).filter(a=>a.playerId===p.id);const hv=(s.rounds||[]).length>0;return `<tr class="link${Number(c.place)===1?" win":""}" data-href="#saison-${esc(s.id)}"><td><span class="who">${slogo(s,"xs")}${esc(o.name||"ORG inconnue")} ${esc(seasonShort(s))}</span></td><td><a href="#saison-${esc(s.id)}">${esc(s.title||"")}</a></td><td class="place">${placeLabel(c.place)}${c.note?` <span class="note">· ${esc(c.note)}</span>`:""}</td><td class="num">${hv?votesAgainst(p.id,s):'<span class="muted">—</span>'}</td><td>${sa.map(a=>`<span class="tag tag-award">${esc(a.name)}</span>`).join(" ")}</td></tr>`;}).join("");
-  const box=infobox(bigImg(p.avatar,p.pseudo),p.pseudo,[["Pronoms",esc(pronounsOf(p))],["Discord",esc(p.discord||"")],["ORGs",orgsPlayed.map(o=>`<a href="#org-${esc(o.id)}">${esc(o.name)}</a>`).join(", ")],["Participations",String(h.length)],["Victoires",String(wins)],["Top 3",String(top3)],["Meilleur",best?placeLabel(best):""],["Votes reçus",String(totalVotes)],["Awards",String(aw.length)]],"pic-player",p.id);
+  const box=infobox(bigImg(p.avatar,p.pseudo),p.pseudo,[["Pronoms",esc(pronounsOf(p))],["Discord",esc(p.discord||"")],["ORGs",orgsPlayed.map(o=>`<a href="#org-${esc(o.id)}">${esc(o.name)}</a>`).join(", ")],["Participations",String(h.length)],["Victoires",String(wins)],["Top 3",String(top3)],["Meilleur",best?placeLabel(best):""],["Votes reçus",String(totalVotes)],["Awards",String(aw.length)]],"pic-player",p.id,!!(S.me&&p.ownerUid===S.me));
   return `<div class="crumbs"><a href="#joueurs">Joueurs</a><span>/</span><span>${esc(p.pseudo)}</span></div>
   <div class="page-head"><div>${p.precision?`<p class="eyebrow">${esc(p.precision)}</p>`:""}<h1>${esc(p.pseudo)}</h1>${pronounsOf(p)?`<p class="pronouns">${esc(pronounsOf(p))}</p>`:""}${p.ownerUid&&p.ownerUid===S.me?`<p class="claimed">C'est ton profil</p>`:""}${aliasesOf(p).length?`<p class="muted" style="margin-top:8px">Aussi connu sous : ${aliasesOf(p).map(esc).join(", ")}</p>`:""}</div>${playerActions(p)}</div>
   <div class="wiki"><div class="wiki-main">${p.bio?`<p class="desc">${esc(p.bio)}</p>`:""}
@@ -1102,9 +1125,11 @@ function seasonForm(s,orgId){
     }});
 }
 
-function playerForm(p){
+function playerForm(p,own){
   const isNew=!p;p=p||{};
-  openModal({title:isNew?"Nouveau joueur":"Modifier le joueur",body:`
+  if(isNew&&own){const pr=S.profile||{};p={pseudo:pr.discord_name||"",discord:pr.discord_name||"",ownerUid:S.me};}
+  const mineF=!!(S.me&&p.ownerUid===S.me);
+  openModal({title:isNew?(own?"Créer ma fiche":"Nouveau joueur"):(mineF?"Modifier mon profil":"Modifier le joueur"),body:`
     <div class="frow">${field("Pseudo *",inp("pseudo",p.pseudo,'required data-label="Pseudo" maxlength="40"'))}${field("Précision",inp("precision",p.precision,'maxlength="30" placeholder="Si homonyme"'))}</div>
     ${field("Pronoms",`<input id="f-pronouns" name="pronouns" list="pron-list" maxlength="30" value="${esc(p.pronouns||"")}" placeholder="Choisis ou écris les tiens"><datalist id="pron-list"><option value="il/lui"></option><option value="elle/elle"></option><option value="iel/iel"></option><option value="il/elle"></option><option value="elle/il"></option><option value="tous pronoms"></option></datalist>`)}
     ${field("Autres pseudos",inp("aliases",aliasesOf(p).join(", "),'maxlength="300" placeholder="Séparés par des virgules"'),"Les anciens pseudos sont reconnus dans la recherche et les tableaux de votes.")}
@@ -1116,7 +1141,7 @@ function playerForm(p){
       const data=Object.assign(strip(p),{pseudo:v.pseudo,precision:v.precision,pronouns:v.pronouns,aliases:(v.aliases||"").split(",").map(x=>x.trim()).filter(Boolean),discord:v.discord,bio:v.bio,avatar:await resolveImage(f,"avatar",p.avatar),updatedAt:t});
       if(isNew)data.createdAt=t;
       await db.doc("players/"+id).set(data);
-      toast(isNew?"Joueur ajouté":"Joueur mis à jour");
+      toast(isNew?(own?"Ta fiche est créée":"Joueur ajouté"):"Profil mis à jour");
       if(isNew)location.hash="joueur-"+id;
     }});
 }
@@ -1331,7 +1356,7 @@ function playerActions(p){
   const mine=S.me&&p.ownerUid===S.me;const pend=S.myClaims.some(c=>c.player_id===p.id&&c.status==="pending");
   const b=[];
   if(p.ownerUid&&S.me&&p.ownerUid!==S.me)b.push(friendButtons(p.ownerUid));
-  if(S.isHost||mine)b.push(`<button class="btn" data-act="edit-player" data-id="${esc(p.id)}">Modifier</button>`);
+  if(S.isHost||mine)b.push(`<button class="btn${mine?" primary":""}" data-act="edit-player" data-id="${esc(p.id)}">${mine?"Modifier mon profil":"Modifier"}</button>`);
   if(S.me&&!p.ownerUid&&!myPlayer())b.push(pend?`<span class="btn ghost" aria-disabled="true">Demande envoyée</span>`:`<button class="btn primary" data-act="claim" data-id="${esc(p.id)}">C'est moi</button>`);
   if(!S.me&&!p.ownerUid)b.push(`<button class="btn ghost" data-act="login">C'est moi ? Connecte-toi</button>`);
   if(mine)b.push(`<button class="btn ghost" data-act="unclaim" data-id="${esc(p.id)}">Ce n'est pas moi</button>`);
@@ -1344,6 +1369,7 @@ async function claimPlayer(id,on){
   try{
     if(on){
       if(myPlayer()){toast("Ton compte est déjà relié à une fiche.",true);return;}
+      if(p.ownerUid){toast("Cette fiche est déjà reliée à un compte.",true);return;}
       if(S.isAdmin){await db.doc("players/"+id).update({ownerUid:S.me,updatedAt:nowIso()});toast("Fiche reliée à ton compte");}
       else{const {error}=await sb.from("claims").upsert({player_id:id,user_id:S.me,status:"pending"});if(error)throw sbErr(error);S.myClaims.push({player_id:id,status:"pending"});toast("Demande envoyée, un admin va la valider");render();}
     }else{await db.doc("players/"+id).update({ownerUid:"",updatedAt:nowIso()});toast("Fiche déliée");}
@@ -1392,7 +1418,10 @@ async function loadAdmin(){
 async function claimDecision(pid,u,ok){
   try{
     if(ok){if(S.players.some(p=>p.ownerUid===u)){toast("Ce compte est déjà relié à une autre fiche.",true);return;}
-      await db.doc("players/"+pid).update({ownerUid:u,updatedAt:nowIso()});}
+      const cur=await db.doc("players/"+pid).get();const ow=cur.exists&&(cur.data()||{}).ownerUid;
+      if(ow&&ow!==u){await sb.from("claims").update({status:"refused"}).eq("player_id",pid).eq("user_id",u);toast("Cette fiche est déjà reliée à un autre compte : demande refusée.",true);loadAdmin();return;}
+      await db.doc("players/"+pid).update({ownerUid:u,updatedAt:nowIso()});
+      await sb.from("claims").update({status:"refused"}).eq("player_id",pid).eq("status","pending").neq("user_id",u);}
     const {error}=await sb.from("claims").update({status:ok?"accepted":"refused"}).eq("player_id",pid).eq("user_id",u);if(error)throw sbErr(error);
     toast(ok?"Demande validée":"Demande refusée");loadAdmin();
   }catch(e){toast(errMsg(e),true);}
@@ -1598,7 +1627,7 @@ document.addEventListener("click",e=>{
     "new-season":()=>seasonForm(null,b.dataset.org),"edit-season":()=>seasonForm(season(id)),"del-season":()=>delSeason(id),
     "cast":()=>castEditor(season(id)),"awards":()=>awardsEditor(season(id)),
     "filter":()=>{S.f[b.dataset.k]=b.dataset.v;render();},"opal":()=>{S.f.opal=b.dataset.v;render();},"votes":()=>votesEditor(season(id)),
-    "new-player":()=>playerForm(),"edit-player":()=>playerForm(player(id)),"del-player":()=>delPlayer(id),"merge-player":()=>mergeForm(player(id)),"claim":()=>claimPlayer(id,true),"login":()=>login(),"fr-add":()=>friendAction("add",b.dataset.u),"fr-accept":()=>friendAction("accept",b.dataset.u),"fr-remove":()=>friendAction("remove",b.dataset.u),"appform":()=>appFormEditor(season(id)),"apptoggle":()=>toggleApps(season(id)),"logout":()=>logout(),"claim-ok":()=>claimDecision(b.dataset.p,b.dataset.u,true),"claim-no":()=>claimDecision(b.dataset.p,b.dataset.u,false),"unsign":()=>signAction(id,"unsign"),"su-ok":()=>signAction(b.dataset.s,"ok",b.dataset.u),"su-no":()=>signAction(b.dataset.s,"no",b.dataset.u),"unclaim":()=>claimPlayer(id,false),"split-player":()=>splitForm(player(id)),
+    "new-player":()=>playerForm(),"new-mine":()=>{if(myPlayer()){location.hash="joueur-"+myPlayer().id;return;}playerForm(null,true);},"edit-player":()=>playerForm(player(id)),"del-player":()=>delPlayer(id),"merge-player":()=>mergeForm(player(id)),"claim":()=>claimPlayer(id,true),"login":()=>login(),"fr-add":()=>friendAction("add",b.dataset.u),"fr-accept":()=>friendAction("accept",b.dataset.u),"fr-remove":()=>friendAction("remove",b.dataset.u),"appform":()=>appFormEditor(season(id)),"apptoggle":()=>toggleApps(season(id)),"logout":()=>logout(),"claim-ok":()=>claimDecision(b.dataset.p,b.dataset.u,true),"claim-no":()=>claimDecision(b.dataset.p,b.dataset.u,false),"unsign":()=>signAction(id,"unsign"),"su-ok":()=>signAction(b.dataset.s,"ok",b.dataset.u),"su-no":()=>signAction(b.dataset.s,"no",b.dataset.u),"unclaim":()=>claimPlayer(id,false),"split-player":()=>splitForm(player(id)),
     "new-news":()=>newsForm(null,b.dataset.org),"edit-news":()=>newsForm(newsItem(id)),"del-news":()=>delNews(id),
     "clear-examples":clearExamples
   };
