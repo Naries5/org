@@ -550,7 +550,7 @@ function awardsOf(pid){const out=[];S.seasons.forEach(s=>(s.awards||[]).forEach(
 function placeLabel(p){p=Number(p);if(!p)return "—";return p===1?"Vainqueur":p+"e";}
 function chip(st){const x=STATUS[st]||STATUS.annoncee;return `<span class="chip ${x.c}">${x.l}</span>`;}
 function roman(n){n=Math.floor(Number(n));if(!n||n<1||n>3999)return String(n||"?");const m=[[1000,"M"],[900,"CM"],[500,"D"],[400,"CD"],[100,"C"],[90,"XC"],[50,"L"],[40,"XL"],[10,"X"],[9,"IX"],[5,"V"],[4,"IV"],[1,"I"]];let r="";m.forEach(([v,l])=>{while(n>=v){r+=l;n-=v;}});return r;}
-function autoShort(s){const o=org(s.orgId)||{};const word=(o.seasonWord||"Saison").trim();const num=o.numbering==="roman"?roman(s.number):(s.number||"?");return (word?word+" ":"")+num;}
+function autoShort(s){const o=org(s.orgId)||{};const word=(o.seasonWord==null?"Saison":String(o.seasonWord)).trim();const num=o.numbering==="roman"?roman(s.number):(s.number||"?");return (word?word+" ":"")+num;}
 function seasonShort(s){return (s.customName&&String(s.customName).trim())||autoShort(s);}
 function seasonName(s){return seasonShort(s)+(s.title?" : "+s.title:"");}
 function fullSeasonName(s){const o=org(s.orgId)||{};return (o.name?o.name+" ":"")+seasonName(s);}
@@ -1414,9 +1414,14 @@ async function dataUrlToBlob(u){const r=await fetch(u);return await r.blob();}
 function normName(x){return String(x||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]/g,"");}
 async function importRankings(j,log){
   const idx=new Map();S.players.forEach(p=>{[p.pseudo,...aliasesOf(p)].forEach(n=>{const k=normName(n);if(k&&!idx.has(k))idx.set(k,p.id);});});
-  const created=[],missing=[],newRows=[];let done=0;const t=nowIso();
-  const resolve=c=>{if(c.playerId&&player(c.playerId))return c.playerId;if(!normName(c.pseudo))return null;for(const n of [c.pseudo,...(c.also||[])]){const k=normName(n);if(idx.has(k))return idx.get(k);}const pid=uid("p");idx.set(normName(c.pseudo),pid);created.push(c.pseudo);newRows.push({id:pid,data:{pseudo:c.pseudo,bio:"",discord:"",avatar:"",createdAt:t,updatedAt:t},updated_at:t});return pid;};
-  const plan=(j.seasons||[]).map(it=>{const se=season(it.id);if(!se)return {it,se,ids:[],aw:[]};
+  const created=[],missing=[],newRows=[],linked=new Set();let done=0;const t=nowIso();
+  if(j.org&&j.org.id&&!org(j.org.id)){await db.doc("orgs/"+j.org.id).set(Object.assign({createdAt:t,updatedAt:t},j.org.data||{}));log("ORG créée : "+((j.org.data||{}).name||j.org.id));}
+  const fresh={};
+  for(const it of j.seasons||[]){if(!season(it.id)&&it.create){const d=Object.assign({cast:[],rounds:[],awards:[],teams:[],createdAt:t,updatedAt:t},it.create);await db.doc("seasons/"+it.id).set(d);fresh[it.id]=Object.assign({id:it.id},d);}}
+  const getSe=id=>season(id)||fresh[id];
+  const newIds=new Set();
+  const resolve=c=>{if(c.playerId&&player(c.playerId))return c.playerId;if(!normName(c.pseudo))return null;for(const n of [c.pseudo,...(c.also||[])]){const k=normName(n);if(idx.has(k)){const id=idx.get(k);if(!newIds.has(id))linked.add(c.pseudo+(player(id)&&normName(player(id).pseudo)!==normName(c.pseudo)?" → "+player(id).pseudo:""));return id;}}const pid=uid("p");idx.set(normName(c.pseudo),pid);newIds.add(pid);created.push(c.pseudo);newRows.push({id:pid,data:{pseudo:c.pseudo,bio:"",discord:"",avatar:"",createdAt:t,updatedAt:t},updated_at:t});return pid;};
+  const plan=(j.seasons||[]).map(it=>{const se=getSe(it.id);if(!se)return {it,se,ids:[],aw:[]};
     const ids=(it.cast||[]).map(resolve);
     const castIdx=new Map();(it.cast?ids:(se.cast||[]).map(c=>c.playerId)).forEach(pid=>{const p=player(pid);const c=(it.cast||[])[ids.indexOf(pid)];[p&&p.pseudo,...(p?aliasesOf(p):[]),c&&c.pseudo,...((c&&c.also)||[])].forEach(n=>{const k=normName(n);if(k&&!castIdx.has(k))castIdx.set(k,pid);});});
     const aw=(it.awards||[]).map(a=>{let pid=null;for(const n of [a.pseudo,...(a.also||[])]){const k=normName(n);if(castIdx.has(k)){pid=castIdx.get(k);break;}}if(!pid)pid=resolve({pseudo:a.pseudo,also:a.also||[]});return {name:a.name,playerId:pid};});
@@ -1435,14 +1440,14 @@ async function importRankings(j,log){
       const o=old[pid]||{};
       cast.push(Object.assign({team:"",team2:"",team3:""},o,{playerId:pid,place:c.place==null?null:Number(c.place),note:c.note!=null?c.note:(o.note||"")}));
     }
-    const upd={cast,updatedAt:t};if(it.awards)upd.awards=aw;
+    const upd={cast,updatedAt:t};if(it.awards)upd.awards=aw;if(Array.isArray(it.teams))upd.teams=it.teams;
     if(Array.isArray(it.rounds)){const byName={};(it.cast||[]).forEach((c,k)=>{byName[c.pseudo]=ids[k];});
       upd.rounds=it.rounds.map(r=>{const v={};Object.entries(r.votes||{}).forEach(([n,x])=>{const pid=byName[n];if(pid&&x!=null&&String(x).trim()!=="")v[pid]=String(x);});return Object.assign({},r,{votes:v});});}
     await db.doc("seasons/"+se.id).update(upd);done++;
     log("Saisons mises à jour : "+done+" / "+(j.seasons||[]).length);
   }
-  if(makeDb._reload&&makeDb._reload.players)makeDb._reload.players();
-  return {done,created,missing};
+  Object.values(makeDb._reload||{}).forEach(f=>f());
+  return {done,created,missing,linked:[...linked]};
 }
 async function exportAll(){
   const out={type:"org-central-sauvegarde",date:new Date().toISOString()};
@@ -1453,7 +1458,7 @@ async function exportAll(){
 async function importExport(file,log){
   const j=JSON.parse(await file.text());
   log("Sauvegarde automatique avant import…");try{await exportAll();}catch(e){throw new Error("Sauvegarde impossible, import annulé : "+errMsg(e));}
-  if(j&&j.type==="org-central-classements"){const r=await importRankings(j,log);log(`Classements importés : ${r.done} saison(s).`+(r.created.length?` Nouveaux joueurs (${r.created.length}) : ${r.created.join(", ")}.`:" Aucun nouveau joueur.")+(r.missing.length?` Saisons introuvables : ${r.missing.join(", ")}.`:""));return -1;}
+  if(j&&j.type==="org-central-classements"){const r=await importRankings(j,log);log(`Classements importés : ${r.done} saison(s).`+(r.created.length?` Nouveaux joueurs (${r.created.length}) : ${r.created.join(", ")}.`:" Aucun nouveau joueur.")+(r.missing.length?` Saisons introuvables : ${r.missing.join(", ")}.`:"")+(r.linked&&r.linked.length?` Reliés à des fiches existantes (${r.linked.length}) : ${r.linked.join(", ")}. Si l'un d'eux n'est pas la même personne, utilise « Séparer… » sur sa fiche.`:""));return -1;}
   if(!j||!j.orgs||!j.seasons||!j.players)throw new Error("Ce fichier n'est pas un export ORG-Central.");
   const up=async v=>{if(typeof v!=="string"||!v.startsWith("data:image/"))return v||"";const b=await dataUrlToBlob(v);const ext=(b.type.split("/")[1]||"png").replace("jpeg","jpg");const path="import/"+uid("i")+"."+ext;
     const {error}=await sb.storage.from("images").upload(path,b,{contentType:b.type});if(error)throw sbErr(error);return sb.storage.from("images").getPublicUrl(path).data.publicUrl;};
