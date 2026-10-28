@@ -461,6 +461,10 @@ select[size]{padding:4px}
 .og-win small{display:block;font-size:.62rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;line-height:1}
 .og-hosts{margin:0;font-size:.76rem;color:var(--muted)}
 @media (prefers-reduced-motion:reduce){.og,.og:hover{transform:none}.og-h.on span::before{animation:none}}
+.pstats{display:grid;grid-template-columns:minmax(120px,1.3fr) repeat(3,minmax(0,1fr));border:1px solid var(--line);border-radius:14px;overflow:hidden;background:rgba(255,255,255,.03)}
+.pstats>span{padding:9px 12px;border-bottom:1px solid var(--line);font-size:.92rem}
+.pstats .ph{font-family:var(--font-cond);text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:var(--accent);text-align:center;background:rgba(255,255,255,.04)}
+.pstats .pl{font-weight:700;color:var(--muted)}.pstats .pv{text-align:center;font-variant-numeric:tabular-nums}.pstats .pv.g{font-weight:800;color:var(--ink)}
 .me-link{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--ink);font-weight:700;text-transform:none;letter-spacing:0;padding:3px 10px 3px 3px;border-radius:999px;background:rgba(255,255,255,.07)}
 .badge{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--live);color:#fff;font-size:.72rem;font-weight:800;margin-left:4px}
 .social{display:grid;grid-template-columns:320px minmax(0,1fr);gap:24px;align-items:start}
@@ -882,7 +886,7 @@ function orgPoster(o){
   ${uniq.length?`<p class="og-hosts">Host${uniq.length>1?"s":""} : ${uniq.slice(0,4).map(esc).join(", ")}${uniq.length>4?` +${uniq.length-4}`:""}</p>`:""}</div></a>`;
 }
 function paintOrgPosters(){document.querySelectorAll(".og[data-paint]").forEach(el=>{const u=el.dataset.paint;el.removeAttribute("data-paint");hueColors(u,r=>{if(r){el.style.setProperty("--c1",r.t1);el.style.setProperty("--c2",r.t2);}});});}
-function playerListHtml(){const list=filtered([...S.players].sort((a,b)=>String(a.pseudo).localeCompare(String(b.pseudo),"fr")),S.q.joueurs,"pseudo");return list.length?`<div class="grid small">${list.map(playerCard).join("")}</div>`:`<p class="muted">Aucun joueur ne correspond.</p>`;}
+function playerListHtml(){const cnt={};S.seasons.forEach(se=>(se.cast||[]).forEach(c=>{cnt[c.playerId]=(cnt[c.playerId]||0)+1;}));const list=filtered([...S.players].sort((a,b)=>(cnt[b.id]||0)-(cnt[a.id]||0)||String(a.pseudo).localeCompare(String(b.pseudo),"fr")),S.q.joueurs,"pseudo");return list.length?`<div class="grid small">${list.map(playerCard).join("")}</div>`:`<p class="muted">Aucun joueur ne correspond.</p>`;}
 function bindSearch(page){
   const s=document.getElementById("search");if(!s)return;
   s.addEventListener("input",()=>{S.q[page]=s.value;document.getElementById("list").innerHTML=page==="orgs"?orgListHtml():playerListHtml();});
@@ -933,7 +937,7 @@ function pageOrg(id){
   const list=[...st].sort((a,b)=>b[k]-a[k]||b.wins-a.wins||b.top3-a.top3||b.part-a.part).filter(x=>x[k]>0).slice(0,15);
   const champ=[...st].sort((a,b)=>b.wins-a.wins||b.top3-a.top3)[0];
   const box=infobox(bigImg(orgLogoVal(o),o.name),o.name,[
-    ["Sigle",esc(o.tag||"")],["Host(s)",esc(o.hosts||"")],["Format",FORMATS[o.format]||""],["Plateforme",PLATFORMS[o.platform]||""],
+    ["Sigle",esc(o.tag||"")],["Host(s)",hostLinks(o.hosts||"")],["Format",FORMATS[o.format]||""],["Plateforme",PLATFORMS[o.platform]||""],
     ["Création",o.founded?fmtDate(o.founded):""],["Saisons",String(ss.length)],["Joueurs",String(st.length)],
     ["Plus titré",champ&&champ.wins?`${plink(champ.id)} (${champ.wins})`:""],["Discord",disc?`<a href="${esc(disc)}" target="_blank" rel="noopener">Rejoindre</a>`:""]],"pic-org",o.id);
   return `<div class="crumbs"><a href="#orgs">ORGs</a><span>/</span><span>${esc(o.name)}</span></div>
@@ -971,7 +975,7 @@ function pageSeason(id){
   return `<div class="crumbs"><a href="#orgs">ORGs</a><span>/</span><a href="#org-${esc(o.id||"")}">${esc(o.name)}</a><span>/</span><span>${esc(seasonShort(s))}</span></div>
   <div class="page-head"><div><p class="eyebrow">${esc(o.name)} · ${esc(seasonShort(s))}</p><h1>${esc(s.title||seasonShort(s))}</h1></div>${edit(`<div class="actions">${appsOf(s).open?"":`<button class="btn" data-act="apptoggle" data-id="${esc(s.id)}">Ouvrir les candidatures</button>`}<button class="btn" data-act="edit-season" data-id="${esc(s.id)}">Modifier</button><button class="btn danger" data-act="del-season" data-id="${esc(s.id)}">Supprimer</button></div>`)}</div>
   <div class="wiki"><div class="wiki-main">
-  ${s.description?`<p class="desc">${esc(s.description)}</p>`:""}
+  ${s.description?`<p class="desc">${descHtml(s.description)}</p>`:""}
   ${s.status==="inscriptions"&&signup?`<a class="btn cta" href="${esc(signup)}" target="_blank" rel="noopener">Lien d'inscription externe ↗</a>`:""}${signupBlock(s)}
   <section class="block"><div class="block-head"><h2>Classement</h2><span class="count">${cast.length}</span>${edit(`<span class="actions"><button class="btn sm" data-act="cast" data-id="${esc(s.id)}">Modifier le casting</button>${cast.length?`<button class="btn sm" data-act="slooks" data-id="${esc(s.id)}">Pseudos & photos de saison</button>`:""}</span>`)}</div>${ranking}</section>
   <section class="block"><div class="block-head"><h2>Awards</h2><span class="count">${awards.length}</span>${edit(`<span class="actions"><button class="btn sm" data-act="awards" data-id="${esc(s.id)}">${awards.length?"Modifier les awards":"Ajouter des awards"}</button></span>`)}</div>
@@ -1014,6 +1018,25 @@ function pagePlayers(){
   <div id="list">${S.players.length?playerListHtml():`<div class="empty"><p class="muted">Aucun joueur pour l'instant.</p>${edit(`<button class="btn primary" data-act="new-player">+ Ajouter un joueur</button>`)}</div>`}</div></section>`;
 }
 
+function playerByName(n){const k=normName(n);if(!k)return null;let r=null;for(const p of S.players){if(normName(p.pseudo)===k)return p;if(!r&&aliasesOf(p).some(a=>normName(a)===k))r=p;}return r;}
+function splitNames(t){return String(t||"").split(/\s*(?:,|&|\/|\bet\b|\(|\)|assist[ée]e?s? par|avec l'aide de)\s*/).map(x=>x.trim()).filter(Boolean);}
+function hostLinks(t){if(!t)return "";return String(t).split(/(\s*(?:,|&|\/|\bet\b|\(|\)|assist[ée]e?s? par|avec l'aide de)\s*)/).map(part=>{const q=part.trim();if(!q||/^(,|&|\/|et|\(|\)|assist[ée]e?s? par|avec l'aide de)$/.test(q))return esc(part);const pl=playerByName(q);return pl?`<a href="#joueur-${esc(pl.id)}">${esc(part)}</a>`:esc(part);}).join("");}
+function descHtml(t){const e=String(t||"");const m=e.match(/^(.*?(?:Organis[ée]e? par|Affiche par)\s*)([^.]*)(\..*)?$/s);if(!m)return esc(e);
+  return esc(m[1])+hostLinks(m[2])+descHtml(m[3]||"");}
+function hostedBy(p){const keys=new Set([p.pseudo,...aliasesOf(p)].map(normName));const orgs=S.orgs.filter(o=>splitNames(o.hosts).some(n=>keys.has(normName(n))));
+  const seas=S.seasons.filter(s=>{const m=String(s.description||"").match(/Organis[ée]e? par\s*([^.]*)/);return m&&splitNames(m[1]).some(n=>keys.has(normName(n)));});
+  const ids=new Set(orgs.map(o=>o.id));seas.forEach(x=>ids.add(x.orgId));return {orgs:[...ids].map(org).filter(Boolean),seasons:seas.sort(byRecent)};}
+function statBlock(h,pid){
+  const grp=f=>h.filter(x=>f((org(x.s.orgId)||{}).format));
+  const st=arr=>{const pl=arr.map(x=>Number(x.c.place)).filter(Boolean);const n=arr.length;const sz=arr.map(x=>(x.s.cast||[]).length).filter(Boolean);
+    const rel=arr.filter(x=>Number(x.c.place)&&(x.s.cast||[]).length>1).map(x=>1-(Number(x.c.place)-1)/((x.s.cast||[]).length-1));
+    return {n,w:pl.filter(x=>x===1).length,t3:pl.filter(x=>x<=3).length,best:pl.length?Math.min(...pl):null,avg:pl.length?(pl.reduce((a,b)=>a+b,0)/pl.length):null,
+      perf:rel.length?Math.round(rel.reduce((a,b)=>a+b,0)/rel.length*100):null,v:Math.round(arr.reduce((a,x)=>a+votesAgainst(pid,x.s),0)*100)/100,
+      aw:arr.reduce((a,x)=>a+(x.s.awards||[]).filter(y=>y.playerId===pid).length,0)};};
+  const cols=[["Global",st(h)],["Speed",st(grp(f=>f==="speed"))],["Format long",st(grp(f=>f!=="speed"))]];
+  const rows=[["Saisons",x=>x.n],["Victoires",x=>x.w],["Top 3",x=>x.t3],["Meilleure place",x=>x.best?placeLabel(x.best):"—"],["Place moyenne",x=>x.avg?fmtN(Math.round(x.avg*10)/10):"—"],["Performance",x=>x.perf==null?"—":x.perf+" %"],["Votes reçus",x=>fmtN(x.v)],["Awards",x=>x.aw]];
+  return `<section class="block"><div class="block-head"><h2>Statistiques</h2></div><div class="pstats"><span></span>${cols.map(([t])=>`<span class="ph">${t}</span>`).join("")}${rows.map(([l,f])=>`<span class="pl">${l}</span>${cols.map(([,x],i)=>`<span class="pv${i===0?" g":""}">${x.n?f(x):"—"}</span>`).join("")}`).join("")}</div><p class="muted" style="font-size:.8rem;margin-top:6px">Performance : 100 % = vainqueur, 0 % = premier éliminé, en moyenne sur les saisons.</p></section>`;
+}
 function pagePlayer(id){
   const p=player(id);if(!p)return notFound("Joueur");
   const h=historyOf(p.id);const places=h.map(x=>Number(x.c.place)).filter(Boolean);
@@ -1025,6 +1048,8 @@ function pagePlayer(id){
   return `<div class="crumbs"><a href="#joueurs">Joueurs</a><span>/</span><span>${esc(p.pseudo)}</span></div>
   <div class="page-head"><div>${p.precision?`<p class="eyebrow">${esc(p.precision)}</p>`:""}<h1>${esc(p.pseudo)}</h1>${pronounsOf(p)?`<p class="pronouns">${esc(pronounsOf(p))}</p>`:""}${p.ownerUid&&p.ownerUid===S.me?`<p class="claimed">C'est ton profil</p>`:""}${aliasesOf(p).length?`<p class="muted" style="margin-top:8px">Aussi connu sous : ${aliasesOf(p).map(esc).join(", ")}</p>`:""}</div>${playerActions(p)}</div>
   <div class="wiki"><div class="wiki-main">${p.bio?`<p class="desc">${esc(p.bio)}</p>`:""}
+  ${h.length?statBlock(h,p.id):""}
+  ${(()=>{const hb=hostedBy(p);return hb.orgs.length?`<section class="block"><div class="block-head"><h2>Host</h2></div><p>${hb.orgs.map(o=>`<a class="who" href="#org-${esc(o.id)}">${logo(o,"xs")}${esc(o.name)}</a>`).join(" · ")}</p>${hb.seasons.length?`<p class="muted" style="margin-top:6px">Saisons organisées : ${hb.seasons.map(x=>`<a href="#saison-${esc(x.id)}">${esc(fullSeasonName(x))}</a>`).join(", ")}</p>`:""}</section>`:"";})()}
   <section class="block"><div class="block-head"><h2>Parcours</h2><span class="count">${h.length}</span></div>
   ${h.length?`<div class="table-wrap"><table><thead><tr><th>Saison</th><th>Thème</th><th>Place</th><th class="num">Votes reçus</th><th>Awards</th></tr></thead><tbody>${rows}</tbody></table></div>`:`<p class="muted">Ce joueur n'apparaît encore dans aucun casting.</p>`}</section>
   </div>${box}</div>`;
