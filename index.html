@@ -547,6 +547,7 @@ select[size]{padding:4px}
 .jr-dot{flex:none;width:10px;height:10px;border-radius:50%;margin-top:6px;background:var(--muted)}.jr-add .jr-dot{background:#3ddc84}.jr-upd .jr-dot{background:var(--t1)}.jr-del .jr-dot{background:#ff4d6d}
 .jr-t{flex:1;min-width:0;line-height:1.5}.jr-t .who{display:inline-flex;vertical-align:middle;font-weight:700}.jr-ch{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}.jr-ch .tag{font-size:.7rem}
 .jr-at{flex:none;color:var(--muted);font-size:.8rem;white-space:nowrap}
+.adm-link{display:block;margin-top:4px}.adm-link input{width:100%;max-width:200px;font-size:.82rem;padding:4px 8px}
 .me-link{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--ink);font-weight:700;text-transform:none;letter-spacing:0;padding:3px 10px 3px 3px;border-radius:999px;background:rgba(255,255,255,.07)}
 .badge{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--live);color:#fff;font-size:.72rem;font-weight:800;margin-left:4px}
 .social{display:grid;grid-template-columns:320px minmax(0,1fr);gap:24px;align-items:start}
@@ -1732,6 +1733,7 @@ async function loadLog(){
     const v=VERB[r.action]||[r.action,""];const ch=(r.changes||[]).filter(k=>!["updated_at","created_at"].includes(k));
     return head+`<div class="jr-i ${v[1]}"><span class="jr-dot"></span><div class="jr-t">${who(r.user_id)} ${v[0]} ${NOUN[r.tbl]||r.tbl} ${target(r)}${ch.length&&r.action==="UPDATE"?`<div class="jr-ch">${ch.map(k=>`<span class="tag">${esc(LOG_FIELDS[k]||k)}</span>`).join("")}</div>`:""}</div><span class="jr-at">${fmt(r.at)}</span></div>`;}).join("")}</div>`;
 }
+function confirmDel(m){return window.confirm(m);}
 async function loadAdmin(){
   const box1=document.getElementById("adm-claims"),box2=document.getElementById("adm-users");if(!box1)return;
   const fi=document.getElementById("f-import");if(fi&&!fi._b){fi._b=1;fi.addEventListener("change",async()=>{const f=fi.files[0];if(!f)return;const lg={set textContent(m){S.impLog=m;const e=document.getElementById("imp-log");if(e)e.textContent=m;}};fi.disabled=true;
@@ -1741,9 +1743,21 @@ async function loadAdmin(){
   ADM_PROFS=profs||[];
   box1.innerHTML=(claims||[]).length?`<div class="table-wrap"><table><thead><tr><th>Compte Discord</th><th>Fiche demandée</th><th></th></tr></thead><tbody>${claims.map(c=>`<tr><td>${esc(pn(c.user_id))}</td><td><a href="#joueur-${esc(c.player_id)}">${esc(pName(c.player_id))}</a></td><td><span class="actions"><button class="btn sm primary" data-act="claim-ok" data-p="${esc(c.player_id)}" data-u="${esc(c.user_id)}">Valider</button><button class="btn sm ghost" data-act="claim-no" data-p="${esc(c.player_id)}" data-u="${esc(c.user_id)}">Refuser</button></span></td></tr>`).join("")}</tbody></table></div>`:`<p class="muted">Aucune demande en attente.</p>`;
   const orgsSorted=[...S.orgs].sort((a,b)=>String(a.name).localeCompare(String(b.name),"fr"));
-  box2.innerHTML=`<div class="table-wrap"><table><thead><tr><th>Compte</th><th>Rôle</th><th>ORGs hostées</th></tr></thead><tbody>${(profs||[]).map(u=>`<tr><td><span class="who">${u.avatar_url?`<img class="avatar xs" src="${esc(u.avatar_url)}" alt="">`:""}${esc(u.discord_name||"?")}</span></td>
+  const nLinked=(profs||[]).filter(u=>linkedPlayer(u.id)).length;
+  const free=S.players.filter(p=>!p.ownerUid).sort((a,b)=>String(a.pseudo).localeCompare(String(b.pseudo),"fr"));
+  const linkCell=u=>{const pl=linkedPlayer(u.id);if(pl)return `<span style="display:inline-flex;align-items:center;gap:8px;white-space:nowrap"><a class="who" href="#joueur-${esc(pl.id)}">${ava(pl,"xs")}<b>${esc(pl.pseudo)}</b></a><button class="btn sm ghost" data-unlink="${esc(pl.id)}" title="Délier la fiche" style="padding:2px 8px">✕</button></span>`;
+    const pend=(claims||[]).find(c=>c.user_id===u.id);const pp=pend&&player(pend.player_id);
+    return `<span class="muted">Non relié</span>${pp?` <span class="tag">demande : ${esc(pp.pseudo)}</span>`:""}<span class="adm-link"><input list="adm-free" data-linkfor="${esc(u.id)}" placeholder="Relier à…" aria-label="Relier ${esc(u.discord_name||"")} à une fiche"></span>`;};
+  box2.innerHTML=`<p class="muted" style="margin:0 0 10px"><b>${(profs||[]).length}</b> comptes inscrits · <b>${nLinked}</b> reliés à une fiche joueur · <b>${(profs||[]).length-nLinked}</b> non reliés</p><datalist id="adm-free">${free.map(p=>`<option value="${esc(p.pseudo)}${p.precision?` (${esc(p.precision)})`:""}"></option>`).join("")}</datalist>
+  <div class="table-wrap"><table><thead><tr><th>Compte</th><th>Fiche joueur</th><th>Rôle</th><th>ORGs hostées</th></tr></thead><tbody>${[...(profs||[])].sort((a,b)=>(linkedPlayer(a.id)?1:0)-(linkedPlayer(b.id)?1:0)).map(u=>`<tr><td><span class="who">${u.avatar_url?`<img class="avatar xs" src="${esc(u.avatar_url)}" alt="">`:""}${esc(u.discord_name||"?")}</span></td><td>${linkCell(u)}</td>
     <td><select data-role="${esc(u.id)}" aria-label="Rôle de ${esc(u.discord_name||"")}" ${u.id===S.me?"disabled":""}>${["player","host","admin"].map(r=>`<option value="${r}"${u.role===r?" selected":""}>${{player:"Joueur",host:"Host",admin:"Admin"}[r]}</option>`).join("")}</select></td>
     <td>${u.role==="host"?orgsSorted.map(o=>`<label class="chk" style="display:inline-flex;margin-right:12px"><input type="checkbox" data-host="${esc(u.id)}" value="${esc(o.id)}"${(hosts||[]).some(h=>h.user_id===u.id&&h.org_id===o.id)?" checked":""}> ${esc(o.name)}</label>`).join(""):u.role==="admin"?'<span class="muted">Toutes</span>':'<span class="muted">—</span>'}</td></tr>`).join("")}</tbody></table></div>`;
+  box2.querySelectorAll("[data-linkfor]").forEach(inp=>inp.addEventListener("change",async()=>{const v=inp.value.trim();if(!v)return;
+    const pl=free.find(p=>(p.pseudo+(p.precision?` (${p.precision})`:""))===v)||playerByName(v);
+    if(!pl||pl.ownerUid){toast("Fiche introuvable ou déjà reliée.",true);return;}
+    try{await db.doc("players/"+pl.id).update({ownerUid:inp.dataset.linkfor,updatedAt:nowIso()});await sb.from("claims").update({status:"accepted"}).eq("player_id",pl.id).eq("user_id",inp.dataset.linkfor);toast("Compte relié à "+pl.pseudo);setTimeout(loadAdmin,400);}catch(e){toast(errMsg(e),true);}}));
+  box2.querySelectorAll("[data-unlink]").forEach(b=>b.addEventListener("click",async()=>{const pl=player(b.dataset.unlink);if(!pl||!confirmDel("Délier la fiche "+pl.pseudo+" de ce compte ?"))return;
+    try{await db.doc("players/"+pl.id).update({ownerUid:"",updatedAt:nowIso()});toast("Fiche déliée");setTimeout(loadAdmin,400);}catch(e){toast(errMsg(e),true);}}));
   box2.querySelectorAll("[data-role]").forEach(sel=>sel.addEventListener("change",async()=>{const {error}=await sb.from("profiles").update({role:sel.value}).eq("id",sel.dataset.role);if(error)toast(sbErr(error).message,true);else{toast("Rôle mis à jour");loadAdmin();}}));
   box2.querySelectorAll("[data-host]").forEach(cb=>cb.addEventListener("change",async()=>{const q=cb.checked?sb.from("org_hosts").insert({org_id:cb.value,user_id:cb.dataset.host}):sb.from("org_hosts").delete().eq("org_id",cb.value).eq("user_id",cb.dataset.host);const {error}=await q;if(error)toast(sbErr(error).message,true);else toast("Hosts mis à jour");}));
 }
