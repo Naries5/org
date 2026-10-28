@@ -521,7 +521,13 @@ function latestSeasonWithLogo(o){if(!o||!o.id)return null;const ss=seasonsOf(o.i
 function orgLogoVal(o){const s=latestSeasonWithLogo(o);return s?s.logo:(o&&o.logo);}
 const logo=(o,size)=>pic(orgLogoVal(o),o&&(o.tag||o.name),"logo "+size);
 function slogo(s,size){const o=org(s.orgId)||{};return pic(s.logo||o.logo,o.tag||o.name,"logo "+size);}
-const ava=(p,size)=>pic(p&&p.avatar,p&&p.pseudo,"avatar "+size);
+let _sav={src:null,map:{}};
+function seasonAvatarMap(){if(_sav.src===S.seasons)return _sav.map;const m={};const cr={terminee:0,en_cours:1,inscriptions:2,annoncee:2};
+  const k=s=>String(s.end||s.start||"")+"|"+(cr[s.status]??0)+"|"+String(Number(s.number)||0).padStart(4,"0");
+  [...(S.seasons||[])].sort((a,b)=>k(a).localeCompare(k(b))).forEach(s=>(s.cast||[]).forEach(c=>{if(c.sAvatar)m[c.playerId]=c.sAvatar;}));
+  _sav={src:S.seasons,map:m};return m;}
+function avatarOf(p){return p?(p.avatar||seasonAvatarMap()[p.id]||""):"";}
+const ava=(p,size)=>pic(avatarOf(p),p&&p.pseudo,"avatar "+size);
 function safeUrl(u){u=String(u||"").trim();return /^https?:\/\//i.test(u)?u:"";}
 function fmtDate(d){if(!d)return "";const t=new Date(d+"T12:00:00");if(isNaN(t))return esc(d);return t.toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"});}
 function dateRange(s){if(s.start&&s.end)return fmtDate(s.start)+" → "+fmtDate(s.end);if(s.start)return fmtDate(s.start);if(s.period)return esc(s.period);return "";}
@@ -790,7 +796,7 @@ function infobox(img,title,rows,picAct,picId,canPic){
 function bigImg(v,label){const u=imgSrc(v);return u?`<img src="${esc(u)}" alt="">`:`<span class="ib-ph">${esc(initials(label))}</span>`;}
 function castEntry(s,id){return s&&(s.cast||[]).find(c=>c.playerId===id)||null;}
 function sName(s,id){const c=castEntry(s,id);return c&&c.sPseudo?c.sPseudo:pName(id);}
-function sAvatar(s,id){const c=castEntry(s,id);const p=player(id);return (c&&c.sAvatar)||(p&&p.avatar)||"";}
+function sAvatar(s,id){const c=castEntry(s,id);const p=player(id);return (c&&c.sAvatar)||avatarOf(p);}
 function sAva(s,id,size){return pic(sAvatar(s,id),sName(s,id),"avatar "+size);}
 function splink(s,id){return id?`<a href="#joueur-${esc(id)}">${esc(sName(s,id))}</a>`:"";}
 function plink(id){return id?`<a href="#joueur-${esc(id)}">${esc(pName(id))}</a>`:"";}
@@ -966,7 +972,7 @@ function pagePlayer(id){
   const aw=awardsOf(p.id);const totalVotes=h.reduce((n,x)=>n+votesAgainst(p.id,x.s),0);
   const orgsPlayed=[...new Set(h.map(x=>x.s.orgId))].map(org).filter(Boolean);
   const rows=h.map(({s,c})=>{const o=org(s.orgId)||{};const sa=(s.awards||[]).filter(a=>a.playerId===p.id);const hv=(s.rounds||[]).length>0;return `<tr class="link${Number(c.place)===1?" win":""}" data-href="#saison-${esc(s.id)}"><td><span class="who">${slogo(s,"xs")}${esc(o.name||"ORG inconnue")} ${esc(seasonShort(s))}</span></td><td><a href="#saison-${esc(s.id)}">${esc(s.title||"")}</a>${c.sPseudo||c.sAvatar?`<span class="as-season">${c.sAvatar?pic(c.sAvatar,c.sPseudo||p.pseudo,"avatar xs"):""}${c.sPseudo?`sous le nom <b>${esc(c.sPseudo)}</b>`:"look de saison"}</span>`:""}</td><td class="place">${placeLabel(c.place)}${c.note?` <span class="note">· ${esc(c.note)}</span>`:""}</td><td class="num">${hv?votesAgainst(p.id,s):'<span class="muted">—</span>'}</td><td>${sa.map(a=>`<span class="tag tag-award">${esc(a.name)}</span>`).join(" ")}</td></tr>`;}).join("");
-  const box=infobox(bigImg(p.avatar,p.pseudo),p.pseudo,[["Pronoms",esc(pronounsOf(p))],["Discord",esc(p.discord||"")],["ORGs",orgsPlayed.map(o=>`<a href="#org-${esc(o.id)}">${esc(o.name)}</a>`).join(", ")],["Participations",String(h.length)],["Victoires",String(wins)],["Top 3",String(top3)],["Meilleur",best?placeLabel(best):""],["Votes reçus",String(totalVotes)],["Awards",String(aw.length)]],"pic-player",p.id,!!(S.me&&p.ownerUid===S.me));
+  const box=infobox(bigImg(avatarOf(p),p.pseudo),p.pseudo,[["Pronoms",esc(pronounsOf(p))],["Discord",esc(p.discord||"")],["ORGs",orgsPlayed.map(o=>`<a href="#org-${esc(o.id)}">${esc(o.name)}</a>`).join(", ")],["Participations",String(h.length)],["Victoires",String(wins)],["Top 3",String(top3)],["Meilleur",best?placeLabel(best):""],["Votes reçus",String(totalVotes)],["Awards",String(aw.length)]],"pic-player",p.id,!!(S.me&&p.ownerUid===S.me));
   return `<div class="crumbs"><a href="#joueurs">Joueurs</a><span>/</span><span>${esc(p.pseudo)}</span></div>
   <div class="page-head"><div>${p.precision?`<p class="eyebrow">${esc(p.precision)}</p>`:""}<h1>${esc(p.pseudo)}</h1>${pronounsOf(p)?`<p class="pronouns">${esc(pronounsOf(p))}</p>`:""}${p.ownerUid&&p.ownerUid===S.me?`<p class="claimed">C'est ton profil</p>`:""}${aliasesOf(p).length?`<p class="muted" style="margin-top:8px">Aussi connu sous : ${aliasesOf(p).map(esc).join(", ")}</p>`:""}</div>${playerActions(p)}</div>
   <div class="wiki"><div class="wiki-main">${p.bio?`<p class="desc">${esc(p.bio)}</p>`:""}
@@ -1487,7 +1493,7 @@ S.friends=[];S.profiles={};S.unread=0;let MSG_CH=null;
 function curRoute(){const h=decodeURIComponent(location.hash.slice(1))||"accueil";const i=h.indexOf("-");return {page:i<0?h:h.slice(0,i),id:i<0?"":h.slice(i+1)};}
 function linkedPlayer(uid){return S.players.find(p=>p.ownerUid&&p.ownerUid===uid);}
 function userName(uid){const p=linkedPlayer(uid);if(p)return p.pseudo;const pr=S.profiles[uid];return pr?(pr.discord_name||"Joueur"):"Joueur";}
-function userAva(uid,size){const p=linkedPlayer(uid);if(p&&p.avatar)return ava(p,size);const pr=S.profiles[uid];return pr&&pr.avatar_url?`<img class="avatar ${size}" src="${esc(pr.avatar_url)}" alt="">`:`<span class="avatar ${size}" aria-hidden="true">${esc(initials(userName(uid)))}</span>`;}
+function userAva(uid,size){const p=linkedPlayer(uid);if(avatarOf(p))return ava(p,size);const pr=S.profiles[uid];return pr&&pr.avatar_url?`<img class="avatar ${size}" src="${esc(pr.avatar_url)}" alt="">`:`<span class="avatar ${size}" aria-hidden="true">${esc(initials(userName(uid)))}</span>`;}
 function friendState(uid){const r=S.friends.find(f=>(f.requester===S.me&&f.addressee===uid)||(f.requester===uid&&f.addressee===S.me));
   if(!r)return "none";if(r.status==="accepted")return "friends";return r.requester===S.me?"sent":"received";}
 async function loadSocial(){
