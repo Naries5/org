@@ -1,0 +1,1448 @@
+{
+ "type": "org-central-classements",
+ "seasons": [
+  {
+   "id": "ssws16",
+   "cast": [
+    {
+     "pseudo": "Chat Malin",
+     "place": 1,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Blackshadow",
+     "place": 2,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Sacha",
+     "place": 3,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Mickey",
+     "place": 4,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Aless",
+     "place": 5,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Giancarlos",
+     "place": 6,
+     "note": "",
+     "also": [
+      "Giancarlo"
+     ]
+    },
+    {
+     "pseudo": "Chapichapo",
+     "place": 7,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "NiZoo",
+     "place": 8,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "AMS",
+     "place": 9,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Martin",
+     "place": 10,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Josephbg",
+     "place": 11,
+     "note": "Éliminé avec Alexandra",
+     "also": []
+    },
+    {
+     "pseudo": "Alexandra",
+     "place": 11,
+     "note": "Éliminée avec Josephbg",
+     "also": []
+    },
+    {
+     "pseudo": "Agui",
+     "place": 13,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Cozotidg",
+     "place": 14,
+     "note": "",
+     "also": []
+    }
+   ]
+  },
+  {
+   "id": "ssws17",
+   "cast": [
+    {
+     "pseudo": "Mickey",
+     "place": 1,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Blackshadow",
+     "place": 2,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Loukas",
+     "place": 3,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Thekinghelos",
+     "place": 4,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Alex19",
+     "place": 5,
+     "note": "",
+     "also": [
+      "Alex 19"
+     ]
+    },
+    {
+     "pseudo": "Attalo",
+     "place": 6,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Spiky",
+     "place": 7,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Clara",
+     "place": 8,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Milady",
+     "place": 9,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Blacklolo",
+     "place": 10,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Cassy",
+     "place": 11,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Giancarlos",
+     "place": 12,
+     "note": "",
+     "also": [
+      "Giancarlo"
+     ]
+    },
+    {
+     "pseudo": "Blaze",
+     "place": 13,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Alan",
+     "place": 14,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Thrawn",
+     "place": 15,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Thynael",
+     "place": 16,
+     "note": "",
+     "also": [
+      "Thynaël"
+     ]
+    },
+    {
+     "pseudo": "Moukalus",
+     "place": 17,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Cramptox",
+     "place": 18,
+     "note": "",
+     "also": []
+    }
+   ]
+  },
+  {
+   "id": "ssws18",
+   "cast": [
+    {
+     "pseudo": "Lisa",
+     "place": 1,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Spider",
+     "place": 2,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Farel",
+     "place": 3,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Draco",
+     "place": 4,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "AliceNoshii",
+     "place": 5,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Zykar",
+     "place": 6,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "LB",
+     "place": 7,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "ChoKoSenpai",
+     "place": 8,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "By",
+     "place": 9,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Jerem",
+     "place": 10,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Kchouuu",
+     "place": 11,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Kyu",
+     "place": 12,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Loserosee",
+     "place": 13,
+     "note": "",
+     "also": []
+    }
+   ]
+  },
+  {
+   "id": "ssws19",
+   "cast": [
+    {
+     "pseudo": "Albacore",
+     "place": 1,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Smith",
+     "place": 2,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Joachim",
+     "place": 3,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Amaury",
+     "place": 4,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Dabi",
+     "place": 5,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Tibonze",
+     "place": 6,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "MJK",
+     "place": 7,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "LaurentJ",
+     "place": 8,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Luxsmo",
+     "place": 9,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Luclyoko",
+     "place": 10,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Yosh",
+     "place": 11,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Eca",
+     "place": 12,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Nairod",
+     "place": 13,
+     "note": "",
+     "also": []
+    }
+   ]
+  },
+  {
+   "id": "ssws20",
+   "cast": [
+    {
+     "pseudo": "Alex19",
+     "place": 1,
+     "note": "",
+     "also": [
+      "Alex 19"
+     ]
+    },
+    {
+     "pseudo": "Cosmos",
+     "place": 2,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Tim",
+     "place": 3,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Even",
+     "place": 4,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Caraxès",
+     "place": 5,
+     "note": "",
+     "also": [
+      "Carasèx",
+      "Caraxes"
+     ]
+    },
+    {
+     "pseudo": "Megadron",
+     "place": 6,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Ener",
+     "place": 7,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Albacore",
+     "place": 8,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Doudou",
+     "place": 9,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Metacyde",
+     "place": 10,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Este",
+     "place": 11,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Dangica",
+     "place": 12,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Lisa",
+     "place": 13,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Clément",
+     "place": 14,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Mikrallium",
+     "place": 15,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Zykar",
+     "place": 16,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Manu",
+     "place": 17,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Vaath",
+     "place": 18,
+     "note": "",
+     "also": []
+    }
+   ]
+  },
+  {
+   "id": "ssws21",
+   "cast": [
+    {
+     "pseudo": "Nachou",
+     "place": 1,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Rizdeau",
+     "place": 2,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Neko",
+     "place": 3,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Kamiga",
+     "place": 4,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Buckybuck's",
+     "place": 5,
+     "note": "",
+     "also": [
+      "Buckybucks"
+     ]
+    },
+    {
+     "pseudo": "Nosten",
+     "place": 6,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Lawtank",
+     "place": 7,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Skearns",
+     "place": 8,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Nizoo",
+     "place": 9,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Akira",
+     "place": 10,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Samson",
+     "place": 11,
+     "note": "Éliminé avec Narek",
+     "also": []
+    },
+    {
+     "pseudo": "Narek",
+     "place": 11,
+     "note": "Éliminé avec Samson",
+     "also": []
+    },
+    {
+     "pseudo": "Emmop",
+     "place": 13,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Neilime",
+     "place": 14,
+     "note": "",
+     "also": []
+    }
+   ]
+  },
+  {
+   "id": "ssws22",
+   "cast": [
+    {
+     "pseudo": "Gab",
+     "place": 1,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Flifloux",
+     "place": 2,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Dusk",
+     "place": 3,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Kole",
+     "place": 4,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Juju'",
+     "place": 5,
+     "note": "",
+     "also": [
+      "Juju"
+     ]
+    },
+    {
+     "pseudo": "Racacax",
+     "place": 6,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Cha Pierce",
+     "place": 7,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Lerat",
+     "place": 8,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Mushu",
+     "place": 9,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Aksana",
+     "place": 10,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Doctor",
+     "place": 11,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "John Textor",
+     "place": 12,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Stylewuju",
+     "place": 13,
+     "note": "",
+     "also": [
+      "StyleWuju"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ssws23",
+   "cast": [
+    {
+     "pseudo": "Narek",
+     "place": 1,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Lyly",
+     "place": 2,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Choko",
+     "place": 3,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Cocolebau",
+     "place": 4,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Clara",
+     "place": 5,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Raph",
+     "place": 6,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Luclyoko",
+     "place": 7,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Spiky",
+     "place": 8,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Blondin",
+     "place": 9,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Aksana",
+     "place": 10,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Kchouuu",
+     "place": 11,
+     "note": "Éliminé avec Lykos",
+     "also": []
+    },
+    {
+     "pseudo": "Lykos",
+     "place": 11,
+     "note": "Éliminé avec Kchouuu",
+     "also": []
+    },
+    {
+     "pseudo": "Josephbg",
+     "place": 13,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Lulu.",
+     "place": 14,
+     "note": "",
+     "also": [
+      "Lulu"
+     ]
+    },
+    {
+     "pseudo": "Doctor",
+     "place": 15,
+     "note": "",
+     "also": []
+    }
+   ]
+  },
+  {
+   "id": "ssws24",
+   "cast": [
+    {
+     "pseudo": "Pragghan",
+     "place": 1,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Romani",
+     "place": 2,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Cramptox",
+     "place": 3,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Morgane",
+     "place": 4,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Hokai",
+     "place": 5,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Dopi",
+     "place": 6,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Pilou",
+     "place": 7,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Perseus",
+     "place": 8,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Lockshooter",
+     "place": 9,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Marilou",
+     "place": 10,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Xiao",
+     "place": 11,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Buffon",
+     "place": 12,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Josby",
+     "place": 13,
+     "note": "",
+     "also": []
+    }
+   ]
+  },
+  {
+   "id": "ssws25",
+   "cast": [
+    {
+     "pseudo": "TMH",
+     "place": 1,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Layte",
+     "place": 2,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Archoonier",
+     "place": 3,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Kiramisa",
+     "place": 4,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Amin",
+     "place": 5,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Loga",
+     "place": 6,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Josby",
+     "place": 7,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Giancarlos",
+     "place": 8,
+     "note": "",
+     "also": [
+      "Giancarlo"
+     ]
+    },
+    {
+     "pseudo": "Rubis",
+     "place": 9,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Aleix",
+     "place": 10,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Lockshooter",
+     "place": 11,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Silco",
+     "place": 12,
+     "note": "Éliminé avec Maryl",
+     "also": []
+    },
+    {
+     "pseudo": "Maryl",
+     "place": 12,
+     "note": "Éliminé avec Silco",
+     "also": []
+    },
+    {
+     "pseudo": "Nizoo",
+     "place": 14,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Kyoshu",
+     "place": 15,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Azur",
+     "place": 16,
+     "note": "",
+     "also": []
+    }
+   ]
+  },
+  {
+   "id": "ssws26",
+   "cast": [
+    {
+     "pseudo": "Xemm",
+     "place": 1,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Clara",
+     "place": 2,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Cosmos",
+     "place": 3,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Saamito",
+     "place": 4,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Alex19",
+     "place": 5,
+     "note": "",
+     "also": [
+      "Alex 19"
+     ]
+    },
+    {
+     "pseudo": "Romani",
+     "place": 6,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Even",
+     "place": 7,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Doudou",
+     "place": 8,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Raph",
+     "place": 9,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Lawtank",
+     "place": 10,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Loga",
+     "place": 11,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Scan",
+     "place": 12,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Zipodu",
+     "place": 13,
+     "note": "Éliminé avec Malkovan",
+     "also": []
+    },
+    {
+     "pseudo": "Malkovan",
+     "place": 13,
+     "note": "Éliminé avec Zipodu",
+     "also": []
+    },
+    {
+     "pseudo": "Tom Sawyer",
+     "place": 15,
+     "note": "",
+     "also": []
+    }
+   ]
+  },
+  {
+   "id": "ssws27",
+   "cast": [
+    {
+     "pseudo": "Charbel",
+     "place": 1,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Weer",
+     "place": 2,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Madebones",
+     "place": 3,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Globostofo",
+     "place": 4,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Sebastos",
+     "place": 5,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Ethan",
+     "place": 6,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Furina",
+     "place": 7,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Jenledger",
+     "place": 8,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Mistimat",
+     "place": 9,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Xanaxelita",
+     "place": 10,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Tiger",
+     "place": 11,
+     "note": "Éliminé avec Mael",
+     "also": []
+    },
+    {
+     "pseudo": "Mael",
+     "place": 11,
+     "note": "Éliminé avec Tiger",
+     "also": []
+    },
+    {
+     "pseudo": "Firedo",
+     "place": 13,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Koala",
+     "place": 14,
+     "note": "",
+     "also": []
+    }
+   ]
+  },
+  {
+   "id": "ssws28",
+   "cast": [
+    {
+     "pseudo": "Yoshi",
+     "place": 1,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Kiricou",
+     "place": 2,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Leyow",
+     "place": 3,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Byleth",
+     "place": 4,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Copidox",
+     "place": 5,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Zangeon",
+     "place": 6,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Akali",
+     "place": 7,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Killian",
+     "place": 8,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Elysa",
+     "place": 9,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Nath",
+     "place": 10,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Cliquegauche",
+     "place": 11,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Meyukiie",
+     "place": 12,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Darc Ciad",
+     "place": 13,
+     "note": "",
+     "also": []
+    }
+   ]
+  },
+  {
+   "id": "ssws29",
+   "cast": [
+    {
+     "pseudo": "Sosia",
+     "place": 1,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Le Loup",
+     "place": 2,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Lenac",
+     "place": 3,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "StyleWuju",
+     "place": 4,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Kyoshu",
+     "place": 5,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Yoso",
+     "place": 6,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Koala",
+     "place": 7,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Darc Ciad",
+     "place": 8,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Nairod",
+     "place": 9,
+     "note": "Éliminé avec Neiki",
+     "also": []
+    },
+    {
+     "pseudo": "Neiki",
+     "place": 9,
+     "note": "Éliminé avec Nairod",
+     "also": []
+    },
+    {
+     "pseudo": "Firedo",
+     "place": 11,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Neilime",
+     "place": 12,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Sakae",
+     "place": 13,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Mikrallium",
+     "place": 14,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Malkovan",
+     "place": 15,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Josby",
+     "place": 16,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Eca",
+     "place": 17,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Azur",
+     "place": 18,
+     "note": "",
+     "also": []
+    }
+   ]
+  },
+  {
+   "id": "ssws30",
+   "cast": [
+    {
+     "pseudo": "Caraxès",
+     "place": 1,
+     "note": "",
+     "also": [
+      "Carasèx",
+      "Caraxes"
+     ]
+    },
+    {
+     "pseudo": "Blueye",
+     "place": 2,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Narek",
+     "place": 3,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Ringa",
+     "place": 4,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Chat Malin",
+     "place": 5,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Este",
+     "place": 6,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Mrbarbecue",
+     "place": 7,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Sosia",
+     "place": 8,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Milady",
+     "place": 9,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Charbel",
+     "place": 10,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "TMH",
+     "place": 11,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Chapix",
+     "place": 12,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Alex19",
+     "place": 13,
+     "note": "",
+     "also": [
+      "Alex 19"
+     ]
+    },
+    {
+     "pseudo": "Yoshi",
+     "place": 14,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Pragghan",
+     "place": 15,
+     "note": "",
+     "also": []
+    },
+    {
+     "pseudo": "Gab",
+     "place": 16,
+     "note": "",
+     "also": []
+    }
+   ]
+  }
+ ]
+}
