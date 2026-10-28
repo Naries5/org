@@ -465,6 +465,41 @@ select[size]{padding:4px}
 .pstats>span{padding:9px 12px;border-bottom:1px solid var(--line);font-size:.92rem}
 .pstats .ph{font-family:var(--font-cond);text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:var(--accent);text-align:center;background:rgba(255,255,255,.04)}
 .pstats .pl{font-weight:700;color:var(--muted)}.pstats .pv{text-align:center;font-variant-numeric:tabular-nums}.pstats .pv.g{font-weight:800;color:var(--ink)}
+.hx{position:relative;text-align:center;padding:46px 10px 20px;display:flex;flex-direction:column;align-items:center;gap:14px}
+.hx-glow{position:absolute;inset:-40px 0 auto;height:340px;z-index:-1;background:radial-gradient(40% 60% at 30% 40%,color-mix(in srgb,var(--t2) 30%,transparent),transparent),radial-gradient(40% 60% at 70% 40%,color-mix(in srgb,var(--t1) 30%,transparent),transparent);filter:blur(20px);animation:hxg 9s ease-in-out infinite alternate}
+@keyframes hxg{to{transform:translateX(30px) scale(1.05)}}
+.hx-t{font-size:clamp(2.8rem,10vw,7rem);white-space:nowrap;transform:rotate(-2deg);margin:0;background:linear-gradient(180deg,#fff2c9,var(--t1) 55%,color-mix(in srgb,var(--t1) 60%,var(--t2)));-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 5px 0 rgba(0,0,0,.45))}
+.hx .lede{color:var(--muted);font-size:1.1rem;max-width:44ch;margin:0}.hx .hero-search{width:min(560px,100%)}
+.hx-counts{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:6px}
+.hx-counts div{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:14px;padding:8px 16px;display:flex;flex-direction:column;min-width:96px}
+.hx-counts b{font-family:var(--font-display);font-size:1.5rem;color:var(--t1);line-height:1.1}.hx-counts span{font-family:var(--font-cond);text-transform:uppercase;letter-spacing:.06em;font-size:.75rem;color:var(--muted)}
+.air{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:18px}.air:has(> :only-child){grid-template-columns:1fr}
+.spot{min-height:260px;transform:none}.spot:hover{transform:translateY(-4px)}.spot .og-bg{inset:0}
+.spot-in{position:relative;display:flex;gap:22px;align-items:center;padding:24px;flex:1}
+.spot-logo .logo{width:170px;height:170px;border-radius:26px;object-fit:cover;border:3px solid var(--c1);box-shadow:0 10px 30px rgba(0,0,0,.5),0 0 40px color-mix(in srgb,var(--c1) 35%,transparent);font-size:2.5rem;background:#1d1016}
+.spot-txt{display:flex;flex-direction:column;gap:8px;align-items:flex-start;min-width:0}.spot-txt h3{font-family:var(--font-display);font-size:clamp(1.5rem,3vw,2.3rem);line-height:1.05;margin:0;color:var(--c1);text-transform:uppercase}
+.spot-org{margin:0;font-family:var(--font-cond);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-size:.85rem}.spot-info{margin:0;color:var(--ink)}
+.air-list{display:flex;flex-direction:column;gap:10px}
+.air-i{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--line);text-decoration:none;color:var(--ink);transition:background .15s,transform .15s}
+.air-i:hover{background:rgba(255,255,255,.08);transform:translateX(3px)}.air-i .logo{width:52px;height:52px;border-radius:12px;object-fit:cover;flex:none}
+.air-i>span{display:flex;flex-direction:column;min-width:0;flex:1}.air-i small{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.crowns{display:grid;grid-auto-flow:column;grid-auto-columns:150px;gap:16px;overflow-x:auto;padding:6px 2px 14px;scroll-snap-type:x mandatory}
+.crown{scroll-snap-align:start;display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;text-decoration:none;color:var(--ink)}
+.crown-pic{position:relative;width:130px;height:130px;border-radius:50%;padding:4px;background:conic-gradient(from 210deg,#FFC23D,#fff3c4,#E8A317,#FFC23D);box-shadow:0 8px 24px rgba(0,0,0,.45);transition:transform .2s}
+.crown:hover .crown-pic{transform:translateY(-4px) rotate(-3deg)}
+.crown-pic>img,.crown-pic>i{width:100%;height:100%;border-radius:50%;object-fit:cover;display:grid;place-items:center;background:#24131b;font-style:normal;font-family:var(--font-display);font-size:2rem;color:var(--t1)}
+.crown-pic::before{content:"👑";position:absolute;top:-16px;left:50%;transform:translateX(-50%) rotate(-8deg);font-size:1.5rem;filter:drop-shadow(0 2px 2px rgba(0,0,0,.5))}
+.crown-badge{position:absolute;right:-2px;bottom:-2px}.crown-badge .logo{width:42px;height:42px;border-radius:10px;border:2px solid #FFC23D;object-fit:cover;background:#1d1016;font-size:.7rem}
+.crown b{font-family:var(--font-display);font-size:1.05rem;margin-top:6px}.crown small{color:var(--muted);font-size:.78rem;line-height:1.2}.crown .crown-t{font-style:italic}
+.pod{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;padding:20px;border-radius:20px;border:1px solid var(--line);background:linear-gradient(135deg,rgba(255,255,255,.06),rgba(255,255,255,.02));text-decoration:none;color:var(--ink)}
+.pod:hover{border-color:var(--t1)}.pod-l{display:flex;gap:16px;align-items:center;min-width:0;flex:1}.pod-l .logo{width:96px;height:96px;border-radius:18px;object-fit:cover;flex:none}
+.pod-l h3{font-family:var(--font-display);font-size:1.6rem;margin:2px 0;color:var(--t1);text-transform:uppercase}.pod-l p{margin:0}
+.pod-r{display:flex;align-items:flex-end;gap:10px}.pod-p{display:flex;flex-direction:column;align-items:center;gap:4px;width:96px;text-align:center}
+.pod-p b{font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.pod-step{width:100%;display:grid;place-items:center;font-family:var(--font-display);font-size:1.4rem;border-radius:10px 10px 0 0;color:#1a0b12}
+.p1 .pod-step{height:74px;background:linear-gradient(#FFE38A,#FFC23D)}.p2 .pod-step{height:52px;background:linear-gradient(#f1f1f1,#b9b9c4)}.p3 .pod-step{height:38px;background:linear-gradient(#f0b27a,#c27c3e)}
+@media (max-width:760px){.air{grid-template-columns:1fr}.spot-in{flex-direction:column;text-align:center}.spot-txt{align-items:center}.spot-logo .logo{width:130px;height:130px}}
+@media (prefers-reduced-motion:reduce){.hx-glow{animation:none}}
 .me-link{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--ink);font-weight:700;text-transform:none;letter-spacing:0;padding:3px 10px 3px 3px;border-radius:999px;background:rgba(255,255,255,.07)}
 .badge{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--live);color:#fff;font-size:.72rem;font-weight:800;margin-left:4px}
 .social{display:grid;grid-template-columns:320px minmax(0,1fr);gap:24px;align-items:start}
@@ -844,21 +879,45 @@ function pageHome(){
   const ins=S.seasons.filter(s=>s.status==="inscriptions").sort(byRecent);
   const ann=S.seasons.filter(s=>s.status==="annoncee").sort(byRecent);
   const done=S.seasons.filter(s=>s.status==="terminee").sort(byRecent);
-  const news=[...S.news].sort(byDateDesc).slice(0,4);
-  let h=`<section class="mast"><div class="mast-l"><p class="eyebrow">Wiki communautaire · ORGs &amp; speeds FR</p><h1>ORG-Central</h1><p class="lede">Résultats, castings, tableaux des votes et awards, saison par saison.</p></div>
-  <div class="mast-r"><div class="hero-search"><input id="hsearch" type="search" placeholder="Chercher un joueur, une ORG, une saison" autocomplete="off" aria-label="Rechercher"><div class="gres" hidden></div></div>
-  <p class="counts"><b>${S.orgs.length}</b> ORG${S.orgs.length>1?"s":""} · <b>${S.seasons.length}</b> saisons · <b>${S.players.length}</b> joueurs</p></div></section>`;
-  if(!S.orgs.length){
-    h+=`<div class="empty"><h2>Le wiki est vide</h2>${edit(`<button class="btn primary" data-act="new-org">+ Créer une ORG</button>`)}</div>`;return h;
+  const news=[...S.news].sort(byDateDesc).slice(0,3);
+  const castN=S.seasons.reduce((n,s)=>n+(s.cast||[]).length,0);
+  const counts=[[S.orgs.length,"ORGs"],[S.seasons.length,"saisons"],[S.players.length,"joueurs"],[castN,"participations"]];
+  let h=`<section class="hx"><div class="hx-glow"></div><p class="eyebrow">Wiki communautaire · ORGs &amp; speeds FR</p><h1 class="hx-t">ORG-Central</h1>
+  <p class="lede">Résultats, castings, tableaux des votes et awards, saison par saison.</p>
+  <div class="hero-search"><input id="hsearch" type="search" placeholder="Chercher un joueur, une ORG, une saison" autocomplete="off" aria-label="Rechercher"><div class="gres" hidden></div></div>
+  <div class="hx-counts">${counts.map(([n,l])=>`<div><b>${n.toLocaleString("fr-FR")}</b><span>${l}</span></div>`).join("")}</div></section>`;
+  if(!S.orgs.length){h+=`<div class="empty"><h2>Le wiki est vide</h2>${edit(`<button class="btn primary" data-act="new-org">+ Créer une ORG</button>`)}</div>`;return h;}
+  const onair=[...live,...ins,...ann];
+  if(onair.length){
+    const top=onair[0];const rest=onair.slice(1);
+    h+=`<section class="block"><div class="block-head"><h2 class="og-h on" style="margin:0"><span>À l'antenne</span></h2><span class="count">${onair.length}</span></div>
+    <div class="air">${spotlight(top)}${rest.length?`<div class="air-list">${rest.map(airItem).join("")}</div>`:""}</div></section>`;
   }
-  const sec=(t,list,showOrg,more)=>list.length?`<section class="block"><div class="block-head"><h2>${t}</h2><span class="count">${list.length}</span>${more||""}</div><div class="stiles">${list.map(s=>seasonTile(s,showOrg)).join("")}</div></section>`:"";
-  h+=sec("En cours",live,true);
-  h+=sec("Inscriptions ouvertes",ins,true);
-  h+=sec("Annoncées",ann,true);
-  h+=sec("Dernières saisons terminées",done.slice(0,6),true,`<span class="actions"><a class="btn sm ghost" href="#saisons">Toutes les saisons</a></span>`);
-  h+=`<section class="block"><div class="block-head"><h2>ORGs</h2><span class="count">${S.orgs.length}</span><span class="actions"><a class="btn sm ghost" href="#orgs">Toutes les ORGs</a></span></div><div class="grid">${[...S.orgs].sort(byOrgActivity).slice(0,6).map(orgCard).join("")}</div></section>`;
+  const crowns=done.filter(s=>winnerOf(s)).slice(0,10);
+  if(crowns.length)h+=`<section class="block"><div class="block-head"><h2>Derniers sacres</h2><span class="actions"><a class="btn sm ghost" href="#saisons">Toutes les saisons</a></span></div><div class="crowns">${crowns.map(crownCard).join("")}</div></section>`;
+  h+=`<section class="block"><div class="block-head"><h2>ORGs</h2><span class="count">${S.orgs.length}</span><span class="actions"><a class="btn sm ghost" href="#orgs">Toutes les ORGs</a></span></div><div class="og-grid">${[...S.orgs].sort(byOrgActivity).slice(0,8).map(orgPoster).join("")}</div></section>`;
+  const pick=pickOfDay();
+  if(pick)h+=`<section class="block"><div class="block-head"><h2>Saison du jour</h2></div>${pick}</section>`;
   if(news.length||S.canEdit)h+=`<section class="block"><div class="block-head"><h2>Annonces</h2><span class="actions"><a class="btn sm ghost" href="#annonces">Tout voir</a>${edit(`<button class="btn sm" data-act="new-news">+ Annonce</button>`)}</span></div>${news.length?`<div class="news-list">${news.map(n=>newsHtml(n,true)).join("")}</div>`:`<p class="muted">Aucune annonce pour l'instant.</p>`}</section>`;
+  setTimeout(paintOrgPosters,0);
   return h;
+}
+function sLogoUrl(s){const o=org(s.orgId)||{};return imgSrc(s.logo||o.logo);}
+function spotlight(s){
+  const o=org(s.orgId)||{};const u=sLogoUrl(s);const n=(s.cast||[]).length;
+  const info=s.status==="en_cours"?`${n?`<b>${n}</b> joueurs en jeu`:""}`:s.status==="inscriptions"?`Candidatures ouvertes${s.slots?` · <b>${esc(s.slots)}</b> places`:""}`:`${s.start?`Début le <b>${fmtDate(s.start)}</b>`:"Bientôt"}${s.slots?` · ${esc(s.slots)} places`:""}`;
+  return `<a class="spot og" href="#saison-${esc(s.id)}"${u?` data-paint="${esc(u)}"`:""}><div class="og-bg"${u?` style="background-image:url('${esc(u)}')"`:""}></div>
+  <div class="spot-in"><div class="spot-logo">${pic(s.logo||o.logo,o.tag||o.name,"logo")}</div><div class="spot-txt">${chip(s.status)}<p class="spot-org">${esc(o.name||"")} · ${esc(seasonShort(s))}</p><h3>${esc(s.title||seasonShort(s))}</h3><p class="spot-info">${info}</p>${s.status==="inscriptions"?`<span class="btn primary sm">Candidater →</span>`:`<span class="btn sm">Voir la saison →</span>`}</div></div></a>`;
+}
+function airItem(s){const o=org(s.orgId)||{};return `<a class="air-i" href="#saison-${esc(s.id)}">${pic(s.logo||o.logo,o.tag||o.name,"logo")}<span><b>${esc(o.name||"")} · ${esc(seasonShort(s))}</b><small>${esc(s.title||"")}</small></span>${chip(s.status)}</a>`;}
+function crownCard(s){const o=org(s.orgId)||{};const w=winnerOf(s);const u=imgSrc(sAvatar(s,w));
+  return `<a class="crown" href="#saison-${esc(s.id)}"><span class="crown-pic">${u?`<img src="${esc(u)}" alt="" loading="lazy">`:`<i>${esc(initials(sName(s,w)))}</i>`}<span class="crown-badge">${pic(s.logo||o.logo,o.tag||o.name,"logo")}</span></span><b>${esc(sName(s,w))}</b><small>${esc(o.name||"")} · ${esc(seasonShort(s))}</small>${s.title?`<small class="crown-t">${esc(s.title)}</small>`:""}</a>`;}
+function pickOfDay(){
+  const pool=S.seasons.filter(s=>s.status==="terminee"&&(s.cast||[]).length&&winnerOf(s));if(!pool.length)return "";
+  const d=new Date();const k=d.getFullYear()*400+d.getMonth()*31+d.getDate();const s=pool[(k*2654435761>>>0)%pool.length];
+  const o=org(s.orgId)||{};const cast=sortedCast(s);const pod=cast.filter(c=>Number(c.place)&&Number(c.place)<=3).slice(0,3);const aw=(s.awards||[]).length,rd=(s.rounds||[]).length;
+  return `<a class="pod" href="#saison-${esc(s.id)}"><div class="pod-l">${pic(s.logo||o.logo,o.tag||o.name,"logo")}<div><p class="spot-org">${esc(o.name||"")} · ${esc(seasonShort(s))}</p><h3>${esc(s.title||seasonShort(s))}</h3><p class="muted">${cast.length} joueurs${rd?` · ${rd} tours de votes`:""}${aw?` · ${aw} awards`:""}${dateRange(s)?` · ${dateRange(s)}`:""}</p></div></div>
+  <div class="pod-r">${[1,0,2].map(i=>pod[i]).filter(Boolean).map(c=>`<div class="pod-p p${c.place}">${sAva(s,c.playerId,"md")}<b>${esc(sName(s,c.playerId))}</b><span class="pod-step">${c.place}</span></div>`).join("")}</div></a>`;
 }
 
 function filtered(list,q,key){q=q.trim().toLowerCase();return q?list.filter(x=>String(x[key]||"").toLowerCase().includes(q)||String(x.tag||"").toLowerCase().includes(q)):list;}
