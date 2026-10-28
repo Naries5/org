@@ -432,6 +432,11 @@ select[size]{padding:4px}
 .claim-mini:hover{filter:brightness(1.1)}.claim-mini.sent{background:rgba(255,255,255,.12);color:var(--ink);cursor:default}.claim-mini.mine{background:var(--ok);color:#111;cursor:default}
 .claim-banner{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:0 0 16px;padding:14px 18px;border-radius:14px;background:rgba(245,197,24,.1);border:1px solid rgba(245,197,24,.35)}
 .claim-banner p{margin:4px 0 0;color:var(--muted,#bbb)}.claim-banner a{color:inherit}
+.creal{display:block;font-size:.72rem;opacity:.7;text-transform:none;letter-spacing:0;font-weight:500}
+.as-season{display:flex;align-items:center;gap:6px;margin-top:4px;font-size:.82rem;color:var(--muted,#bbb)}
+.sllist{display:grid;gap:10px}.slrow{display:flex;gap:14px;align-items:center;padding:10px;border-radius:12px;background:rgba(255,255,255,.04)}
+.slrow .imgpick{padding:4px;flex:none;cursor:pointer}.slmain{flex:1;min-width:0;display:grid;gap:6px}.slwho{display:flex;gap:6px;align-items:center}
+.slmain input[name]{width:100%}.slbtns{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.slbtns input[type=file]{max-width:100%;font-size:.8rem}
 .me-link{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--ink);font-weight:700;text-transform:none;letter-spacing:0;padding:3px 10px 3px 3px;border-radius:999px;background:rgba(255,255,255,.07)}
 .badge{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--live);color:#fff;font-size:.72rem;font-weight:800;margin-left:4px}
 .social{display:grid;grid-template-columns:320px minmax(0,1fr);gap:24px;align-items:start}
@@ -783,6 +788,11 @@ function infobox(img,title,rows,picAct,picId,canPic){
   return `<aside class="infobox"><div class="ib-title">${esc(title)}</div>${im}<dl>${rows.filter(r=>r&&r[1]!==""&&r[1]!=null).map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl></aside>`;
 }
 function bigImg(v,label){const u=imgSrc(v);return u?`<img src="${esc(u)}" alt="">`:`<span class="ib-ph">${esc(initials(label))}</span>`;}
+function castEntry(s,id){return s&&(s.cast||[]).find(c=>c.playerId===id)||null;}
+function sName(s,id){const c=castEntry(s,id);return c&&c.sPseudo?c.sPseudo:pName(id);}
+function sAvatar(s,id){const c=castEntry(s,id);const p=player(id);return (c&&c.sAvatar)||(p&&p.avatar)||"";}
+function sAva(s,id,size){return pic(sAvatar(s,id),sName(s,id),"avatar "+size);}
+function splink(s,id){return id?`<a href="#joueur-${esc(id)}">${esc(sName(s,id))}</a>`:"";}
 function plink(id){return id?`<a href="#joueur-${esc(id)}">${esc(pName(id))}</a>`:"";}
 function orgStats(orgId){
   const m={};const g=id=>m[id]||(m[id]={id,part:0,wins:0,top3:0,awards:0,best:null});
@@ -892,12 +902,12 @@ function pageSeason(id){
   const o=org(s.orgId)||{name:"ORG inconnue"};
   const cast=sortedCast(s);const signup=safeUrl(s.signup);const awards=s.awards||[];
   const hasVotes=(s.rounds||[]).length>0;
-  const by=n=>cast.filter(c=>Number(c.place)===n).map(c=>plink(c.playerId)).join(", ");
-  const ranking=cast.length?`<div class="classement">${cast.map((c,i)=>{const p=player(c.playerId);const pl=Number(c.place);const u=imgSrc(p&&p.avatar);
+  const by=n=>cast.filter(c=>Number(c.place)===n).map(c=>splink(s,c.playerId)).join(", ");
+  const ranking=cast.length?`<div class="classement">${cast.map((c,i)=>{const pl=Number(c.place);const u=imgSrc(sAvatar(s,c.playerId));const real=c.sPseudo?pName(c.playerId):"";
     const tms=[teamById(s,c.team),teamById(s,c.team2),teamById(s,c.team3)].filter((t,j,arr)=>t&&arr.indexOf(t)===j);
     const sub=[tms.map(t=>`<span class="tdot" style="--tc:${esc(t.color)}">${esc(t.name)}</span>`).join(""),c.note?`<span>${esc(c.note)}</span>`:"",hasVotes&&pl!==1?`<span>${votesAgainst(c.playerId,s)} vote${votesAgainst(c.playerId,s)>1?"s":""}</span>`:""].filter(Boolean).join("");
     const rot=(((i*37)%5)-2)*0.7;
-    return `<a class="ccard${pl&&pl<=3?" p"+pl:""}${pl?"":" dq"}" style="--rot:${rot}deg" href="#joueur-${esc(c.playerId)}"><span class="cpic">${u?`<img src="${esc(u)}" alt="" loading="lazy">`:esc(initials(pName(c.playerId)))}</span><span class="cnum">${pl?String(pl).padStart(2,"0"):"DQ"}</span><span class="cname">${esc(pName(c.playerId))}</span>${sub?`<span class="csub">${sub}</span>`:""}</a>`;}).join("")}</div>`:`<p class="muted">Le casting n'a pas encore été renseigné.</p>`;
+    return `<a class="ccard${pl&&pl<=3?" p"+pl:""}${pl?"":" dq"}" style="--rot:${rot}deg" href="#joueur-${esc(c.playerId)}"><span class="cpic">${u?`<img src="${esc(u)}" alt="" loading="lazy">`:esc(initials(sName(s,c.playerId)))}</span><span class="cnum">${pl?String(pl).padStart(2,"0"):"DQ"}</span><span class="cname">${esc(sName(s,c.playerId))}</span>${real&&real!==c.sPseudo?`<span class="creal">${esc(real)}</span>`:""}${sub?`<span class="csub">${sub}</span>`:""}</a>`;}).join("")}</div>`:`<p class="muted">Le casting n'a pas encore été renseigné.</p>`;
   const sib=seasonsOf(s.orgId);const ix=sib.indexOf(s);const prv=sib[ix-1],nxt=sib[ix+1];
   const box=infobox(bigImg(s.logo||o.logo,o.name),fullSeasonName(s),[
     ["ORG",o.id?`<a href="#org-${esc(o.id)}">${esc(o.name)}</a>`:esc(o.name)],["Saison",esc(seasonShort(s))],["Thème",esc(s.title||"")],
@@ -908,9 +918,9 @@ function pageSeason(id){
   <div class="wiki"><div class="wiki-main">
   ${s.description?`<p class="desc">${esc(s.description)}</p>`:""}
   ${s.status==="inscriptions"&&signup?`<a class="btn cta" href="${esc(signup)}" target="_blank" rel="noopener">Lien d'inscription externe ↗</a>`:""}${signupBlock(s)}
-  <section class="block"><div class="block-head"><h2>Classement</h2><span class="count">${cast.length}</span>${edit(`<span class="actions"><button class="btn sm" data-act="cast" data-id="${esc(s.id)}">Modifier le casting</button></span>`)}</div>${ranking}</section>
+  <section class="block"><div class="block-head"><h2>Classement</h2><span class="count">${cast.length}</span>${edit(`<span class="actions"><button class="btn sm" data-act="cast" data-id="${esc(s.id)}">Modifier le casting</button>${cast.length?`<button class="btn sm" data-act="slooks" data-id="${esc(s.id)}">Pseudos & photos de saison</button>`:""}</span>`)}</div>${ranking}</section>
   <section class="block"><div class="block-head"><h2>Awards</h2><span class="count">${awards.length}</span>${edit(`<span class="actions"><button class="btn sm" data-act="awards" data-id="${esc(s.id)}">${awards.length?"Modifier les awards":"Ajouter des awards"}</button></span>`)}</div>
-  ${awards.length?`<div class="table-wrap"><table class="aw"><tbody>${awards.map(a=>`<tr class="link" data-href="#joueur-${esc(a.playerId)}"><th>${esc(a.name)}</th><td><a class="who" href="#joueur-${esc(a.playerId)}">${ava(player(a.playerId),"xs")}${esc(pName(a.playerId))}</a></td></tr>`).join("")}</tbody></table></div>`:`<p class="muted">Aucun award renseigné.</p>`}</section>
+  ${awards.length?`<div class="table-wrap"><table class="aw"><tbody>${awards.map(a=>`<tr class="link" data-href="#joueur-${esc(a.playerId)}"><th>${esc(a.name)}</th><td><a class="who" href="#joueur-${esc(a.playerId)}">${sAva(s,a.playerId,"xs")}${esc(sName(s,a.playerId))}</a></td></tr>`).join("")}</tbody></table></div>`:`<p class="muted">Aucun award renseigné.</p>`}</section>
   </div>${box}</div>
   <section class="block"><div class="block-head"><h2>Tableau des votes</h2>${edit(`<span class="actions"><button class="btn sm" data-act="votes" data-id="${esc(s.id)}">${hasVotes?"Modifier les votes":"Renseigner les votes"}</button></span>`)}</div>${votesTable(s)}</section>`;
 }
@@ -930,7 +940,7 @@ function votesTable(s){
     const has3=cast.some(x=>x.team3),has2=cast.some(x=>x.team2);
     const sw=t=>`<i style="background:${esc(t?t.color:"var(--out)")}"></i>`;
     const stripes=teams.length?`<span class="tstripes" aria-hidden="true">${sw(teamById(s,c.team))}${has2?sw(teamById(s,c.team2)):""}${has3?sw(teamById(s,c.team3)):""}</span>`:"";
-    return `<tr><th><span class="who">${stripes}<a href="#joueur-${esc(c.playerId)}">${esc(pName(c.playerId))}</a></span></th>${rounds.map((r,i)=>{
+    return `<tr><th><span class="who">${stripes}<a href="#joueur-${esc(c.playerId)}">${esc(sName(s,c.playerId))}</a></span></th>${rounds.map((r,i)=>{
       const raw=(r.votes||{})[c.playerId];const txt=cellText(raw);
       const e=elimAt[c.playerId];if(!txt)return (e!==undefined&&i>e)?`<td class="out" aria-label="Éliminé·e"></td>`:"<td></td>";
       const tm=teamFor(s,c,r.phase==null?1:r.phase);const el=elimIds(s,r);
@@ -955,7 +965,7 @@ function pagePlayer(id){
   const wins=places.filter(x=>x===1).length, top3=places.filter(x=>x<=3).length, best=places.length?Math.min(...places):null;
   const aw=awardsOf(p.id);const totalVotes=h.reduce((n,x)=>n+votesAgainst(p.id,x.s),0);
   const orgsPlayed=[...new Set(h.map(x=>x.s.orgId))].map(org).filter(Boolean);
-  const rows=h.map(({s,c})=>{const o=org(s.orgId)||{};const sa=(s.awards||[]).filter(a=>a.playerId===p.id);const hv=(s.rounds||[]).length>0;return `<tr class="link${Number(c.place)===1?" win":""}" data-href="#saison-${esc(s.id)}"><td><span class="who">${slogo(s,"xs")}${esc(o.name||"ORG inconnue")} ${esc(seasonShort(s))}</span></td><td><a href="#saison-${esc(s.id)}">${esc(s.title||"")}</a></td><td class="place">${placeLabel(c.place)}${c.note?` <span class="note">· ${esc(c.note)}</span>`:""}</td><td class="num">${hv?votesAgainst(p.id,s):'<span class="muted">—</span>'}</td><td>${sa.map(a=>`<span class="tag tag-award">${esc(a.name)}</span>`).join(" ")}</td></tr>`;}).join("");
+  const rows=h.map(({s,c})=>{const o=org(s.orgId)||{};const sa=(s.awards||[]).filter(a=>a.playerId===p.id);const hv=(s.rounds||[]).length>0;return `<tr class="link${Number(c.place)===1?" win":""}" data-href="#saison-${esc(s.id)}"><td><span class="who">${slogo(s,"xs")}${esc(o.name||"ORG inconnue")} ${esc(seasonShort(s))}</span></td><td><a href="#saison-${esc(s.id)}">${esc(s.title||"")}</a>${c.sPseudo||c.sAvatar?`<span class="as-season">${c.sAvatar?pic(c.sAvatar,c.sPseudo||p.pseudo,"avatar xs"):""}${c.sPseudo?`sous le nom <b>${esc(c.sPseudo)}</b>`:"look de saison"}</span>`:""}</td><td class="place">${placeLabel(c.place)}${c.note?` <span class="note">· ${esc(c.note)}</span>`:""}</td><td class="num">${hv?votesAgainst(p.id,s):'<span class="muted">—</span>'}</td><td>${sa.map(a=>`<span class="tag tag-award">${esc(a.name)}</span>`).join(" ")}</td></tr>`;}).join("");
   const box=infobox(bigImg(p.avatar,p.pseudo),p.pseudo,[["Pronoms",esc(pronounsOf(p))],["Discord",esc(p.discord||"")],["ORGs",orgsPlayed.map(o=>`<a href="#org-${esc(o.id)}">${esc(o.name)}</a>`).join(", ")],["Participations",String(h.length)],["Victoires",String(wins)],["Top 3",String(top3)],["Meilleur",best?placeLabel(best):""],["Votes reçus",String(totalVotes)],["Awards",String(aw.length)]],"pic-player",p.id,!!(S.me&&p.ownerUid===S.me));
   return `<div class="crumbs"><a href="#joueurs">Joueurs</a><span>/</span><span>${esc(p.pseudo)}</span></div>
   <div class="page-head"><div>${p.precision?`<p class="eyebrow">${esc(p.precision)}</p>`:""}<h1>${esc(p.pseudo)}</h1>${pronounsOf(p)?`<p class="pronouns">${esc(pronounsOf(p))}</p>`:""}${p.ownerUid&&p.ownerUid===S.me?`<p class="claimed">C'est ton profil</p>`:""}${aliasesOf(p).length?`<p class="muted" style="margin-top:8px">Aussi connu sous : ${aliasesOf(p).map(esc).join(", ")}</p>`:""}</div>${playerActions(p)}</div>
@@ -1162,6 +1172,22 @@ function newsForm(n,orgId){
 }
 
 const TEAM_COLORS=["#E8722C","#4CAF50","#3EC6E0","#C77DBA","#E5B532","#5B7FE0","#D9534F","#8D6E63"];
+function seasonLooksEditor(s){
+  if(!s)return;const cast=sortedCast(s);
+  const rows=cast.map((c,i)=>{const p=player(c.playerId)||{};const n="sl"+i;const cls="avatar lg";
+    return `<div class="slrow"><div class="imgpick drop" data-drop="${n}" tabindex="-1" title="Clique ici puis Ctrl+V pour coller"><span data-prev="${n}">${pic(c.sAvatar||"","+",cls)}</span></div>
+    <div class="slmain"><div class="slwho">${ava(p,"xs")}<b>${esc(p.pseudo||"Joueur supprimé")}</b>${c.sAvatar?"":`<span class="muted">· photo normale</span>`}</div>
+    <input name="sp_${i}" maxlength="40" value="${esc(c.sPseudo||"")}" placeholder="Pseudo pendant la saison (vide = pseudo normal)" aria-label="Pseudo de saison de ${esc(p.pseudo||"")}">
+    <div class="slbtns"><input type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-img="${n}" data-cls="${cls}" aria-label="Photo de saison de ${esc(p.pseudo||"")}"><button type="button" class="btn sm ghost" data-clearimg="${n}">Photo normale</button></div></div></div>`;}).join("");
+  openModal({title:"Pseudos & photos de saison",wide:true,body:`<p class="muted" style="margin-top:0">Pour cette saison uniquement : le classement, les awards et le tableau des votes afficheront ce pseudo et cette photo. Le profil du joueur garde les siens. Astuce : clique sur une case photo puis Ctrl+V pour coller une image.</p><div class="sllist">${rows}</div>`,
+    onSave:async f=>{
+      const v=vals(f);const cur=season(s.id)||s;const byId={};
+      for(let i=0;i<cast.length;i++){const c=cast[i];byId[c.playerId]={sPseudo:(v["sp_"+i]||"").trim(),sAvatar:await resolveImage(f,"sl"+i,c.sAvatar)};}
+      const nc=(cur.cast||[]).map(c=>{const l=byId[c.playerId];if(!l)return c;const x=Object.assign({},c,l);if(!x.sPseudo)delete x.sPseudo;if(!x.sAvatar)delete x.sAvatar;return x;});
+      await db.doc("seasons/"+s.id).update({cast:nc,updatedAt:nowIso()});
+      toast("Pseudos et photos de saison enregistrés");
+    }});
+}
 function castEditor(s){
   if(!s)return;
   const teams=(s.teams||[]).map(t=>({id:t.id,name:t.name||"",color:t.color||"#888888"}));
@@ -1209,7 +1235,8 @@ function castEditor(s){
     },
     onSave:async()=>{
       const seen=new Set();
-      const cast=draft.filter(c=>c.playerId&&!seen.has(c.playerId)&&seen.add(c.playerId)).map(c=>({playerId:c.playerId,place:c.place===""?null:Number(c.place),note:String(c.note||"").trim(),team:c.team||"",team2:c.team2||"",team3:c.team3||""}));
+      const prevLook={};(season(s.id)||s).cast&&(season(s.id)||s).cast.forEach(c=>{if(c.sPseudo||c.sAvatar)prevLook[c.playerId]={sPseudo:c.sPseudo||"",sAvatar:c.sAvatar||""};});
+      const cast=draft.filter(c=>c.playerId&&!seen.has(c.playerId)&&seen.add(c.playerId)).map(c=>Object.assign({playerId:c.playerId,place:c.place===""?null:Number(c.place),note:String(c.note||"").trim(),team:c.team||"",team2:c.team2||"",team3:c.team3||""},prevLook[c.playerId]||{}));
       const tms=teams.map(t=>({id:t.id,name:t.name.trim()||"Équipe",color:t.color}));
       await db.doc("seasons/"+s.id).update({cast,teams:tms,updatedAt:nowIso()});
       toast("Casting enregistré");
@@ -1625,7 +1652,7 @@ document.addEventListener("click",e=>{
   const A={
     "new-org":()=>orgForm(),"pic-org":()=>picForm("org",org(id)),"pic-player":()=>picForm("player",player(id)),"pic-season":()=>picForm("season",season(id)),"edit-org":()=>orgForm(org(id)),"del-org":()=>delOrg(id),
     "new-season":()=>seasonForm(null,b.dataset.org),"edit-season":()=>seasonForm(season(id)),"del-season":()=>delSeason(id),
-    "cast":()=>castEditor(season(id)),"awards":()=>awardsEditor(season(id)),
+    "cast":()=>castEditor(season(id)),"slooks":()=>seasonLooksEditor(season(id)),"awards":()=>awardsEditor(season(id)),
     "filter":()=>{S.f[b.dataset.k]=b.dataset.v;render();},"opal":()=>{S.f.opal=b.dataset.v;render();},"votes":()=>votesEditor(season(id)),
     "new-player":()=>playerForm(),"new-mine":()=>{if(myPlayer()){location.hash="joueur-"+myPlayer().id;return;}playerForm(null,true);},"edit-player":()=>playerForm(player(id)),"del-player":()=>delPlayer(id),"merge-player":()=>mergeForm(player(id)),"claim":()=>claimPlayer(id,true),"login":()=>login(),"fr-add":()=>friendAction("add",b.dataset.u),"fr-accept":()=>friendAction("accept",b.dataset.u),"fr-remove":()=>friendAction("remove",b.dataset.u),"appform":()=>appFormEditor(season(id)),"apptoggle":()=>toggleApps(season(id)),"logout":()=>logout(),"claim-ok":()=>claimDecision(b.dataset.p,b.dataset.u,true),"claim-no":()=>claimDecision(b.dataset.p,b.dataset.u,false),"unsign":()=>signAction(id,"unsign"),"su-ok":()=>signAction(b.dataset.s,"ok",b.dataset.u),"su-no":()=>signAction(b.dataset.s,"no",b.dataset.u),"unclaim":()=>claimPlayer(id,false),"split-player":()=>splitForm(player(id)),
     "new-news":()=>newsForm(null,b.dataset.org),"edit-news":()=>newsForm(newsItem(id)),"del-news":()=>delNews(id),
