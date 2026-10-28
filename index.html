@@ -538,7 +538,7 @@ function teamByName(s,name){const n=norm(name);return n?(s.teams||[]).find(t=>no
 function teamFor(s,c,ph){ph=Number(ph);if(!c||!ph)return null;const k=ph===3?"team3":ph===2?"team2":"team";return teamById(s,c[k])||null;}
 function teamStyle(s,name){const t=teamByName(s,name);return t?` style="--tc:${esc(t.color)}"`:"";}
 function resolveName(s,v){if(!v||v==="_none")return null;const cast=s.cast||[];if(cast.some(c=>c.playerId===v))return v;const n=norm(v);if(!n)return null;const c=cast.find(c=>norm(pName(c.playerId))===n||aliasesOf(player(c.playerId)).some(a=>norm(a)===n));if(c)return c.playerId;if(n.length>=4){const m=cast.filter(c=>norm(pName(c.playerId)).startsWith(n));if(m.length===1)return m[0].playerId;}return null;}
-function voteWeights(s,v){if(!v||v==="_none")return [];if(/[\/|].*\(barr[ée]\)\s*$/i.test(String(v)))return [];const id=resolveName(s,v);if(id)return [{id,w:1}];const out=[];let t=String(v);
+function voteWeights(s,v){if(!v||v==="_none")return [];if(/\|.*\(barr[ée]\)\s*$/i.test(String(v)))return [];const id=resolveName(s,v);if(id)return [{id,w:1}];const out=[];let t=String(v);
   t=t.replace(/\(\s*\+\s*(\d+(?:[.,]\d+)?)\s+([^)]+)\)/g,(m,n,name)=>{const r=resolveName(s,name.trim());if(r)out.push({id:r,w:Number(n.replace(",","."))||1});return "";});
   t.split(/\s*[\/|]\s*/).forEach(x=>{x=x.trim();if(!x||/barr[ée]/i.test(x))return;let w=1;const m=x.match(/^(.*\S)\s*x\s*(\d+(?:[.,]\d+)?)$/i);if(m){x=m[1];w=Number(m[2].replace(",","."));if(!(w>=0))w=1;w=Math.min(w,9);}const r=resolveName(s,x.trim());if(r)out.push({id:r,w});});
   return out;}
