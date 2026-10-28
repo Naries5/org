@@ -468,7 +468,7 @@ select[size]{padding:4px}
 .hx{position:relative;text-align:center;padding:46px 10px 20px;display:flex;flex-direction:column;align-items:center;gap:14px}
 .hx-glow{position:absolute;inset:-40px 0 auto;height:340px;z-index:-1;background:radial-gradient(40% 60% at 30% 40%,color-mix(in srgb,var(--t2) 30%,transparent),transparent),radial-gradient(40% 60% at 70% 40%,color-mix(in srgb,var(--t1) 30%,transparent),transparent);filter:blur(20px);animation:hxg 9s ease-in-out infinite alternate}
 @keyframes hxg{to{transform:translateX(30px) scale(1.05)}}
-.hx-t{font-size:clamp(2.8rem,10vw,7rem);white-space:nowrap;transform:rotate(-2deg);margin:0;background:linear-gradient(180deg,#fff2c9,var(--t1) 55%,color-mix(in srgb,var(--t1) 60%,var(--t2)));-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 5px 0 rgba(0,0,0,.45))}
+.hx-t{font-size:clamp(2.8rem,9vw,6.4rem);white-space:nowrap;transform:rotate(-2deg);margin:0}
 .hx .lede{color:var(--muted);font-size:1.1rem;max-width:44ch;margin:0}.hx .hero-search{width:min(560px,100%)}
 .hx-counts{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:6px}
 .hx-counts div{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:14px;padding:8px 16px;display:flex;flex-direction:column;min-width:96px}
@@ -518,7 +518,23 @@ select[size]{padding:4px}
 .nw-bg{position:absolute;inset:0;background-image:var(--nwbg,none);background-size:cover;background-position:center;filter:blur(24px) saturate(1.3) brightness(.35);transform:scale(1.4);opacity:.8}
 .nw-in{position:relative;padding:18px;display:flex;flex-direction:column;gap:10px;height:100%}
 .nw-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.nw-top .who{font-weight:700;font-size:.9rem;text-decoration:none;color:var(--ink)}
-.nw-gen{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:7px;background:var(--t2);color:#fff;font-size:.8rem}
+.nw-gen{display:grid!important;place-items:center;background:var(--t2)!important;color:#fff!important;font-size:1.6rem!important}
+.nw-org{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--ink);min-width:0}
+.nw-org .logo{width:60px;height:60px;border-radius:14px;object-fit:cover;flex:none;border:2px solid var(--t1);box-shadow:0 6px 16px rgba(0,0,0,.45);background:#1d1016;font-size:1rem}
+.nw-org small{display:block;font-family:var(--font-cond);text-transform:uppercase;letter-spacing:.08em;font-size:.7rem;color:var(--muted)}
+.nw-org b{display:block;font-family:var(--font-display);font-size:1.25rem;line-height:1.05;color:var(--t1);text-transform:uppercase}
+.ins-sec{position:relative;padding:28px 24px;border-radius:26px;background:radial-gradient(120% 140% at 0% 0%,color-mix(in srgb,#3ddc84 22%,transparent),transparent 55%),linear-gradient(160deg,rgba(255,255,255,.06),rgba(255,255,255,.02));border:2px dashed color-mix(in srgb,#3ddc84 55%,transparent)}
+.ins-head{text-align:center;margin-bottom:22px}.ins-head h2{font-family:var(--font-display);font-size:clamp(1.8rem,5vw,3rem);margin:4px 0;color:#7CF2A8;text-transform:uppercase;transform:rotate(-1.5deg);text-shadow:3px 3px 0 #000}
+.ins-head p{margin:0;color:var(--muted)}.ins-kicker{display:inline-block;background:#3ddc84;color:#06210f;font-family:var(--font-cond);font-weight:800;text-transform:uppercase;letter-spacing:.1em;font-size:.8rem;padding:4px 12px;border-radius:999px;animation:ogpulse2 2s infinite}
+@keyframes ogpulse2{50%{box-shadow:0 0 0 8px rgba(61,220,132,0)}0%{box-shadow:0 0 0 0 rgba(61,220,132,.5)}}
+.ins-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:20px}.ins-grid>.ins:only-child{max-width:760px;margin:0 auto;width:100%}.ins-txt .btn{white-space:normal;text-align:center}
+.ins{transform:none;min-height:0}.ins:hover{transform:translateY(-5px)}.ins .og-bg{inset:0}
+.ins-in{position:relative;display:flex;gap:18px;align-items:center;padding:20px}
+.ins-logo .logo{width:120px;height:120px;border-radius:22px;object-fit:cover;border:3px solid var(--c1);box-shadow:0 8px 24px rgba(0,0,0,.5);background:#1d1016;font-size:1.8rem}
+.ins-txt{display:flex;flex-direction:column;gap:8px;align-items:flex-start;min-width:0}.ins-txt h3{font-family:var(--font-display);font-size:1.6rem;line-height:1.05;margin:0;color:var(--c1);text-transform:uppercase}
+.ins-meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:.85rem}.ins-meta>span:not(.tag){background:rgba(0,0,0,.35);padding:3px 9px;border-radius:999px}
+.ins-intro{margin:0;font-size:.88rem;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+@media (max-width:600px){.ins-in{flex-direction:column;text-align:center}.ins-txt{align-items:center}}
 .nw-date{flex:none;display:flex;flex-direction:column;align-items:center;line-height:1;background:var(--t1);color:#1a0b12;border-radius:10px;padding:5px 8px;font-family:var(--font-cond);text-transform:uppercase;font-size:.7rem;font-weight:700;transform:rotate(3deg)}
 .nw-date b{font-family:var(--font-display);font-size:1.2rem}
 .nw h3{font-family:var(--font-display);font-size:1.3rem;line-height:1.15;margin:0;text-transform:uppercase}
@@ -912,19 +928,28 @@ function pageHome(){
   <div class="hero-search"><input id="hsearch" type="search" placeholder="Chercher un joueur, une ORG, une saison" autocomplete="off" aria-label="Rechercher"><div class="gres" hidden></div></div>
   <div class="hx-counts">${counts.map(([n,l])=>`<div><b>${n.toLocaleString("fr-FR")}</b><span>${l}</span></div>`).join("")}</div></section>`;
   if(!S.orgs.length){h+=`<div class="empty"><h2>Le wiki est vide</h2>${edit(`<button class="btn primary" data-act="new-org">+ Créer une ORG</button>`)}</div>`;return h;}
-  const now=[...live,...ins];
-  if(now.length){
-    const top=now[0];const rest=now.slice(1);
-    h+=`<section class="block"><div class="block-head"><h2 class="og-h on" style="margin:0"><span>À l'antenne</span></h2><span class="count">${now.length}</span></div>
+  if(live.length){
+    const top=live[0];const rest=live.slice(1);
+    h+=`<section class="block"><div class="block-head"><h2 class="og-h on" style="margin:0"><span>À l'antenne</span></h2><span class="count">${live.length}</span></div>
     <div class="air">${spotlight(top)}${rest.length?`<div class="air-list">${rest.map(airItem).join("")}</div>`:""}</div></section>`;
   }
+  if(ins.length)h+=`<section class="block ins-sec"><div class="ins-head"><span class="ins-kicker">Casting en cours</span><h2>Tu peux t'inscrire !</h2><p>${ins.length} saison${ins.length>1?"s cherchent":" cherche"} des joueurs en ce moment.</p></div><div class="ins-grid">${ins.map(insCard).join("")}</div></section>`;
+  if(news.length||S.canEdit)h+=`<section class="block"><div class="block-head"><h2>Dernières annonces</h2><span class="actions"><a class="btn sm ghost" href="#annonces">Tout voir</a>${edit(`<button class="btn sm" data-act="new-news">+ Annonce</button>`)}</span></div>${news.length?`<div class="nw-grid">${news.map(n=>newsCard(n)).join("")}</div>`:`<p class="muted">Aucune annonce pour l'instant.</p>`}</section>`;
   if(ann.length)h+=`<section class="block"><div class="block-head"><h2>Prochainement</h2><span class="count">${ann.length}</span></div>${calendarHtml(ann)}</section>`;
   const crowns=done.filter(s=>winnerOf(s)).slice(0,10);
   if(crowns.length)h+=`<section class="block"><div class="block-head"><h2>Derniers sacres</h2><span class="actions"><a class="btn sm ghost" href="#saisons">Toutes les saisons</a></span></div><div class="crowns">${crowns.map(crownCard).join("")}</div></section>`;
   h+=`<section class="block"><div class="block-head"><h2>ORGs</h2><span class="count">${S.orgs.length}</span><span class="actions"><a class="btn sm ghost" href="#orgs">Toutes les ORGs</a></span></div><div class="og-grid">${[...S.orgs].sort(byOrgActivity).slice(0,8).map(orgPoster).join("")}</div></section>`;
-  if(news.length||S.canEdit)h+=`<section class="block"><div class="block-head"><h2>Annonces</h2><span class="actions"><a class="btn sm ghost" href="#annonces">Tout voir</a>${edit(`<button class="btn sm" data-act="new-news">+ Annonce</button>`)}</span></div>${news.length?`<div class="nw-grid">${news.map(n=>newsCard(n)).join("")}</div>`:`<p class="muted">Aucune annonce pour l'instant.</p>`}</section>`;
   setTimeout(paintOrgPosters,0);
   return h;
+}
+function insCard(s){
+  const o=org(s.orgId)||{};const u=sLogoUrl(s);const a=appsOf(s);const ext=safeUrl(s.signup);const n=(s.cast||[]).length;
+  const cta=a.open?`<span class="btn primary">Candidater sur ORG-Central →</span>`:ext?`<span class="btn primary">S'inscrire ↗</span>`:`<span class="btn">Voir la saison →</span>`;
+  const meta=[s.slots?`<span><b>${esc(s.slots)}</b> places</span>`:"",s.start?`<span>Début <b>${fmtDate(s.start)}</b></span>`:"",tags(o)].filter(Boolean).join("");
+  const href=!a.open&&ext?` href="${esc(ext)}" target="_blank" rel="noopener"`:` href="#saison-${esc(s.id)}"`;
+  return `<a class="ins og"${href}${u?` data-paint="${esc(u)}"`:""}><div class="og-bg"${u?` style="background-image:url('${esc(u)}')"`:""}></div>
+  <div class="ins-in"><div class="ins-logo">${pic(s.logo||o.logo,o.tag||o.name,"logo")}</div>
+  <div class="ins-txt"><p class="spot-org">${esc(o.name||"")} · ${esc(seasonShort(s))}</p><h3>${esc(s.title||seasonShort(s))}</h3><div class="ins-meta">${meta}</div>${a.intro?`<p class="ins-intro">${esc(a.intro)}</p>`:""}${cta}</div></div></a>`;
 }
 function calendarHtml(list){
   const dated=list.filter(s=>s.start).sort((a,b)=>String(a.start).localeCompare(String(b.start))),undated=list.filter(s=>!s.start);
@@ -942,7 +967,7 @@ function calendarHtml(list){
 function newsCard(n){
   const o=n.orgId?org(n.orgId):null;const u=o?imgSrc(orgLogoVal(o)):"";const d=n.date?new Date(n.date+"T12:00:00"):null;
   return `<article class="nw"${u?` style="--nwbg:url('${esc(u)}')"`:""}><div class="nw-bg"></div><div class="nw-in">
-  <div class="nw-top">${o?`<a class="who" href="#org-${esc(o.id)}">${logo(o,"xs")}<span>${esc(o.name)}</span></a>`:`<span class="who"><span class="nw-gen">★</span><span>Annonce générale</span></span>`}${d?`<span class="nw-date"><b>${d.getDate()}</b>${d.toLocaleDateString("fr-FR",{month:"short"})}</span>`:""}</div>
+  <div class="nw-top">${o?`<a class="nw-org" href="#org-${esc(o.id)}">${pic(orgLogoVal(o),o.tag||o.name,"logo")}<span><small>Annonce de</small><b>${esc(o.name)}</b></span></a>`:`<span class="nw-org"><span class="logo nw-gen">★</span><span><small>Annonce</small><b>ORG-Central</b></span></span>`}${d?`<span class="nw-date"><b>${d.getDate()}</b>${d.toLocaleDateString("fr-FR",{month:"short"})}</span>`:""}</div>
   <h3>${esc(n.title)}</h3>${n.body?`<p>${esc(n.body)}</p>`:""}
   ${edit(`<div class="actions"><button class="btn sm ghost" data-act="edit-news" data-id="${esc(n.id)}">Modifier</button><button class="btn sm ghost danger" data-act="del-news" data-id="${esc(n.id)}">Supprimer</button></div>`)}</div></article>`;
 }
