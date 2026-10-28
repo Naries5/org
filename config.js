@@ -1,6 +1,5 @@
-// Remplace ces deux valeurs par celles de ton projet Supabase
-// (Supabase > Project Settings > API : "Project URL" et "anon public").
+// Configuration Supabase d'ORG-Central (valeurs publiques).
 window.ORG_CENTRAL_CONFIG = {
-  supabaseUrl: "https://XXXX.supabase.co",
-  supabaseAnonKey: "XXXX"
+  supabaseUrl: "https://czfgpgvkpxhmxyepvgzs.supabase.co",
+  supabaseAnonKey: "sb_publishable_3ubRuFBO_tVucgZYsHqG2w_AE11ccRW"
 };
