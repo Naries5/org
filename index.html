@@ -500,6 +500,31 @@ select[size]{padding:4px}
 .p1 .pod-step{height:74px;background:linear-gradient(#FFE38A,#FFC23D)}.p2 .pod-step{height:52px;background:linear-gradient(#f1f1f1,#b9b9c4)}.p3 .pod-step{height:38px;background:linear-gradient(#f0b27a,#c27c3e)}
 @media (max-width:760px){.air{grid-template-columns:1fr}.spot-in{flex-direction:column;text-align:center}.spot-txt{align-items:center}.spot-logo .logo{width:130px;height:130px}}
 @media (prefers-reduced-motion:reduce){.hx-glow{animation:none}}
+.cal{display:flex;flex-direction:column;gap:18px}.cal-m h3{font-family:var(--font-cond);text-transform:uppercase;letter-spacing:.08em;font-size:.95rem;color:var(--t1);margin:0 0 8px;display:flex;align-items:center;gap:10px}
+.cal-m h3::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,color-mix(in srgb,var(--t1) 50%,transparent),transparent)}
+.cal-l{display:flex;flex-direction:column;gap:8px}
+.cal-i{display:flex;align-items:center;gap:14px;padding:10px 14px 10px 10px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid var(--line);text-decoration:none;color:var(--ink);transition:background .15s,transform .15s,border-color .15s}
+.cal-i:hover{background:rgba(255,255,255,.08);transform:translateX(4px);border-color:color-mix(in srgb,var(--t1) 50%,transparent)}
+.cal-d{flex:none;width:62px;border-radius:12px;overflow:hidden;text-align:center;background:#f7efe2;color:#1a0b12;display:flex;flex-direction:column;box-shadow:0 4px 12px rgba(0,0,0,.35)}
+.cal-d small:first-child{background:var(--t2);color:#fff;font-family:var(--font-cond);text-transform:uppercase;font-size:.7rem;letter-spacing:.08em;padding:2px 0;font-weight:700}
+.cal-d b{font-family:var(--font-display);font-size:1.6rem;line-height:1.1;padding-top:2px}.cal-d small:last-child{font-family:var(--font-cond);text-transform:uppercase;font-size:.72rem;padding-bottom:3px;font-weight:700}
+.cal-i>.logo{width:56px;height:56px;border-radius:12px;object-fit:cover;flex:none}
+.cal-t{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}.cal-t>span{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cal-t small{display:flex;gap:4px;flex-wrap:wrap}.cal-t .tag{font-size:.68rem}
+.cal-rel{flex:none;font-family:var(--font-cond);text-transform:uppercase;letter-spacing:.05em;font-size:.8rem;font-weight:700;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.07);color:var(--muted)}
+.cal-rel.soon{background:var(--t1);color:#1a0b12}
+.nw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
+.nw{position:relative;border-radius:20px;overflow:hidden;border:1px solid var(--line);background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(255,255,255,.02));box-shadow:0 10px 26px rgba(0,0,0,.35);transition:transform .2s,border-color .2s}
+.nw:hover{transform:translateY(-4px);border-color:color-mix(in srgb,var(--t1) 60%,transparent)}
+.nw-bg{position:absolute;inset:0;background-image:var(--nwbg,none);background-size:cover;background-position:center;filter:blur(24px) saturate(1.3) brightness(.35);transform:scale(1.4);opacity:.8}
+.nw-in{position:relative;padding:18px;display:flex;flex-direction:column;gap:10px;height:100%}
+.nw-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.nw-top .who{font-weight:700;font-size:.9rem;text-decoration:none;color:var(--ink)}
+.nw-gen{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:7px;background:var(--t2);color:#fff;font-size:.8rem}
+.nw-date{flex:none;display:flex;flex-direction:column;align-items:center;line-height:1;background:var(--t1);color:#1a0b12;border-radius:10px;padding:5px 8px;font-family:var(--font-cond);text-transform:uppercase;font-size:.7rem;font-weight:700;transform:rotate(3deg)}
+.nw-date b{font-family:var(--font-display);font-size:1.2rem}
+.nw h3{font-family:var(--font-display);font-size:1.3rem;line-height:1.15;margin:0;text-transform:uppercase}
+.nw p{margin:0;color:color-mix(in srgb,var(--ink) 85%,transparent);white-space:pre-line;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
+.nw .actions{margin-top:auto}
+@media (max-width:600px){.cal-i{flex-wrap:wrap}.cal-rel{order:-1;margin-left:auto}}
 .me-link{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--ink);font-weight:700;text-transform:none;letter-spacing:0;padding:3px 10px 3px 3px;border-radius:999px;background:rgba(255,255,255,.07)}
 .badge{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--live);color:#fff;font-size:.72rem;font-weight:800;margin-left:4px}
 .social{display:grid;grid-template-columns:320px minmax(0,1fr);gap:24px;align-items:start}
@@ -887,25 +912,44 @@ function pageHome(){
   <div class="hero-search"><input id="hsearch" type="search" placeholder="Chercher un joueur, une ORG, une saison" autocomplete="off" aria-label="Rechercher"><div class="gres" hidden></div></div>
   <div class="hx-counts">${counts.map(([n,l])=>`<div><b>${n.toLocaleString("fr-FR")}</b><span>${l}</span></div>`).join("")}</div></section>`;
   if(!S.orgs.length){h+=`<div class="empty"><h2>Le wiki est vide</h2>${edit(`<button class="btn primary" data-act="new-org">+ Créer une ORG</button>`)}</div>`;return h;}
-  const onair=[...live,...ins,...ann];
-  if(onair.length){
-    const top=onair[0];const rest=onair.slice(1);
-    h+=`<section class="block"><div class="block-head"><h2 class="og-h on" style="margin:0"><span>À l'antenne</span></h2><span class="count">${onair.length}</span></div>
+  const now=[...live,...ins];
+  if(now.length){
+    const top=now[0];const rest=now.slice(1);
+    h+=`<section class="block"><div class="block-head"><h2 class="og-h on" style="margin:0"><span>À l'antenne</span></h2><span class="count">${now.length}</span></div>
     <div class="air">${spotlight(top)}${rest.length?`<div class="air-list">${rest.map(airItem).join("")}</div>`:""}</div></section>`;
   }
+  if(ann.length)h+=`<section class="block"><div class="block-head"><h2>Prochainement</h2><span class="count">${ann.length}</span></div>${calendarHtml(ann)}</section>`;
   const crowns=done.filter(s=>winnerOf(s)).slice(0,10);
   if(crowns.length)h+=`<section class="block"><div class="block-head"><h2>Derniers sacres</h2><span class="actions"><a class="btn sm ghost" href="#saisons">Toutes les saisons</a></span></div><div class="crowns">${crowns.map(crownCard).join("")}</div></section>`;
   h+=`<section class="block"><div class="block-head"><h2>ORGs</h2><span class="count">${S.orgs.length}</span><span class="actions"><a class="btn sm ghost" href="#orgs">Toutes les ORGs</a></span></div><div class="og-grid">${[...S.orgs].sort(byOrgActivity).slice(0,8).map(orgPoster).join("")}</div></section>`;
-  const pick=pickOfDay();
-  if(pick)h+=`<section class="block"><div class="block-head"><h2>Saison du jour</h2></div>${pick}</section>`;
-  if(news.length||S.canEdit)h+=`<section class="block"><div class="block-head"><h2>Annonces</h2><span class="actions"><a class="btn sm ghost" href="#annonces">Tout voir</a>${edit(`<button class="btn sm" data-act="new-news">+ Annonce</button>`)}</span></div>${news.length?`<div class="news-list">${news.map(n=>newsHtml(n,true)).join("")}</div>`:`<p class="muted">Aucune annonce pour l'instant.</p>`}</section>`;
+  if(news.length||S.canEdit)h+=`<section class="block"><div class="block-head"><h2>Annonces</h2><span class="actions"><a class="btn sm ghost" href="#annonces">Tout voir</a>${edit(`<button class="btn sm" data-act="new-news">+ Annonce</button>`)}</span></div>${news.length?`<div class="nw-grid">${news.map(n=>newsCard(n)).join("")}</div>`:`<p class="muted">Aucune annonce pour l'instant.</p>`}</section>`;
   setTimeout(paintOrgPosters,0);
   return h;
+}
+function calendarHtml(list){
+  const dated=list.filter(s=>s.start).sort((a,b)=>String(a.start).localeCompare(String(b.start))),undated=list.filter(s=>!s.start);
+  const today=new Date();today.setHours(0,0,0,0);
+  const months={};dated.forEach(s=>{const k=String(s.start).slice(0,7);(months[k]=months[k]||[]).push(s);});
+  const row=s=>{const o=org(s.orgId)||{};const d=s.start?new Date(s.start+"T12:00:00"):null;
+    const diff=d?Math.round((d-today)/864e5):null;const rel=diff==null?"":diff<0?"Date passée":diff===0?"Aujourd'hui":diff===1?"Demain":`Dans ${diff} jours`;
+    return `<a class="cal-i" href="#saison-${esc(s.id)}"><div class="cal-d">${d?`<small>${d.toLocaleDateString("fr-FR",{weekday:"short"})}</small><b>${d.getDate()}</b><small>${d.toLocaleDateString("fr-FR",{month:"short"})}</small>`:`<b>?</b><small>à venir</small>`}</div>
+    ${pic(s.logo||o.logo,o.tag||o.name,"logo")}<div class="cal-t"><b>${esc(o.name||"")} · ${esc(seasonShort(s))}</b><span>${esc(s.title||"")}</span><small>${[tags(o),s.slots?`<span class="tag">${esc(s.slots)} places</span>`:"",s.end?`<span class="tag">jusqu'au ${fmtDate(s.end)}</span>`:""].join("")}</small></div>${rel?`<span class="cal-rel${diff!=null&&diff<=7&&diff>=0?" soon":""}">${rel}</span>`:""}</a>`;};
+  let h=`<div class="cal">`;
+  Object.keys(months).sort().forEach(k=>{const d=new Date(k+"-15T12:00:00");h+=`<div class="cal-m"><h3>${d.toLocaleDateString("fr-FR",{month:"long",year:"numeric"})}</h3><div class="cal-l">${months[k].map(row).join("")}</div></div>`;});
+  if(undated.length)h+=`<div class="cal-m"><h3>Date à venir</h3><div class="cal-l">${undated.map(row).join("")}</div></div>`;
+  return h+`</div>`;
+}
+function newsCard(n){
+  const o=n.orgId?org(n.orgId):null;const u=o?imgSrc(orgLogoVal(o)):"";const d=n.date?new Date(n.date+"T12:00:00"):null;
+  return `<article class="nw"${u?` style="--nwbg:url('${esc(u)}')"`:""}><div class="nw-bg"></div><div class="nw-in">
+  <div class="nw-top">${o?`<a class="who" href="#org-${esc(o.id)}">${logo(o,"xs")}<span>${esc(o.name)}</span></a>`:`<span class="who"><span class="nw-gen">★</span><span>Annonce générale</span></span>`}${d?`<span class="nw-date"><b>${d.getDate()}</b>${d.toLocaleDateString("fr-FR",{month:"short"})}</span>`:""}</div>
+  <h3>${esc(n.title)}</h3>${n.body?`<p>${esc(n.body)}</p>`:""}
+  ${edit(`<div class="actions"><button class="btn sm ghost" data-act="edit-news" data-id="${esc(n.id)}">Modifier</button><button class="btn sm ghost danger" data-act="del-news" data-id="${esc(n.id)}">Supprimer</button></div>`)}</div></article>`;
 }
 function sLogoUrl(s){const o=org(s.orgId)||{};return imgSrc(s.logo||o.logo);}
 function spotlight(s){
   const o=org(s.orgId)||{};const u=sLogoUrl(s);const n=(s.cast||[]).length;
-  const info=s.status==="en_cours"?`${n?`<b>${n}</b> joueurs en jeu`:""}`:s.status==="inscriptions"?`Candidatures ouvertes${s.slots?` · <b>${esc(s.slots)}</b> places`:""}`:`${s.start?`Début le <b>${fmtDate(s.start)}</b>`:"Bientôt"}${s.slots?` · ${esc(s.slots)} places`:""}`;
+  const info=s.status==="en_cours"?`${n?`<b>${n}</b> joueur${n>1?"s":""} en jeu`:""}`:s.status==="inscriptions"?`Candidatures ouvertes${s.slots?` · <b>${esc(s.slots)}</b> places`:""}`:`${s.start?`Début le <b>${fmtDate(s.start)}</b>`:"Bientôt"}${s.slots?` · ${esc(s.slots)} places`:""}`;
   return `<a class="spot og" href="#saison-${esc(s.id)}"${u?` data-paint="${esc(u)}"`:""}><div class="og-bg"${u?` style="background-image:url('${esc(u)}')"`:""}></div>
   <div class="spot-in"><div class="spot-logo">${pic(s.logo||o.logo,o.tag||o.name,"logo")}</div><div class="spot-txt">${chip(s.status)}<p class="spot-org">${esc(o.name||"")} · ${esc(seasonShort(s))}</p><h3>${esc(s.title||seasonShort(s))}</h3><p class="spot-info">${info}</p>${s.status==="inscriptions"?`<span class="btn primary sm">Candidater →</span>`:`<span class="btn sm">Voir la saison →</span>`}</div></div></a>`;
 }
@@ -1117,7 +1161,7 @@ function pagePlayer(id){
 function pageNews(){
   const list=[...S.news].sort(byDateDesc);
   return `<section class="block"><div class="block-head"><h1>Annonces</h1><span class="count">${list.length}</span>${edit(`<span class="actions"><button class="btn primary" data-act="new-news">+ Nouvelle annonce</button></span>`)}</div>
-  ${list.length?`<div class="news-list">${list.map(n=>newsHtml(n,true)).join("")}</div>`:`<p class="muted">Aucune annonce pour l'instant.</p>`}</section>`;
+  ${list.length?`<div class="nw-grid">${list.map(n=>newsCard(n)).join("")}</div>`:`<p class="muted">Aucune annonce pour l'instant.</p>`}</section>`;
 }
 
 /* ---------- fenêtre modale ---------- */
