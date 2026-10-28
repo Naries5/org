@@ -1414,12 +1414,17 @@ async function importRankings(j,log){
   const idx=new Map();S.players.forEach(p=>{[p.pseudo,...aliasesOf(p)].forEach(n=>{const k=normName(n);if(k&&!idx.has(k))idx.set(k,p.id);});});
   const created=[],missing=[],newRows=[];let done=0;const t=nowIso();
   const resolve=c=>{for(const n of [c.pseudo,...(c.also||[])]){const k=normName(n);if(idx.has(k))return idx.get(k);}const pid=uid("p");idx.set(normName(c.pseudo),pid);created.push(c.pseudo);newRows.push({id:pid,data:{pseudo:c.pseudo,bio:"",discord:"",avatar:"",createdAt:t,updatedAt:t},updated_at:t});return pid;};
-  const plan=(j.seasons||[]).map(it=>{const se=season(it.id);return {it,se,ids:se?(it.cast||[]).map(resolve):[]};});
+  const plan=(j.seasons||[]).map(it=>{const se=season(it.id);if(!se)return {it,se,ids:[],aw:[]};
+    const ids=(it.cast||[]).map(resolve);
+    const castIdx=new Map();(it.cast?ids:(se.cast||[]).map(c=>c.playerId)).forEach(pid=>{const p=player(pid);const c=(it.cast||[])[ids.indexOf(pid)];[p&&p.pseudo,...(p?aliasesOf(p):[]),c&&c.pseudo,...((c&&c.also)||[])].forEach(n=>{const k=normName(n);if(k&&!castIdx.has(k))castIdx.set(k,pid);});});
+    const aw=(it.awards||[]).map(a=>{let pid=null;for(const n of [a.pseudo,...(a.also||[])]){const k=normName(n);if(castIdx.has(k)){pid=castIdx.get(k);break;}}if(!pid)pid=resolve({pseudo:a.pseudo,also:a.also||[]});return {name:a.name,playerId:pid};});
+    return {it,se,ids,aw};});
   const addAlias={};plan.forEach(({it,se,ids})=>{if(!se)return;(it.cast||[]).forEach((c,k)=>{const p=player(ids[k]);if(!p)return;const known=[p.pseudo,...aliasesOf(p)].map(norm);[c.pseudo,...(c.also||[])].forEach(n=>{if(n&&!known.includes(norm(n))){(addAlias[p.id]=addAlias[p.id]||new Set()).add(n);known.push(norm(n));}});});});
   for(const [pid,set] of Object.entries(addAlias)){const p=player(pid);await db.doc("players/"+pid).update({aliases:[...aliasesOf(p),...set],updatedAt:t});}
   for(let i=0;i<newRows.length;i+=200){const {error}=await sb.from("players").insert(newRows.slice(i,i+200));if(error)throw sbErr(error);log("Nouveaux joueurs : "+Math.min(i+200,newRows.length)+" / "+newRows.length);}
-  for(const {it,se,ids} of plan){
+  for(const {it,se,ids,aw} of plan){
     if(!se){missing.push(it.id);continue;}
+    if(!it.cast){const upd={updatedAt:t};if(it.awards)upd.awards=aw;await db.doc("seasons/"+se.id).update(upd);done++;log("Saisons mises à jour : "+done+" / "+(j.seasons||[]).length);continue;}
     const old={};(se.cast||[]).forEach(c=>old[c.playerId]=c);
     const cast=[];
     for(let k=0;k<(it.cast||[]).length;k++){const c=it.cast[k];const pid=ids[k];
@@ -1427,7 +1432,7 @@ async function importRankings(j,log){
       const o=old[pid]||{};
       cast.push(Object.assign({team:"",team2:"",team3:""},o,{playerId:pid,place:c.place==null?null:Number(c.place),note:c.note!=null?c.note:(o.note||"")}));
     }
-    const upd={cast,updatedAt:t};
+    const upd={cast,updatedAt:t};if(it.awards)upd.awards=aw;
     if(Array.isArray(it.rounds)){const byName={};(it.cast||[]).forEach((c,k)=>{byName[c.pseudo]=ids[k];});
       upd.rounds=it.rounds.map(r=>{const v={};Object.entries(r.votes||{}).forEach(([n,x])=>{const pid=byName[n];if(pid&&x!=null&&String(x).trim()!=="")v[pid]=String(x);});return Object.assign({},r,{votes:v});});}
     await db.doc("seasons/"+se.id).update(upd);done++;
