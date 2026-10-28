@@ -532,7 +532,7 @@ function teamByName(s,name){const n=norm(name);return n?(s.teams||[]).find(t=>no
 function teamFor(s,c,ph){ph=Number(ph);if(!c||!ph)return null;const k=ph===3?"team3":ph===2?"team2":"team";return teamById(s,c[k])||null;}
 function teamStyle(s,name){const t=teamByName(s,name);return t?` style="--tc:${esc(t.color)}"`:"";}
 function resolveName(s,v){if(!v||v==="_none")return null;const cast=s.cast||[];if(cast.some(c=>c.playerId===v))return v;const n=norm(v);if(!n)return null;const c=cast.find(c=>norm(pName(c.playerId))===n||aliasesOf(player(c.playerId)).some(a=>norm(a)===n));if(c)return c.playerId;if(n.length>=4){const m=cast.filter(c=>norm(pName(c.playerId)).startsWith(n));if(m.length===1)return m[0].playerId;}return null;}
-function targetsOf(s,v){if(!v||v==="_none")return [];const id=resolveName(s,v);if(id)return [id];return String(v).split("/").map(x=>resolveName(s,x)).filter(Boolean);}
+function targetsOf(s,v){if(!v||v==="_none")return [];const id=resolveName(s,v);if(id)return [id];const out=[];String(v).split("/").forEach(x=>{if(/barr[ée]/i.test(x))return;let n=1;const m=String(x).match(/^(.*\S)\s+x\s*(\d+)\s*$/i);if(m){x=m[1];n=Math.min(9,Number(m[2])||1);}const t=resolveName(s,String(x).trim());if(t)for(let i=0;i<n;i++)out.push(t);});return out;}
 function cellText(v){if(!v)return "";if(v==="_none")return "Pas de vote";return player(v)?pName(v):String(v);}
 function elimText(r){if(r.eliminated!=null)return String(r.eliminated);if(Array.isArray(r.eliminatedIds))return r.eliminatedIds.map(pName).join(" & ");return r.eliminatedId?pName(r.eliminatedId):"";}
 function elimIds(s,r){const ids=new Set();if(r.eliminatedId)ids.add(r.eliminatedId);(r.eliminatedIds||[]).forEach(x=>ids.add(x));String(r.eliminated||"").split(/\s*(?:&|,|\+|\/|\bet\b)\s*/i).forEach(n=>{const id=resolveName(s,n);if(id)ids.add(id);});return [...ids];}
@@ -1403,8 +1403,36 @@ async function claimPlayer(id,on){
   }catch(e){toast(errMsg(e),true);}
 }
 async function dataUrlToBlob(u){const r=await fetch(u);return await r.blob();}
+function normName(x){return String(x||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]/g,"");}
+async function importRankings(j,log){
+  const idx=new Map();S.players.forEach(p=>{[p.pseudo,...aliasesOf(p)].forEach(n=>{const k=normName(n);if(k&&!idx.has(k))idx.set(k,p.id);});});
+  const created=[],missing=[],newRows=[];let done=0;const t=nowIso();
+  const resolve=c=>{for(const n of [c.pseudo,...(c.also||[])]){const k=normName(n);if(idx.has(k))return idx.get(k);}const pid=uid("p");idx.set(normName(c.pseudo),pid);created.push(c.pseudo);newRows.push({id:pid,data:{pseudo:c.pseudo,bio:"",discord:"",avatar:"",createdAt:t,updatedAt:t},updated_at:t});return pid;};
+  const plan=(j.seasons||[]).map(it=>{const se=season(it.id);return {it,se,ids:se?(it.cast||[]).map(resolve):[]};});
+  const addAlias={};plan.forEach(({it,se,ids})=>{if(!se)return;(it.cast||[]).forEach((c,k)=>{const p=player(ids[k]);if(!p)return;const known=[p.pseudo,...aliasesOf(p)].map(norm);[c.pseudo,...(c.also||[])].forEach(n=>{if(n&&!known.includes(norm(n))){(addAlias[p.id]=addAlias[p.id]||new Set()).add(n);known.push(norm(n));}});});});
+  for(const [pid,set] of Object.entries(addAlias)){const p=player(pid);await db.doc("players/"+pid).update({aliases:[...aliasesOf(p),...set],updatedAt:t});}
+  for(let i=0;i<newRows.length;i+=200){const {error}=await sb.from("players").insert(newRows.slice(i,i+200));if(error)throw sbErr(error);log("Nouveaux joueurs : "+Math.min(i+200,newRows.length)+" / "+newRows.length);}
+  for(const {it,se,ids} of plan){
+    if(!se){missing.push(it.id);continue;}
+    const old={};(se.cast||[]).forEach(c=>old[c.playerId]=c);
+    const cast=[];
+    for(let k=0;k<(it.cast||[]).length;k++){const c=it.cast[k];const pid=ids[k];
+      if(cast.some(x=>x.playerId===pid))continue;
+      const o=old[pid]||{};
+      cast.push(Object.assign({team:"",team2:"",team3:""},o,{playerId:pid,place:c.place==null?null:Number(c.place),note:c.note!=null?c.note:(o.note||"")}));
+    }
+    const upd={cast,updatedAt:t};
+    if(Array.isArray(it.rounds)){const byName={};(it.cast||[]).forEach((c,k)=>{byName[c.pseudo]=ids[k];});
+      upd.rounds=it.rounds.map(r=>{const v={};Object.entries(r.votes||{}).forEach(([n,x])=>{const pid=byName[n];if(pid&&x!=null&&String(x).trim()!=="")v[pid]=String(x);});return Object.assign({},r,{votes:v});});}
+    await db.doc("seasons/"+se.id).update(upd);done++;
+    log("Saisons mises à jour : "+done+" / "+(j.seasons||[]).length);
+  }
+  if(makeDb._reload&&makeDb._reload.players)makeDb._reload.players();
+  return {done,created,missing};
+}
 async function importExport(file,log){
   const j=JSON.parse(await file.text());
+  if(j&&j.type==="org-central-classements"){const r=await importRankings(j,log);log(`Classements importés : ${r.done} saison(s).`+(r.created.length?` Nouveaux joueurs (${r.created.length}) : ${r.created.join(", ")}.`:" Aucun nouveau joueur.")+(r.missing.length?` Saisons introuvables : ${r.missing.join(", ")}.`:""));return -1;}
   if(!j||!j.orgs||!j.seasons||!j.players)throw new Error("Ce fichier n'est pas un export ORG-Central.");
   const up=async v=>{if(typeof v!=="string"||!v.startsWith("data:image/"))return v||"";const b=await dataUrlToBlob(v);const ext=(b.type.split("/")[1]||"png").replace("jpeg","jpg");const path="import/"+uid("i")+"."+ext;
     const {error}=await sb.storage.from("images").upload(path,b,{contentType:b.type});if(error)throw sbErr(error);return sb.storage.from("images").getPublicUrl(path).data.publicUrl;};
@@ -1426,12 +1454,12 @@ function pageAdmin(){
   return `<section class="block"><div class="block-head"><h1>Administration</h1></div>
   <section class="block"><div class="block-head"><h2>Demandes « C'est moi »</h2></div><div id="adm-claims"><p class="muted">Chargement…</p></div></section>
   <section class="block"><div class="block-head"><h2>Comptes et rôles</h2></div><p class="hint">Un <b>host</b> peut créer des joueurs et modifier uniquement les ORGs cochées. Un <b>admin</b> peut tout faire.</p><div id="adm-users"><p class="muted">Chargement…</p></div></section>
-  <section class="block"><div class="block-head"><h2>Importer des données</h2></div><p class="hint">Choisis le fichier <b>org-central-export.json</b> téléchargé depuis l'ancien site. Les éléments déjà présents avec le même identifiant sont remplacés.</p><input type="file" id="f-import" accept="application/json,.json"><p id="imp-log" class="muted"></p></section></section>`;
+  <section class="block"><div class="block-head"><h2>Importer des données</h2></div><p class="hint">Choisis le fichier <b>org-central-export.json</b> téléchargé depuis l'ancien site. Les éléments déjà présents avec le même identifiant sont remplacés. Tu peux aussi y mettre un fichier de <b>classements</b> préparé par Claude : il remplit les castings et crée seulement les joueurs qui n'existent pas encore.</p><input type="file" id="f-import" accept="application/json,.json"><p id="imp-log" class="muted">${esc(S.impLog||"")}</p></section></section>`;
 }
 async function loadAdmin(){
   const box1=document.getElementById("adm-claims"),box2=document.getElementById("adm-users");if(!box1)return;
-  const fi=document.getElementById("f-import");if(fi&&!fi._b){fi._b=1;fi.addEventListener("change",async()=>{const f=fi.files[0];if(!f)return;const lg=document.getElementById("imp-log");fi.disabled=true;
-    try{const n=await importExport(f,m=>{lg.textContent=m;});lg.textContent="Import terminé ("+n+" images).";toast("Import terminé");}catch(e){lg.textContent="Erreur : "+errMsg(e);}fi.disabled=false;});}
+  const fi=document.getElementById("f-import");if(fi&&!fi._b){fi._b=1;fi.addEventListener("change",async()=>{const f=fi.files[0];if(!f)return;const lg={set textContent(m){S.impLog=m;const e=document.getElementById("imp-log");if(e)e.textContent=m;}};fi.disabled=true;
+    try{const n=await importExport(f,m=>{lg.textContent=m;});if(n>=0)lg.textContent="Import terminé ("+n+" images).";toast("Import terminé");}catch(e){lg.textContent="Erreur : "+errMsg(e);}fi.disabled=false;});}
   const [{data:claims},{data:profs},{data:hosts}]=await Promise.all([sb.from("claims").select("*").eq("status","pending"),sb.from("profiles").select("*").order("created_at"),sb.from("org_hosts").select("*")]);
   const pn=id=>{const p=(profs||[]).find(x=>x.id===id);return p?(p.discord_name||"?"):"?";};
   box1.innerHTML=(claims||[]).length?`<div class="table-wrap"><table><thead><tr><th>Compte Discord</th><th>Fiche demandée</th><th></th></tr></thead><tbody>${claims.map(c=>`<tr><td>${esc(pn(c.user_id))}</td><td><a href="#joueur-${esc(c.player_id)}">${esc(pName(c.player_id))}</a></td><td><span class="actions"><button class="btn sm primary" data-act="claim-ok" data-p="${esc(c.player_id)}" data-u="${esc(c.user_id)}">Valider</button><button class="btn sm ghost" data-act="claim-no" data-p="${esc(c.player_id)}" data-u="${esc(c.user_id)}">Refuser</button></span></td></tr>`).join("")}</tbody></table></div>`:`<p class="muted">Aucune demande en attente.</p>`;
