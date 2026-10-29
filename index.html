@@ -2197,10 +2197,10 @@ function pageContrib(){
     <div class="ct-step"><span class="ct-n">3</span><div><h3>Autre chose à préciser ?</h3>${field("Message",`<textarea id="ct-msg" rows="3" maxlength="2000" placeholder="Hosts, règles spéciales, pseudos à corriger…"></textarea>`)}</div></div>
     <p class="ferr" id="ct-err" role="alert"></p><p><button type="submit" class="btn primary" id="ct-send">Envoyer</button></p>
   </form></section>
-  <section class="block"><div class="block-head"><h2>${S.isAdmin?"Contributions reçues":"Mes contributions"}</h2></div><div id="ct-list"><p class="muted">Chargement…</p></div></section>`;}
+  <section class="block"><div class="block-head"><h2>${S.isAdmin?"Contributions reçues":"Mes contributions"}</h2>${S.isAdmin?`<span class="actions"><label class="chk"><input type="checkbox" id="ct-onlyopen" checked> Seulement les ouvertes</label><button type="button" class="btn sm primary" id="ct-zip">Tout télécharger (.zip)</button></span>`:""}</div><div id="ct-list"><p class="muted">Chargement…</p></div></section>`;}
 function ctRender(k){const box=document.getElementById("ct-t-"+k);if(!box)return;box.innerHTML=CT.files[k].map((f,i)=>`<span class="ct-th"><img src="${f._u||(f._u=URL.createObjectURL(f))}" alt=""><button type="button" data-ctrm="${k}:${i}" aria-label="Retirer">×</button></span>`).join("");}
 function ctAdd(k,files){[...files].filter(f=>/^image\//.test(f.type)).forEach(f=>CT.files[k].push(f));ctRender(k);}
-function bindContrib(){const f=document.getElementById("ct-form");loadContribs();if(!f||f._b)return;f._b=1;
+function bindContrib(){const f=document.getElementById("ct-form");loadContribs();const zb=document.getElementById("ct-zip");if(zb&&!zb._b){zb._b=1;zb.addEventListener("click",async()=>{zb.disabled=true;try{await exportContribs(document.getElementById("ct-onlyopen").checked,zb);}catch(e){toast(errMsg(e),true);}zb.disabled=false;zb.textContent="Tout télécharger (.zip)";});}if(!f||f._b)return;f._b=1;
   let last="votes";
   f.querySelectorAll("[data-ct]").forEach(z=>{const k=z.dataset.ct;z.addEventListener("focus",()=>last=k);z.addEventListener("click",()=>last=k);
     z.addEventListener("dragover",e=>{e.preventDefault();z.classList.add("over");});z.addEventListener("dragleave",()=>z.classList.remove("over"));
@@ -2239,6 +2239,24 @@ function bindContrib(){const f=document.getElementById("ct-form");loadContribs()
       if(error)throw /check constraint|tickets_kind/i.test(error.message)?new Error("Les contributions ne sont pas encore activées : l'admin doit lancer update-8-contributions.sql dans Supabase."):/relation|does not exist/i.test(error.message)?new Error("Lance d'abord update-6-tickets.sql dans Supabase."):sbErr(error);
       CT={files:{votes:[],awards:[],logo:[],autres:[]}};toast("Merci ! Ta contribution est envoyée.");render();tkCount();
     }catch(x){err(errMsg(x));btn.disabled=false;btn.textContent="Envoyer";}});}
+function loadScript(u){return new Promise((ok,ko)=>{if(document.querySelector(`script[src="${u}"]`)){ok();return;}const sc=document.createElement("script");sc.src=u;sc.onload=ok;sc.onerror=()=>ko(new Error("Impossible de charger "+u));document.head.appendChild(sc);});}
+async function exportContribs(onlyOpen,btn){
+  let q=sb.from("tickets").select("*").eq("kind","infos").order("created_at",{ascending:true});if(onlyOpen)q=q.eq("status","open");
+  const {data,error}=await q;if(error)throw sbErr(error);if(!data.length){toast("Aucune contribution à exporter.");return;}
+  await loadScript("https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js");
+  if(!ADM_PROFS.length){const r=await sb.from("profiles").select("*");ADM_PROFS=r.data||[];}
+  const zip=new JSZip();const out=[];const slug=t=>String(t||"").normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-zA-Z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40)||"x";
+  let n=0,tot=data.reduce((a,t)=>a+Object.values((t.data||{}).images||{}).reduce((b,l)=>b+l.length,0),0),ok=0,miss=0;
+  for(const [i,t] of data.entries()){const d=t.data||{};const o=org(d.orgId);const dir=String(i+1).padStart(3,"0")+"-"+slug(o?o.name:d.orgName)+"-saison-"+slug(d.number);
+    const lp=linkedPlayer(t.user_id);const pr=ADM_PROFS.find(x=>x.id===t.user_id);
+    const rec={n:i+1,id:t.id,dossier:dir,statut:t.status,envoye_le:t.created_at,par:lp?lp.pseudo:(pr&&pr.discord_name)||"",org:o?o.name:d.orgName,org_existante:!!o,org_id:o?o.id:"",saison:d.number,theme:d.title||"",debut:d.start||"",fin:d.end||"",message:d.message||"",images:{}};
+    for(const [k] of CT_KINDS){const l=(d.images||{})[k]||[];rec.images[k]=[];for(const [j,u] of l.entries()){n++;if(btn)btn.textContent=`Préparation… ${n}/${tot}`;
+      try{const r=await fetch(u);if(!r.ok)throw 0;const b=await r.blob();const ext=((b.type.split("/")[1]||"png").replace("jpeg","jpg"));const nm=`${k}-${j+1}.${ext}`;zip.file(dir+"/"+nm,b);rec.images[k].push(dir+"/"+nm);ok++;}catch(_){rec.images[k].push(u);miss++;}}}
+    zip.file(dir+"/infos.txt",`ORG : ${rec.org}${rec.org_existante?"":" (nouvelle)"}\nSaison : ${rec.saison}\nThème : ${rec.theme}\nDates : ${rec.debut||"?"} → ${rec.fin||"?"}\nEnvoyé par : ${rec.par}\n\n${rec.message}`);
+    out.push(rec);}
+  zip.file("contributions.json",JSON.stringify(out,null,1));
+  const blob=await zip.generateAsync({type:"blob"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="contributions-org-central-"+today()+".zip";document.body.appendChild(a);a.click();a.remove();
+  toast(`${out.length} contributions exportées (${ok} images)`+(miss?`, ${miss} image(s) introuvable(s)`:""));}
 async function loadContribs(){const box=document.getElementById("ct-list");if(!box)return;
   if(S.isAdmin&&!ADM_PROFS.length){const {data}=await sb.from("profiles").select("*");ADM_PROFS=data||[];}
   let q=sb.from("tickets").select("*").eq("kind","infos").order("created_at",{ascending:false}).limit(100);if(!S.isAdmin)q=q.eq("user_id",S.me);
