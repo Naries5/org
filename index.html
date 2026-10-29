@@ -1661,7 +1661,7 @@ function pagePlayer(id){
   const hb=hostedBy(p);
   const host=hb.orgs.length?`<section class="block"><div class="block-head"><h2>Host</h2><span class="count">${hb.orgs.length}</span></div><div class="pp-hosts">${hb.orgs.map(o=>{const ss=hb.seasons.filter(x=>x.orgId===o.id);return `<a class="pp-host" href="#org-${esc(o.id)}">${pic(orgLogoVal(o),o.name,"pp-hl")}<span><b>${esc(o.name)}</b><small>${ss.length?ss.length+" saison"+(ss.length>1?"s":"")+" organisée"+(ss.length>1?"s":""):(FORMATS[o.format]||"ORG")}</small></span></a>`;}).join("")}</div></section>`:"";
   const runs=h.map(({s,c})=>{const o=org(s.orgId)||{};const n=(s.cast||[]).length;const pl=Number(c.place);const sa=(s.awards||[]).filter(a=>a.playerId===p.id);
-    const lg=imgSrc(s.logo||orgLogoVal(o));const med=pl===1?" m1":pl===2?" m2":pl===3?" m3":"";const fb=n>1&&pl===n;
+    const lg=imgSrc(s.logo||o.logo||orgLogoVal(o));const med=pl===1?" m1":pl===2?" m2":pl===3?" m3":"";const fb=n>1&&pl===n;
     return `<a class="pc${med}${fb?" fb":""}" href="#saison-${esc(s.id)}" title="${esc(fullSeasonName(s))}"${lg&&!med?` data-pc-src="${esc(lg)}"`:""}>
       <div class="pc-art">${lg?`<img src="${esc(lg)}" alt="" loading="lazy">`:`<span class="pc-ph">${esc(initials(o.name||"?"))}</span>`}
         <div class="pc-rank">${pl?`<b>${pl}<sup>${pl===1?"er":"e"}</sup></b>${n?`<i>/ ${n}</i>`:""}`:`<b>—</b>`}</div>${fb?`<span class="pc-tag">First boot</span>`:""}${o.format==="speed"?`<span class="pc-fmt">Speed</span>`:""}</div>
@@ -2215,7 +2215,7 @@ function pageCalendar(id){
   <p class="cal-today"><a class="btn sm ghost" href="#calendrier-${now.getFullYear()}-${now.getMonth()+1}">Aujourd'hui</a></p>
   <div class="cal-scroll"><div class="cal-grid"><div class="cal-head">${["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"].map((d,i)=>`<span class="${i>4?"we":""}">${d}</span>`).join("")}</div><div class="cal-days">`;
   for(let i=0;i<weeks*7;i++){const t=gStart+i*CAL_DAY;const d=i%7;const out=t<first||t>last;const list=(byDay[t]||[]).sort((a,b)=>calLabel(a).localeCompare(calLabel(b),"fr"));
-    h+=`<div class="cal-day${d>4?" we":""}${out?" out":""}${t===today?" now":""}"><b>${new Date(t).getUTCDate()}</b>${list.map(s=>{const o=org(s.orgId)||{};const lg=s.logo||orgLogoVal(o);return `<a class="cal-ev" href="#saison-${esc(s.id)}" title="${esc(fullSeasonName(s))}">${pic(lg,o.name||"?","cal-logo")}<span>${esc(calLabel(s))}</span></a>`;}).join("")}</div>`;}
+    h+=`<div class="cal-day${d>4?" we":""}${out?" out":""}${t===today?" now":""}"><b>${new Date(t).getUTCDate()}</b>${list.map(s=>{const o=org(s.orgId)||{};const lg=s.logo||o.logo||orgLogoVal(o);return `<a class="cal-ev" href="#saison-${esc(s.id)}" title="${esc(fullSeasonName(s))}">${pic(lg,o.name||"?","cal-logo")}<span>${esc(calLabel(s))}</span></a>`;}).join("")}</div>`;}
   h+=`</div></div></div>`;
   const undated=S.seasons.filter(s=>["inscriptions","annoncee","en_cours"].includes(s.status)&&!s.start);
   h+=`<p class="hint cal-hint">Une saison apparaît le jour de son début dès qu'elle a une date de début dans « Modifier ».</p>`;
@@ -2232,7 +2232,7 @@ function tlLoad(s){let st=null;try{st=JSON.parse(localStorage.getItem(tlKey(s.id
 function tierList(s){if(!s)return;let st=tlLoad(s);const o=org(s.orgId)||{};
   const save=()=>{try{localStorage.setItem(tlKey(s.id),JSON.stringify({rows:st.rows}));}catch(_){}};
   const tile=id=>{const src=imgSrc(sAvatar(s,id));return `<div class="tl-it" draggable="true" data-pid="${esc(id)}" title="${esc(sName(s,id))}">${src?`<img src="${esc(src)}" alt="" draggable="false" crossorigin="anonymous">`:`<span>${esc(initials(sName(s,id)))}</span>`}<b>${esc(sName(s,id))}</b></div>`;};
-  const body=()=>`<div class="tl" id="tl-cap"><div class="tl-head">${pic(s.logo||orgLogoVal(o),o.name,"tl-logo")}<div><b>${esc(fullSeasonName(s))}</b><small>Ma tier list · orgcentral.fr</small></div></div>
+  const body=()=>`<div class="tl" id="tl-cap"><div class="tl-head">${pic(s.logo||o.logo||orgLogoVal(o),o.name,"tl-logo")}<div><b>${esc(fullSeasonName(s))}</b><small>Ma tier list · orgcentral.fr</small></div></div>
     ${st.rows.map((r,i)=>`<div class="tl-row"><div class="tl-lab" style="background:${esc(r.color)}"><span contenteditable="true" spellcheck="false" data-rn="${i}">${esc(r.name)}</span></div><div class="tl-drop" data-row="${i}">${r.items.map(tile).join("")}</div><div class="tl-ctl"><button type="button" data-tlup="${i}" title="Monter">▲</button><button type="button" data-tldn="${i}" title="Descendre">▼</button><input type="color" value="${esc(r.color)}" data-tlc="${i}" title="Couleur"><button type="button" data-tlrm="${i}" title="Supprimer la ligne">✕</button></div></div>`).join("")}</div>
     <p class="hint">Glisse les joueurs dans les lignes (sur téléphone : touche un joueur puis une ligne). Clique sur une lettre pour la renommer.</p>
     <div class="tl-pool tl-drop" data-row="pool">${st.pool.map(tile).join("")||`<span class="muted">Tout le monde est classé !</span>`}</div>`;
