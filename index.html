@@ -687,6 +687,39 @@ a.mention{color:var(--t1);font-weight:700;text-decoration:none;border-bottom:1px
 .pp-more-m button{text-align:left;padding:8px 12px;border:0;background:none;color:var(--ink);font:inherit;font-weight:600;border-radius:8px;cursor:pointer}.pp-more-m button:hover{background:rgba(255,255,255,.07)}.pp-more-m .dg{color:#ff8a8a}
 @media (max-width:700px){.pk-grid{grid-template-columns:repeat(3,1fr)}.pp-run{grid-template-columns:auto 1fr}.pp-run-side{grid-column:1/-1;flex-direction:row;align-items:center;justify-content:space-between}}
 @media (max-width:860px){.pp-wiki .infobox{display:grid;grid-template-columns:110px 1fr;gap:4px 14px;align-items:start;max-width:none}.pp-wiki .infobox .ib-title{grid-column:1/-1}.pp-wiki .infobox .ib-img{grid-row:span 2;aspect-ratio:1;max-height:110px}.pp-wiki .infobox .ib-img img,.pp-wiki .infobox .ib-ph{width:100%;height:100%;object-fit:cover;font-size:2rem}.pp-wiki .infobox dl{margin:0}}
+.sb-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:-1px;flex-wrap:wrap}
+.sb-live{font-family:var(--font-cond);font-weight:800;letter-spacing:.18em;text-transform:uppercase;font-size:.85rem;background:var(--t2);color:#fff;padding:5px 14px 4px;border-radius:8px 8px 0 0}
+.sb{display:grid;grid-template-columns:repeat(7,1fr);background:linear-gradient(180deg,#0d070b,#1c0e18);border:2px solid color-mix(in srgb,var(--gold) 60%,transparent);border-radius:0 14px 14px 14px;box-shadow:inset 0 0 40px rgba(0,0,0,.6),0 10px 30px rgba(0,0,0,.4);overflow:hidden}
+.sb-c{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px 6px 12px;text-align:center;position:relative}
+.sb-c+.sb-c::before{content:"";position:absolute;left:0;top:18%;bottom:18%;border-left:1px dashed color-mix(in srgb,var(--gold) 30%,transparent)}
+.sb-c b{font-family:var(--font-display);font-size:2rem;line-height:1;color:var(--ink);text-shadow:0 0 18px rgba(255,255,255,.12)}.sb-c b sup{font-size:.45em;margin-left:1px}
+.sb-c span{margin-top:6px;font-family:var(--font-cond);text-transform:uppercase;letter-spacing:.1em;font-size:.72rem;color:var(--muted)}
+.sb-c.gold b{color:var(--gold);text-shadow:0 0 18px color-mix(in srgb,var(--gold) 55%,transparent)}
+.pc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:26px 18px;padding-top:6px}
+.pc{--rot:0deg;display:flex;flex-direction:column;gap:3px;text-decoration:none;color:var(--ink);transform:rotate(var(--rot));transition:transform .2s}
+.pc:nth-child(3n+1){--rot:-1.4deg}.pc:nth-child(3n+2){--rot:1deg}.pc:nth-child(3n){--rot:-.4deg}
+.pc:hover{transform:rotate(0) translateY(-5px)}
+.pc-art{position:relative;aspect-ratio:1;border-radius:14px;overflow:hidden;background:#140a10;box-shadow:0 0 0 2px var(--line),0 12px 24px rgba(0,0,0,.5);margin-bottom:8px}
+.pc-art img,.pc-ph{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:grayscale(1) brightness(.32) contrast(1.15);transition:filter .25s}
+.pc-ph{display:grid;place-items:center;font-family:var(--font-display);font-size:2.2rem;color:rgba(255,255,255,.12)}
+.pc:hover .pc-art img{filter:grayscale(.2) brightness(.55)}
+.pc-rank{position:absolute;inset:0;display:flex;align-items:baseline;justify-content:center;padding-top:30%;font-family:var(--font-display);color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.7),0 0 24px rgba(0,0,0,.8)}
+.pc-rank b{font-size:3.6rem;line-height:1}.pc-rank i{font-style:normal;font-size:1.25rem;opacity:.65;margin-left:2px}
+.pc.win .pc-art{box-shadow:0 0 0 3px var(--gold),0 0 26px color-mix(in srgb,var(--gold) 45%,transparent),0 12px 24px rgba(0,0,0,.5)}
+.pc.win .pc-art img{filter:none}.pc.win .pc-rank{align-items:flex-end;justify-content:flex-start;padding:0 0 10px 12px}.pc.win .pc-rank b{color:var(--gold);font-size:2.6rem}.pc.win .pc-rank i{display:none}
+.pc.win .pc-rank::before{content:"";position:absolute;inset:auto 0 0 0;height:55%;background:linear-gradient(transparent,rgba(0,0,0,.8));z-index:-1}
+.pc.podium .pc-art{box-shadow:0 0 0 2px color-mix(in srgb,var(--t1) 60%,transparent),0 12px 24px rgba(0,0,0,.5)}.pc.podium .pc-rank b{color:var(--t1)}
+.pc-crown{position:absolute;top:8px;left:8px;background:var(--gold);color:#1A0B12;font-family:var(--font-cond);font-weight:800;text-transform:uppercase;letter-spacing:.08em;font-size:.72rem;padding:3px 8px;border-radius:6px;transform:rotate(-3deg)}
+.pc-fmt{position:absolute;top:8px;right:8px;font-family:var(--font-cond);font-weight:700;text-transform:uppercase;letter-spacing:.1em;font-size:.66rem;padding:2px 7px;border-radius:999px;background:rgba(0,0,0,.55);color:var(--muted);border:1px solid rgba(255,255,255,.12)}
+.pc-org{margin:0;font-family:var(--font-cond);font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:.82rem;color:var(--muted)}
+.pc-t{margin:0;font-weight:700;line-height:1.2}
+.pc-note{margin:0;font-size:.8rem;color:var(--muted);font-style:italic}
+.pc-aw{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 0}.pc-aw span{font-size:.72rem;font-weight:700;padding:2px 7px;border-radius:6px;background:var(--gold-soft);color:var(--gold);border:1px solid color-mix(in srgb,var(--gold) 30%,transparent)}
+.pp-hosts{display:flex;flex-wrap:wrap;gap:10px}
+.pp-host{display:inline-flex;align-items:center;gap:10px;padding:6px 14px 6px 6px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.03);text-decoration:none;color:var(--ink)}
+.pp-hl{width:40px;height:40px;border-radius:50%;object-fit:cover;flex:none;display:inline-grid;place-items:center;background:var(--surface-2);font-size:.8rem;color:var(--t1)}
+@media (max-width:900px){.sb{grid-template-columns:repeat(4,1fr)}.sb-c:nth-child(5)::before{display:none}}
+@media (max-width:520px){.sb{grid-template-columns:repeat(3,1fr)}.sb-c::before{display:none}.pc-grid{grid-template-columns:repeat(2,1fr);gap:20px 14px}.pc-rank b{font-size:2.8rem}}
 </style>
 </head>
 <body>
@@ -1343,16 +1376,10 @@ function pStatsData(h,pid){
   return {all:st(h),speed:st(grp(f=>f==="speed")),long:st(grp(f=>f!=="speed"))};}
 function pStatsHtml(h,pid){const D=pStatsData(h,pid);
   const modes=[["all","Tout"],["speed","Speed"],["long","Format long"]].filter(([k])=>k==="all"||D[k].n);
-  const tiles=x=>`<div class="pk-grid">
-    <div class="pk"><b>${x.n}</b><span>saison${x.n>1?"s":""}</span></div>
-    <div class="pk gold"><b>${x.w}</b><span>victoire${x.w>1?"s":""}</span></div>
-    <div class="pk"><b>${x.t3}</b><span>top 3</span></div>
-    <div class="pk"><b>${x.best?(x.best===1?"🏆":x.best+"<small>e</small>"):"—"}</b><span>meilleure place</span></div>
-    <div class="pk"><b>${x.aw}</b><span>award${x.aw>1?"s":""}</span></div></div>
-    <div class="pk-perf"><div class="pk-perf-top"><span>Performance moyenne</span><b>${x.perf==null?"—":x.perf+" %"}</b></div><div class="pk-bar"><i style="width:${x.perf||0}%"></i></div>
-    <p class="muted">Place moyenne ${x.avg?fmtN(Math.round(x.avg*10)/10)+"e":"—"} · ${fmtN(x.v)} vote${x.v>1?"s":""} reçu${x.v>1?"s":""} · 100 % = vainqueur, 0 % = premier éliminé</p></div>`;
-  return `<section class="block pstat-b" data-pmode="all"><div class="block-head"><h2>Statistiques</h2>${modes.length>1?`<span class="pk-tabs" role="tablist">${modes.map(([k,l])=>`<button type="button" role="tab" data-pm="${k}" aria-selected="${k==="all"}">${l}</button>`).join("")}</span>`:""}</div>
-  ${modes.map(([k])=>`<div class="pk-pane" data-pane="${k}"${k==="all"?"":" hidden"}>${tiles(D[k])}</div>`).join("")}</section>`;}
+  const cell=(v,l,cls)=>`<div class="sb-c${cls?" "+cls:""}"><b>${v}</b><span>${l}</span></div>`;
+  const board=x=>`<div class="sb">${cell(x.n,"saison"+(x.n>1?"s":""))}${cell(x.w,"victoire"+(x.w>1?"s":""),"gold")}${cell(x.t3,"top 3")}${cell(x.best?x.best+"<sup>"+(x.best===1?"er":"e")+"</sup>":"—","meilleure place")}${cell(x.avg?fmtN(Math.round(x.avg*10)/10)+"<sup>e</sup>":"—","place moyenne")}${cell(fmtN(x.v),"votes reçus")}${cell(x.aw,"award"+(x.aw>1?"s":""))}</div>`;
+  return `<section class="block pstat-b"><div class="sb-head"><span class="sb-live">● Stats</span>${modes.length>1?`<span class="pk-tabs" role="tablist">${modes.map(([k,l])=>`<button type="button" role="tab" data-pm="${k}" aria-selected="${k==="all"}">${l}</button>`).join("")}</span>`:""}</div>
+  ${modes.map(([k])=>`<div class="pk-pane" data-pane="${k}"${k==="all"?"":" hidden"}>${board(D[k])}</div>`).join("")}</section>`;}
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-pm]");if(!b)return;const sec=b.closest(".pstat-b");
   sec.querySelectorAll("[data-pm]").forEach(x=>x.setAttribute("aria-selected",x===b));sec.querySelectorAll(".pk-pane").forEach(x=>x.hidden=x.dataset.pane!==b.dataset.pm);});
 function medal(pl,n){pl=Number(pl);if(!pl)return `<span class="pp-place">—</span>`;const cls=pl===1?"m1":pl===2?"m2":pl===3?"m3":"";return `<span class="pp-place ${cls}">${pl===1?"🏆 Vainqueur":pl+"<small>e</small>"}${n&&pl!==1?`<em>/ ${n}</em>`:""}</span>`;}
@@ -1366,21 +1393,21 @@ function pagePlayer(id){
   const awc={};aw.forEach(({a})=>{awc[a.name]=(awc[a.name]||0)+1;});
   const trophies=Object.keys(awc).length?`<section class="block"><div class="block-head"><h2>Awards</h2><span class="count">${aw.length}</span></div><div class="pp-aw">${Object.entries(awc).sort((x,y)=>y[1]-x[1]||x[0].localeCompare(y[0],"fr")).map(([n,c])=>`<span class="pp-awc">🏅 ${esc(n)}${c>1?` <b>×${c}</b>`:""}</span>`).join("")}</div></section>`:"";
   const hb=hostedBy(p);
-  const host=hb.orgs.length?`<section class="block"><div class="block-head"><h2>Host</h2><span class="count">${hb.orgs.length}</span></div><div class="pp-hosts">${hb.orgs.map(o=>{const ss=hb.seasons.filter(x=>x.orgId===o.id);return `<a class="pp-host" href="#org-${esc(o.id)}">${logo(o,"sm")}<span><b>${esc(o.name)}</b><small>${ss.length?ss.length+" saison"+(ss.length>1?"s":"")+" organisée"+(ss.length>1?"s":""):(FORMATS[o.format]||"ORG")}</small></span></a>`;}).join("")}</div></section>`:"";
-  const runs=h.slice().reverse().map(({s,c})=>{const o=org(s.orgId)||{};const n=(s.cast||[]).length;const pl=Number(c.place);const sa=(s.awards||[]).filter(a=>a.playerId===p.id);const hv=(s.rounds||[]).length>0;const v=hv?votesAgainst(p.id,s):null;
-    const pct=pl&&n>1?Math.round((1-(pl-1)/(n-1))*100):null;
-    return `<a class="pp-run${pl===1?" win":""}" href="#saison-${esc(s.id)}">${slogo(s,"sm")}
-      <div class="pp-run-main"><p class="pp-run-org">${esc(o.name||"ORG inconnue")} · ${esc(seasonShort(s))}${o.format?` <span class="pp-fmt">${o.format==="speed"?"Speed":"Long"}</span>`:""}</p><p class="pp-run-t">${esc(s.title||((o.name||"")+" "+seasonShort(s)))}</p>
-      ${c.sPseudo||c.sAvatar?`<p class="pp-run-as">${c.sAvatar?pic(c.sAvatar,c.sPseudo||p.pseudo,"avatar xs"):""}${c.sPseudo?`joué en tant que <b>${esc(c.sPseudo)}</b>`:"look de saison"}</p>`:""}
-      ${sa.length||c.note?`<p class="pp-run-tags">${c.note?`<span class="pp-note">${esc(c.note)}</span>`:""}${sa.map(a=>`<span class="tag tag-award">${esc(a.name)}</span>`).join("")}</p>`:""}</div>
-      <div class="pp-run-side">${medal(c.place,n)}${pct!=null&&pl!==1?`<span class="pp-mini"><i style="width:${pct}%"></i></span>`:""}${v!=null?`<small>${fmtN(v)} vote${v>1?"s":""} reçu${v>1?"s":""}</small>`:""}</div></a>`;}).join("");
+  const host=hb.orgs.length?`<section class="block"><div class="block-head"><h2>Host</h2><span class="count">${hb.orgs.length}</span></div><div class="pp-hosts">${hb.orgs.map(o=>{const ss=hb.seasons.filter(x=>x.orgId===o.id);return `<a class="pp-host" href="#org-${esc(o.id)}">${pic(orgLogoVal(o),o.name,"pp-hl")}<span><b>${esc(o.name)}</b><small>${ss.length?ss.length+" saison"+(ss.length>1?"s":"")+" organisée"+(ss.length>1?"s":""):(FORMATS[o.format]||"ORG")}</small></span></a>`;}).join("")}</div></section>`:"";
+  const runs=h.slice().reverse().map(({s,c})=>{const o=org(s.orgId)||{};const n=(s.cast||[]).length;const pl=Number(c.place);const sa=(s.awards||[]).filter(a=>a.playerId===p.id);
+    const lg=imgSrc(s.logo||orgLogoVal(o));
+    return `<a class="pc${pl===1?" win":pl&&pl<=3?" podium":""}" href="#saison-${esc(s.id)}" title="${esc(fullSeasonName(s))}">
+      <div class="pc-art">${lg?`<img src="${esc(lg)}" alt="" loading="lazy">`:`<span class="pc-ph">${esc(initials(o.name||"?"))}</span>`}
+        <div class="pc-rank">${pl?`<b>${pl}</b>${n?`<i>/${n}</i>`:""}`:`<b>—</b>`}</div>${pl===1?`<span class="pc-crown">Vainqueur</span>`:""}${o.format==="speed"?`<span class="pc-fmt">Speed</span>`:""}</div>
+      <p class="pc-org">${esc(o.name||"ORG")} · ${esc(seasonShort(s))}</p><p class="pc-t">${esc(s.title||"")}</p>
+      ${c.note?`<p class="pc-note">${esc(c.note)}</p>`:""}${sa.length?`<p class="pc-aw">${sa.map(a=>`<span>${esc(a.name)}</span>`).join("")}</p>`:""}</a>`;}).join("");
   return `<div class="crumbs"><a href="#joueurs">Joueurs</a><span>/</span><span>${esc(p.pseudo)}</span></div>
   <div class="page-head"><div>${p.precision?`<p class="eyebrow">${esc(p.precision)}</p>`:""}<h1>${esc(p.pseudo)}</h1><p class="pp-sub">${pronounsOf(p)?`<span class="pronouns">${esc(pronounsOf(p))}</span>`:""}${mine?`<span class="claimed">C'est ton profil</span>`:""}</p></div>${playerActions(p)}</div>
   <div class="wiki pp-wiki"><div class="wiki-main">${p.bio?`<blockquote class="pp-bio">${richText(p.bio)}</blockquote>`:""}
   ${h.length?pStatsHtml(h,p.id):""}
-  ${trophies}${host}
   <section class="block"><div class="block-head"><h2>Parcours</h2><span class="count">${h.length}</span></div>
-  ${h.length?`<div class="pp-runs">${runs}</div>`:`<p class="muted">Ce joueur n'apparaît encore dans aucun casting.</p>`}</section>
+  ${h.length?`<div class="pc-grid">${runs}</div>`:`<p class="muted">Ce joueur n'apparaît encore dans aucun casting.</p>`}</section>
+  ${trophies}${host}
   </div>${box}</div>`;
 }
 
