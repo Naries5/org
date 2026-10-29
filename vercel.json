@@ -1,0 +1,7 @@
+{
+  "rewrites": [
+    { "source": "/s/:id", "destination": "/api/share?t=s&id=:id" },
+    { "source": "/o/:id", "destination": "/api/share?t=o&id=:id" },
+    { "source": "/j/:id", "destination": "/api/share?t=j&id=:id" }
+  ]
+}

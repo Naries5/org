@@ -8,6 +8,16 @@
 <link rel="icon" href="icon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="icon-180.png">
 <meta name="theme-color" content="#1A0B12">
+<meta name="description" content="Le wiki communautaire des ORGs et speeds françaises : saisons, classements, votes, awards et palmarès.">
+<meta property="og:site_name" content="ORG-Central">
+<meta property="og:type" content="website">
+<meta property="og:title" content="ORG-Central">
+<meta property="og:description" content="Le wiki communautaire des ORGs et speeds françaises : saisons, classements, votes, awards et palmarès.">
+<meta property="og:image" content="https://www.orgcentral.fr/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://www.orgcentral.fr/">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
@@ -117,7 +127,11 @@ a.card:hover{border-color:var(--accent);transform:translateY(-1px)}
 .xl{width:112px;height:112px;font-size:2rem}
 
 /* Pages détail */
-.crumbs{font-size:.88rem;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap}
+.crumbs{font-size:.88rem;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.jr-rs{margin-left:8px;font:inherit;font-size:.75rem;padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:none;color:var(--muted);cursor:pointer}
+.jr-rs:hover{color:var(--accent);border-color:var(--accent)}
+.share-btn{margin-left:auto;font:inherit;font-size:.8rem;letter-spacing:.04em;padding:5px 12px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--ink);cursor:pointer}
+.share-btn:hover{border-color:var(--accent);color:var(--accent)}
 .crumbs a{color:var(--muted);text-decoration:none}
 .crumbs a:hover{color:var(--ink);text-decoration:underline}
 .head{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap}
@@ -880,6 +894,45 @@ button.ph-av{cursor:pointer}.ph-av img,.ph-av .ib-ph{width:100%;height:100%;obje
 .pl-seg button[aria-pressed="true"]{background:var(--t1);color:var(--accent-ink)}
 .pl-count{margin:0 0 8px;font-size:.85rem}
 .pl-ok{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:#3ba55d;color:#fff;font-size:.7rem;vertical-align:middle}
+.wt-list{display:flex;flex-direction:column;gap:8px}
+.wt-org{border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.03)}
+.wt-org summary{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;list-style:none}
+.wt-org summary::-webkit-details-marker{display:none}
+.wt-org summary .count{margin-left:auto}
+.wt-ss{display:flex;flex-wrap:wrap;gap:8px;padding:0 14px 14px}
+.wt-s{display:flex;flex-direction:column;align-items:flex-start;gap:2px;font:inherit;padding:7px 12px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--ink);cursor:pointer;text-align:left}
+.wt-s:hover{border-color:var(--accent)}
+.wt-s small{color:var(--muted);font-size:.74rem}
+.qa-n{font-style:normal;margin-left:6px;font-size:.75rem;padding:0 7px;border-radius:999px;background:rgba(255,255,255,.1)}
+.qa-list{display:flex;flex-direction:column;gap:12px;margin-top:12px}
+.qa-pair,.qa-season{padding:14px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.03)}
+.qa-why{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.tag.ok{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 40%,transparent)}
+.tag.warn{color:var(--gold);border-color:color-mix(in srgb,var(--gold) 40%,transparent)}
+.qa-sides{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:start}
+.qa-vs{align-self:center;font-size:1.4rem;color:var(--muted)}
+.qa-side{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.qa-side small{color:var(--muted);font-size:.8rem;line-height:1.35}
+.qa-foot{margin-top:10px;display:flex;justify-content:flex-end}
+.qa-filters{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:12px 0}
+.qa-chip{font:inherit;font-size:.82rem;padding:4px 12px;border-radius:999px;border:1px solid var(--line);background:none;color:var(--ink);cursor:pointer}
+.qa-chip.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.qa-t td{vertical-align:middle}
+.qa-h{margin:22px 0 8px}
+.qa-sh{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.qa-items{margin:10px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+.qa-items li{font-size:.92rem}
+.qa-ign{margin-left:6px;font:inherit;font-size:.75rem;background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer}
+@media (max-width:700px){.qa-sides{grid-template-columns:1fr}.qa-vs{display:none}}
+.on-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.on-tile{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.03)}
+.on-l{font-family:var(--font-cond);text-transform:uppercase;letter-spacing:.08em;font-size:.78rem;color:var(--muted)}
+.on-v{font-family:var(--font-display);font-size:1.7rem;color:var(--accent);line-height:1.1}
+.on-tile small{color:var(--muted);font-size:.82rem}
+.on-tile small a{color:var(--ink)}
+.on-hosts{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:12px}
+.on-host{display:inline-flex;flex-direction:column;padding:8px 14px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.03)}
+.on-host small{color:var(--muted);font-size:.78rem}
 .th-intro{font-size:15px;max-width:760px}
 .th-names{display:flex;flex-wrap:wrap;gap:12px}
 .th-chip{display:inline-flex;align-items:center;gap:6px;padding:7px 18px 7px 7px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.04);font-weight:700;font-size:20px}
@@ -1157,7 +1210,7 @@ function updateRole(){const el=document.getElementById("role");if(!el)return;
   const item=(href,label,n,act)=>act?`<button type="button" role="menuitem" data-act="${act}">${label}</button>`:`<a role="menuitem" href="${href}">${label}${bd(n)}</a>`;
   el.innerHTML=`<a class="hicon" href="#social" title="Messages" aria-label="Messages${msgN?" ("+msgN+" non lus)":""}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.2 3.6c-.5.4-1.3.1-1.3-.6V16A2.5 2.5 0 0 1 4 13.5z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg>${msgN?`<b class="badge">${msgN}</b>`:""}</a>
   <div class="umenu"><button type="button" class="ubtn" aria-haspopup="menu" aria-expanded="false">${av}<span class="uname">${esc(name)}</span>${tkN?`<i class="udot" aria-label="${tkN} ticket(s) ouvert(s)"></i>`:""}<svg class="caret" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-  <div class="udrop" role="menu" hidden>${item(mp?"#joueur-"+mp.id:"#moi","Mon profil")}${item("#social","Messages",msgN)}${item("#tickets",S.isAdmin?"Tickets":"Mes tickets",tkN)}${S.isOwner?item("#journal","Journal"):""}${S.isAdmin?item("#admin","Administration"):S.isHost?`<span class="umuted">Compte host</span>`:""}<hr>${item("","Déconnexion",0,"logout")}</div></div>`;}
+  <div class="udrop" role="menu" hidden>${item(mp?"#joueur-"+mp.id:"#moi","Mon profil")}${item("#social","Messages",msgN)}${item("#tickets",S.isAdmin?"Tickets":"Mes tickets",tkN)}${S.isOwner?item("#journal","Journal"):""}${S.isAdmin?item("#qualite","Qualité des données"):""}${S.isAdmin?item("#admin","Administration"):S.isHost?`<span class="umuted">Compte host</span>`:""}<hr>${item("","Déconnexion",0,"logout")}</div></div>`;}
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".ubtn");const open=document.querySelector(".udrop:not([hidden])");
   if(b){const d=b.parentNode.querySelector(".udrop");const show=d.hidden;d.hidden=!show;b.setAttribute("aria-expanded",show);return;}
   if(open&&(!e.target.closest(".udrop")||e.target.closest("a,button"))){open.hidden=true;const bb=document.querySelector(".ubtn");if(bb)bb.setAttribute("aria-expanded","false");}});
@@ -1266,6 +1319,7 @@ function render(){
     case "calendrier":html=pageCalendar(id);break;
     case "contribuer":html=pageContrib();break;
     case "merci":html=pageThanks();break;
+    case "qualite":html=pageQuality();break;
     case "social":html=pageSocial(id);break;
     default:html=pageHome();
   }
@@ -1274,11 +1328,14 @@ function render(){
   bindSearch(page);bindSearchBox(document.getElementById("hsearch"));
   themeFor(page,id);updateRole();if(page==="social")bindSocial();
   if(keepFocus){const s=document.getElementById("search");if(s){s.focus();s.setSelectionRange(s.value.length,s.value.length);}}
-  const title={merci:"Remerciements",contribuer:"Contribuer",calendrier:"Calendrier",tickets:"Tickets",social:"Messages",orgs:"ORGs",saisons:"Saisons",joueurs:"Joueurs",annonces:"Annonces",palmares:"Palmarès"}[page];
+  const title={qualite:"Qualité des données",merci:"Remerciements",contribuer:"Contribuer",calendrier:"Calendrier",tickets:"Tickets",social:"Messages",orgs:"ORGs",saisons:"Saisons",joueurs:"Joueurs",annonces:"Annonces",palmares:"Palmarès"}[page];
   document.title=title?title+" · ORG-Central":"ORG-Central";
   lastPage=h;
 }
 window.addEventListener("hashchange",()=>{render();window.scrollTo(0,0);});
+function shareBtn(k,id){return `<button type="button" class="share-btn" data-act="share" data-k="${k}" data-id="${esc(id)}" title="Copier un lien qui affiche un aperçu sur Discord">🔗 Partager</button>`;}
+async function shareLink(k,id){const u=location.origin+"/"+k+"/"+encodeURIComponent(id);
+  try{await navigator.clipboard.writeText(u);toast("Lien copié : colle-le sur Discord pour afficher l'aperçu");}catch(_){window.prompt("Copie ce lien :",u);}}
 function notFound(what){return `<div class="empty"><h2>${what} introuvable</h2><p class="muted">Cette page a peut-être été supprimée.</p><a class="btn" href="#accueil">Retour à l'accueil</a></div>`;}
 
 /* ---------- cartes ---------- */
@@ -1514,6 +1571,30 @@ function pageOrgs(){
   <div id="list">${S.orgs.length?orgListHtml():`<div class="empty"><p class="muted">Aucune ORG pour l'instant.</p>${edit(`<button class="btn primary" data-act="new-org">+ Créer une ORG</button>`)}</div>`}</div></section>`;
 }
 
+function orgNumbers(o,ss,st){
+  if(!ss.length)return "";
+  const days=s=>{if(!s.start||!s.end)return null;const d=(new Date(s.end+"T12:00:00")-new Date(s.start+"T12:00:00"))/864e5;return isNaN(d)||d<0?null:Math.round(d)+1;};
+  const withD=ss.map(s=>({s,d:days(s)})).filter(x=>x.d);const withC=ss.filter(s=>(s.cast||[]).length);
+  const avg=a=>a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length):0;
+  const longest=withD.sort((a,b)=>b.d-a.d)[0];const biggest=[...withC].sort((a,b)=>b.cast.length-a.cast.length)[0];
+  const done=ss.filter(s=>s.status==="terminee");const winners=new Set(done.map(winnerOf).filter(Boolean));
+  const multi=st.filter(x=>x.wins>1).sort((a,b)=>b.wins-a.wins);
+  const loyal=st.filter(x=>x.part>=3).length;
+  const first=ss.map(s=>s.start||periodKey(s.period)).filter(Boolean).sort()[0];
+  const sl=s=>`<a href="#saison-${esc(s.id)}">${esc(seasonShort(s))}</a>`;
+  const tiles=[
+    ["Saisons",ss.length,done.length<ss.length?`${done.length} terminée${done.length>1?"s":""}`:""],
+    ["Joueurs différents",st.length,loyal?`${loyal} fidèle${loyal>1?"s":""} (3 saisons ou +)`:""],
+    ["Casting moyen",withC.length?avg(withC.map(s=>s.cast.length))+" joueurs":"—",biggest?`Record : ${biggest.cast.length} (${sl(biggest)})`:""],
+    ["Durée moyenne",withD.length?avg(withD.map(x=>x.d))+" jours":"—",longest?`Plus longue : ${longest.d} j (${sl(longest.s)})`:""],
+    ["Vainqueurs différents",winners.size||"—",multi.length?"Multi-titrés : "+multi.slice(0,4).map(x=>`${plink(x.id)} (${x.wins})`).join(", "):""],
+    ["Depuis",first?String(first).slice(0,4):"—",first&&ss.length>1?`${ss.length} saisons en ${Math.max(1,new Date().getFullYear()-Number(String(first).slice(0,4))+1)} an${new Date().getFullYear()-Number(String(first).slice(0,4))>0?"s":""}`:""]];
+  const hosts=splitNames(o.hosts||"");
+  const hostRows=hosts.map(h=>{const p=S.players.find(p=>normName(p.pseudo)===normName(h)||aliasesOf(p).some(a=>normName(a)===normName(h)));const x=p&&st.find(y=>y.id===p.id);
+    return `<span class="on-host">${p?`<a class="who" href="#joueur-${esc(p.id)}">${ava(p,"xs")}${esc(p.pseudo)}</a>`:`<b>${esc(h)}</b>`}<small>${x?`a aussi joué ${x.part} saison${x.part>1?"s":""}${x.wins?` · ${x.wins} victoire${x.wins>1?"s":""}`:""}`:"host"}</small></span>`;}).join("");
+  return `<section class="block"><div class="block-head"><h2>En chiffres</h2></div>
+  <div class="on-grid">${tiles.map(([l,v,sub])=>`<div class="on-tile"><span class="on-l">${l}</span><b class="on-v">${v}</b>${sub?`<small>${sub}</small>`:""}</div>`).join("")}</div>
+  ${hosts.length?`<div class="on-hosts"><span class="on-l">Hosts</span>${hostRows}</div>`:""}</section>`;}
 function pageOrg(id){
   const o=org(id);if(!o)return notFound("ORG");
   const ss=seasonsOf(o.id);const news=S.news.filter(n=>n.orgId===o.id).sort(byDateDesc);
@@ -1525,12 +1606,13 @@ function pageOrg(id){
     ["Sigle",esc(o.tag||"")],["Host(s)",hostLinks(o.hosts||"")],["Format",FORMATS[o.format]||""],["Plateforme",PLATFORMS[o.platform]||""],
     ["Création",o.founded?fmtDate(o.founded):""],["Saisons",String(ss.length)],["Joueurs",String(st.length)],
     ["Plus titré",champ&&champ.wins?`${plink(champ.id)} (${champ.wins})`:""],["Discord",disc?`<a href="${esc(disc)}" target="_blank" rel="noopener">Rejoindre</a>`:""]],"pic-org",o.id);
-  return `<div class="crumbs"><a href="#orgs">ORGs</a><span>/</span><span>${esc(o.name)}</span></div>
+  return `<div class="crumbs"><a href="#orgs">ORGs</a><span>/</span><span>${esc(o.name)}</span>${shareBtn("o",o.id)}</div>
   <div class="page-head"><h1>${esc(o.name)}</h1>${edit(`<div class="actions"><button class="btn" data-act="edit-org" data-id="${esc(o.id)}">Modifier</button><button class="btn danger" data-act="del-org" data-id="${esc(o.id)}">Supprimer</button></div>`)}</div>
   <div class="wiki"><div class="wiki-main">
   ${o.description?`<p class="desc">${richText(o.description)}</p>`:""}
   <section class="block"><div class="block-head"><h2>Saisons</h2><span class="count">${ss.length}</span>${edit(`<span class="actions"><button class="btn primary sm" data-act="new-season" data-org="${esc(o.id)}">+ Nouvelle saison</button></span>`)}</div>
   ${ss.length?`<div class="stiles">${[...ss].reverse().map(x=>seasonTile(x,false)).join("")}</div>`:`<p class="muted">Aucune saison renseignée.</p>`}</section>
+  ${orgNumbers(o,ss,st)}
   ${st.length?`<section class="block"><div class="block-head"><h2>Palmarès ${esc(o.name)}</h2></div>
   <div class="tabs" role="group" aria-label="Trier le palmarès">${Object.entries(labels).map(([v,l])=>`<button type="button" data-act="opal" data-v="${v}" aria-pressed="${k===v}">${l}</button>`).join("")}</div>
   <div class="table-wrap"><table class="pal"><thead><tr><th class="num">#</th><th>Joueur</th>${Object.values(labels).map(l=>`<th class="num">${l}</th>`).join("")}<th>Meilleur</th></tr></thead><tbody>
@@ -1557,7 +1639,7 @@ function pageSeason(id){
     ["ORG",o.id?`<a href="#org-${esc(o.id)}">${esc(o.name)}</a>`:esc(o.name)],["Saison",esc(seasonShort(s))],["Thème",esc(s.title||"")],
     ["Statut",chip(s.status)],["Dates",dateRange(s)],["Format",FORMATS[o.format]||""],["Joueurs",cast.length?String(cast.length):(s.slots?esc(s.slots)+" places":"")],
     ["Vainqueur",by(1)],["2e",by(2)],["3e",by(3)],["Précédente",prv?`<a href="#saison-${esc(prv.id)}">${esc(seasonShort(prv))}</a>`:""],["Suivante",nxt?`<a href="#saison-${esc(nxt.id)}">${esc(seasonShort(nxt))}</a>`:""]],"pic-season",s.id);
-  return `<div class="crumbs"><a href="#orgs">ORGs</a><span>/</span><a href="#org-${esc(o.id||"")}">${esc(o.name)}</a><span>/</span><span>${esc(seasonShort(s))}</span></div>
+  return `<div class="crumbs"><a href="#orgs">ORGs</a><span>/</span><a href="#org-${esc(o.id||"")}">${esc(o.name)}</a><span>/</span><span>${esc(seasonShort(s))}</span>${shareBtn("s",s.id)}</div>
   <div class="page-head"><div><p class="eyebrow">${esc(o.name)} · ${esc(seasonShort(s))}</p><h1>${esc(s.title||seasonShort(s))}</h1></div>${edit(`<div class="actions">${appsOf(s).open?"":`<button class="btn" data-act="apptoggle" data-id="${esc(s.id)}">Ouvrir les candidatures</button>`}<button class="btn" data-act="edit-season" data-id="${esc(s.id)}">Modifier</button><button class="btn danger" data-act="del-season" data-id="${esc(s.id)}">Supprimer</button></div>`)}</div>
   <div class="wiki"><div class="wiki-main">
   ${s.description?`<p class="desc">${descHtml(s.description)}</p>`:""}
@@ -1700,7 +1782,7 @@ function pagePlayer(id){
   setTimeout(()=>document.querySelectorAll(".pc[data-pc-src],.pin-card[data-pc-src]").forEach(a=>hueColors(a.dataset.pcSrc,r=>{if(r)a.style.setProperty("--pc",r.t1);})),0);
   const bn=imgSrc(p.banner);const av=avatarOf(p);
   const facts=[pronounsOf(p)&&`<span>${esc(pronounsOf(p))}</span>`,p.discord&&`<span>Discord : <b>${esc(p.discord)}</b></span>`,aliasesOf(p).length&&`<span>aussi « ${aliasesOf(p).map(esc).join(" », « ")} »</span>`].filter(Boolean);
-  return `<div class="crumbs"><a href="#joueurs">Joueurs</a><span>/</span><span>${esc(p.pseudo)}</span></div>
+  return `<div class="crumbs"><a href="#joueurs">Joueurs</a><span>/</span><span>${esc(p.pseudo)}</span>${shareBtn("j",p.id)}</div>
   <header class="ph${bn?" has-bn":""}">
     <div class="ph-bn">${bn?`<img src="${esc(bn)}" alt="" style="${framing(p.bannerPos)}">`:""}${canPic?`<span class="ph-bn-btns">${bn?`<button type="button" class="btn sm" data-act="frame-banner" data-id="${esc(p.id)}">Recadrer</button>`:""}<button type="button" class="btn sm" data-act="edit-banner" data-id="${esc(p.id)}">${bn?"Changer":"+ Ajouter une bannière"}</button></span>`:""}</div>
     <div class="ph-row">
@@ -2168,7 +2250,7 @@ function moveSeasonsForm(p){
       if(clash.length)throw new Error(t.pseudo+" est déjà dans le casting de : "+clash.map(fullSeasonName).join(", ")+". Décoche ces saisons.");
       for(const sid of ids){const se=season(sid);const u=se&&swapRefs(se,p.id,t.id);if(u)await db.doc("seasons/"+sid).update(u);}
       toast(ids.length+" saison"+(ids.length>1?"s associées":" associée")+" à "+t.pseudo);location.hash="joueur-"+t.id;}});}
-function mergeForm(keep){
+function mergeForm(keep,preId){
   if(!S.isAdmin){toast("Seul l'admin peut fusionner des fiches.",true);return;}
   if(!keep)return;
   const others=()=>[...S.players].filter(p=>p.id!==keep.id).sort((a,b)=>String(a.pseudo).localeCompare(String(b.pseudo),"fr"));
@@ -2182,6 +2264,7 @@ function mergeForm(keep){
       const q=form.querySelector("#f-mq"),sel=form.querySelector("#f-other"),pv=form.querySelector("#mprev");
       q.addEventListener("input",()=>{const n=norm(q.value);sel.innerHTML=others().filter(p=>!n||norm(pLabel(p)).includes(n)||aliasesOf(p).some(a=>norm(a).includes(n))).map(opt).join("");});
       q.addEventListener("keydown",e=>{if(e.key==="Enter")e.preventDefault();});
+      if(preId)setTimeout(()=>{sel.value=preId;sel.dispatchEvent(new Event("change"));},0);
       sel.addEventListener("change",()=>{const o=player(sel.value);if(!o){pv.textContent="";return;}const both=historyOf(o.id).filter(x=>(x.s.cast||[]).some(c=>c.playerId===keep.id));
         pv.innerHTML=`Saisons de ${esc(o.pseudo)} : ${historyOf(o.id).map(x=>esc(fullSeasonName(x.s).split(" : ")[0])).join(", ")||"aucune"}.`+(both.length?` <b>Attention</b> : les deux comptes ont joué ensemble ${both.length} saison(s), seule la ligne de ${esc(keep.pseudo)} sera gardée.`:"");});
     },
@@ -2193,7 +2276,7 @@ function mergeForm(keep){
       ["avatar","bio","discord"].forEach(k=>{if(!keep[k]&&o[k])upd[k]=o[k];});
       await db.doc("players/"+keep.id).update(upd);
       await db.doc("players/"+o.id).delete();
-      toast(o.pseudo+" fusionné dans "+keep.pseudo);
+      toast(o.pseudo+" fusionné dans "+keep.pseudo);if(typeof qaInvalidate==="function")qaInvalidate();
     }});
 }
 function splitForm(p){
@@ -2290,6 +2373,136 @@ function tierList(s){if(!s)return;let st=tlLoad(s);const o=org(s.orgId)||{};
     onSave:async()=>{await loadScript("https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js");const el=document.getElementById("tl-cap");el.classList.add("snap");
       try{const cv=await html2canvas(el,{backgroundColor:"#1a0d16",scale:2,useCORS:true});const a=document.createElement("a");a.href=cv.toDataURL("image/png");a.download="tierlist-"+(fullSeasonName(s).replace(/[^\wÀ-ÿ]+/g,"-"))+".png";document.body.appendChild(a);a.click();a.remove();toast("Image téléchargée");}
       finally{el.classList.remove("snap");}throw Object.assign(new Error(""),{keep:true});}});}
+/* ---------- qualité des données ---------- */
+const QA={tab:"dups",miss:"",org:"",showAll:false};
+function pageQuality(){
+  QA_RUN++;setTimeout(bindQuality,0);
+  if(!S.isAdmin)return `<div class="empty"><h2>Réservé à l'admin</h2></div>`;
+  const tabs=[["dups","Doublons"],["todo","À compléter"],["votes","Votes à vérifier"]];
+  let body="";
+  try{body=QA.tab==="dups"?qaDupsHtml():QA.tab==="todo"?qaTodoHtml():qaVotesHtml();}catch(e){console.error(e);body=`<p class="ferr">${esc(errMsg(e))}</p>`;}
+  return `<section class="block"><div class="block-head"><h1>Qualité des données</h1>${S.isOwner?`<span class="actions"><a class="btn sm" href="#journal">Journal (restaurer)</a></span>`:""}</div>
+  <div class="tabs" role="group" aria-label="Rubrique">${tabs.map(([k,l])=>`<button type="button" data-act="qa-tab" data-v="${k}" aria-pressed="${QA.tab===k}">${l}<i class="qa-n">${qaCount(k)}</i></button>`).join("")}</div>
+  <div id="qa-body">${body}</div></section>`;}
+let QA_CACHE={};
+function qaCount(k){try{return k==="dups"?qaDups().length:k==="todo"?qaTodo().seasons.length:qaVotesAll().reduce((a,x)=>a+x.items.length,0);}catch(_){return "?";}}
+let QA_RUN=0;function qaKey(){return QA_RUN;}
+function memo(name,fn){const k=qaKey();if(QA_CACHE[name]&&QA_CACHE[name].k===k)return QA_CACHE[name].v;const v=fn();QA_CACHE[name]={k,v};return v;}
+function qaInvalidate(){QA_CACHE={};}
+
+/* --- doublons --- */
+function qaDups(){return memo("dups",()=>{
+  const seasonsOfP=new Map(),orgsOfP=new Map();
+  S.seasons.forEach(s=>(s.cast||[]).forEach(c=>{if(!c.playerId)return;(seasonsOfP.get(c.playerId)||seasonsOfP.set(c.playerId,new Set()).get(c.playerId)).add(s.id);(orgsOfP.get(c.playerId)||orgsOfP.set(c.playerId,new Set()).get(c.playerId)).add(s.orgId);}));
+  const buckets=new Map();const put=(k,pid)=>{let b=buckets.get(k);if(!b)buckets.set(k,b=new Set());b.add(pid);};
+  const names=[];
+  S.players.forEach(p=>{const ns=[...new Set([p.pseudo,...aliasesOf(p)].map(normName).filter(n=>n&&n.length>=2))];
+    ns.forEach(n=>{put("e:"+n,p.id);const d=n.replace(/\d+/g,"");if(d.length>=3&&d!==n)put("d:"+d,p.id);else if(d.length>=3)put("d:"+d,p.id);
+      if(n.length>=5){put("v:"+n,p.id);for(let i=0;i<n.length;i++)put("v:"+n.slice(0,i)+n.slice(i+1),p.id);}
+      if(n.length>=4)names.push([n,p.id]);});});
+  const pairs=new Map();const R={e:["Même pseudo",3],d:["Même pseudo sans les chiffres",2],v:["Pseudos presque identiques",1],x:["L'un commence comme l'autre",1]};
+  const add=(a,b,kind)=>{if(a===b)return;const k=a<b?a+"|"+b:b+"|"+a;const cur=pairs.get(k);if(!cur||R[kind][1]>R[cur.kind][1])pairs.set(k,{a:a<b?a:b,b:a<b?b:a,kind});};
+  buckets.forEach((set,k)=>{if(set.size<2||set.size>12)return;const arr=[...set];const kind=k[0];for(let i=0;i<arr.length;i++)for(let j=i+1;j<arr.length;j++)add(arr[i],arr[j],kind);});
+  names.sort((x,y)=>x[0]<y[0]?-1:x[0]>y[0]?1:0);
+  for(let i=0;i<names.length;i++){for(let j=i+1;j<names.length&&j<i+30;j++){if(!names[j][0].startsWith(names[i][0]))break;add(names[i][1],names[j][1],"x");}}
+  const out=[];
+  pairs.forEach(x=>{const A=player(x.a),B=player(x.b);if(!A||!B)return;
+    if((A.notSame||[]).includes(B.id)||(B.notSame||[]).includes(A.id))return;
+    if(A.precision||B.precision)return;
+    const sa=seasonsOfP.get(A.id)||new Set(),sb_=seasonsOfP.get(B.id)||new Set();
+    if([...sa].some(id=>sb_.has(id)))return;
+    const oa=orgsOfP.get(A.id)||new Set(),ob=orgsOfP.get(B.id)||new Set();const shared=[...oa].filter(o=>ob.has(o));
+    if(R[x.kind][1]<2&&!shared.length&&sa.size&&sb_.size)return;
+    if(x.kind==="x"&&!shared.length)return;
+    out.push({a:A,b:B,kind:x.kind,reason:R[x.kind][0],score:R[x.kind][1]+(shared.length?1:0)+(!sa.size||!sb_.size?1:0),shared,na:sa.size,nb:sb_.size});});
+  return out.sort((x,y)=>y.score-x.score||String(x.a.pseudo).localeCompare(String(y.a.pseudo),"fr"));});}
+function qaSide(p,n,other){const orgs=[...new Set(historyOf(p.id).map(h=>h.s.orgId))].map(o=>(org(o)||{}).name).filter(Boolean);
+  return `<div class="qa-side"><a class="who" href="#joueur-${esc(p.id)}">${ava(p,"sm")}<b>${esc(pLabel(p))}</b></a>
+    <small>${n} saison${n>1?"s":""}${orgs.length?" · "+esc(orgs.slice(0,4).join(", "))+(orgs.length>4?"…":""):""}${aliasesOf(p).length?`<br>Aussi : ${esc(aliasesOf(p).slice(0,4).join(", "))}`:""}${p.ownerUid?"<br>✓ Compte relié":""}</small>
+    <button type="button" class="btn sm" data-act="qa-merge" data-id="${esc(p.id)}" data-o="${esc(other.id)}">Garder cette fiche</button></div>`;}
+function qaDupsHtml(){const all=qaDups();const list=QA.showAll?all:all.slice(0,40);
+  if(!all.length)return `<p class="muted">Aucun doublon probable 🎉</p>`;
+  return `<p class="hint">Fiches qui ont l'air d'être la même personne. « Garder cette fiche » ouvre la fusion : l'autre fiche y sera fusionnée (ses saisons, votes et awards passent dessus). Les paires de joueurs qui ont joué ensemble ou qui ont une précision (ex : « KM ») ne sont jamais proposées.</p>
+  <div class="qa-list">${list.map(x=>`<div class="qa-pair"><div class="qa-why"><span class="tag">${esc(x.reason)}</span>${x.shared.length?`<span class="tag ok">ORG en commun : ${esc(x.shared.map(o=>(org(o)||{}).name).filter(Boolean).join(", "))}</span>`:""}</div>
+    <div class="qa-sides">${qaSide(x.a,x.na,x.b)}<span class="qa-vs">≟</span>${qaSide(x.b,x.nb,x.a)}</div>
+    <div class="qa-foot"><button type="button" class="btn sm ghost" data-act="qa-notsame" data-id="${esc(x.a.id)}" data-o="${esc(x.b.id)}">Pas la même personne</button></div></div>`).join("")}</div>
+  ${all.length>list.length?`<p><button type="button" class="btn" data-act="qa-more">Voir les ${all.length-list.length} autres</button></p>`:""}`;}
+async function qaNotSame(a,b){const A=player(a);if(!A)return;await db.doc("players/"+a).update({notSame:[...new Set([...(A.notSame||[]),b])],updatedAt:nowIso()});qaInvalidate();toast("C'est noté, cette paire ne sera plus proposée");render();}
+
+/* --- à compléter --- */
+const MISS={dates:"Dates",logo:"Logo",cast:"Casting",winner:"Gagnant",votes:"Votes",awards:"Awards",title:"Titre/thème"};
+function seasonMissing(s){const o=org(s.orgId)||{};const m=[];const fut=s.status==="annoncee"||s.status==="inscriptions";
+  if(!s.start&&!s.end&&!s.period)m.push("dates");else if(s.status==="terminee"&&!s.end&&!s.period)m.push("dates");
+  if(!s.logo&&!o.logo)m.push("logo");
+  if(!fut&&!(s.cast||[]).length)m.push("cast");
+  if(s.status==="terminee"){if((s.cast||[]).length&&!winnerOf(s))m.push("winner");
+    if(!(s.rounds||[]).some(r=>Object.keys(r.votes||{}).length))m.push("votes");
+    if(!(s.awards||[]).length)m.push("awards");}
+  return m;}
+function qaTodo(){return memo("todo",()=>{
+  const seasons=S.seasons.map(s=>({s,m:seasonMissing(s)})).filter(x=>x.m.length);
+  const orgs=S.orgs.map(o=>{const m=[];if(!String(o.hosts||"").trim())m.push("Host(s)");if(!orgLogoVal(o))m.push("Logo");if(!String(o.description||"").trim())m.push("Description");if(!o.format)m.push("Format");return {o,m};}).filter(x=>x.m.length);
+  return {seasons,orgs};});}
+function qaTodoHtml(){const {seasons,orgs}=qaTodo();
+  const cnt={};seasons.forEach(x=>x.m.forEach(k=>cnt[k]=(cnt[k]||0)+1));
+  let list=seasons.filter(x=>(!QA.miss||x.m.includes(QA.miss))&&(!QA.org||x.s.orgId===QA.org));
+  list.sort((a,b)=>String((org(a.s.orgId)||{}).name).localeCompare(String((org(b.s.orgId)||{}).name),"fr")||(Number(a.s.number)||0)-(Number(b.s.number)||0));
+  const orgOpts=[...new Set(seasons.map(x=>x.s.orgId))].map(id=>org(id)).filter(Boolean).sort((a,b)=>String(a.name).localeCompare(String(b.name),"fr"));
+  return `<div class="qa-filters"><button type="button" class="qa-chip${!QA.miss?" on":""}" data-act="qa-miss" data-v="">Tout (${seasons.length})</button>${Object.entries(MISS).filter(([k])=>cnt[k]).map(([k,l])=>`<button type="button" class="qa-chip${QA.miss===k?" on":""}" data-act="qa-miss" data-v="${k}">${l} (${cnt[k]})</button>`).join("")}
+    <select id="qa-org" class="search" style="max-width:240px" aria-label="Filtrer par ORG"><option value="">Toutes les ORGs</option>${orgOpts.map(o=>`<option value="${esc(o.id)}"${QA.org===o.id?" selected":""}>${esc(o.name)}</option>`).join("")}</select></div>
+  <div class="table-wrap"><table class="qa-t"><thead><tr><th>Saison</th><th>Il manque</th><th></th></tr></thead><tbody>
+  ${list.map(x=>`<tr><td><a class="who" href="#saison-${esc(x.s.id)}">${logo(org(x.s.orgId)||{},"xs")}${esc(fullSeasonName(x.s))}</a></td><td>${x.m.map(k=>`<span class="tag warn">${MISS[k]}</span>`).join(" ")}</td>
+  <td class="num"><span class="actions">${x.m.includes("votes")?`<button class="btn sm ghost" data-act="votes" data-id="${esc(x.s.id)}">Votes</button>`:""}${x.m.includes("awards")?`<button class="btn sm ghost" data-act="awards" data-id="${esc(x.s.id)}">Awards</button>`:""}<button class="btn sm" data-act="edit-season" data-id="${esc(x.s.id)}">Modifier</button></span></td></tr>`).join("")||`<tr><td colspan="3" class="muted">Rien à compléter ici 🎉</td></tr>`}
+  </tbody></table></div>
+  ${orgs.length?`<h3 class="qa-h">ORGs à compléter</h3><div class="table-wrap"><table class="qa-t"><tbody>${orgs.map(x=>`<tr><td><a class="who" href="#org-${esc(x.o.id)}">${logo(x.o,"xs")}${esc(x.o.name)}</a></td><td>${x.m.map(k=>`<span class="tag warn">${k}</span>`).join(" ")}</td><td class="num"><button class="btn sm" data-act="edit-org" data-id="${esc(x.o.id)}">Modifier</button></td></tr>`).join("")}</tbody></table></div>`:""}`;}
+
+/* --- votes --- */
+function qaVotesFor(s){
+  const cast=(s.cast||[]).filter(c=>c.playerId);const ids=new Set(cast.map(c=>c.playerId));
+  const nm=new Map();cast.forEach(c=>{const p=player(c.playerId);if(!p)return;[p.pseudo,...aliasesOf(p)].forEach(n=>{const k=normName(n);if(k&&!nm.has(k))nm.set(k,p.id);});});
+  const res=t=>{t=String(t||"").trim();if(!t)return null;if(ids.has(t))return t;return nm.get(normName(t))||null;};
+  const parse=v=>{if(v==null)return [];v=String(v).trim();if(!v||v==="_none")return [];if(ids.has(v))return [{pid:v,w:1}];
+    const one=part=>{part=part.trim();if(!part||/barr[ée]/i.test(part))return [];let w=1;const m=part.match(/\s*[x×]\s*(\d+(?:[.,]\d+)?)\s*$/i);if(m){w=parseFloat(m[1].replace(",","."))||1;part=part.slice(0,m.index);}const pid=res(part);return pid?[{pid,w}]:[];};
+    let out=v.split(/\s*\|\s*|\s+\/\s+/).flatMap(one);if(!out.length&&v.includes("/"))out=v.split("/").flatMap(one);return out;};
+  const elimOf=r=>{if(Array.isArray(r.eliminatedIds)&&r.eliminatedIds.length)return r.eliminatedIds.filter(i=>ids.has(i));if(r.eliminatedId)return ids.has(r.eliminatedId)?[r.eliminatedId]:[];
+    const t=String(r.eliminated||"").trim();if(!t||/^[—–-]$|aucun|personne|^\/$/i.test(t))return [];const w=res(t);if(w)return [w];return t.split(/\s*(?:&|,|\/|\+|\bet\b)\s*/).map(res).filter(Boolean);};
+  const items=[];const ign=new Set(s.qaIgnore||[]);const push=(key,round,msg)=>{if(!ign.has(key))items.push({key,round,msg});};
+  const out=new Map();const rounds=s.rounds||[];
+  const isFin=(r,i)=>/final|jury|ftc/i.test((r.label||"")+" "+(r.challenge||""))||(i===rounds.length-1&&r.winner&&!elimOf(r).length);
+  const voteR=new Map(),elimR=new Map();
+  rounds.forEach((r,i)=>{if(isFin(r,i))return;Object.entries(r.votes||{}).forEach(([v,x])=>{if(parse(x).length)(voteR.get(v)||voteR.set(v,[]).get(v)).push(i);});elimOf(r).forEach(e=>(elimR.get(e)||elimR.set(e,[]).get(e)).push(i));});
+  const back=(pid,i)=>(elimR.get(pid)||[]).some(j=>j>=i)||(voteR.get(pid)||[]).filter(j=>j>i).length>=1;
+  const pl=(l,n)=>l.length>1||/ & /.test(n)?"en ont":"en a";const plc=n=>n===1?"1er":n+"e";
+  rounds.forEach((r,i)=>{const lab=r.label||("Épisode "+(i+1));const fin=isFin(r,i);
+    if(!fin){Object.keys(r.votes||{}).forEach(v=>{if(out.has(v)&&back(v,i))out.delete(v);});}
+    const cnt=new Map();let total=0;
+    Object.entries(r.votes||{}).forEach(([voter,v])=>{const vs=parse(v);
+      if(!fin&&vs.length&&out.has(voter)&&out.get(voter)<i)push("ve:"+i+":"+voter,lab,`${pName(voter)} vote alors qu'il/elle est déjà éliminé(e) (${(rounds[out.get(voter)]||{}).label||"épisode "+(out.get(voter)+1)}).`);
+      vs.forEach(x=>{cnt.set(x.pid,(cnt.get(x.pid)||0)+x.w);total+=x.w;
+        if(!fin&&out.has(x.pid)&&out.get(x.pid)<i&&back(x.pid,i))out.delete(x.pid);
+        if(!fin&&out.has(x.pid)&&out.get(x.pid)<i)push("vt:"+i+":"+voter+":"+x.pid,lab,`${pName(voter)} vote contre ${pName(x.pid)}, déjà éliminé(e).`);});});
+    if(fin){const w=res(r.winner)||winnerOf(s);if(w&&total>=3){const top=Math.max(...cnt.values());if((cnt.get(w)||0)<top){const lead=[...cnt].filter(([,n])=>n===top).map(([p])=>pName(p)).join(" & ");push("fw:"+i,lab,`Le vainqueur ${pName(w)} a ${cnt.get(w)||0} voix mais ${lead} ${pl([],lead)} ${top}.`);}}return;}
+    const el=elimOf(r);
+    if(String(r.eliminated||"").trim()&&!el.length&&!/^[—–-]$|aucun|personne|^\/$/i.test(String(r.eliminated).trim()))push("en:"+i,lab,`Éliminé « ${r.eliminated} » introuvable dans le casting.`);
+    el.forEach(e=>{if(out.has(e))push("e2:"+i+":"+e,lab,`${pName(e)} est éliminé(e) une deuxième fois.`);});
+    if(el.length===1&&total>=3&&cnt.size){const top=Math.max(...cnt.values());const n=cnt.get(el[0])||0;if(n<top){const lead=[...cnt].filter(([,x])=>x===top).map(([p])=>pName(p)).join(" & ");push("nt:"+i,lab,`${pName(el[0])} est éliminé(e) avec ${n} voix, mais ${lead} ${pl([],lead)} ${top}${/2nd|second|moins/i.test(lab+" "+(r.recap||""))?" (twist ?)":""}.`);}}
+    el.forEach(e=>{if(!out.has(e))out.set(e,i);});});
+  // ordre d'élimination vs places
+  const placeOf=new Map(cast.map(c=>[c.playerId,Number(c.place)||0]));
+  const ord=[...out].filter(([p])=>placeOf.get(p)).sort((a,b)=>a[1]-b[1]);
+  for(let i=0;i<ord.length;i++)for(let j=i+1;j<ord.length;j++){const [a,ra]=ord[i],[b,rb]=ord[j];if(ra<rb&&placeOf.get(a)<placeOf.get(b)){push("pl:"+a+":"+b,"Classement",`${pName(a)} est sorti(e) avant ${pName(b)} mais est classé(e) ${plc(placeOf.get(a))} contre ${plc(placeOf.get(b))}.`);break;}}
+  const byPlace=new Map();cast.forEach(c=>{const pl=Number(c.place);if(pl)(byPlace.get(pl)||byPlace.set(pl,[]).get(pl)).push(c.playerId);});
+  byPlace.forEach((l,pl)=>{if(l.length>1)push("dp:"+pl,"Classement",`Place ${pl} en double : ${l.map(pName).join(", ")}.`);});
+  return items;}
+function qaVotesAll(){return memo("votes",()=>S.seasons.map(s=>({s,items:qaVotesFor(s)})).filter(x=>x.items.length).sort((a,b)=>fullSeasonName(a.s).localeCompare(fullSeasonName(b.s),"fr")));}
+function qaVotesHtml(){const all=qaVotesAll();const list=QA.showAll?all:all.slice(0,40);
+  if(!all.length)return `<p class="muted">Aucune incohérence détectée 🎉</p>`;
+  return `<p class="hint">Points qui méritent un coup d'œil : ce ne sont pas forcément des erreurs (twists, égalités, décision du dernier éliminé…). « Ignorer » les retire de la liste pour de bon.</p>
+  <div class="qa-list">${list.map(x=>`<div class="qa-season"><div class="qa-sh"><a class="who" href="#saison-${esc(x.s.id)}">${logo(org(x.s.orgId)||{},"xs")}<b>${esc(fullSeasonName(x.s))}</b></a><span class="actions"><button class="btn sm" data-act="votes" data-id="${esc(x.s.id)}">Ouvrir les votes</button><button class="btn sm ghost" data-act="cast" data-id="${esc(x.s.id)}">Casting</button></span></div>
+    <ul class="qa-items">${x.items.map(it=>`<li><span class="tag">${esc(it.round)}</span> ${esc(it.msg)} <button type="button" class="qa-ign" data-act="qa-ignore" data-id="${esc(x.s.id)}" data-k="${esc(it.key)}">Ignorer</button></li>`).join("")}</ul></div>`).join("")}</div>
+  ${all.length>list.length?`<p><button type="button" class="btn" data-act="qa-more">Voir les ${all.length-list.length} autres saisons</button></p>`:""}`;}
+async function qaIgnore(sid,key){const s=season(sid);if(!s)return;await db.doc("seasons/"+sid).update({qaIgnore:[...new Set([...(s.qaIgnore||[]),key])]});qaInvalidate();render();}
+function bindQuality(){const o=document.getElementById("qa-org");if(o&&!o._b){o._b=1;o.addEventListener("change",()=>{QA.org=o.value;render();});}}
 /* ---------- remerciements ---------- */
 const TH={credits:[],people:null};
 function pageThanks(){
@@ -2362,10 +2575,19 @@ async function storeRaw(file){if(file.size>15*1024*1024)throw new Error("« "+fi
   const ext=((b.type||"image/png").split("/")[1]||"png").replace("jpeg","jpg");const path=(S.me||"anon")+"/contrib/"+uid("c")+"."+ext;
   const {error}=await sb.storage.from("images").upload(path,b,{contentType:b.type||"image/png",upsert:false});if(error)throw sbErr(error);
   return sb.storage.from("images").getPublicUrl(path).data.publicUrl;}
+function wantedHtml(){
+  const W={votes:"votes",dates:"dates",logo:"logo",awards:"awards",winner:"gagnant"};
+  const by=new Map();S.seasons.forEach(s=>{const m=seasonMissing(s).filter(k=>W[k]);if(!m.length)return;(by.get(s.orgId)||by.set(s.orgId,[]).get(s.orgId)).push({s,m});});
+  const orgs=[...by].map(([id,l])=>({o:org(id),l:l.sort((a,b)=>(Number(a.s.number)||0)-(Number(b.s.number)||0))})).filter(x=>x.o).sort((a,b)=>String(a.o.name).localeCompare(String(b.o.name),"fr"));
+  if(!orgs.length)return "";const n=orgs.reduce((a,x)=>a+x.l.length,0);
+  return `<section class="block"><div class="block-head"><h2>Il nous manque des infos</h2><span class="count">${n}</span></div>
+  <p class="muted">Ces saisons sont incomplètes. Tu as des captures ou tu te souviens des dates ? Clique sur une saison pour la préremplir dans le formulaire.</p>
+  <div class="wt-list">${orgs.map(x=>`<details class="wt-org"><summary>${logo(x.o,"xs")}<b>${esc(x.o.name)}</b><span class="count">${x.l.length}</span></summary><div class="wt-ss">${x.l.map(y=>`<button type="button" class="wt-s" data-act="ct-fill" data-o="${esc(x.o.name)}" data-n="${esc(y.s.number)}" title="Il manque : ${esc(y.m.filter(k=>W[k]).map(k=>W[k]).join(", "))}"><b>${esc(seasonShort(y.s))}</b><small>${y.m.filter(k=>W[k]).map(k=>W[k]).join(" · ")}</small></button>`).join("")}</div></details>`).join("")}</div></section>`;}
+function ctFill(o,n){if(!S.me){login();return;}const a=document.getElementById("ct-org"),b=document.getElementById("ct-num");if(!a||!b)return;a.value=o;b.value=n;[a,b].forEach(x=>x.dispatchEvent(new Event("input")));const sg=document.getElementById("ct-sug");if(sg)sg.hidden=true;document.getElementById("ct-form").scrollIntoView({behavior:"smooth",block:"start"});toast("Saison préremplie : ajoute tes captures");}
 function pageContrib(){
   setTimeout(bindContrib,0);
   const intro=`<p class="muted">Tu as les infos d'une saison qui manque sur le wiki, ou des captures pour la compléter ? Envoie-les ici : l'équipe s'occupe de tout mettre en ligne. <a href="#merci">Voir les remerciements →</a></p>`;
-  if(!S.me)return `<section class="block"><div class="block-head"><h1>Contribuer</h1></div>${intro}<p><button class="btn primary" data-act="login">Se connecter avec Discord pour contribuer</button></p></section>`;
+  if(!S.me)return `<section class="block"><div class="block-head"><h1>Contribuer</h1></div>${intro}<p><button class="btn primary" data-act="login">Se connecter avec Discord pour contribuer</button></p></section>${wantedHtml()}`;
   const orgs=[...S.orgs].sort((a,b)=>String(a.name).localeCompare(String(b.name),"fr"));
   return `<section class="block"><div class="block-head"><h1>Contribuer</h1></div>${intro}
   <form id="ct-form" class="ct-form" novalidate>
@@ -2378,6 +2600,7 @@ function pageContrib(){
     <div class="ct-step"><span class="ct-n">3</span><div><h3>Autre chose à préciser ?</h3>${field("Message",`<textarea id="ct-msg" rows="3" maxlength="2000" placeholder="Hosts, règles spéciales, pseudos à corriger…"></textarea>`)}</div></div>
     <p class="ferr" id="ct-err" role="alert"></p><p><button type="submit" class="btn primary" id="ct-send">Envoyer</button></p>
   </form></section>
+  ${wantedHtml()}
   <section class="block"><div class="block-head"><h2>${S.isAdmin?"Contributions reçues":"Mes contributions"}</h2>${S.isAdmin?`<span class="actions"><label class="chk"><input type="checkbox" id="ct-onlyopen" checked> Seulement les ouvertes</label><button type="button" class="btn sm primary" id="ct-zip">Tout télécharger (.zip)</button></span>`:""}</div><div id="ct-list"><p class="muted">Chargement…</p></div></section>`;}
 function ctRender(k){const box=document.getElementById("ct-t-"+k);if(!box)return;box.innerHTML=CT.files[k].map((f,i)=>`<span class="ct-th"><img src="${f._u||(f._u=URL.createObjectURL(f))}" alt=""><button type="button" data-ctrm="${k}:${i}" aria-label="Retirer">×</button></span>`).join("");}
 function ctAdd(k,files){[...files].filter(f=>/^image\//.test(f.type)).forEach(f=>CT.files[k].push(f));ctRender(k);}
@@ -2642,7 +2865,7 @@ async function importExport(file,log){
 function pageAdmin(){
   if(!S.isAdmin)return `<div class="empty"><h2>Réservé à l'admin</h2><p class="muted">Connecte-toi avec le compte admin.</p></div>`;
   setTimeout(loadAdmin,0);
-  return `<section class="block"><div class="block-head"><h1>Administration</h1></div>
+  return `<section class="block"><div class="block-head"><h1>Administration</h1><span class="actions"><a class="btn primary" href="#qualite">Qualité des données</a></span></div>
   <section class="block"><div class="block-head"><h2>Demandes « C'est moi »</h2></div><div id="adm-claims"><p class="muted">Chargement…</p></div></section>
   <section class="block"><div class="block-head"><h2>Comptes et rôles</h2></div><p class="hint">Un <b>host</b> peut créer des joueurs et modifier uniquement les ORGs cochées. Un <b>admin</b> peut tout faire.</p><div id="adm-users"><p class="muted">Chargement…</p></div></section>
   <section class="block"><div class="block-head"><h2>Importer des données</h2></div><p class="hint">Choisis le fichier <b>org-central-export.json</b> téléchargé depuis l'ancien site. Les éléments déjà présents avec le même identifiant sont remplacés. Tu peux aussi y mettre un fichier de <b>classements</b> préparé par Claude : il remplit les castings et crée seulement les joueurs qui n'existent pas encore.</p><p><button class="btn" data-act="export-all">Télécharger une sauvegarde complète</button> <button class="btn" data-act="optimize-images">Alléger les images (accélère le site)</button></p><input type="file" id="f-import" accept="application/json,.json"><p id="imp-log" class="muted">${esc(S.impLog||"")}</p></section></section>`;
@@ -2659,8 +2882,9 @@ function pageJournal(){
 }
 async function loadLog(){
   const box=document.getElementById("adm-log");if(!box)return;const f=(document.getElementById("log-f")||{}).value||"";
-  let q=sb.from("audit_log").select("*").order("at",{ascending:false}).limit(250);if(f)q=q.in("tbl",f.split(","));
-  const {data,error}=await q;
+  const mk=cols=>{let q=sb.from("audit_log").select(cols).order("at",{ascending:false}).limit(250);if(f)q=q.in("tbl",f.split(","));return q;};
+  let {data,error}=await mk("id,at,user_id,action,tbl,row_id,label,extra,changes,has_before");let noRestore=false;
+  if(error&&/has_before/.test(error.message||"")){noRestore=true;({data,error}=await mk("id,at,user_id,action,tbl,row_id,label,extra,changes"));}
   if(error){box.innerHTML=`<p class="muted">Journal indisponible : lance les fichiers <b>update-4-journal.sql</b> puis <b>update-5-journal-prive.sql</b> dans Supabase. (${esc(error.message)})</p>`;return;}
   if(!data.length){box.innerHTML=`<p class="muted">Aucune modification enregistrée pour l'instant.</p>`;return;}
   const who=u=>{if(!u)return `<span class="muted">Système</span>`;const p=ADM_PROFS.find(x=>x.id===u);const pl=linkedPlayer(u);const nm=pl?pl.pseudo:(p&&p.discord_name)||"Compte inconnu";
@@ -2682,9 +2906,18 @@ async function loadLog(){
   let lastDay="";
   box.innerHTML=`<div class="jr">${data.map(r=>{const d=new Date(r.at).toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});const head=d!==lastDay?`<div class="jr-day">${esc(d)}</div>`:"";lastDay=d;
     const v=VERB[r.action]||[r.action,""];const ch=(r.changes||[]).filter(k=>!["updated_at","created_at"].includes(k));
-    return head+`<div class="jr-i ${v[1]}"><span class="jr-dot"></span><div class="jr-t">${who(r.user_id)} ${v[0]} ${NOUN[r.tbl]||r.tbl} ${target(r)}${ch.length&&r.action==="UPDATE"?`<div class="jr-ch">${ch.map(k=>`<span class="tag">${esc(LOG_FIELDS[k]||k)}</span>`).join("")}</div>`:""}</div><span class="jr-at">${fmt(r.at)}</span></div>`;}).join("")}</div>`;
+    return head+`<div class="jr-i ${v[1]}"><span class="jr-dot"></span><div class="jr-t">${who(r.user_id)} ${v[0]} ${NOUN[r.tbl]||r.tbl} ${target(r)}${ch.length&&r.action==="UPDATE"?`<div class="jr-ch">${ch.map(k=>`<span class="tag">${esc(LOG_FIELDS[k]||k)}</span>`).join("")}</div>`:""}</div><span class="jr-at">${fmt(r.at)}${r.has_before?`<button type="button" class="jr-rs" data-act="restore" data-id="${esc(r.id)}" title="Remettre ${r.action==="DELETE"?"l'élément supprimé":"l'état d'avant cette modification"}">↺ Restaurer</button>`:""}</span></div>`;}).join("")}</div>`+(noRestore?`<p class="hint">Pour pouvoir annuler une modification, lance <b>update-10-restauration.sql</b> dans Supabase.</p>`:"");
 }
 function confirmDel(m){return window.confirm(m);}
+async function restoreLog(logId){
+  const {data,error}=await sb.from("audit_log").select("id,action,tbl,row_id,label,before,at").eq("id",Number(logId)).maybeSingle();
+  if(error||!data||!data.before){toast(error?sbErr(error).message:"Rien à restaurer pour cette ligne.",true);return;}
+  const noun={orgs:"l'ORG",seasons:"la saison",players:"la fiche",news:"l'annonce"}[data.tbl]||data.tbl;
+  const when=new Date(data.at).toLocaleString("fr-FR");
+  const msg=data.action==="DELETE"?`Recréer ${noun} « ${data.label||data.row_id} » supprimée le ${when} ?`:`Remettre ${noun} « ${data.label||data.row_id} » dans l'état où elle était juste avant la modification du ${when} ?\n\nAttention : les modifications faites depuis seront aussi annulées.`;
+  if(!window.confirm(msg))return;
+  try{await db.doc(data.tbl+"/"+data.row_id).set(data.before);toast("Restauré ✔");loadLog();}catch(e){toast(errMsg(e),true);}
+}
 async function loadAdmin(){
   const box1=document.getElementById("adm-claims"),box2=document.getElementById("adm-users");if(!box1)return;
   const fi=document.getElementById("f-import");if(fi&&!fi._b){fi._b=1;fi.addEventListener("change",async()=>{const f=fi.files[0];if(!f)return;const lg={set textContent(m){S.impLog=m;const e=document.getElementById("imp-log");if(e)e.textContent=m;}};fi.disabled=true;
@@ -2953,6 +3186,10 @@ document.addEventListener("click",e=>{
     "new-player":()=>playerForm(),"new-mine":()=>{if(myPlayer()){location.hash="joueur-"+myPlayer().id;return;}playerForm(null,true);},"edit-player":()=>playerForm(player(id)),"del-player":()=>delPlayer(id),"merge-player":()=>mergeForm(player(id)),"claim":()=>claimPlayer(id,true),"login":()=>login(),"fr-add":()=>friendAction("add",b.dataset.u),"block":()=>blockAction(b.dataset.u,true),"unblock":()=>blockAction(b.dataset.u,false),"fr-accept":()=>friendAction("accept",b.dataset.u),"fr-remove":()=>friendAction("remove",b.dataset.u),"appform":()=>appFormEditor(season(id)),"apptoggle":()=>toggleApps(season(id)),"logout":()=>logout(),"claim-ok":()=>claimDecision(b.dataset.p,b.dataset.u,true),"claim-no":()=>claimDecision(b.dataset.p,b.dataset.u,false),"unsign":()=>signAction(id,"unsign"),"su-ok":()=>signAction(b.dataset.s,"ok",b.dataset.u),"su-no":()=>signAction(b.dataset.s,"no",b.dataset.u),"unclaim":()=>claimPlayer(id,false),"split-player":()=>splitForm(player(id)),"move-seasons":()=>moveSeasonsForm(player(id)),
     "new-news":()=>newsForm(null,b.dataset.org),"edit-news":()=>newsForm(newsItem(id)),"del-news":()=>delNews(id),
     "new-credit":()=>creditForm(null),"edit-credit":()=>creditForm(TH.credits.find(c=>c.id===id)),"del-credit":()=>delCredit(id),
+    "qa-tab":()=>{QA.tab=b.dataset.v;QA.showAll=false;render();},"qa-miss":()=>{QA.miss=b.dataset.v;render();},"qa-more":()=>{QA.showAll=true;render();},
+    "qa-merge":()=>mergeForm(player(id),b.dataset.o),"qa-notsame":()=>qaNotSame(id,b.dataset.o),"qa-ignore":()=>qaIgnore(id,b.dataset.k),
+    "ct-fill":()=>ctFill(b.dataset.o,b.dataset.n),
+    "share":()=>shareLink(b.dataset.k,id),"restore":()=>restoreLog(id),
     "clear-examples":clearExamples
   };
   if(A[b.dataset.act])A[b.dataset.act]();
