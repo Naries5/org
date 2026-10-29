@@ -790,6 +790,26 @@ button.ph-av{cursor:pointer}.ph-av img,.ph-av .ib-ph{width:100%;height:100%;obje
   .msg-app.has-open .msg-side{display:none}}
 @media (max-width:900px){.sb{grid-template-columns:repeat(4,1fr)}}
 .msg-back{display:none;font-size:1.8rem;text-decoration:none;color:var(--ink);line-height:1;padding:0 4px}@media (max-width:760px){.msg-back{display:block}}
+.car{position:relative}
+.car-track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;border-radius:var(--radius)}
+.car-track::-webkit-scrollbar{display:none}
+.car-s{flex:0 0 100%;scroll-snap-align:start;padding:2px}
+.car-s .spot{height:100%;min-height:230px}
+.car-nav{margin-left:auto;display:flex;gap:6px}
+.car-b{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--ink);font-size:1.4rem;line-height:1;cursor:pointer}.car-b:hover{background:var(--t1);color:var(--accent-ink)}
+.car-dots{display:flex;justify-content:center;gap:8px;margin-top:12px}
+.car-dots button{width:9px;height:9px;padding:0;border-radius:999px;border:0;background:var(--line);cursor:pointer;transition:width .25s,background .25s}
+.car-dots button[aria-current]{width:28px;background:var(--t1)}
+.ph-bn-btns{position:absolute;top:12px;right:12px;z-index:2;display:flex;gap:6px}.ph-bn-btns .btn{background:rgba(0,0,0,.55);backdrop-filter:blur(6px)}
+.ph-avw{position:relative;flex:none}.ph-av img{transition:none}
+.ph-fr{position:absolute;right:-6px;bottom:-6px;width:34px;height:34px;border-radius:50%;border:2px solid var(--surface);background:var(--t1);color:var(--accent-ink);font-size:1rem;cursor:pointer;z-index:2;box-shadow:0 4px 10px rgba(0,0,0,.4)}
+.fr-box{position:relative;overflow:hidden;border-radius:14px;background:#000;cursor:grab;touch-action:none;user-select:none;margin:0 auto;border:2px solid var(--line)}
+.fr-box.on{cursor:grabbing}.fr-box.banner{aspect-ratio:1120/220;width:100%}.fr-box.avatar{width:260px;height:260px;border-radius:28px}
+.fr-box img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+.fr-zoom{display:flex;align-items:center;gap:12px;margin-top:14px}.fr-zoom input{flex:1}
+.ph-id h1{color:var(--t1)}
+.ph{border-color:color-mix(in srgb,var(--t1) 45%,var(--line))}
+.sb{border-color:color-mix(in srgb,var(--t1) 60%,transparent)}.sb-c.gold b{color:var(--t1);text-shadow:0 0 18px color-mix(in srgb,var(--t1) 55%,transparent)}.sb-c+.sb-c::before{border-left-color:color-mix(in srgb,var(--t1) 30%,transparent)}
 </style>
 </head>
 <body>
@@ -844,7 +864,7 @@ const org=id=>byId(S.orgs,id), player=id=>byId(S.players,id), season=id=>byId(S.
 const pName=id=>{const p=player(id);return p?(p.pseudo||"Sans pseudo"):"Joueur supprimé";};
 function initials(n){n=String(n||"?").trim();const parts=n.split(/\s+/).filter(Boolean);return ((parts[0]||"?")[0]+(parts[1]?parts[1][0]:(parts[0]||"")[1]||"")).toUpperCase();}
 function imgSrc(v){if(!v)return "";v=String(v);if(v.startsWith("data:image/")||/^https:\/\//.test(v))return v;if(/^[A-Za-z0-9_-]{8,64}$/.test(v))return "/_blob/"+v;return "";}
-function pic(v,name,cls){const s=imgSrc(v);return s?`<img class="${cls}" src="${esc(s)}" alt="">`:`<span class="${cls}" aria-hidden="true">${esc(initials(name))}</span>`;}
+function pic(v,name,cls,st){const s=imgSrc(v);return s?`<img class="${cls}" src="${esc(s)}" alt=""${st?` style="${st}"`:""}>`:`<span class="${cls}" aria-hidden="true">${esc(initials(name))}</span>`;}
 function latestSeasonWithLogo(o){if(!o||!o.id)return null;const ss=seasonsOf(o.id).filter(s=>s.logo);return ss[ss.length-1]||null;}
 function orgLogoVal(o){const s=latestSeasonWithLogo(o);return s?s.logo:(o&&o.logo);}
 const logo=(o,size)=>pic(orgLogoVal(o),o&&(o.tag||o.name),"logo "+size);
@@ -855,7 +875,8 @@ function seasonAvatarMap(){if(_sav.src===S.seasons)return _sav.map;const m={};co
   [...(S.seasons||[])].sort((a,b)=>k(a).localeCompare(k(b))).forEach(s=>(s.cast||[]).forEach(c=>{if(c.sAvatar)m[c.playerId]=c.sAvatar;}));
   _sav={src:S.seasons,map:m};return m;}
 function avatarOf(p){return p?(p.avatar||seasonAvatarMap()[p.id]||""):"";}
-const ava=(p,size)=>pic(avatarOf(p),p&&p.pseudo,"avatar "+size);
+function framing(f){if(!f||typeof f!=="object")return "";const x=Math.max(0,Math.min(100,+f.x||50)),y=Math.max(0,Math.min(100,+f.y||50)),z=Math.max(1,Math.min(4,+f.z||1));return `object-position:${x}% ${y}%;${z>1?`transform:scale(${z});transform-origin:${x}% ${y}%;`:""}`;}
+const ava=(p,size)=>pic(avatarOf(p),p&&p.pseudo,"avatar "+size,p&&p.avatar&&avatarOf(p)===p.avatar?framing(p.avatarPos):"");
 function safeUrl(u){u=String(u||"").trim();return /^https?:\/\//i.test(u)?u:"";}
 function fmtDate(d){if(!d)return "";const t=new Date(d+"T12:00:00");if(isNaN(t))return esc(d);return t.toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"});}
 function dateRange(s){if(s.start&&s.end&&s.start===s.end)return fmtDate(s.start)+(s.period?" · "+esc(s.period):"");if(s.start&&s.end)return fmtDate(s.start)+" → "+fmtDate(s.end);if(s.start)return fmtDate(s.start);if(s.period)return esc(s.period);return "";}
@@ -1181,9 +1202,11 @@ function pageHome(){
   <div class="hx-counts">${counts.map(([n,l])=>`<div><b>${n.toLocaleString("fr-FR")}</b><span>${l}</span></div>`).join("")}</div></section>`;
   if(!S.orgs.length){h+=`<div class="empty"><h2>Le wiki est vide</h2>${edit(`<button class="btn primary" data-act="new-org">+ Créer une ORG</button>`)}</div>`;return h;}
   if(live.length){
-    const top=live[0];const rest=live.slice(1);
-    h+=`<section class="block"><div class="block-head"><h2 class="og-h on" style="margin:0"><span>À l'antenne</span></h2><span class="count">${live.length}</span></div>
-    <div class="air">${spotlight(top)}${rest.length?`<div class="air-list">${rest.map(airItem).join("")}</div>`:""}</div></section>`;
+    const many=live.length>1;
+    h+=`<section class="block"><div class="block-head"><h2 class="og-h on" style="margin:0"><span>À l'antenne</span></h2><span class="count">${live.length}</span>${many?`<span class="actions car-nav"><button type="button" class="car-b" data-car="-1" aria-label="Précédent">‹</button><button type="button" class="car-b" data-car="1" aria-label="Suivant">›</button></span>`:""}</div>
+    <div class="car" role="region" aria-roledescription="carrousel" aria-label="Saisons à l'antenne"><div class="car-track">${live.map(s=>`<div class="car-s">${spotlight(s)}</div>`).join("")}</div>
+    ${many?`<div class="car-dots">${live.map((s,i)=>`<button type="button" data-cdot="${i}" aria-label="${esc(fullSeasonName(s))}"${i===0?' aria-current="true"':""}></button>`).join("")}</div>`:""}</div></section>`;
+    setTimeout(bindCarousel,0);
   }
   if(ins.length)h+=`<section class="block ins-sec"><div class="ins-head"><span class="ins-kicker">Casting en cours</span><h2>Tu peux t'inscrire !</h2><p>${ins.length} saison${ins.length>1?"s cherchent":" cherche"} des joueurs en ce moment.</p></div><div class="ins-grid">${ins.map(insCard).join("")}</div></section>`;
   if(news.length||S.canEdit)h+=`<section class="block"><div class="block-head"><h2>Dernières annonces</h2><span class="actions"><a class="btn sm ghost" href="#annonces">Tout voir</a>${edit(`<button class="btn sm" data-act="new-news">+ Annonce</button>`)}</span></div>${news.length?`<div class="nw-grid">${news.map(n=>newsCard(n)).join("")}</div>`:`<p class="muted">Aucune annonce pour l'instant.</p>`}</section>`;
@@ -1224,6 +1247,18 @@ function newsCard(n){
   ${edit(`<div class="actions"><button class="btn sm ghost" data-act="edit-news" data-id="${esc(n.id)}">Modifier</button><button class="btn sm ghost danger" data-act="del-news" data-id="${esc(n.id)}">Supprimer</button></div>`)}</div></article>`;
 }
 function sLogoUrl(s){const o=org(s.orgId)||{};return imgSrc(s.logo||o.logo);}
+
+let CAR_T=null;
+function bindCarousel(){const car=document.querySelector(".car");if(!car||car._b)return;car._b=1;const tr=car.querySelector(".car-track");const n=tr.children.length;if(n<2)return;
+  const cur=()=>Math.round(tr.scrollLeft/tr.clientWidth);
+  const go=i=>{i=(i+n)%n;tr.scrollTo({left:i*tr.clientWidth,behavior:"smooth"});};
+  const mark=()=>{const i=cur();car.querySelectorAll("[data-cdot]").forEach((d,k)=>d.toggleAttribute("aria-current",k===i));};
+  tr.addEventListener("scroll",()=>{clearTimeout(tr._t);tr._t=setTimeout(mark,80);});
+  car.closest(".block").querySelectorAll("[data-car]").forEach(b=>b.addEventListener("click",()=>{go(cur()+Number(b.dataset.car));restart();}));
+  car.querySelectorAll("[data-cdot]").forEach(d=>d.addEventListener("click",()=>{go(Number(d.dataset.cdot));restart();}));
+  let paused=false;car.addEventListener("mouseenter",()=>paused=true);car.addEventListener("mouseleave",()=>paused=false);car.addEventListener("focusin",()=>paused=true);car.addEventListener("focusout",()=>paused=false);
+  const restart=()=>{clearInterval(CAR_T);if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;CAR_T=setInterval(()=>{if(!document.body.contains(tr)){clearInterval(CAR_T);return;}if(!paused&&!document.hidden)go(cur()+1);},6500);};
+  restart();}
 function spotlight(s){
   const o=org(s.orgId)||{};const u=sLogoUrl(s);const n=(s.cast||[]).length;
   const info=s.status==="en_cours"?`${n?`<b>${n}</b> joueur${n>1?"s":""} en jeu`:""}`:s.status==="inscriptions"?`Candidatures ouvertes${s.slots?` · <b>${esc(s.slots)}</b> places`:""}`:`${s.start?`Début le <b>${fmtDate(s.start)}</b>`:"Bientôt"}${s.slots?` · ${esc(s.slots)} places`:""}`;
@@ -1419,7 +1454,7 @@ function mentionShow(ta){const box=ta.parentNode.querySelector(".msug");if(!box)
 function mentionPick(ta,i){const box=ta.parentNode.querySelector(".msug");const p=box._list&&box._list[i];if(!p)return;const c=box._ctx;
   const tag=/^[^\s@<>{}()\[\],;:!?]+$/.test(p.pseudo)&&playerByName(p.pseudo)===p?"@"+p.pseudo:"@{"+p.pseudo+"}";
   const before=ta.value.slice(0,c.start),after=ta.value.slice(ta.selectionStart).replace(/^\}/,"");ta.value=before+tag+" "+after;const pos=(before+tag+" ").length;ta.focus();ta.setSelectionRange(pos,pos);mentionHide(box);}
-document.addEventListener("input",e=>{if(e.target.dataset&&e.target.dataset.mention)mentionShow(e.target);});
+document.addEventListener("input",e=>{if(e.target.dataset&&e.target.dataset.mention)mentionShow(e.target);if(e.target.id==="f-accent"&&e.target.form&&e.target.form.accentAuto)e.target.form.accentAuto.checked=false;});
 document.addEventListener("keydown",e=>{const ta=e.target;if(!(ta.dataset&&ta.dataset.mention))return;const box=ta.parentNode.querySelector(".msug");if(!box||box.hidden)return;const n=(box._list||[]).length;
   if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault();box._i=(box._i+(e.key==="ArrowDown"?1:n-1))%n;box.querySelectorAll(".psug-i").forEach((b,i)=>b.classList.toggle("on",i===box._i));}
   else if(e.key==="Enter"||e.key==="Tab"){e.preventDefault();mentionPick(ta,box._i);}else if(e.key==="Escape"){e.preventDefault();e.stopPropagation();mentionHide(box);}},true);
@@ -1458,6 +1493,22 @@ function pStatsHtml(h,pid){const D=pStatsData(h,pid);
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-pm]");if(!b)return;const sec=b.closest(".pstat-b");
   sec.querySelectorAll("[data-pm]").forEach(x=>x.setAttribute("aria-selected",x===b));sec.querySelectorAll(".pk-pane").forEach(x=>x.hidden=x.dataset.pane!==b.dataset.pm);});
 function medal(pl,n){pl=Number(pl);if(!pl)return `<span class="pp-place">—</span>`;const cls=pl===1?"m1":pl===2?"m2":pl===3?"m3":"";return `<span class="pp-place ${cls}">${pl===1?"🏆 Vainqueur":pl+"<small>e</small>"}${n&&pl!==1?`<em>/ ${n}</em>`:""}</span>`;}
+
+function frameEditor(p,kind){if(!p)return;const key=kind==="banner"?"banner":"avatar";const src=imgSrc(p[key]);if(!src)return;
+  const f=Object.assign({x:50,y:50,z:1},p[key+"Pos"]||{});
+  openModal({title:kind==="banner"?"Recadrer la bannière":"Recadrer la photo",body:`<p class="hint">Fais glisser l'image pour choisir la partie visible, et zoome avec le curseur.</p>
+    <div class="fr-box ${kind}"><img id="fr-img" src="${esc(src)}" alt="" draggable="false"></div>
+    <label class="fr-zoom"><span>Zoom</span><input type="range" id="fr-z" min="1" max="3" step="0.01" value="${f.z}"></label>
+    <p><button type="button" class="btn sm ghost" id="fr-reset">Recentrer</button></p>`,
+    onMount:form=>{const img=form.querySelector("#fr-img"),box=form.querySelector(".fr-box"),z=form.querySelector("#fr-z");
+      const apply=()=>{img.setAttribute("style",framing(f));};apply();
+      let drag=null;
+      box.addEventListener("pointerdown",e=>{drag={x:e.clientX,y:e.clientY,fx:f.x,fy:f.y};box.setPointerCapture(e.pointerId);box.classList.add("on");});
+      box.addEventListener("pointermove",e=>{if(!drag)return;const r=box.getBoundingClientRect();const k=100/f.z;f.x=Math.max(0,Math.min(100,drag.fx-(e.clientX-drag.x)/r.width*k*1.6));f.y=Math.max(0,Math.min(100,drag.fy-(e.clientY-drag.y)/r.height*k*1.6));apply();});
+      const end=()=>{drag=null;box.classList.remove("on");};box.addEventListener("pointerup",end);box.addEventListener("pointercancel",end);
+      z.addEventListener("input",()=>{f.z=Number(z.value);apply();});
+      form.querySelector("#fr-reset").addEventListener("click",()=>{f.x=50;f.y=50;f.z=1;z.value=1;apply();});},
+    onSave:async()=>{await db.doc("players/"+p.id).update({[key+"Pos"]:{x:Math.round(f.x*10)/10,y:Math.round(f.y*10)/10,z:Math.round(f.z*100)/100},updatedAt:nowIso()});toast("Cadrage enregistré");}});}
 function pagePlayer(id){
   const p=player(id);if(!p)return notFound("Joueur");
   const h=historyOf(p.id);
@@ -1480,9 +1531,9 @@ function pagePlayer(id){
   const facts=[pronounsOf(p)&&`<span>${esc(pronounsOf(p))}</span>`,p.discord&&`<span>Discord : <b>${esc(p.discord)}</b></span>`,aliasesOf(p).length&&`<span>aussi « ${aliasesOf(p).map(esc).join(" », « ")} »</span>`].filter(Boolean);
   return `<div class="crumbs"><a href="#joueurs">Joueurs</a><span>/</span><span>${esc(p.pseudo)}</span></div>
   <header class="ph${bn?" has-bn":""}">
-    <div class="ph-bn">${bn?`<img src="${esc(bn)}" alt="">`:""}${mine?`<button type="button" class="btn sm ph-bn-btn" data-act="edit-player" data-id="${esc(p.id)}">${bn?"Changer la bannière":"+ Ajouter une bannière"}</button>`:""}</div>
+    <div class="ph-bn">${bn?`<img src="${esc(bn)}" alt="" style="${framing(p.bannerPos)}">`:""}${canPic?`<span class="ph-bn-btns">${bn?`<button type="button" class="btn sm" data-act="frame-banner" data-id="${esc(p.id)}">Recadrer</button>`:""}<button type="button" class="btn sm" data-act="edit-player" data-id="${esc(p.id)}">${bn?"Changer":"+ Ajouter une bannière"}</button></span>`:""}</div>
     <div class="ph-row">
-      ${canPic?`<button type="button" class="ph-av picbtn" data-act="pic-player" data-id="${esc(p.id)}" aria-label="Changer la photo">${bigImg(av,p.pseudo)}<span class="pb-l">Changer</span></button>`:`<div class="ph-av">${bigImg(av,p.pseudo)}</div>`}
+      ${(()=>{const im=av?`<img src="${esc(imgSrc(av))}" alt="" style="${p.avatar&&av===p.avatar?framing(p.avatarPos):""}">`:bigImg(av,p.pseudo);return canPic?`<div class="ph-avw"><button type="button" class="ph-av picbtn" data-act="pic-player" data-id="${esc(p.id)}" aria-label="Changer la photo">${im}<span class="pb-l">Changer</span></button>${p.avatar?`<button type="button" class="ph-fr" data-act="frame-avatar" data-id="${esc(p.id)}" title="Recadrer la photo" aria-label="Recadrer la photo">⤧</button>`:""}</div>`:`<div class="ph-av">${im}</div>`;})()}
       <div class="ph-id">${p.precision?`<p class="eyebrow">${esc(p.precision)}</p>`:""}<h1>${esc(p.pseudo)}</h1>${p.tagline?`<p class="ph-tag">${esc(p.tagline)}</p>`:""}
         <p class="ph-facts">${mine?`<span class="claimed">C'est ton profil</span>`:""}${facts.join("")}</p></div>
       ${playerActions(p)}
@@ -2470,7 +2521,7 @@ document.addEventListener("click",e=>{
   if(!b){const tr=e.target.closest("tr[data-href]");if(tr&&!e.target.closest("a"))location.hash=tr.dataset.href.slice(1);return;}
   const id=b.dataset.id;
   const A={
-    "new-org":()=>orgForm(),"pic-org":()=>picForm("org",org(id)),"pic-player":()=>picForm("player",player(id)),"pic-season":()=>picForm("season",season(id)),"edit-org":()=>orgForm(org(id)),"del-org":()=>delOrg(id),
+    "new-org":()=>orgForm(),"pic-org":()=>picForm("org",org(id)),"pic-player":()=>picForm("player",player(id)),"frame-banner":()=>frameEditor(player(id),"banner"),"frame-avatar":()=>frameEditor(player(id),"avatar"),"pic-season":()=>picForm("season",season(id)),"edit-org":()=>orgForm(org(id)),"del-org":()=>delOrg(id),
     "new-season":()=>seasonForm(null,b.dataset.org),"edit-season":()=>seasonForm(season(id)),"del-season":()=>delSeason(id),
     "cast":()=>castEditor(season(id)),"export-all":async()=>{try{await exportAll();toast("Sauvegarde téléchargée");}catch(e){toast(errMsg(e),true);}},"slooks":()=>seasonLooksEditor(season(id)),"awards":()=>awardsEditor(season(id)),
     "filter":()=>{S.f[b.dataset.k]=b.dataset.v;render();},"opal":()=>{S.f.opal=b.dataset.v;render();},"votes":()=>votesEditor(season(id)),
