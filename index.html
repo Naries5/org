@@ -575,6 +575,7 @@ select[size]{padding:4px}
 .ans{display:flex;flex-direction:column;gap:2px}.ans span{font-size:.8rem}.ans p{margin:0;white-space:pre-wrap}
 @media (max-width:860px){.social{grid-template-columns:1fr}.qrow{grid-template-columns:1fr 1fr}}
 .dayin{position:relative;display:flex;gap:6px;align-items:stretch}.dayin>input[data-day]{flex:1;min-width:0}.daybtn{flex:none;width:42px;border-radius:10px;border:1px solid var(--line,#444);background:transparent;cursor:pointer;font-size:17px}.daybtn:hover{background:rgba(255,255,255,.06)}.daynat{position:absolute;right:0;bottom:0;width:42px;height:100%;opacity:0;pointer-events:none}
+.vstruck{text-decoration:line-through;text-decoration-thickness:2px;opacity:.6}
 </style>
 </head>
 <body>
@@ -655,6 +656,11 @@ function voteWeights(s,v){if(!v||v==="_none")return [];if(/\|.*\(barr[ée]\)\s*$
   t.split(/\s*[\/|]\s*/).forEach(x=>{x=x.trim();if(!x||/barr[ée]/i.test(x))return;let w=1;const m=x.match(/^(.*\S)\s*x\s*(\d+(?:[.,]\d+)?)$/i);if(m){x=m[1];w=Number(m[2].replace(",","."));if(!(w>=0))w=1;w=Math.min(w,9);}const r=resolveName(s,x.trim());if(r)out.push({id:r,w});});
   return out;}
 function targetsOf(s,v){const o=[];voteWeights(s,v).forEach(x=>{const n=Math.max(1,Math.round(x.w));for(let i=0;i<n;i++)o.push(x.id);});return o;}
+const BARRE=/\s*\(barr[ée]e?\)\s*/gi;
+function voteHtml(t){t=String(t||"");if(!/barr[ée]/i.test(t))return esc(t);
+  const strike=x=>`<s class="vstruck" title="Vote annulé">${esc(x.replace(BARRE," ").trim())}</s>`;
+  if(/\|.*\(barr[ée]\)\s*$/i.test(t))return strike(t);
+  return t.split(/(\s*[\/|]\s*)/).map(x=>/^\s*[\/|]\s*$/.test(x)?" / ":/barr[ée]/i.test(x)?strike(x):esc(x)).join("");}
 function cellText(v){if(!v)return "";if(v==="_none")return "Pas de vote";return player(v)?pName(v):String(v);}
 function elimText(r){if(r.eliminated!=null)return String(r.eliminated);if(Array.isArray(r.eliminatedIds))return r.eliminatedIds.map(pName).join(" & ");return r.eliminatedId?pName(r.eliminatedId):"";}
 function elimIds(s,r){const ids=new Set();if(r.eliminatedId)ids.add(r.eliminatedId);(r.eliminatedIds||[]).forEach(x=>ids.add(x));String(r.eliminated||"").split(/\s*(?:&|,|\+|\/|\bet\b)\s*/i).forEach(n=>{const id=resolveName(s,n);if(id)ids.add(id);});return [...ids];}
@@ -1145,7 +1151,7 @@ function votesTable(s){
       const e=elimAt[c.playerId];if(!txt)return (e!==undefined&&i>e)?`<td class="out" aria-label="Éliminé·e"></td>`:"<td></td>";
       const tm=teamFor(s,c,r.phase==null?1:r.phase);const el=elimIds(s,r);
       const hit=targetsOf(s,raw).some(t=>el.includes(t));
-      return `<td class="${tm?"tc":""}${hit?" hit":""}"${tm?` style="--tc:${esc(tm.color)}"`:""}>${esc(txt)}</td>`;}).join("")}</tr>`;}).join("");
+      return `<td class="${tm?"tc":""}${hit?" hit":""}"${tm?` style="--tc:${esc(tm.color)}"`:""}>${voteHtml(txt)}</td>`;}).join("")}</tr>`;}).join("");
   let foot=row("Éliminé·e(s)",rounds.map(r=>`<td class="elim">${elimHtml(s,r)}</td>`).join(""),"vfoot");
   if(any("recap"))foot+=row("Récapitulatif",rounds.map(r=>`<td class="recap">${colorize(s,r.recap)}</td>`).join(""),"vfoot");
   const legend=teams.length?`<div class="legend">${teams.map(t=>`<span><i class="sw" style="background:${esc(t.color)}"></i>${esc(t.name)}</span>`).join("")}<span><i class="sw" style="background:var(--out)"></i>Éliminé·e</span></div>`:`<div class="legend"><span><i class="sw" style="background:var(--out)"></i>Déjà éliminé·e</span></div>`;
