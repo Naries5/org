@@ -911,6 +911,14 @@ button.ph-av{cursor:pointer}.ph-av img,.ph-av .ib-ph{width:100%;height:100%;obje
 .tl-bar{display:flex;gap:8px;margin:10px 0 0}
 @media (max-width:600px){.tl-it{width:56px;height:56px}.tl-lab{width:60px;font-size:1.2rem}}
 .ph{overflow:visible}.ph-bn{border-radius:22px 22px 0 0;overflow:hidden}.ph-row{z-index:3}.pp-more-m{z-index:50;min-width:260px}.pp-more-m button{white-space:nowrap}
+.pin-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin:16px 24px 0}
+.pin-card{--pc:var(--t1);position:relative;display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:16px;text-decoration:none;color:var(--ink);background:linear-gradient(135deg,color-mix(in srgb,var(--pc) 22%,var(--surface-2)),var(--surface));border:2px solid color-mix(in srgb,var(--pc) 70%,transparent);box-shadow:0 0 22px color-mix(in srgb,var(--pc) 25%,transparent);transition:transform .2s}
+.pin-card:hover{transform:translateY(-3px) rotate(-.5deg)}
+.pin-tag{position:absolute;top:-10px;right:12px;font-family:var(--font-cond);font-weight:800;text-transform:uppercase;letter-spacing:.08em;font-size:.68rem;padding:2px 8px;border-radius:6px;background:var(--pc);color:#1A0B12}
+.pin-logo{width:64px;height:64px;border-radius:14px;object-fit:cover;flex:none;display:inline-grid;place-items:center;background:var(--surface-2);font-family:var(--font-display);color:var(--t1);box-shadow:0 6px 14px rgba(0,0,0,.4)}
+.pin-txt{display:flex;flex-direction:column;min-width:0}.pin-txt b{font-family:var(--font-display);font-size:1.15rem;line-height:1.1}.pin-txt small{color:var(--muted);margin-top:4px}
+.pin-checks{display:flex;flex-wrap:wrap;gap:6px 14px}
+@media (max-width:640px){.pin-row{margin:14px 16px 0}}
 </style>
 </head>
 <body>
@@ -1659,7 +1667,7 @@ function pagePlayer(id){
         <div class="pc-rank">${pl?`<b>${pl}<sup>${pl===1?"er":"e"}</sup></b>${n?`<i>/ ${n}</i>`:""}`:`<b>—</b>`}</div>${fb?`<span class="pc-tag">First boot</span>`:""}${o.format==="speed"?`<span class="pc-fmt">Speed</span>`:""}</div>
       <p class="pc-org">${esc(o.name||"ORG")} · ${esc(seasonShort(s))}</p><p class="pc-t">${esc(s.title||"")}</p>
       ${c.note?`<p class="pc-note">${esc(c.note)}</p>`:""}${sa.length?`<p class="pc-aw">${sa.map(a=>`<span>${esc(awardLabel(a.name))}</span>`).join("")}</p>`:""}</a>`;}).join("");
-  setTimeout(()=>document.querySelectorAll(".pc[data-pc-src]").forEach(a=>hueColors(a.dataset.pcSrc,r=>{if(r)a.style.setProperty("--pc",r.t1);})),0);
+  setTimeout(()=>document.querySelectorAll(".pc[data-pc-src],.pin-card[data-pc-src]").forEach(a=>hueColors(a.dataset.pcSrc,r=>{if(r)a.style.setProperty("--pc",r.t1);})),0);
   const bn=imgSrc(p.banner);const av=avatarOf(p);
   const facts=[pronounsOf(p)&&`<span>${esc(pronounsOf(p))}</span>`,p.discord&&`<span>Discord : <b>${esc(p.discord)}</b></span>`,aliasesOf(p).length&&`<span>aussi « ${aliasesOf(p).map(esc).join(" », « ")} »</span>`].filter(Boolean);
   return `<div class="crumbs"><a href="#joueurs">Joueurs</a><span>/</span><span>${esc(p.pseudo)}</span></div>
@@ -1672,7 +1680,10 @@ function pagePlayer(id){
       ${playerActions(p)}
     </div>
     ${p.bio?`<div class="ph-bio">${richText(p.bio)}</div>`:""}
-    ${orgsPlayed.length?`<p class="ph-orgs">${orgsPlayed.map(o=>`<a href="#org-${esc(o.id)}" title="${esc(o.name)}">${pic(orgLogoVal(o),o.name,"pp-hl")}<span>${esc(o.name)}</span></a>`).join("")}</p>`:""}
+    ${(()=>{const pins=(Array.isArray(p.pinnedOrgs)?p.pinnedOrgs:[]).map(org).filter(Boolean);if(!pins.length)return "";const hb=hostedBy(p);
+      return `<div class="pin-row">${pins.map(o=>{const hs=h.filter(x=>x.s.orgId===o.id);const best=Math.min(...hs.map(x=>Number(x.c.place)).filter(Boolean),999);const wins=hs.filter(x=>Number(x.c.place)===1).length;const host=hb.orgs.some(x=>x.id===o.id);const u=imgSrc(orgLogoVal(o));
+        return `<a class="pin-card" href="#org-${esc(o.id)}"${u?` data-pc-src="${esc(u)}"`:""}><span class="pin-tag">📌 Épinglée</span>${pic(orgLogoVal(o),o.name,"pin-logo")}<span class="pin-txt"><b>${esc(o.name)}</b><small>${[hs.length?hs.length+" saison"+(hs.length>1?"s":""):"",wins?"🏆 "+wins+" victoire"+(wins>1?"s":""):best<999?"meilleure place : "+best+"e":"",host?"Host":""].filter(Boolean).join(" · ")}</small></span></a>`;}).join("")}</div>`;})()}
+    ${(()=>{const pinned=new Set(Array.isArray(p.pinnedOrgs)?p.pinnedOrgs:[]);const rest=orgsPlayed.filter(o=>!pinned.has(o.id));return rest.length?`<p class="ph-orgs">${rest.map(o=>`<a href="#org-${esc(o.id)}" title="${esc(o.name)}">${pic(orgLogoVal(o),o.name,"pp-hl")}<span>${esc(o.name)}</span></a>`).join("")}</p>`:"";})()}
   </header>
   ${h.length?pStatsHtml(h,p.id):""}
   <section class="block"><div class="block-head"><h2>Parcours</h2><span class="count">${h.length}</span></div>
@@ -1730,6 +1741,7 @@ function dayInp(name,val){return `<div class="dayin">${inp(name,frDay(val),'plac
 document.addEventListener("input",e=>{const t=e.target;
   if(t.dataset&&t.dataset.day&&!(e.inputType||"").startsWith("delete")&&/^[\d\/]*$/.test(t.value)&&(/^\d+$/.test(t.value)||t.dataset.auto==="1")){if(t.value.split("/").some((x,i,a)=>i<a.length-1&&x.length!==2)){t.dataset.auto="";return;}t.dataset.auto="1";let d=t.value.replace(/[^\d]/g,"").slice(0,8);t.value=d.length>4?d.slice(0,2)+"/"+d.slice(2,4)+"/"+d.slice(4):d.length>2?d.slice(0,2)+"/"+d.slice(2):d;}
   if(t.dataset&&t.dataset.dayfor){const x=document.getElementById("f-"+t.dataset.dayfor);if(x&&t.value)x.value=frDay(t.value);}});
+document.addEventListener("change",e=>{if(e.target.name==="pin"&&e.target.checked&&e.target.form&&e.target.form.querySelectorAll("[name=pin]:checked").length>3){e.target.checked=false;toast("3 ORGs épinglées maximum.",true);}});
 document.addEventListener("change",e=>{const t=e.target;if(t.dataset&&t.dataset.dayfor){const x=document.getElementById("f-"+t.dataset.dayfor);if(x&&t.value)x.value=frDay(t.value);}});
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-daypick]");if(!b)return;const n=b.parentNode.querySelector(".daynat");const x=document.getElementById("f-"+b.dataset.daypick);
   try{const iso=isoDay(x.value,"");if(iso)n.value=iso;}catch(_){}
@@ -1895,12 +1907,14 @@ function playerForm(p,own){
     ${field("Autres pseudos",inp("aliases",aliasesOf(p).join(", "),'maxlength="300" placeholder="Séparés par des virgules"'),"Les anciens pseudos sont reconnus dans la recherche et les tableaux de votes.")}
     ${imageField("avatar",p.avatar,"Photo de profil",true,"avatar",p.avatarPos)}
     ${imageField("banner",p.banner,"Bannière (en haut du profil)",false,"banner",p.bannerPos)}
+    ${(()=>{if(isNew)return "";const ids=new Set([...historyOf(p.id).map(x=>x.s.orgId),...hostedBy(p).orgs.map(o=>o.id)]);const list=[...ids].map(org).filter(Boolean).sort((a,b)=>String(a.name).localeCompare(String(b.name),"fr"));if(!list.length)return "";const cur=Array.isArray(p.pinnedOrgs)?p.pinnedOrgs:[];
+      return field("ORGs épinglées (3 maximum)",`<div class="checks pin-checks">${list.map(o=>`<label class="chk"><input type="checkbox" name="pin" value="${esc(o.id)}"${cur.includes(o.id)?" checked":""}> ${esc(o.name)}</label>`).join("")}</div>`,"Elles sont mises en avant en haut de ton profil.");})()}
     <div class="frow">${field("Devise",inp("tagline",p.tagline,'maxlength="80" placeholder="ex : Je ne joue pas, je survis."'))}${field("Couleur du profil",`<span class="acc-in"><input type="color" id="f-accent" name="accent" value="${esc(/^#[0-9a-f]{6}$/i.test(p.accent||"")?p.accent:"#ffc23d")}"><label class="chk"><input type="checkbox" name="accentAuto" ${p.accent?"":"checked"}> Automatique (d'après la bannière ou la photo)</label></span>`)}</div>
     ${field("Pseudo Discord",inp("discord",p.discord,'maxlength="40" placeholder="ex : pseudo#0000 ou @pseudo"'))}
     ${field("Bio",area("bio",p.bio,'rows="4" maxlength="2000" placeholder="Style de jeu, faits marquants…"'))}`,
     onSave:async f=>{
       const v=vals(f);const id=p.id||uid("p");const t=nowIso();
-      const data=Object.assign(strip(p),{pseudo:v.pseudo,precision:v.precision,pronouns:v.pronouns,aliases:(v.aliases||"").split(",").map(x=>x.trim()).filter(Boolean),discord:v.discord,bio:v.bio,tagline:v.tagline||"",accent:f.querySelector("[name=accentAuto]").checked?"":(v.accent||""),avatar:await resolveImage(f,"avatar",p.avatar),banner:await resolveImage(f,"banner",p.banner),avatarPos:(f._pos||{}).avatar||p.avatarPos||null,bannerPos:(f._pos||{}).banner||p.bannerPos||null,updatedAt:t});
+      const data=Object.assign(strip(p),{pseudo:v.pseudo,precision:v.precision,pronouns:v.pronouns,aliases:(v.aliases||"").split(",").map(x=>x.trim()).filter(Boolean),discord:v.discord,bio:v.bio,tagline:v.tagline||"",pinnedOrgs:f.querySelector("[name=pin]")?[...f.querySelectorAll("[name=pin]:checked")].map(x=>x.value).slice(0,3):(p.pinnedOrgs||[]),accent:f.querySelector("[name=accentAuto]").checked?"":(v.accent||""),avatar:await resolveImage(f,"avatar",p.avatar),banner:await resolveImage(f,"banner",p.banner),avatarPos:(f._pos||{}).avatar||p.avatarPos||null,bannerPos:(f._pos||{}).banner||p.bannerPos||null,updatedAt:t});
       if(isNew)data.createdAt=t;
       await db.doc("players/"+id).set(data);
       toast(isNew?(own?"Ta fiche est créée":"Joueur ajouté"):"Profil mis à jour");
