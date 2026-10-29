@@ -823,6 +823,56 @@ button.ph-av{cursor:pointer}.ph-av img,.ph-av .ib-ph{width:100%;height:100%;obje
 .spot-last{gap:8px}.spot-last-l{font-size:.85rem}
 .spot-out{gap:10px;padding:5px 16px 5px 5px}.spot-out .avatar{width:52px;height:52px;font-size:1rem}.spot-out b{font-size:1.25rem;font-family:var(--font-display);letter-spacing:.01em}.spot-out small{font-size:1rem;font-weight:700}
 .crop-wrap{margin:4px 0 10px;padding:12px;border-radius:14px;border:1px dashed var(--line);background:rgba(255,255,255,.02)}.crop-wrap .fr-box.avatar{width:180px;height:180px}.crop-wrap .fr-zoom{margin-top:10px}.crop-wrap>.btn{margin-top:6px}
+
+/* messagerie façon Discord */
+.msg-app{--dc-bg:#313338;--dc-side:#2b2d31;--dc-dark:#1e1f22;--dc-hover:#35373c;--dc-sel:#404249;--dc-txt:#dbdee1;--dc-mut:#949ba4;--dc-blurple:#5865f2;
+  background:var(--dc-bg);border:0;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.45);font-family:"gg sans","Noto Sans","Helvetica Neue",var(--font-body);color:var(--dc-txt);grid-template-columns:260px minmax(0,1fr)}
+.msg-side{background:var(--dc-side);border-right:0;padding-bottom:10px}
+.msg-search{padding:10px 10px 8px;border-bottom:1px solid var(--dc-dark);box-shadow:0 1px 0 rgba(0,0,0,.2)}
+.msg-search input{background:var(--dc-dark);border:0;border-radius:6px;padding:7px 10px;font-size:.85rem;color:var(--dc-txt);height:30px}
+.msg-search input::placeholder{color:var(--dc-mut)}
+.msg-lbl{margin:16px 16px 4px 18px;font-family:inherit;font-size:.72rem;letter-spacing:.02em;font-weight:700;color:var(--dc-mut)}
+.cvs{padding:0 8px;gap:2px}
+.cv{padding:6px 8px;border-radius:6px;gap:12px;color:var(--dc-mut)}
+.cv:hover{background:var(--dc-hover);color:var(--dc-txt)}
+.cv.on{background:var(--dc-sel);box-shadow:none;color:#fff}
+.cv .avatar{width:32px;height:32px}.cv.sm .avatar{width:32px;height:32px}
+.cv-m b{font-weight:500;font-size:.95rem}.cv-m small{font-size:.75rem;color:var(--dc-mut)}
+.cv-top time{display:none}
+.cv.un .cv-m b{color:#fff;font-weight:600}.cv.un::before{content:"";position:absolute;left:-8px;top:50%;width:4px;height:8px;margin-top:-4px;border-radius:0 4px 4px 0;background:#fff}
+.cv-n{background:#f23f43;min-width:16px;height:16px;font-size:.7rem}
+.msg-friends summary{color:var(--dc-mut)}.msg-friends summary::before{content:""}
+.cv-empty{color:var(--dc-mut)}
+.msg-req .urow{color:var(--dc-txt)}
+.msg-main{background:var(--dc-bg)}
+.msg-head{background:var(--dc-bg);border-bottom:1px solid var(--dc-dark);box-shadow:0 1px 0 rgba(0,0,0,.2);padding:10px 16px;gap:8px;min-height:48px}
+.dc-at{font-size:1.4rem;color:var(--dc-mut);font-weight:500;margin-right:2px}
+.msg-head-n{flex-direction:row;align-items:baseline;gap:10px}.msg-head-n b{color:#f2f3f5;font-size:1rem}.msg-head-n small{color:var(--dc-mut);font-size:.8rem}.msg-head-n small a{color:#00a8fc}
+.msg-head .btn{background:transparent;border-color:#4e5058;color:var(--dc-txt);border-radius:4px}.msg-head .btn:hover{background:#4e5058}
+.msg-thread{padding:0 0 16px;gap:0}
+.dc-day{display:flex;align-items:center;margin:20px 16px 8px;color:var(--dc-mut);font-size:.75rem;font-weight:600}
+.dc-day::before,.dc-day::after{content:"";flex:1;border-top:1px solid #3f4147}.dc-day span{padding:0 8px}
+.dc-msg{display:flex;gap:16px;padding:2px 48px 2px 16px;position:relative}
+.dc-msg:hover{background:#2e3035}
+.dc-msg.head{margin-top:14px;padding-top:2px}
+.dc-av .avatar{width:40px;height:40px;border-radius:50%}.dc-av{flex:none;width:40px}
+.dc-side{width:40px;flex:none;font-size:.68rem;color:var(--dc-mut);text-align:right;line-height:22px;opacity:0}
+.dc-msg:hover .dc-side{opacity:1}
+.dc-body{min-width:0}
+.dc-meta{margin:0;display:flex;align-items:baseline;gap:8px}
+.dc-name{font-weight:600;color:#f2f3f5;text-decoration:none}.dc-name:hover{text-decoration:underline}.dc-name.me{color:var(--t1)}
+.dc-meta time{font-size:.75rem;color:var(--dc-mut)}
+.dc-txt{margin:0;line-height:1.375;color:var(--dc-txt);white-space:pre-wrap;word-break:break-word}
+.dc-txt a{color:#00a8fc}.dc-txt a.mention{background:rgba(88,101,242,.3);color:#c9cdfb;border:0;border-radius:3px;padding:0 2px}
+.dc-start{margin-top:auto;padding:16px}.dc-start .avatar{width:80px;height:80px;border-radius:50%;font-size:1.6rem}.dc-start h2{margin:8px 0 4px;color:#f2f3f5;font-size:1.8rem}.dc-start p{color:var(--dc-mut);margin:0}
+.msg-thread>.dc-msg:first-child,.msg-thread>.dc-day:first-child{margin-top:auto}
+.msg-form{background:var(--dc-bg);border-top:0;padding:0 16px 22px}
+.dc-input{display:flex;align-items:flex-end;flex:1;background:#383a40;border-radius:8px;padding:0 6px 0 16px}
+.dc-input textarea{flex:1;background:transparent;border:0;box-shadow:none!important;outline:none;color:var(--dc-txt);padding:11px 0;min-height:44px;font:inherit}
+.dc-input textarea::placeholder{color:#6d6f78}
+.dc-send{background:none;border:0;color:var(--dc-mut);width:36px;height:44px;display:grid;place-items:center;cursor:pointer}.dc-send:hover{color:var(--dc-txt)}.dc-send svg{width:20px;height:20px}
+.msg-empty h2{color:#f2f3f5}.msg-empty-i{background:#2b2d31;color:var(--dc-mut)}
+.msg-back{color:var(--dc-mut)}
 </style>
 </head>
 <body>
@@ -2405,19 +2455,18 @@ function pageSocial(id){
   const lp=open&&linkedPlayer(open);const st=open?friendState(open):"";
   return `<div class="msg-app${open?" has-open":""}">
     <aside class="msg-side">
-      <div class="msg-side-h"><h1>Messages</h1></div>
-      <div class="msg-search"><input id="f-usearch" placeholder="Écrire à un joueur…" autocomplete="off" aria-label="Chercher un joueur"><div id="ures"></div></div>
+      <div class="msg-search"><input id="f-usearch" placeholder="Rechercher un joueur" autocomplete="off" aria-label="Chercher un joueur"><div id="ures"></div></div>
       ${rec.length?`<div class="msg-req"><p class="msg-lbl">Demandes d'ami · ${rec.length}</p>${rec.map(u=>userRow(u,`<button class="btn sm primary" data-act="fr-accept" data-u="${esc(u)}">Accepter</button><button class="btn sm ghost" data-act="fr-remove" data-u="${esc(u)}">Refuser</button>`)).join("")}</div>`:""}
-      <p class="msg-lbl">Conversations</p><div id="convos" class="cvs">${convosHtml()}</div>
+      <p class="msg-lbl">Messages privés</p><div id="convos" class="cvs">${convosHtml()}</div>
       <details class="msg-friends"${friends.length?"":" open"}><summary class="msg-lbl">Amis · ${friends.length}</summary>
         ${friends.length?friends.map(u=>`<a class="cv sm" href="#social-${esc(u)}">${userAva(u,"sm-img")}<span class="cv-m"><b>${esc(userName(u))}</b></span></a>`).join(""):`<p class="muted cv-empty">Pas encore d'amis. « Ajouter en ami » depuis une fiche joueur ou la recherche.</p>`}
         ${sent.length?`<p class="msg-lbl">Demandes envoyées</p>${sent.map(u=>userRow(u,`<button class="btn sm ghost" data-act="fr-remove" data-u="${esc(u)}">Annuler</button>`)).join("")}`:""}
       </details>
     </aside>
-    <section class="msg-main">${open?`<div class="msg-head"><a class="msg-back" href="#social" aria-label="Retour aux conversations">‹</a>${userAva(open,"sm-img")}<div class="msg-head-n"><b>${esc(userName(open))}</b><small>${lp?`<a href="#joueur-${esc(lp.id)}">Voir la fiche joueur</a>`:esc((S.profiles[open]||{}).discord_name||"")}${st==="friends"?" · ami":""}</small></div>
+    <section class="msg-main">${open?`<div class="msg-head"><a class="msg-back" href="#social" aria-label="Retour aux conversations">‹</a><span class="dc-at">@</span><div class="msg-head-n"><b>${esc(userName(open))}</b><small>${lp?`<a href="#joueur-${esc(lp.id)}">Voir la fiche joueur</a>`:esc((S.profiles[open]||{}).discord_name||"")}${st==="friends"?" · ami":""}</small></div>
         <span class="actions">${st==="none"?`<button class="btn sm" data-act="fr-add" data-u="${esc(open)}">Ajouter en ami</button>`:st==="received"?`<button class="btn sm primary" data-act="fr-accept" data-u="${esc(open)}">Accepter en ami</button>`:""}<button class="btn sm ghost" data-act="${S.blocks.includes(open)?"unblock":"block"}" data-u="${esc(open)}">${S.blocks.includes(open)?"Débloquer":"Bloquer"}</button></span></div>
       <div id="thread" class="msg-thread"><p class="muted">Chargement…</p></div>
-      <form id="msgform" class="msg-form"><textarea id="f-msg" rows="1" maxlength="2000" placeholder="Écris à ${esc(userName(open))}…" aria-label="Message"></textarea><button class="btn primary" type="submit" aria-label="Envoyer">Envoyer</button></form>`
+      <form id="msgform" class="msg-form"><div class="dc-input"><textarea id="f-msg" rows="1" maxlength="2000" placeholder="Envoyer un message à @${esc(userName(open))}" aria-label="Message"></textarea><button class="dc-send" type="submit" aria-label="Envoyer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20.5 21 12 3 3.5l2.5 8.5L3 20.5Zm2.5-8.5H13" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg></button></div></form>`
       :`<div class="msg-empty"><div class="msg-empty-i">✉</div><h2>Tes messages</h2><p class="muted">Choisis une conversation, ou cherche n'importe quel joueur à gauche pour lui écrire, même s'il n'est pas ton ami.</p></div>`}</section>
   </div>`;
 }
@@ -2443,9 +2492,11 @@ async function loadThread(uid){
   const box=document.getElementById("thread");if(!box)return;
   const {data,error}=await sb.from("messages").select("*").or(`and(sender.eq.${S.me},recipient.eq.${uid}),and(sender.eq.${uid},recipient.eq.${S.me})`).order("created_at",{ascending:true}).limit(500);
   if(error){box.innerHTML=`<p class="muted">${esc(sbErr(error).message)}</p>`;return;}
-  let lastDay="",lastS="";box.innerHTML=(data||[]).length?data.map(m=>{const d=new Date(m.created_at);const day=d.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});const me=m.sender===S.me;
-    const sep=day!==lastDay?`<p class="msg-day"><span>${day}</span></p>`:"";const first=sep||m.sender!==lastS;lastDay=day;lastS=m.sender;
-    return sep+`<div class="mb${me?" me":""}${first?" first":""}">${!me&&first?userAva(m.sender,"sm-img"):`<span class="mb-sp"></span>`}<div class="mb-b"><p>${richText(m.body)}</p><time>${d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})}</time></div></div>`;}).join(""):`<div class="msg-empty sm"><p class="muted">Aucun message. Dis bonjour à ${esc(userName(uid))} !</p></div>`;
+  let lastDay="",lastS="",lastT=0;box.innerHTML=(data||[]).length?data.map(m=>{const d=new Date(m.created_at);const day=d.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});const me=m.sender===S.me;
+    const sep=day!==lastDay?`<div class="dc-day"><span>${day}</span></div>`:"";const head=sep||m.sender!==lastS||d-lastT>7*60000;lastDay=day;lastS=m.sender;lastT=d;
+    const hh=d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});const lp=linkedPlayer(m.sender);
+    return sep+(head?`<div class="dc-msg head"><span class="dc-av">${userAva(m.sender,"sm-img")}</span><div class="dc-body"><p class="dc-meta">${lp?`<a class="dc-name${me?" me":""}" href="#joueur-${esc(lp.id)}">${esc(userName(m.sender))}</a>`:`<b class="dc-name${me?" me":""}">${esc(userName(m.sender))}</b>`}<time>${d.toDateString()===new Date().toDateString()?"Aujourd'hui à "+hh:d.toLocaleDateString("fr-FR")+" "+hh}</time></p><p class="dc-txt">${richText(m.body)}</p></div></div>`
+      :`<div class="dc-msg"><time class="dc-side">${hh}</time><div class="dc-body"><p class="dc-txt">${richText(m.body)}</p></div></div>`);}).join(""):`<div class="dc-start">${userAva(uid,"sm-img")}<h2>${esc(userName(uid))}</h2><p>C'est le début de ta conversation avec <b>${esc(userName(uid))}</b>.</p></div>`;
   box.scrollTop=box.scrollHeight;
   if((data||[]).some(m=>m.recipient===S.me&&!m.read_at)){
     await sb.from("messages").update({read_at:new Date().toISOString()}).eq("sender",uid).eq("recipient",S.me).is("read_at",null);
