@@ -645,6 +645,10 @@ footer.site a{color:inherit}
 .cadd .psug-wrap{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:8px}.cadd .psug-wrap input{flex:1;min-width:200px}.psug{position:static;flex-basis:100%;max-height:none;box-shadow:none}
 .msug-wrap{position:relative}.msug-wrap textarea{width:100%}.msug{position:static;margin-top:6px}.msug-h{margin:2px 8px 4px;font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
 a.mention{color:var(--t1);font-weight:700;text-decoration:none;border-bottom:1px dashed color-mix(in srgb,var(--t1) 60%,transparent)}a.mention:hover{border-bottom-style:solid}
+.vscroll{max-height:max(260px,calc(100vh - 330px));overflow:auto;overscroll-behavior:contain;border:1px solid var(--line);border-radius:12px}
+.vscroll thead th{position:sticky;top:0;z-index:2;background:var(--surface)}
+.vscroll thead th:first-child{z-index:3}
+.vscroll::-webkit-scrollbar{height:12px;width:12px}.vscroll::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}
 </style>
 </head>
 <body>
@@ -1625,7 +1629,7 @@ function votesEditor(s){
   const names=cast.map(c=>pName(c.playerId));
   const dl=`<datalist id="dl-names">${names.map(n=>`<option value="${esc(n)}"></option>`).join("")}<option value="Pas de vote"></option></datalist><datalist id="dl-win">${(s.teams||[]).map(t=>`<option value="${esc(t.name)}"></option>`).join("")}${names.map(n=>`<option value="${esc(n)}"></option>`).join("")}</datalist>`;
   const cell=(i,k,val,ph,list)=>`<input id="v-${k}-${i}" data-r="${i}" data-k="${k}" value="${esc(val)}" placeholder="${ph}"${list?` list="${list}"`:""} aria-label="${ph}, colonne ${i+1}">`;
-  const grid=()=>`<div class="scroll"><table class="vedit"><thead>
+  const grid=()=>`<div class="scroll vscroll"><table class="vedit"><thead>
     <tr><th></th>${rounds.map((r,i)=>`<th><div class="vh"><span class="hint">Colonne ${i+1}</span><button type="button" class="icon-btn" data-mv="${i}" data-d="-1" aria-label="Déplacer à gauche"${i?"":" disabled"}>‹</button><button type="button" class="icon-btn" data-mv="${i}" data-d="1" aria-label="Déplacer à droite"${i<rounds.length-1?"":" disabled"}>›</button><button type="button" class="icon-btn" data-rmr="${i}" aria-label="Supprimer la colonne ${i+1}">×</button></div></th>`).join("")}</tr>
     <tr><th>Épreuve</th>${rounds.map((r,i)=>`<th>${cell(i,"challenge",r.challenge,"Nom de l'épreuve")}</th>`).join("")}</tr>
     <tr><th>Gagnée par</th>${rounds.map((r,i)=>`<th>${cell(i,"winner",r.winner,"Équipe ou joueur","dl-win")}</th>`).join("")}</tr>
