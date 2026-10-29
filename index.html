@@ -991,7 +991,7 @@ function claimBanner(){
 }
 function newsHtml(n,showOrg){
   const o=n.orgId?org(n.orgId):null;
-  return `<article class="news"><div class="news-top">${showOrg?(o?`${logo(o,"xs")}<a href="#org-${esc(o.id)}">${esc(o.name)}</a> ·`:"<span>Annonce générale</span> ·"):""}<span>${fmtDate(n.date)}</span>${edit(`<span class="actions"><button class="btn sm ghost" data-act="edit-news" data-id="${esc(n.id)}">Modifier</button><button class="btn sm ghost danger" data-act="del-news" data-id="${esc(n.id)}">Supprimer</button></span>`)}</div><h3>${esc(n.title)}</h3>${n.body?`<p>${esc(n.body)}</p>`:""}</article>`;
+  return `<article class="news"><div class="news-top">${showOrg?(o?`${logo(o,"xs")}<a href="#org-${esc(o.id)}">${esc(o.name)}</a> ·`:"<span>Annonce générale</span> ·"):""}<span>${fmtDate(n.date)}</span>${edit(`<span class="actions"><button class="btn sm ghost" data-act="edit-news" data-id="${esc(n.id)}">Modifier</button><button class="btn sm ghost danger" data-act="del-news" data-id="${esc(n.id)}">Supprimer</button></span>`)}</div><h3>${esc(n.title)}</h3>${n.body?`<p>${richText(n.body)}</p>`:""}</article>`;
 }
 function seasonBlock(title,list,empty){
   return `<section class="block"><div class="block-head"><h2>${title}</h2><span class="count">${list.length}</span></div>${list.length?`<div class="grid">${list.map(seasonCard).join("")}</div>`:`<p class="muted">${empty}</p>`}</section>`;
@@ -1068,7 +1068,7 @@ function newsCard(n){
   const o=n.orgId?org(n.orgId):null;const u=o?imgSrc(orgLogoVal(o)):"";const d=n.date?new Date(n.date+"T12:00:00"):null;
   return `<article class="nw"${u?` style="--nwbg:url('${esc(u)}')"`:""}><div class="nw-bg"></div><div class="nw-in">
   <div class="nw-top">${o?`<a class="nw-org" href="#org-${esc(o.id)}">${pic(orgLogoVal(o),o.tag||o.name,"logo")}<span><small>Annonce de</small><b>${esc(o.name)}</b></span></a>`:`<span class="nw-org"><span class="logo nw-gen">★</span><span><small>Annonce</small><b>ORG-Central</b></span></span>`}${d?`<span class="nw-date"><b>${d.getDate()}</b>${d.toLocaleDateString("fr-FR",{month:"short"})}</span>`:""}</div>
-  <h3>${esc(n.title)}</h3>${n.body?`<p>${esc(n.body)}</p>`:""}
+  <h3>${esc(n.title)}</h3>${n.body?`<p>${richText(n.body)}</p>`:""}
   ${edit(`<div class="actions"><button class="btn sm ghost" data-act="edit-news" data-id="${esc(n.id)}">Modifier</button><button class="btn sm ghost danger" data-act="del-news" data-id="${esc(n.id)}">Supprimer</button></div>`)}</div></article>`;
 }
 function sLogoUrl(s){const o=org(s.orgId)||{};return imgSrc(s.logo||o.logo);}
@@ -1171,7 +1171,7 @@ function pageOrg(id){
   return `<div class="crumbs"><a href="#orgs">ORGs</a><span>/</span><span>${esc(o.name)}</span></div>
   <div class="page-head"><h1>${esc(o.name)}</h1>${edit(`<div class="actions"><button class="btn" data-act="edit-org" data-id="${esc(o.id)}">Modifier</button><button class="btn danger" data-act="del-org" data-id="${esc(o.id)}">Supprimer</button></div>`)}</div>
   <div class="wiki"><div class="wiki-main">
-  ${o.description?`<p class="desc">${esc(o.description)}</p>`:""}
+  ${o.description?`<p class="desc">${richText(o.description)}</p>`:""}
   <section class="block"><div class="block-head"><h2>Saisons</h2><span class="count">${ss.length}</span>${edit(`<span class="actions"><button class="btn primary sm" data-act="new-season" data-org="${esc(o.id)}">+ Nouvelle saison</button></span>`)}</div>
   ${ss.length?`<div class="stiles">${[...ss].reverse().map(x=>seasonTile(x,false)).join("")}</div>`:`<p class="muted">Aucune saison renseignée.</p>`}</section>
   ${st.length?`<section class="block"><div class="block-head"><h2>Palmarès ${esc(o.name)}</h2></div>
@@ -1249,8 +1249,14 @@ function pagePlayers(){
 function playerByName(n){const k=normName(n);if(!k)return null;let r=null;for(const p of S.players){if(normName(p.pseudo)===k)return p;if(!r&&aliasesOf(p).some(a=>normName(a)===k))r=p;}return r;}
 function splitNames(t){return String(t||"").split(/\s*(?:,|&|\/|\bet\b|\(|\)|assist[ée]e?s? par|avec l'aide de)\s*/).map(x=>x.trim()).filter(Boolean);}
 function hostLinks(t){if(!t)return "";return String(t).split(/(\s*(?:,|&|\/|\bet\b|\(|\)|assist[ée]e?s? par|avec l'aide de)\s*)/).map(part=>{const q=part.trim();if(!q||/^(,|&|\/|et|\(|\)|assist[ée]e?s? par|avec l'aide de)$/.test(q))return esc(part);const pl=playerByName(q);return pl?`<a href="#joueur-${esc(pl.id)}">${esc(part)}</a>`:esc(part);}).join("");}
-function descHtml(t){const e=String(t||"");const m=e.match(/^(.*?(?:Organis[ée]e? par|Affiche par)\s*)([^.]*)(\..*)?$/s);if(!m)return esc(e);
-  return esc(m[1])+hostLinks(m[2])+descHtml(m[3]||"");}
+function richText(t){let h=esc(String(t||""));const links=[];
+  h=h.replace(/\[([^\]\n]{1,200})\]\((https?:\/\/[^\s)]+|#[\w\-]+)\)/g,(m,a,u)=>{links.push(`<a href="${u}"${u[0]==="#"?"":' target="_blank" rel="noopener noreferrer"'}>${a}</a>`);return "\u0000"+(links.length-1)+"\u0000";});
+  h=h.replace(/(^|[\s(])(https?:\/\/[^\s<]+[^\s<.,;:!?)])/g,(m,pre,u)=>`${pre}<a href="${u}" target="_blank" rel="noopener noreferrer">${u.replace(/^https?:\/\//,"").slice(0,60)}</a>`);
+  h=h.replace(/\*\*([^*\n]+)\*\*/g,"<b>$1</b>");
+  h=h.replace(/\u0000(\d+)\u0000/g,(m,i)=>links[+i]);
+  return h.replace(/\n/g,"<br>");}
+function descHtml(t){const e=String(t||"");const m=e.match(/^(.*?(?:Organis[ée]e? par|Affiche par)\s*)([^.\n]*)(\..*)?$/s);if(!m)return richText(e);
+  return richText(m[1])+hostLinks(m[2])+descHtml(m[3]||"");}
 function hostedBy(p){const keys=new Set([p.pseudo,...aliasesOf(p)].map(normName));const orgs=S.orgs.filter(o=>splitNames(o.hosts).some(n=>keys.has(normName(n))));
   const seas=S.seasons.filter(s=>{const m=String(s.description||"").match(/Organis[ée]e? par\s*([^.]*)/);return m&&splitNames(m[1]).some(n=>keys.has(normName(n)));});
   const ids=new Set(orgs.map(o=>o.id));seas.forEach(x=>ids.add(x.orgId));return {orgs:[...ids].map(org).filter(Boolean),seasons:seas.sort(byRecent)};}
@@ -1415,7 +1421,7 @@ function orgForm(o){
     <p class="hint" style="margin-top:-6px">Utilisé tant qu'aucune saison n'a de logo. Ensuite, l'ORG affiche le logo de sa saison la plus récente.</p>
     ${field("Host(s)",inp("hosts",o.hosts,'maxlength="160" placeholder="Pseudos séparés par des virgules"'))}
     <div class="frow">${field("Lien du Discord",inp("discord",o.discord,'type="url" placeholder="https://discord.gg/…"'))}${field("Date de création",inp("founded",o.founded,'type="date"'))}</div>
-    ${field("Description",area("description",o.description,'rows="5" maxlength="4000" placeholder="Concept, format, règles particulières…"'))}`,
+    ${field("Description",area("description",o.description,'rows="5" maxlength="4000" placeholder="Concept, format, règles particulières…"'),"Liens : [texte](https://…) ou colle directement l'adresse. Gras : **texte**.")}`,
     onMount:form=>{
       const pv=form.querySelector("#namepreview");
       const up=()=>{const n=form.querySelector("#f-name").value.trim()||"Nom de l'ORG";const w=form.querySelector("#f-seasonWord").value.trim();const r=form.querySelector("#f-numbering").value==="roman";
@@ -1445,7 +1451,7 @@ function seasonForm(s,orgId){
     <div class="frow">${field("Date de début",dayInp("start",s.start))}${field("Date de fin",dayInp("end",s.end))}</div>
     ${field("Période approximative",inp("period",s.period,'maxlength="40" placeholder="ex : Été 2023, Fin 2021…"'),"Toutes les dates sont facultatives. La période s'affiche si tu ne mets pas de date exacte.")}
     ${field("Lien d'inscription",inp("signup",s.signup,'type="url" placeholder="https://… (formulaire, salon Discord)"'),"Affiché comme bouton « S'inscrire » quand le statut est « Inscriptions ouvertes ».")}
-    ${field("Description",area("description",s.description,'rows="4" maxlength="4000" placeholder="Format, twists, infos pratiques…"'))}`,
+    ${field("Description",area("description",s.description,'rows="4" maxlength="4000" placeholder="Format, twists, infos pratiques…"'),"Liens : [texte](https://…) ou colle directement l'adresse. Gras : **texte**.")}`,
     onSave:async f=>{
       const v=vals(f);v.start=isoDay(v.start,"de début");v.end=isoDay(v.end,"de fin");const id=s.id||uid("s");const t=nowIso();
       const data=Object.assign(strip(s),{orgId:v.orgId,number:Number(v.number),title:v.title,status:v.status,slots:v.slots?Number(v.slots):null,customName:v.customName,start:v.start,end:v.end,period:v.period,logo:await resolveImage(f,"logo",s.logo),signup:v.signup,description:v.description,cast:s.cast||[],rounds:s.rounds||[],awards:s.awards||[],updatedAt:t});
@@ -1485,7 +1491,7 @@ function newsForm(n,orgId){
   openModal({title:isNew?"Nouvelle annonce":"Modifier l'annonce",body:`
     <div class="frow">${field("ORG",sel("orgId",[["","Annonce générale"],...orgOpts()],n.orgId))}${field("Date",inp("date",n.date,'type="date"'))}</div>
     ${field("Titre *",inp("title",n.title,'required data-label="Titre" maxlength="120" placeholder="ex : Casting de la saison 3 dévoilé"'))}
-    ${field("Texte",area("body",n.body,'rows="6" maxlength="5000"'))}`,
+    ${field("Texte",area("body",n.body,'rows="6" maxlength="5000"'),"Liens : [texte](https://…) ou colle directement l'adresse. Gras : **texte**.")}`,
     onSave:async f=>{
       const v=vals(f);const id=n.id||uid("n");const t=nowIso();
       const data=Object.assign(strip(n),{orgId:v.orgId,date:v.date||today(),title:v.title,body:v.body,updatedAt:t});
