@@ -720,6 +720,76 @@ a.mention{color:var(--t1);font-weight:700;text-decoration:none;border-bottom:1px
 .pp-hl{width:40px;height:40px;border-radius:50%;object-fit:cover;flex:none;display:inline-grid;place-items:center;background:var(--surface-2);font-size:.8rem;color:var(--t1)}
 @media (max-width:900px){.sb{grid-template-columns:repeat(4,1fr)}.sb-c:nth-child(5)::before{display:none}}
 @media (max-width:520px){.sb{grid-template-columns:repeat(3,1fr)}.sb-c::before{display:none}.pc-grid{grid-template-columns:repeat(2,1fr);gap:20px 14px}.pc-rank b{font-size:2.8rem}}
+.ph{position:relative;margin:4px 0 26px;border-radius:22px;overflow:hidden;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow)}
+.ph-bn{position:relative;height:170px;background:radial-gradient(120% 140% at 0% 0%,color-mix(in srgb,var(--t2) 55%,transparent),transparent 60%),radial-gradient(120% 140% at 100% 0%,color-mix(in srgb,var(--t1) 45%,transparent),transparent 60%),repeating-linear-gradient(135deg,rgba(255,255,255,.035) 0 12px,transparent 12px 24px),#1a0c16}
+.ph.has-bn .ph-bn{height:220px}.ph-bn img{width:100%;height:100%;object-fit:cover;display:block}
+.ph-bn::after{content:"";position:absolute;inset:auto 0 0 0;height:60%;background:linear-gradient(transparent,var(--surface))}
+.ph-bn-btn{position:absolute;top:12px;right:12px;z-index:2;background:rgba(0,0,0,.55);backdrop-filter:blur(6px)}
+.ph-row{position:relative;display:flex;align-items:flex-end;gap:20px;padding:0 24px;margin-top:-70px;flex-wrap:wrap}
+.ph-av{position:relative;width:132px;height:132px;flex:none;border-radius:28px;overflow:hidden;border:4px solid var(--surface);box-shadow:0 0 0 2px var(--t1),0 14px 30px rgba(0,0,0,.55);transform:rotate(-2.5deg);background:var(--surface-2);padding:0;cursor:default}
+button.ph-av{cursor:pointer}.ph-av img,.ph-av .ib-ph{width:100%;height:100%;object-fit:cover;display:grid;place-items:center;font-family:var(--font-display);font-size:2.6rem;color:var(--t1)}
+.ph-id{flex:1;min-width:220px;padding-bottom:6px}.ph-id h1{margin:0;line-height:1}
+.ph-tag{margin:6px 0 0;font-style:italic;color:var(--t1);font-weight:600}
+.ph-facts{display:flex;flex-wrap:wrap;gap:6px 14px;margin:8px 0 0;color:var(--muted);font-size:.9rem}.ph-facts .claimed{margin:0}
+.ph-row>.actions{padding-bottom:10px}
+.ph-bio{margin:16px 24px 0;padding:12px 16px;border-left:3px solid var(--t1);background:rgba(255,255,255,.03);border-radius:0 12px 12px 0;color:var(--ink)}
+.ph-orgs{display:flex;flex-wrap:wrap;gap:6px;margin:16px 24px 20px}
+.ph-orgs a{display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 3px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid var(--line);text-decoration:none;color:var(--ink);font-size:.85rem;font-weight:600}
+.ph-orgs .pp-hl{width:24px;height:24px;font-size:.55rem}
+.ph:not(:has(.ph-orgs)) .ph-row{padding-bottom:20px}
+.acc-in{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.acc-in input[type=color]{width:52px;height:36px;padding:2px}
+.sb{grid-template-columns:repeat(8,1fr)}.sb-c.red b{color:#ff7a8a}
+.pc{--pc:var(--line)}
+.pc-art img,.pc-ph{filter:none}
+.pc:hover .pc-art img{filter:brightness(1.08)}
+.pc-art{box-shadow:0 0 0 3px var(--pc),0 0 22px color-mix(in srgb,var(--pc) 30%,transparent),0 12px 24px rgba(0,0,0,.5)}
+.pc-rank{inset:auto 0 0 0;padding:28px 12px 10px;justify-content:flex-start;align-items:baseline;background:linear-gradient(transparent,rgba(0,0,0,.85) 55%)}
+.pc-rank b{font-size:2.6rem;color:#fff}.pc-rank b sup{font-size:.4em;margin-left:1px}.pc-rank i{font-size:1rem}
+.pc.win .pc-rank,.pc.m1 .pc-rank{padding:28px 12px 10px;align-items:baseline}
+.pc.m1{--pc:var(--gold)}.pc.m1 .pc-rank b{color:var(--gold)}
+.pc.m2{--pc:#d9dde6}.pc.m2 .pc-rank b{color:#eef1f6}
+.pc.m3{--pc:#d08a4a}.pc.m3 .pc-rank b{color:#e7a86c}
+.pc.m1 .pc-rank i,.pc.win .pc-rank i{display:inline}
+.pc-tag{position:absolute;top:8px;left:8px;background:#ff5470;color:#fff;font-family:var(--font-cond);font-weight:800;text-transform:uppercase;letter-spacing:.08em;font-size:.68rem;padding:3px 8px;border-radius:6px;transform:rotate(-3deg)}
+@media (max-width:640px){.ph-row{margin-top:-56px;padding:0 16px}.ph-av{width:104px;height:104px}.ph-bio,.ph-orgs{margin-left:16px;margin-right:16px}.sb{grid-template-columns:repeat(4,1fr)}}
+.msg-app{display:grid;grid-template-columns:330px minmax(0,1fr);height:calc(100vh - 150px);min-height:520px;border:1px solid var(--line);border-radius:20px;overflow:hidden;background:var(--surface);box-shadow:var(--shadow);margin-top:8px}
+.msg-side{display:flex;flex-direction:column;border-right:1px solid var(--line);overflow:auto;background:linear-gradient(180deg,rgba(255,255,255,.02),transparent)}
+.msg-side-h{padding:18px 18px 6px}.msg-side-h h1{margin:0;font-size:1.8rem}
+.msg-search{padding:6px 14px 4px;position:relative}.msg-search input{width:100%;border-radius:999px;padding:9px 14px}
+#ures{display:flex;flex-direction:column;margin-top:4px}
+.msg-lbl{margin:14px 18px 4px;font-family:var(--font-cond);font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:.75rem;color:var(--muted);cursor:default}
+.msg-req{padding:0 8px}.msg-req .urow{padding:6px 8px}
+.cvs{display:flex;flex-direction:column;padding:0 8px}
+.cv{position:relative;display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:14px;text-decoration:none;color:var(--ink)}
+.cv:hover{background:rgba(255,255,255,.05)}.cv.on{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--t1)}
+.cv .avatar{width:44px;height:44px;flex:none;border-radius:50%}.cv.sm .avatar{width:34px;height:34px}
+.cv-m{display:flex;flex-direction:column;min-width:0;flex:1}.cv-top{display:flex;justify-content:space-between;gap:8px}.cv-top time{font-size:.75rem;color:var(--muted);flex:none}
+.cv-m small{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cv.un .cv-m b,.cv.un .cv-m small{color:var(--ink);font-weight:700}
+.cv-n{font-style:normal;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--live);color:#fff;font-size:.72rem;font-weight:800;display:grid;place-items:center}
+.cv-empty{padding:4px 18px;font-size:.88rem}
+.msg-friends{padding:0 8px 14px}.msg-friends summary{list-style:none;margin-left:10px}.msg-friends summary::before{content:"▸ ";}.msg-friends[open] summary::before{content:"▾ ";}
+.msg-main{display:flex;flex-direction:column;min-width:0;background:radial-gradient(80% 60% at 100% 0%,color-mix(in srgb,var(--t1) 6%,transparent),transparent)}
+.msg-head{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line);background:rgba(0,0,0,.15)}
+.msg-head .avatar{width:42px;height:42px;border-radius:50%}.msg-head-n{display:flex;flex-direction:column;flex:1;min-width:0}.msg-head-n small{color:var(--muted)}.msg-head-n small a{color:var(--t1)}
+.msg-thread{flex:1;overflow:auto;padding:18px 20px;display:flex;flex-direction:column;gap:3px}
+.msg-day{text-align:center;margin:14px 0 8px;font-size:.75rem;color:var(--muted);text-transform:capitalize}.msg-day span{padding:3px 12px;border-radius:999px;background:rgba(255,255,255,.05)}
+.mb{display:flex;align-items:flex-end;gap:8px;max-width:78%}.mb.first{margin-top:8px}
+.mb .avatar{width:30px;height:30px;border-radius:50%;flex:none}.mb-sp{width:30px;flex:none}
+.mb-b{background:var(--surface-2);border-radius:16px;padding:8px 12px 6px;border:1px solid var(--line)}
+.mb-b p{margin:0;white-space:pre-wrap;word-break:break-word}.mb-b time{display:block;text-align:right;font-size:.68rem;color:var(--muted);margin-top:2px}
+.mb.me{align-self:flex-end;flex-direction:row-reverse}.mb.me .mb-sp{display:none}
+.mb.me .mb-b{background:var(--t1);color:var(--accent-ink);border-color:transparent;border-bottom-right-radius:5px}.mb.me .mb-b time{color:color-mix(in srgb,var(--accent-ink) 60%,transparent)}.mb.me .mb-b a{color:inherit}
+.mb:not(.me).first .mb-b{border-bottom-left-radius:5px}
+.msg-form{display:flex;gap:10px;align-items:flex-end;padding:12px 16px;border-top:1px solid var(--line);background:rgba(0,0,0,.15)}
+.msg-form textarea{flex:1;resize:none;border-radius:18px;padding:10px 14px;min-height:42px;max-height:160px;line-height:1.35}
+.msg-empty{margin:auto;text-align:center;max-width:360px;padding:30px}.msg-empty.sm{padding:10px}.msg-empty-i{font-size:2.6rem;width:84px;height:84px;margin:0 auto 10px;border-radius:50%;display:grid;place-items:center;background:var(--accent-soft);color:var(--t1)}
+#toast .t.mt{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;pointer-events:auto;text-align:left;min-width:240px}
+#toast .t.mt .avatar{width:34px;height:34px;border-radius:50%;flex:none}#toast .t.mt span{display:flex;flex-direction:column}#toast .t.mt small{opacity:.8}
+@media (max-width:760px){.msg-app{grid-template-columns:1fr;height:auto}.msg-side{border-right:0;border-bottom:1px solid var(--line);max-height:none}.msg-main{min-height:70vh}
+  .msg-app.has-open .msg-side{display:none}}
+@media (max-width:900px){.sb{grid-template-columns:repeat(4,1fr)}}
+.msg-back{display:none;font-size:1.8rem;text-decoration:none;color:var(--ink);line-height:1;padding:0 4px}@media (max-width:760px){.msg-back{display:block}}
 </style>
 </head>
 <body>
@@ -814,6 +884,10 @@ function colorize(s,txt){let h=esc(txt||"");(s.teams||[]).filter(t=>t.name&&t.na
 function isFinal(r){return /finale|ftc/.test(norm(r.label)+" "+norm(r.challenge));}
 function votesAgainst(pid,s){let n=0;(s.rounds||[]).filter(r=>!isFinal(r)).forEach(r=>Object.values(r.votes||{}).forEach(v=>{voteWeights(s,v).forEach(t=>{if(t.id===pid)n+=t.w;});}));return Math.round(n*100)/100;}
 function fmtN(n){return String(n).replace(".",",");}
+const AWARD_CANON=[[/^(meilleur |best )?h[ée]ros?$/,"Héros"],[/^(meilleur |best )?vill?ain$/,"Vilain"],[/^(meilleur |best )?strat[èe]ge$/,"Stratège"],[/^(meilleur |best )?social$/,"Social"],[/^(meilleur |best )?confess$/,"Meilleur confess"],[/^(meilleur |best )duo$/,"Meilleur duo"],[/^(meilleur |best )trio$/,"Meilleur trio"],[/^(meilleur |best )(joueur )?pr[ée][- ]?merge$/,"Meilleur pré-merge"],[/^(meilleur |best )(joueur )?(post[- ]?)?merge$/,"Meilleur joueur merge"],[/^(meilleur |best )pr[ée][- ]?jury$/,"Meilleur pré-jury"],[/^(meilleur |best )(move|mouv|moove)$/,"Meilleur move"],[/^pire (move|mouv|moove)$/,"Pire move"],[/^(meilleure |best )rivalit[ée]$/,"Meilleure rivalité"],[/^(meilleure |best )alliance$/,"Meilleure alliance"],[/^(meilleur |best )(buildeur|builder)$/,"Meilleur buildeur"],[/^surprise$/,"Surprise"],[/^robbed$/,"Robbed"],[/^ovni$/,"OVNI"],[/^parcou?rs? wtf$/,"Parcours WTF"],[/^m[ée]rite (un retour|de revenir)$/,"Mérite un retour"],[/^immu(nity)? runner$/,"Immu runner"],[/^relou$/,"Relou"],[/^comique$/,"Comique"],[/^target$/,"Target"],[/^mvp$/,"MVP"],[/^dans nos c(œ|oe)urs?$/,"Dans nos cœurs"],[/^fan favou?rite$/,"Fan favorite"],[/^(le )?suicidaire$/,"Le suicidaire"],[/^(meilleur |best )(spec|spectateur)$/,"Meilleur spec"],[/^(meilleur |best )(host|hosts)$/,"Meilleur host"]];
+function awardLabel(n){n=String(n||"").trim();const m=n.match(/^(.*?)\s*(\((?:joueurs|hosts|p|h|p\/h)\))?$/i);let base=m[1],suf=m[2]||"";
+  const k=base.toLowerCase().replace(/\s+de la saison$/,"").replace(/\s+/g," ").trim();for(const [re,l] of AWARD_CANON)if(re.test(k)){base=l;break;}
+  return base+(suf?" "+suf:"");}
 function awardsOf(pid){const out=[];S.seasons.forEach(s=>(s.awards||[]).forEach(a=>{if(a.playerId===pid)out.push({a,s});}));return out.sort((x,y)=>String(y.s.start||"").localeCompare(String(x.s.start||"")));}
 function placeLabel(p){p=Number(p);if(!p)return "—";return p===1?"Vainqueur":p+"e";}
 function chip(st){const x=STATUS[st]||STATUS.annoncee;return `<span class="chip ${x.c}">${x.l}</span>`;}
@@ -910,6 +984,7 @@ function themeFor(page,id){
   setTheme._cur=null;
   if(page==="saison"){const s=season(id);if(s){const o=org(s.orgId)||{};setTheme(s.logo||o.logo);return;}}
   if(page==="org"){const o=org(id);if(o){setTheme(orgLogoVal(o));return;}}
+  if(page==="joueur"){const p=player(id);if(p){if(/^#[0-9a-f]{6}$/i.test(p.accent||"")){const r=document.documentElement.style;r.setProperty("--t1",p.accent);r.setProperty("--t2",p.accent);return;}setTheme(p.banner||avatarOf(p));return;}}
   setTheme("");
 }
 function myPlayer(){return S.me?S.players.find(p=>p.ownerUid===S.me):null;}
@@ -923,7 +998,7 @@ function updateRole(){const el=document.getElementById("role");if(!el)return;
   const item=(href,label,n,act)=>act?`<button type="button" role="menuitem" data-act="${act}">${label}</button>`:`<a role="menuitem" href="${href}">${label}${bd(n)}</a>`;
   el.innerHTML=`<a class="hicon" href="#social" title="Messages" aria-label="Messages${msgN?" ("+msgN+" non lus)":""}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.2 3.6c-.5.4-1.3.1-1.3-.6V16A2.5 2.5 0 0 1 4 13.5z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg>${msgN?`<b class="badge">${msgN}</b>`:""}</a>
   <div class="umenu"><button type="button" class="ubtn" aria-haspopup="menu" aria-expanded="false">${av}<span class="uname">${esc(name)}</span>${tkN?`<i class="udot" aria-label="${tkN} ticket(s) ouvert(s)"></i>`:""}<svg class="caret" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-  <div class="udrop" role="menu" hidden>${item(mp?"#joueur-"+mp.id:"#moi","Mon profil")}${item("#social","Amis &amp; messages",msgN)}${item("#tickets",S.isAdmin?"Tickets":"Mes tickets",tkN)}${S.isOwner?item("#journal","Journal"):""}${S.isAdmin?item("#admin","Administration"):S.isHost?`<span class="umuted">Compte host</span>`:""}<hr>${item("","Déconnexion",0,"logout")}</div></div>`;}
+  <div class="udrop" role="menu" hidden>${item(mp?"#joueur-"+mp.id:"#moi","Mon profil")}${item("#social","Messages",msgN)}${item("#tickets",S.isAdmin?"Tickets":"Mes tickets",tkN)}${S.isOwner?item("#journal","Journal"):""}${S.isAdmin?item("#admin","Administration"):S.isHost?`<span class="umuted">Compte host</span>`:""}<hr>${item("","Déconnexion",0,"logout")}</div></div>`;}
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".ubtn");const open=document.querySelector(".udrop:not([hidden])");
   if(b){const d=b.parentNode.querySelector(".udrop");const show=d.hidden;d.hidden=!show;b.setAttribute("aria-expanded",show);return;}
   if(open&&(!e.target.closest(".udrop")||e.target.closest("a,button"))){open.hidden=true;const bb=document.querySelector(".ubtn");if(bb)bb.setAttribute("aria-expanded","false");}});
@@ -1029,7 +1104,7 @@ function render(){
   bindSearch(page);bindSearchBox(document.getElementById("hsearch"));
   themeFor(page,id);updateRole();if(page==="social")bindSocial();
   if(keepFocus){const s=document.getElementById("search");if(s){s.focus();s.setSelectionRange(s.value.length,s.value.length);}}
-  const title={calendrier:"Calendrier",tickets:"Tickets",social:"Amis & messages",orgs:"ORGs",saisons:"Saisons",joueurs:"Joueurs",annonces:"Annonces",palmares:"Palmarès"}[page];
+  const title={calendrier:"Calendrier",tickets:"Tickets",social:"Messages",orgs:"ORGs",saisons:"Saisons",joueurs:"Joueurs",annonces:"Annonces",palmares:"Palmarès"}[page];
   document.title=title?title+" · ORG-Central":"ORG-Central";
   lastPage=h;
 }
@@ -1284,7 +1359,7 @@ function pageSeason(id){
   ${s.status==="inscriptions"&&signup?`<a class="btn cta" href="${esc(signup)}" target="_blank" rel="noopener">Lien d'inscription externe ↗</a>`:""}${signupBlock(s)}
   <section class="block"><div class="block-head"><h2>Classement</h2><span class="count">${cast.length}</span>${edit(`<span class="actions"><button class="btn sm" data-act="cast" data-id="${esc(s.id)}">Modifier le casting</button>${cast.length?`<button class="btn sm" data-act="slooks" data-id="${esc(s.id)}">Pseudos & photos de saison</button>`:""}</span>`)}</div>${ranking}</section>
   <section class="block"><div class="block-head"><h2>Awards</h2><span class="count">${awards.length}</span>${edit(`<span class="actions"><button class="btn sm" data-act="awards" data-id="${esc(s.id)}">${awards.length?"Modifier les awards":"Ajouter des awards"}</button></span>`)}</div>
-  ${awards.length?`<div class="table-wrap"><table class="aw"><tbody>${awards.map(a=>`<tr class="link" data-href="#joueur-${esc(a.playerId)}"><th>${esc(a.name)}</th><td><a class="who" href="#joueur-${esc(a.playerId)}">${sAva(s,a.playerId,"xs")}${esc(sName(s,a.playerId))}</a></td></tr>`).join("")}</tbody></table></div>`:`<p class="muted">Aucun award renseigné.</p>`}</section>
+  ${awards.length?`<div class="table-wrap"><table class="aw"><tbody>${awards.map(a=>`<tr class="link" data-href="#joueur-${esc(a.playerId)}"><th>${esc(awardLabel(a.name))}</th><td><a class="who" href="#joueur-${esc(a.playerId)}">${sAva(s,a.playerId,"xs")}${esc(sName(s,a.playerId))}</a></td></tr>`).join("")}</tbody></table></div>`:`<p class="muted">Aucun award renseigné.</p>`}</section>
   </div>${box}</div>
   <section class="block"><div class="block-head"><h2>Tableau des votes</h2>${edit(`<span class="actions"><button class="btn sm" data-act="votes" data-id="${esc(s.id)}">${hasVotes?"Modifier les votes":"Renseigner les votes"}</button></span>`)}</div>${votesTable(s)}</section>`;
 }
@@ -1372,12 +1447,12 @@ function pStatsData(h,pid){
     const rel=arr.filter(x=>Number(x.c.place)&&(x.s.cast||[]).length>1).map(x=>1-(Number(x.c.place)-1)/((x.s.cast||[]).length-1));
     return {n:arr.length,w:pl.filter(x=>x===1).length,t3:pl.filter(x=>x<=3).length,best:pl.length?Math.min(...pl):null,avg:pl.length?(pl.reduce((a,b)=>a+b,0)/pl.length):null,
       perf:rel.length?Math.round(rel.reduce((a,b)=>a+b,0)/rel.length*100):null,v:Math.round(arr.reduce((a,x)=>a+votesAgainst(pid,x.s),0)*100)/100,
-      aw:arr.reduce((a,x)=>a+(x.s.awards||[]).filter(y=>y.playerId===pid).length,0)};};
+      fb:arr.filter(x=>{const n=(x.s.cast||[]).length;return n>1&&Number(x.c.place)===n;}).length,aw:arr.reduce((a,x)=>a+(x.s.awards||[]).filter(y=>y.playerId===pid).length,0)};};
   return {all:st(h),speed:st(grp(f=>f==="speed")),long:st(grp(f=>f!=="speed"))};}
 function pStatsHtml(h,pid){const D=pStatsData(h,pid);
   const modes=[["all","Tout"],["speed","Speed"],["long","Format long"]].filter(([k])=>k==="all"||D[k].n);
   const cell=(v,l,cls)=>`<div class="sb-c${cls?" "+cls:""}"><b>${v}</b><span>${l}</span></div>`;
-  const board=x=>`<div class="sb">${cell(x.n,"saison"+(x.n>1?"s":""))}${cell(x.w,"victoire"+(x.w>1?"s":""),"gold")}${cell(x.t3,"top 3")}${cell(x.best?x.best+"<sup>"+(x.best===1?"er":"e")+"</sup>":"—","meilleure place")}${cell(x.avg?fmtN(Math.round(x.avg*10)/10)+"<sup>e</sup>":"—","place moyenne")}${cell(fmtN(x.v),"votes reçus")}${cell(x.aw,"award"+(x.aw>1?"s":""))}</div>`;
+  const board=x=>`<div class="sb">${cell(x.n,"saison"+(x.n>1?"s":""))}${cell(x.w,"victoire"+(x.w>1?"s":""),"gold")}${cell(x.t3,"top 3")}${cell(x.best?x.best+"<sup>"+(x.best===1?"er":"e")+"</sup>":"—","meilleure place")}${cell(x.avg?fmtN(Math.round(x.avg*10)/10)+"<sup>e</sup>":"—","place moyenne")}${cell(fmtN(x.v),"votes reçus")}${cell(x.fb,"first boot"+(x.fb>1?"s":""),x.fb?"red":"")}${cell(x.aw,"award"+(x.aw>1?"s":""))}</div>`;
   return `<section class="block pstat-b"><div class="sb-head"><span class="sb-live">● Stats</span>${modes.length>1?`<span class="pk-tabs" role="tablist">${modes.map(([k,l])=>`<button type="button" role="tab" data-pm="${k}" aria-selected="${k==="all"}">${l}</button>`).join("")}</span>`:""}</div>
   ${modes.map(([k])=>`<div class="pk-pane" data-pane="${k}"${k==="all"?"":" hidden"}>${board(D[k])}</div>`).join("")}</section>`;}
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-pm]");if(!b)return;const sec=b.closest(".pstat-b");
@@ -1388,27 +1463,37 @@ function pagePlayer(id){
   const h=historyOf(p.id);
   const aw=awardsOf(p.id);
   const orgsPlayed=[...new Set(h.map(x=>x.s.orgId))].map(org).filter(Boolean);
-  const mine=!!(S.me&&p.ownerUid===S.me);
-  const box=infobox(bigImg(avatarOf(p),p.pseudo),p.pseudo,[["Pronoms",esc(pronounsOf(p))],["Discord",esc(p.discord||"")],["Autres pseudos",aliasesOf(p).map(esc).join(", ")],["ORGs jouées",orgsPlayed.map(o=>`<a href="#org-${esc(o.id)}">${esc(o.name)}</a>`).join(", ")]],"pic-player",p.id,mine);
-  const awc={};aw.forEach(({a})=>{awc[a.name]=(awc[a.name]||0)+1;});
-  const trophies=Object.keys(awc).length?`<section class="block"><div class="block-head"><h2>Awards</h2><span class="count">${aw.length}</span></div><div class="pp-aw">${Object.entries(awc).sort((x,y)=>y[1]-x[1]||x[0].localeCompare(y[0],"fr")).map(([n,c])=>`<span class="pp-awc">🏅 ${esc(n)}${c>1?` <b>×${c}</b>`:""}</span>`).join("")}</div></section>`:"";
+  const mine=!!(S.me&&p.ownerUid===S.me);const canPic=S.canEdit||mine;
+  const awc={};aw.forEach(({a})=>{const k=awardLabel(a.name);awc[k]=(awc[k]||0)+1;});
+  const trophies=Object.keys(awc).length?`<section class="block"><div class="block-head"><h2>Awards</h2><span class="count">${aw.length}</span></div><div class="pp-aw">${Object.entries(awc).sort((x,y)=>y[1]-x[1]||x[0].localeCompare(y[0],"fr")).map(([n,c])=>`<span class="pp-awc">${esc(n)}${c>1?` <b>×${c}</b>`:""}</span>`).join("")}</div></section>`:"";
   const hb=hostedBy(p);
   const host=hb.orgs.length?`<section class="block"><div class="block-head"><h2>Host</h2><span class="count">${hb.orgs.length}</span></div><div class="pp-hosts">${hb.orgs.map(o=>{const ss=hb.seasons.filter(x=>x.orgId===o.id);return `<a class="pp-host" href="#org-${esc(o.id)}">${pic(orgLogoVal(o),o.name,"pp-hl")}<span><b>${esc(o.name)}</b><small>${ss.length?ss.length+" saison"+(ss.length>1?"s":"")+" organisée"+(ss.length>1?"s":""):(FORMATS[o.format]||"ORG")}</small></span></a>`;}).join("")}</div></section>`:"";
   const runs=h.slice().reverse().map(({s,c})=>{const o=org(s.orgId)||{};const n=(s.cast||[]).length;const pl=Number(c.place);const sa=(s.awards||[]).filter(a=>a.playerId===p.id);
-    const lg=imgSrc(s.logo||orgLogoVal(o));
-    return `<a class="pc${pl===1?" win":pl&&pl<=3?" podium":""}" href="#saison-${esc(s.id)}" title="${esc(fullSeasonName(s))}">
+    const lg=imgSrc(s.logo||orgLogoVal(o));const med=pl===1?" m1":pl===2?" m2":pl===3?" m3":"";const fb=n>1&&pl===n;
+    return `<a class="pc${med}${fb?" fb":""}" href="#saison-${esc(s.id)}" title="${esc(fullSeasonName(s))}"${lg&&!med?` data-pc-src="${esc(lg)}"`:""}>
       <div class="pc-art">${lg?`<img src="${esc(lg)}" alt="" loading="lazy">`:`<span class="pc-ph">${esc(initials(o.name||"?"))}</span>`}
-        <div class="pc-rank">${pl?`<b>${pl}</b>${n?`<i>/${n}</i>`:""}`:`<b>—</b>`}</div>${pl===1?`<span class="pc-crown">Vainqueur</span>`:""}${o.format==="speed"?`<span class="pc-fmt">Speed</span>`:""}</div>
+        <div class="pc-rank">${pl?`<b>${pl}<sup>${pl===1?"er":"e"}</sup></b>${n?`<i>/ ${n}</i>`:""}`:`<b>—</b>`}</div>${fb?`<span class="pc-tag">First boot</span>`:""}${o.format==="speed"?`<span class="pc-fmt">Speed</span>`:""}</div>
       <p class="pc-org">${esc(o.name||"ORG")} · ${esc(seasonShort(s))}</p><p class="pc-t">${esc(s.title||"")}</p>
-      ${c.note?`<p class="pc-note">${esc(c.note)}</p>`:""}${sa.length?`<p class="pc-aw">${sa.map(a=>`<span>${esc(a.name)}</span>`).join("")}</p>`:""}</a>`;}).join("");
+      ${c.note?`<p class="pc-note">${esc(c.note)}</p>`:""}${sa.length?`<p class="pc-aw">${sa.map(a=>`<span>${esc(awardLabel(a.name))}</span>`).join("")}</p>`:""}</a>`;}).join("");
+  setTimeout(()=>document.querySelectorAll(".pc[data-pc-src]").forEach(a=>hueColors(a.dataset.pcSrc,r=>{if(r)a.style.setProperty("--pc",r.t1);})),0);
+  const bn=imgSrc(p.banner);const av=avatarOf(p);
+  const facts=[pronounsOf(p)&&`<span>${esc(pronounsOf(p))}</span>`,p.discord&&`<span>Discord : <b>${esc(p.discord)}</b></span>`,aliasesOf(p).length&&`<span>aussi « ${aliasesOf(p).map(esc).join(" », « ")} »</span>`].filter(Boolean);
   return `<div class="crumbs"><a href="#joueurs">Joueurs</a><span>/</span><span>${esc(p.pseudo)}</span></div>
-  <div class="page-head"><div>${p.precision?`<p class="eyebrow">${esc(p.precision)}</p>`:""}<h1>${esc(p.pseudo)}</h1><p class="pp-sub">${pronounsOf(p)?`<span class="pronouns">${esc(pronounsOf(p))}</span>`:""}${mine?`<span class="claimed">C'est ton profil</span>`:""}</p></div>${playerActions(p)}</div>
-  <div class="wiki pp-wiki"><div class="wiki-main">${p.bio?`<blockquote class="pp-bio">${richText(p.bio)}</blockquote>`:""}
+  <header class="ph${bn?" has-bn":""}">
+    <div class="ph-bn">${bn?`<img src="${esc(bn)}" alt="">`:""}${mine?`<button type="button" class="btn sm ph-bn-btn" data-act="edit-player" data-id="${esc(p.id)}">${bn?"Changer la bannière":"+ Ajouter une bannière"}</button>`:""}</div>
+    <div class="ph-row">
+      ${canPic?`<button type="button" class="ph-av picbtn" data-act="pic-player" data-id="${esc(p.id)}" aria-label="Changer la photo">${bigImg(av,p.pseudo)}<span class="pb-l">Changer</span></button>`:`<div class="ph-av">${bigImg(av,p.pseudo)}</div>`}
+      <div class="ph-id">${p.precision?`<p class="eyebrow">${esc(p.precision)}</p>`:""}<h1>${esc(p.pseudo)}</h1>${p.tagline?`<p class="ph-tag">${esc(p.tagline)}</p>`:""}
+        <p class="ph-facts">${mine?`<span class="claimed">C'est ton profil</span>`:""}${facts.join("")}</p></div>
+      ${playerActions(p)}
+    </div>
+    ${p.bio?`<div class="ph-bio">${richText(p.bio)}</div>`:""}
+    ${orgsPlayed.length?`<p class="ph-orgs">${orgsPlayed.map(o=>`<a href="#org-${esc(o.id)}" title="${esc(o.name)}">${pic(orgLogoVal(o),o.name,"pp-hl")}<span>${esc(o.name)}</span></a>`).join("")}</p>`:""}
+  </header>
   ${h.length?pStatsHtml(h,p.id):""}
   <section class="block"><div class="block-head"><h2>Parcours</h2><span class="count">${h.length}</span></div>
   ${h.length?`<div class="pc-grid">${runs}</div>`:`<p class="muted">Ce joueur n'apparaît encore dans aucun casting.</p>`}</section>
-  ${trophies}${host}
-  </div>${box}</div>`;
+  ${trophies}${host}`;
 }
 
 function pageNews(){
@@ -1596,11 +1681,13 @@ function playerForm(p,own){
     ${field("Pronoms",`<input id="f-pronouns" name="pronouns" list="pron-list" maxlength="30" value="${esc(p.pronouns||"")}" placeholder="Choisis ou écris les tiens"><datalist id="pron-list"><option value="il/lui"></option><option value="elle/elle"></option><option value="iel/iel"></option><option value="il/elle"></option><option value="elle/il"></option><option value="tous pronoms"></option></datalist>`)}
     ${field("Autres pseudos",inp("aliases",aliasesOf(p).join(", "),'maxlength="300" placeholder="Séparés par des virgules"'),"Les anciens pseudos sont reconnus dans la recherche et les tableaux de votes.")}
     ${imageField("avatar",p.avatar,"Photo de profil",true)}
+    ${imageField("banner",p.banner,"Bannière (en haut du profil)")}
+    <div class="frow">${field("Devise",inp("tagline",p.tagline,'maxlength="80" placeholder="ex : Je ne joue pas, je survis."'))}${field("Couleur du profil",`<span class="acc-in"><input type="color" id="f-accent" name="accent" value="${esc(/^#[0-9a-f]{6}$/i.test(p.accent||"")?p.accent:"#ffc23d")}"><label class="chk"><input type="checkbox" name="accentAuto" ${p.accent?"":"checked"}> Automatique (d'après la bannière ou la photo)</label></span>`)}</div>
     ${field("Pseudo Discord",inp("discord",p.discord,'maxlength="40" placeholder="ex : pseudo#0000 ou @pseudo"'))}
     ${field("Bio",area("bio",p.bio,'rows="4" maxlength="2000" placeholder="Style de jeu, faits marquants…"'))}`,
     onSave:async f=>{
       const v=vals(f);const id=p.id||uid("p");const t=nowIso();
-      const data=Object.assign(strip(p),{pseudo:v.pseudo,precision:v.precision,pronouns:v.pronouns,aliases:(v.aliases||"").split(",").map(x=>x.trim()).filter(Boolean),discord:v.discord,bio:v.bio,avatar:await resolveImage(f,"avatar",p.avatar),updatedAt:t});
+      const data=Object.assign(strip(p),{pseudo:v.pseudo,precision:v.precision,pronouns:v.pronouns,aliases:(v.aliases||"").split(",").map(x=>x.trim()).filter(Boolean),discord:v.discord,bio:v.bio,tagline:v.tagline||"",accent:f.querySelector("[name=accentAuto]").checked?"":(v.accent||""),avatar:await resolveImage(f,"avatar",p.avatar),banner:await resolveImage(f,"banner",p.banner),updatedAt:t});
       if(isNew)data.createdAt=t;
       await db.doc("players/"+id).set(data);
       toast(isNew?(own?"Ta fiche est créée":"Joueur ajouté"):"Profil mis à jour");
@@ -2185,8 +2272,9 @@ async function loadSocial(){
 function socialPending(){return S.friends.filter(f=>f.addressee===S.me&&f.status==="pending").length;}
 async function onIncoming(m){
   const r=curRoute();
-  if(r.page==="social"&&r.id===m.sender){loadThread(m.sender);}
-  else{S.unread++;toast("Nouveau message de "+userName(m.sender));updateRole();}
+  if(!S.profiles[m.sender]){const {data}=await sb.from("profiles").select("id,discord_name,avatar_url").eq("id",m.sender).maybeSingle();if(data)S.profiles[data.id]=data;}
+  if(r.page==="social"&&r.id===m.sender){loadThread(m.sender);loadConvos();}
+  else{S.unread++;msgToast(m);updateRole();if(r.page==="social")loadConvos();}
 }
 async function friendAction(act,uid){
   let res;
@@ -2200,33 +2288,48 @@ async function friendAction(act,uid){
 function friendButtons(uid){
   if(!S.me||!uid||uid===S.me)return "";
   const st=friendState(uid);
-  if(st==="friends")return `<a class="btn primary" href="#social-${esc(uid)}">Envoyer un message</a><button class="btn ghost" data-act="fr-remove" data-u="${esc(uid)}">Retirer des amis</button>`;
-  if(st==="sent")return `<button class="btn ghost" data-act="fr-remove" data-u="${esc(uid)}">Annuler la demande d'ami</button>`;
-  if(st==="received")return `<button class="btn primary" data-act="fr-accept" data-u="${esc(uid)}">Accepter la demande d'ami</button>`;
-  return `<button class="btn" data-act="fr-add" data-u="${esc(uid)}">Ajouter en ami</button>`;
+  const msg=`<a class="btn primary" href="#social-${esc(uid)}">Message</a>`;
+  if(st==="friends")return msg+`<button class="btn ghost" data-act="fr-remove" data-u="${esc(uid)}">Retirer des amis</button>`;
+  if(st==="sent")return msg+`<button class="btn ghost" data-act="fr-remove" data-u="${esc(uid)}">Annuler la demande d'ami</button>`;
+  if(st==="received")return msg+`<button class="btn" data-act="fr-accept" data-u="${esc(uid)}">Accepter en ami</button>`;
+  return msg+`<button class="btn" data-act="fr-add" data-u="${esc(uid)}">Ajouter en ami</button>`;
 }
 function userRow(uid,extra){return `<div class="urow">${userAva(uid,"sm-img")}<div class="urow-main">${linkedPlayer(uid)?`<a href="#joueur-${esc(linkedPlayer(uid).id)}"><b>${esc(userName(uid))}</b></a>`:`<b>${esc(userName(uid))}</b>`}${S.profiles[uid]&&linkedPlayer(uid)?`<small class="muted">${esc(S.profiles[uid].discord_name||"")}</small>`:""}</div><span class="actions">${extra}</span></div>`;}
+function msgToast(m){const t=document.createElement("a");t.className="t mt";t.href="#social-"+m.sender;t.innerHTML=`${userAva(m.sender,"sm-img")}<span><b>${esc(userName(m.sender))}</b><small>${esc(String(m.body||"").slice(0,80))}</small></span>`;document.getElementById("toast").appendChild(t);setTimeout(()=>t.remove(),6000);}
+S.convos=[];S.blocks=[];
+async function loadConvos(){if(!S.me)return;
+  const [{data},bl]=await Promise.all([sb.from("messages").select("sender,recipient,body,created_at,read_at").or(`sender.eq.${S.me},recipient.eq.${S.me}`).order("created_at",{ascending:false}).limit(600),sb.from("blocks").select("blocked")]);
+  S.blocks=bl&&!bl.error?(bl.data||[]).map(x=>x.blocked):[];
+  const map=new Map();(data||[]).forEach(m=>{const o=m.sender===S.me?m.recipient:m.sender;if(!map.has(o))map.set(o,{uid:o,last:m,unread:0});if(m.recipient===S.me&&!m.read_at)map.get(o).unread++;});
+  S.convos=[...map.values()];const box=document.getElementById("convos");if(box)box.innerHTML=convosHtml();}
+function relTimeShort(d){const t=new Date(d),n=new Date();const s=(n-t)/1000;if(s<60)return "à l'instant";if(s<3600)return Math.floor(s/60)+" min";if(t.toDateString()===n.toDateString())return t.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});if(s<7*86400)return t.toLocaleDateString("fr-FR",{weekday:"short"});return t.toLocaleDateString("fr-FR",{day:"numeric",month:"short"});}
+function convosHtml(){const open=curRoute().id;if(!S.convos.length)return `<p class="muted cv-empty">Aucune conversation. Cherche un joueur ci-dessus pour lui écrire.</p>`;
+  return S.convos.map(c=>`<a class="cv${c.uid===open?" on":""}${c.unread?" un":""}" href="#social-${esc(c.uid)}">${userAva(c.uid,"sm-img")}<span class="cv-m"><span class="cv-top"><b>${esc(userName(c.uid))}</b><time>${relTimeShort(c.last.created_at)}</time></span><small>${c.last.sender===S.me?"Toi : ":""}${esc(String(c.last.body).slice(0,60))}</small></span>${c.unread?`<i class="cv-n">${c.unread}</i>`:""}</a>`).join("");}
 function pageSocial(id){
-  if(!S.me)return `<div class="empty"><h2>Amis et messages</h2><p class="muted">Connecte-toi avec Discord pour ajouter des amis et discuter.</p><button class="btn primary" data-act="login">Se connecter avec Discord</button></div>`;
+  if(!S.me)return `<div class="empty"><h2>Messages</h2><p class="muted">Connecte-toi avec Discord pour discuter avec les autres joueurs.</p><button class="btn primary" data-act="login">Se connecter avec Discord</button></div>`;
   const other=f=>f.requester===S.me?f.addressee:f.requester;
   const friends=S.friends.filter(f=>f.status==="accepted").map(other).sort((a,b)=>userName(a).localeCompare(userName(b),"fr"));
   const rec=S.friends.filter(f=>f.status==="pending"&&f.addressee===S.me).map(f=>f.requester);
   const sent=S.friends.filter(f=>f.status==="pending"&&f.requester===S.me).map(f=>f.addressee);
-  const open=id&&friendState(id)==="friends"?id:"";
-  if(open)setTimeout(()=>loadThread(open),0);
-  return `<div class="page-head" style="margin-top:0"><h1>Amis &amp; messages</h1></div>
-  <div class="social">
-    <aside class="social-side">
-      <div class="field"><label class="flabel" for="f-usearch">Ajouter un ami</label><input id="f-usearch" placeholder="Pseudo ou nom Discord" autocomplete="off"></div>
-      <div id="ures"></div>
-      ${rec.length?`<h3>Demandes reçues</h3>${rec.map(u=>userRow(u,`<button class="btn sm primary" data-act="fr-accept" data-u="${esc(u)}">Accepter</button><button class="btn sm ghost" data-act="fr-remove" data-u="${esc(u)}">Refuser</button>`)).join("")}`:""}
-      <h3>Amis (${friends.length})</h3>
-      ${friends.length?friends.map(u=>`<a class="frow${u===open?" on":""}" href="#social-${esc(u)}">${userAva(u,"sm-img")}<span>${esc(userName(u))}</span></a>`).join(""):`<p class="muted">Pas encore d'amis. Cherche un pseudo ci-dessus ou clique sur « Ajouter en ami » sur une fiche joueur.</p>`}
-      ${sent.length?`<h3>Demandes envoyées</h3>${sent.map(u=>userRow(u,`<button class="btn sm ghost" data-act="fr-remove" data-u="${esc(u)}">Annuler</button>`)).join("")}`:""}
+  const open=id&&id!==S.me?id:"";
+  setTimeout(()=>{loadConvos();if(open)loadThread(open);},0);
+  const lp=open&&linkedPlayer(open);const st=open?friendState(open):"";
+  return `<div class="msg-app${open?" has-open":""}">
+    <aside class="msg-side">
+      <div class="msg-side-h"><h1>Messages</h1></div>
+      <div class="msg-search"><input id="f-usearch" placeholder="Écrire à un joueur…" autocomplete="off" aria-label="Chercher un joueur"><div id="ures"></div></div>
+      ${rec.length?`<div class="msg-req"><p class="msg-lbl">Demandes d'ami · ${rec.length}</p>${rec.map(u=>userRow(u,`<button class="btn sm primary" data-act="fr-accept" data-u="${esc(u)}">Accepter</button><button class="btn sm ghost" data-act="fr-remove" data-u="${esc(u)}">Refuser</button>`)).join("")}</div>`:""}
+      <p class="msg-lbl">Conversations</p><div id="convos" class="cvs">${convosHtml()}</div>
+      <details class="msg-friends"${friends.length?"":" open"}><summary class="msg-lbl">Amis · ${friends.length}</summary>
+        ${friends.length?friends.map(u=>`<a class="cv sm" href="#social-${esc(u)}">${userAva(u,"sm-img")}<span class="cv-m"><b>${esc(userName(u))}</b></span></a>`).join(""):`<p class="muted cv-empty">Pas encore d'amis. « Ajouter en ami » depuis une fiche joueur ou la recherche.</p>`}
+        ${sent.length?`<p class="msg-lbl">Demandes envoyées</p>${sent.map(u=>userRow(u,`<button class="btn sm ghost" data-act="fr-remove" data-u="${esc(u)}">Annuler</button>`)).join("")}`:""}
+      </details>
     </aside>
-    <section class="social-main">${open?`<div class="thread-head">${userAva(open,"sm-img")}<b>${esc(userName(open))}</b></div><div id="thread" class="thread"><p class="muted">Chargement…</p></div>
-      <form id="msgform" class="msgform"><input id="f-msg" maxlength="2000" placeholder="Écris un message…" autocomplete="off" aria-label="Message"><button class="btn primary" type="submit">Envoyer</button></form>`
-      :`<div class="empty"><p class="muted">${id?"Vous devez être amis pour discuter.":"Choisis un ami pour discuter."}</p></div>`}</section>
+    <section class="msg-main">${open?`<div class="msg-head"><a class="msg-back" href="#social" aria-label="Retour aux conversations">‹</a>${userAva(open,"sm-img")}<div class="msg-head-n"><b>${esc(userName(open))}</b><small>${lp?`<a href="#joueur-${esc(lp.id)}">Voir la fiche joueur</a>`:esc((S.profiles[open]||{}).discord_name||"")}${st==="friends"?" · ami":""}</small></div>
+        <span class="actions">${st==="none"?`<button class="btn sm" data-act="fr-add" data-u="${esc(open)}">Ajouter en ami</button>`:st==="received"?`<button class="btn sm primary" data-act="fr-accept" data-u="${esc(open)}">Accepter en ami</button>`:""}<button class="btn sm ghost" data-act="${S.blocks.includes(open)?"unblock":"block"}" data-u="${esc(open)}">${S.blocks.includes(open)?"Débloquer":"Bloquer"}</button></span></div>
+      <div id="thread" class="msg-thread"><p class="muted">Chargement…</p></div>
+      <form id="msgform" class="msg-form"><textarea id="f-msg" rows="1" maxlength="2000" placeholder="Écris à ${esc(userName(open))}…" aria-label="Message"></textarea><button class="btn primary" type="submit" aria-label="Envoyer">Envoyer</button></form>`
+      :`<div class="msg-empty"><div class="msg-empty-i">✉</div><h2>Tes messages</h2><p class="muted">Choisis une conversation, ou cherche n'importe quel joueur à gauche pour lui écrire, même s'il n'est pas ton ami.</p></div>`}</section>
   </div>`;
 }
 function bindSocial(){
@@ -2234,17 +2337,26 @@ function bindSocial(){
   if(q&&!q._b){q._b=1;q.addEventListener("input",()=>{const n=norm(q.value);const box=document.getElementById("ures");
     if(n.length<2){box.innerHTML="";return;}
     const list=Object.keys(S.profiles).filter(u=>u!==S.me&&(norm(userName(u)).includes(n)||norm((S.profiles[u]||{}).discord_name).includes(n))).slice(0,8);
-    box.innerHTML=list.length?list.map(u=>userRow(u,friendButtons(u).replace(/class="btn( primary| ghost)?"/g,'class="btn sm$1"'))).join(""):`<p class="muted">Personne trouvé. La personne doit s'être connectée au moins une fois.</p>`;});}
+    box.innerHTML=list.length?list.map(u=>`<a class="cv sm" href="#social-${esc(u)}">${userAva(u,"sm-img")}<span class="cv-m"><b>${esc(userName(u))}</b><small>${esc((S.profiles[u]||{}).discord_name||"")}</small></span></a>`).join(""):`<p class="muted cv-empty">Personne trouvé. La personne doit s'être connectée au moins une fois au site.</p>`;});}
   const f=document.getElementById("msgform");
-  if(f&&!f._b){f._b=1;f.addEventListener("submit",async e=>{e.preventDefault();const inp=document.getElementById("f-msg");const body=inp.value.trim();if(!body)return;
-    const to=curRoute().id;inp.value="";const {error}=await sb.from("messages").insert({sender:S.me,recipient:to,body});
-    if(error){toast(sbErr(error).message,true);inp.value=body;return;}loadThread(to);});}
+  if(f&&!f._b){f._b=1;const inp=document.getElementById("f-msg");
+    const grow=()=>{inp.style.height="auto";inp.style.height=Math.min(inp.scrollHeight,160)+"px";};inp.addEventListener("input",grow);
+    inp.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();f.requestSubmit();}});
+    f.addEventListener("submit",async e=>{e.preventDefault();const body=inp.value.trim();if(!body)return;
+    const to=curRoute().id;inp.value="";grow();const {error}=await sb.from("messages").insert({sender:S.me,recipient:to,body});
+    if(error){toast(/row-level|42501|permission/i.test(error.message)?"Message impossible : cette personne t'a bloqué, ou les messages ouverts ne sont pas encore activés (update-7-messages-ouverts.sql).":sbErr(error).message,true);inp.value=body;return;}loadThread(to);loadConvos();});
+    setTimeout(()=>inp.focus(),50);}
 }
+async function blockAction(uid,on){const {error}=on?await sb.from("blocks").insert({blocker:S.me,blocked:uid}):await sb.from("blocks").delete().eq("blocker",S.me).eq("blocked",uid);
+  if(error){toast(/relation|does not exist|schema cache/i.test(error.message)?"Lance d'abord update-7-messages-ouverts.sql dans Supabase.":sbErr(error).message,true);return;}
+  toast(on?"Joueur bloqué : il ne peut plus t'écrire":"Joueur débloqué");await loadConvos();render();}
 async function loadThread(uid){
   const box=document.getElementById("thread");if(!box)return;
   const {data,error}=await sb.from("messages").select("*").or(`and(sender.eq.${S.me},recipient.eq.${uid}),and(sender.eq.${uid},recipient.eq.${S.me})`).order("created_at",{ascending:true}).limit(500);
   if(error){box.innerHTML=`<p class="muted">${esc(sbErr(error).message)}</p>`;return;}
-  box.innerHTML=(data||[]).length?data.map(m=>`<div class="bubble${m.sender===S.me?" me":""}"><p>${esc(m.body)}</p><time>${new Date(m.created_at).toLocaleString("fr-FR",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}</time></div>`).join(""):`<p class="muted">Aucun message. Dis bonjour !</p>`;
+  let lastDay="",lastS="";box.innerHTML=(data||[]).length?data.map(m=>{const d=new Date(m.created_at);const day=d.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});const me=m.sender===S.me;
+    const sep=day!==lastDay?`<p class="msg-day"><span>${day}</span></p>`:"";const first=sep||m.sender!==lastS;lastDay=day;lastS=m.sender;
+    return sep+`<div class="mb${me?" me":""}${first?" first":""}">${!me&&first?userAva(m.sender,"sm-img"):`<span class="mb-sp"></span>`}<div class="mb-b"><p>${richText(m.body)}</p><time>${d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})}</time></div></div>`;}).join(""):`<div class="msg-empty sm"><p class="muted">Aucun message. Dis bonjour à ${esc(userName(uid))} !</p></div>`;
   box.scrollTop=box.scrollHeight;
   if((data||[]).some(m=>m.recipient===S.me&&!m.read_at)){
     await sb.from("messages").update({read_at:new Date().toISOString()}).eq("sender",uid).eq("recipient",S.me).is("read_at",null);
@@ -2362,7 +2474,7 @@ document.addEventListener("click",e=>{
     "new-season":()=>seasonForm(null,b.dataset.org),"edit-season":()=>seasonForm(season(id)),"del-season":()=>delSeason(id),
     "cast":()=>castEditor(season(id)),"export-all":async()=>{try{await exportAll();toast("Sauvegarde téléchargée");}catch(e){toast(errMsg(e),true);}},"slooks":()=>seasonLooksEditor(season(id)),"awards":()=>awardsEditor(season(id)),
     "filter":()=>{S.f[b.dataset.k]=b.dataset.v;render();},"opal":()=>{S.f.opal=b.dataset.v;render();},"votes":()=>votesEditor(season(id)),
-    "new-player":()=>playerForm(),"new-mine":()=>{if(myPlayer()){location.hash="joueur-"+myPlayer().id;return;}playerForm(null,true);},"edit-player":()=>playerForm(player(id)),"del-player":()=>delPlayer(id),"merge-player":()=>mergeForm(player(id)),"claim":()=>claimPlayer(id,true),"login":()=>login(),"fr-add":()=>friendAction("add",b.dataset.u),"fr-accept":()=>friendAction("accept",b.dataset.u),"fr-remove":()=>friendAction("remove",b.dataset.u),"appform":()=>appFormEditor(season(id)),"apptoggle":()=>toggleApps(season(id)),"logout":()=>logout(),"claim-ok":()=>claimDecision(b.dataset.p,b.dataset.u,true),"claim-no":()=>claimDecision(b.dataset.p,b.dataset.u,false),"unsign":()=>signAction(id,"unsign"),"su-ok":()=>signAction(b.dataset.s,"ok",b.dataset.u),"su-no":()=>signAction(b.dataset.s,"no",b.dataset.u),"unclaim":()=>claimPlayer(id,false),"split-player":()=>splitForm(player(id)),
+    "new-player":()=>playerForm(),"new-mine":()=>{if(myPlayer()){location.hash="joueur-"+myPlayer().id;return;}playerForm(null,true);},"edit-player":()=>playerForm(player(id)),"del-player":()=>delPlayer(id),"merge-player":()=>mergeForm(player(id)),"claim":()=>claimPlayer(id,true),"login":()=>login(),"fr-add":()=>friendAction("add",b.dataset.u),"block":()=>blockAction(b.dataset.u,true),"unblock":()=>blockAction(b.dataset.u,false),"fr-accept":()=>friendAction("accept",b.dataset.u),"fr-remove":()=>friendAction("remove",b.dataset.u),"appform":()=>appFormEditor(season(id)),"apptoggle":()=>toggleApps(season(id)),"logout":()=>logout(),"claim-ok":()=>claimDecision(b.dataset.p,b.dataset.u,true),"claim-no":()=>claimDecision(b.dataset.p,b.dataset.u,false),"unsign":()=>signAction(id,"unsign"),"su-ok":()=>signAction(b.dataset.s,"ok",b.dataset.u),"su-no":()=>signAction(b.dataset.s,"no",b.dataset.u),"unclaim":()=>claimPlayer(id,false),"split-player":()=>splitForm(player(id)),
     "new-news":()=>newsForm(null,b.dataset.org),"edit-news":()=>newsForm(newsItem(id)),"del-news":()=>delNews(id),
     "clear-examples":clearExamples
   };
