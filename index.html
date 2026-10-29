@@ -891,6 +891,7 @@ button.ph-av{cursor:pointer}.ph-av img,.ph-av .ib-ph{width:100%;height:100%;obje
 .ct-shots div{display:flex;flex-wrap:wrap;gap:8px}.ct-shots img{max-height:120px;max-width:260px;border-radius:8px;border:1px solid var(--line);object-fit:contain;background:#000}
 @media (max-width:1100px){nav.main a[data-nav="contribuer"]{order:9}}
 @media (max-width:1380px){nav.main a{padding:6px 8px;font-size:.98rem;letter-spacing:.04em}.top-in{gap:10px}.gsearch{max-width:200px;min-width:120px}}
+.ct-ac{position:relative}.ct-ac .psug{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:30;box-shadow:var(--shadow-hi);max-height:320px;overflow:auto}.ct-ac .pp-hl{width:34px;height:34px;border-radius:8px}
 </style>
 </head>
 <body>
@@ -2162,7 +2163,7 @@ function pageContrib(){
   return `<section class="block"><div class="block-head"><h1>Contribuer</h1></div>${intro}
   <form id="ct-form" class="ct-form" novalidate>
     <div class="ct-step"><span class="ct-n">1</span><div><h3>La saison</h3>
-      <div class="frow">${field("ORG *",`<input id="ct-org" list="ct-orgs" placeholder="Nom de l'ORG" autocomplete="off" maxlength="60"><datalist id="ct-orgs">${orgs.map(o=>`<option value="${esc(o.name)}"></option>`).join("")}</datalist>`,"Choisis dans la liste, ou écris le nom si l'ORG n'est pas encore sur le site.")}${field("Numéro de saison *",`<input id="ct-num" placeholder="ex : 3, V2, All Stars" maxlength="20">`)}</div>
+      <div class="frow">${field("ORG *",`<div class="ct-ac"><input id="ct-org" placeholder="Commence à écrire le nom de l'ORG…" autocomplete="off" maxlength="60" role="combobox" aria-expanded="false" aria-controls="ct-sug"><div class="psug" id="ct-sug" role="listbox" hidden></div></div>`,"Choisis dans la liste, ou écris le nom si l'ORG n'est pas encore sur le site.")}${field("Numéro de saison *",`<input id="ct-num" placeholder="ex : 3, V2, All Stars" maxlength="20">`)}</div>
       <div class="frow">${field("Nom / thème de la saison",`<input id="ct-title" placeholder="ex : Wizarding World" maxlength="100">`)}${field("Date de début",dayInp("ctstart",""))}${field("Date de fin",dayInp("ctend",""))}</div>
       <p class="hint" id="ct-exists"></p></div></div>
     <div class="ct-step"><span class="ct-n">2</span><div><h3>Les captures</h3><p class="hint">Colle (Ctrl+V), glisse ou choisis tes images dans chaque case. Plusieurs images possibles par case.</p>
@@ -2185,6 +2186,20 @@ function bindContrib(){const f=document.getElementById("ct-form");loadContribs()
   const chk=()=>{const o=S.orgs.find(x=>norm(x.name)===norm(document.getElementById("ct-org").value));const n=document.getElementById("ct-num").value.trim();const ex=o&&S.seasons.find(x=>x.orgId===o.id&&String(x.number)===n.replace(/^\D+/,""));
     document.getElementById("ct-exists").innerHTML=ex?`Cette saison existe déjà sur le site : <a href="#saison-${esc(ex.id)}">${esc(fullSeasonName(ex))}</a>. Tes captures serviront à la compléter.`:o?"":document.getElementById("ct-org").value.trim()?"Nouvelle ORG : elle sera créée.":"";};
   ["ct-org","ct-num"].forEach(id=>document.getElementById(id).addEventListener("input",chk));
+  const oi=document.getElementById("ct-org"),sg=document.getElementById("ct-sug");let si=-1,sl=[];
+  const hide=()=>{sg.hidden=true;sg.innerHTML="";si=-1;oi.setAttribute("aria-expanded","false");};
+  const pick=o=>{oi.value=o.name;hide();chk();const n=document.getElementById("ct-num");n.focus();};
+  const show=()=>{const v=normName(oi.value);if(!v){hide();return;}
+    sl=S.orgs.map(o=>{const n=normName(o.name),t=normName(o.tag);const sc=n===v||t===v?0:n.startsWith(v)?1:t.startsWith(v)?2:n.includes(v)?3:99;return [o,sc];}).filter(x=>x[1]<99).sort((a,b)=>a[1]-b[1]||seasonsOf(b[0].id).length-seasonsOf(a[0].id).length).slice(0,6).map(x=>x[0]);
+    if(!sl.length||(sl.length===1&&sl[0].name===oi.value)){hide();return;}
+    sg.innerHTML=sl.map((o,i)=>{const ss=seasonsOf(o.id);return `<button type="button" role="option" class="psug-i" data-i="${i}">${pic(orgLogoVal(o),o.name,"pp-hl")}<span class="psug-t"><b>${esc(o.name)}</b><small>${ss.length} saison${ss.length>1?"s":""}${o.hosts?" · "+esc(o.hosts):""}</small></span></button>`;}).join("");
+    sg.hidden=false;si=-1;oi.setAttribute("aria-expanded","true");};
+  const mark=()=>sg.querySelectorAll(".psug-i").forEach((b,i)=>b.classList.toggle("on",i===si));
+  oi.addEventListener("input",show);oi.addEventListener("focus",show);oi.addEventListener("blur",()=>setTimeout(hide,150));
+  oi.addEventListener("keydown",e=>{if(sg.hidden)return;const n=sl.length;
+    if(e.key==="ArrowDown"){e.preventDefault();si=(si+1)%n;mark();}else if(e.key==="ArrowUp"){e.preventDefault();si=(si-1+n)%n;mark();}
+    else if(e.key==="Enter"||e.key==="Tab"){if(si<0&&e.key==="Tab")si=0;if(si>=0){e.preventDefault();pick(sl[si]);}}else if(e.key==="Escape"){hide();}});
+  sg.addEventListener("mousedown",e=>e.preventDefault());sg.addEventListener("click",e=>{const b=e.target.closest(".psug-i");if(b)pick(sl[Number(b.dataset.i)]);});
   f.addEventListener("submit",async e=>{e.preventDefault();const err=m=>{document.getElementById("ct-err").textContent=m;};err("");
     const orgName=document.getElementById("ct-org").value.trim(),num=document.getElementById("ct-num").value.trim();
     if(!orgName)return err("Indique le nom de l'ORG.");if(!num)return err("Indique le numéro de la saison.");
