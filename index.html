@@ -810,6 +810,14 @@ button.ph-av{cursor:pointer}.ph-av img,.ph-av .ib-ph{width:100%;height:100%;obje
 .ph-id h1{color:var(--t1)}
 .ph{border-color:color-mix(in srgb,var(--t1) 45%,var(--line))}
 .sb{border-color:color-mix(in srgb,var(--t1) 60%,transparent)}.sb-c.gold b{color:var(--t1);text-shadow:0 0 18px color-mix(in srgb,var(--t1) 55%,transparent)}.sb-c+.sb-c::before{border-left-color:color-mix(in srgb,var(--t1) 30%,transparent)}
+.spot-live{display:flex;flex-wrap:wrap;gap:12px 22px;align-items:stretch;margin:4px 0 12px}
+.spot-left{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;min-width:170px}.spot-left b{font-family:var(--font-display);font-size:2.2rem;line-height:1;color:var(--t1)}.spot-left span{color:var(--muted);font-weight:600}
+.spot-bar{display:block;flex-basis:100%;height:6px;border-radius:999px;background:rgba(255,255,255,.1);overflow:hidden}.spot-bar i{display:block;height:100%;background:var(--t1);border-radius:inherit}
+.spot-last{display:flex;flex-direction:column;gap:6px;padding-left:18px;border-left:2px solid color-mix(in srgb,var(--live) 60%,transparent)}
+.spot-last-l{font-family:var(--font-cond);font-weight:700;text-transform:uppercase;letter-spacing:.1em;font-size:.75rem;color:var(--live)}
+.spot-last-p{display:flex;flex-wrap:wrap;gap:8px}
+.spot-out{display:inline-flex;align-items:center;gap:7px;padding:3px 10px 3px 3px;border-radius:999px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.1)}
+.spot-out .avatar{width:28px;height:28px;border-radius:50%;filter:grayscale(.6)}.spot-out b{text-decoration:line-through;text-decoration-color:var(--live);text-decoration-thickness:2px}.spot-out small{color:var(--muted)}
 </style>
 </head>
 <body>
@@ -1261,9 +1269,15 @@ function bindCarousel(){const car=document.querySelector(".car");if(!car||car._b
   restart();}
 function spotlight(s){
   const o=org(s.orgId)||{};const u=sLogoUrl(s);const n=(s.cast||[]).length;
-  const info=s.status==="en_cours"?`${n?`<b>${n}</b> joueur${n>1?"s":""} en jeu`:""}`:s.status==="inscriptions"?`Candidatures ouvertes${s.slots?` · <b>${esc(s.slots)}</b> places`:""}`:`${s.start?`Début le <b>${fmtDate(s.start)}</b>`:"Bientôt"}${s.slots?` · ${esc(s.slots)} places`:""}`;
+  let live="";
+  if(s.status==="en_cours"&&n){const out=new Set();let last=null,lastR=null;(s.rounds||[]).forEach(r=>{const ids=elimIds(s,r).filter(id=>(s.cast||[]).some(c=>c.playerId===id));ids.forEach(id=>out.add(id));if(ids.length){last=ids;lastR=r;}});
+    (s.cast||[]).forEach(c=>{if(Number(c.place)>1&&!out.has(c.playerId))out.add(c.playerId);});
+    if(!last){const pl=(s.cast||[]).filter(c=>Number(c.place)>1).sort((a,b)=>Number(a.place)-Number(b.place));if(pl.length){const mn=Number(pl[0].place);last=pl.filter(c=>Number(c.place)===mn).map(c=>c.playerId);}}
+    const left=Math.max(0,n-out.size);
+    live=`<div class="spot-live"><div class="spot-left"><b>${left}</b><span>/ ${n} encore en jeu</span><i class="spot-bar"><i style="width:${Math.round(left/n*100)}%"></i></i></div>${last&&last.length?`<div class="spot-last"><span class="spot-last-l">Dernier${last.length>1?"s":""} éliminé${last.length>1?"s":""}${lastR&&lastR.label?` · ${esc(lastR.label)}`:""}</span><span class="spot-last-p">${last.map(id=>{const pp=player(id);const c=(s.cast||[]).find(x=>x.playerId===id)||{};return pp?`<span class="spot-out">${pp.avatar||c.sAvatar?pic(c.sAvatar||avatarOf(pp),pp.pseudo,"avatar xs"):`<span class="avatar xs">${esc(initials(pp.pseudo))}</span>`}<b>${esc(sName(s,id))}</b>${c.place?`<small>${c.place}<sup>e</sup></small>`:""}</span>`:"";}).join("")}</span></div>`:""}</div>`;}
+  const info=s.status==="en_cours"?(live?"":`${n?`<b>${n}</b> joueur${n>1?"s":""} en jeu`:""}`):s.status==="inscriptions"?`Candidatures ouvertes${s.slots?` · <b>${esc(s.slots)}</b> places`:""}`:`${s.start?`Début le <b>${fmtDate(s.start)}</b>`:"Bientôt"}${s.slots?` · ${esc(s.slots)} places`:""}`;
   return `<a class="spot og" href="#saison-${esc(s.id)}"${u?` data-paint="${esc(u)}"`:""}><div class="og-bg"${u?` style="background-image:url('${esc(u)}')"`:""}></div>
-  <div class="spot-in"><div class="spot-logo">${pic(s.logo||o.logo,o.tag||o.name,"logo")}</div><div class="spot-txt">${chip(s.status)}<p class="spot-org">${esc(o.name||"")} · ${esc(seasonShort(s))}</p><h3>${esc(s.title||seasonShort(s))}</h3><p class="spot-info">${info}</p>${s.status==="inscriptions"?`<span class="btn primary sm">Candidater →</span>`:`<span class="btn sm">Voir la saison →</span>`}</div></div></a>`;
+  <div class="spot-in"><div class="spot-logo">${pic(s.logo||o.logo,o.tag||o.name,"logo")}</div><div class="spot-txt">${chip(s.status)}<p class="spot-org">${esc(o.name||"")} · ${esc(seasonShort(s))}</p><h3>${esc(s.title||seasonShort(s))}</h3>${info?`<p class="spot-info">${info}</p>`:""}${live}${s.status==="inscriptions"?`<span class="btn primary sm">Candidater →</span>`:`<span class="btn sm">Voir la saison →</span>`}</div></div></a>`;
 }
 function airItem(s){const o=org(s.orgId)||{};return `<a class="air-i" href="#saison-${esc(s.id)}">${pic(s.logo||o.logo,o.tag||o.name,"logo")}<span><b>${esc(o.name||"")} · ${esc(seasonShort(s))}</b><small>${esc(s.title||"")}</small></span>${chip(s.status)}</a>`;}
 function crownCard(s){const o=org(s.orgId)||{};const w=winnerOf(s);const u=imgSrc(sAvatar(s,w));
