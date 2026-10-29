@@ -574,6 +574,7 @@ select[size]{padding:4px}
 .appcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .ans{display:flex;flex-direction:column;gap:2px}.ans span{font-size:.8rem}.ans p{margin:0;white-space:pre-wrap}
 @media (max-width:860px){.social{grid-template-columns:1fr}.qrow{grid-template-columns:1fr 1fr}}
+.dayin{position:relative;display:flex;gap:6px;align-items:stretch}.dayin>input[data-day]{flex:1;min-width:0}.daybtn{flex:none;width:42px;border-radius:10px;border:1px solid var(--line,#444);background:transparent;cursor:pointer;font-size:17px}.daybtn:hover{background:rgba(255,255,255,.06)}.daynat{position:absolute;right:0;bottom:0;width:42px;height:100%;opacity:0;pointer-events:none}
 </style>
 </head>
 <body>
@@ -1241,6 +1242,14 @@ function isoDay(v,lbl){v=String(v||"").trim();if(!v)return "";let m=v.match(/^(\
   if(m){y=+m[1];mo=+m[2];d=+m[3];}else{m=v.match(/^(\d{1,2})[\/.\- ](\d{1,2})[\/.\- ](\d{2}|\d{4})$/);if(!m)throw new Error("Date "+lbl+" invalide : écris-la comme 15/03/2024.");d=+m[1];mo=+m[2];y=+m[3];if(y<100)y+=2000;}
   const dt=new Date(Date.UTC(y,mo-1,d));if(dt.getUTCMonth()!==mo-1||dt.getUTCDate()!==d)throw new Error("Date "+lbl+" invalide : "+v+" n'existe pas.");
   return y+"-"+String(mo).padStart(2,"0")+"-"+String(d).padStart(2,"0");}
+function dayInp(name,val){return `<div class="dayin">${inp(name,frDay(val),'placeholder="jj/mm/aaaa" maxlength="10" autocomplete="off" inputmode="numeric" data-day="1"')}<button type="button" class="daybtn" data-daypick="${name}" title="Choisir dans le calendrier" aria-label="Choisir dans le calendrier">📅</button><input type="date" class="daynat" tabindex="-1" aria-hidden="true" data-dayfor="${name}" value="${esc(/^\d{4}-\d{2}-\d{2}$/.test(val||"")?val:"")}"></div>`;}
+document.addEventListener("input",e=>{const t=e.target;
+  if(t.dataset&&t.dataset.day&&!(e.inputType||"").startsWith("delete")){let d=t.value.replace(/[^\d]/g,"").slice(0,8);if(/[^\d\/]/.test(t.value))return;t.value=d.length>4?d.slice(0,2)+"/"+d.slice(2,4)+"/"+d.slice(4):d.length>2?d.slice(0,2)+"/"+d.slice(2):d;}
+  if(t.dataset&&t.dataset.dayfor){const x=document.getElementById("f-"+t.dataset.dayfor);if(x&&t.value)x.value=frDay(t.value);}});
+document.addEventListener("change",e=>{const t=e.target;if(t.dataset&&t.dataset.dayfor){const x=document.getElementById("f-"+t.dataset.dayfor);if(x&&t.value)x.value=frDay(t.value);}});
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-daypick]");if(!b)return;const n=b.parentNode.querySelector(".daynat");const x=document.getElementById("f-"+b.dataset.daypick);
+  try{const iso=isoDay(x.value,"");if(iso)n.value=iso;}catch(_){}
+  try{n.showPicker();}catch(_){n.focus();n.click();}});
 function inp(name,val,attrs){return `<input id="f-${name}" name="${name}" value="${esc(val==null?"":val)}" ${attrs||""}>`;}
 function area(name,val,attrs){return `<textarea id="f-${name}" name="${name}" ${attrs||""}>${esc(val||"")}</textarea>`;}
 function sel(name,opts,cur,attrs){return `<select id="f-${name}" name="${name}" ${attrs||""}>${opts.map(([v,l])=>`<option value="${esc(v)}"${String(v)===String(cur==null?"":cur)?" selected":""}>${esc(l)}</option>`).join("")}</select>`;}
@@ -1346,7 +1355,7 @@ function seasonForm(s,orgId){
     ${field("Nom affiché (facultatif)",inp("customName",s.customName,'maxlength="30" placeholder="Automatique"'),"Laisse vide pour le nom automatique. Remplis seulement pour une exception, par exemple « Speed AS » ou « All Stars 2 ».")}
     ${field("Titre ou thème",inp("title",s.title,'maxlength="100" placeholder="ex : Les chasseurs de références"'),"Le nom complet s'affiche comme « LaytORG Speed I : Les chasseurs de références », selon les réglages de l'ORG.")}
     <div class="frow">${field("Statut",sel("status",statusOpts,s.status))}${field("Nombre de places",inp("slots",s.slots,'type="number" min="0" placeholder="ex : 18"'))}</div>
-    <div class="frow">${field("Date de début",inp("start",frDay(s.start),'placeholder="jj/mm/aaaa" maxlength="10" autocomplete="off"'))}${field("Date de fin",inp("end",frDay(s.end),'placeholder="jj/mm/aaaa" maxlength="10" autocomplete="off"'))}</div>
+    <div class="frow">${field("Date de début",dayInp("start",s.start))}${field("Date de fin",dayInp("end",s.end))}</div>
     ${field("Période approximative",inp("period",s.period,'maxlength="40" placeholder="ex : Été 2023, Fin 2021…"'),"Toutes les dates sont facultatives. La période s'affiche si tu ne mets pas de date exacte.")}
     ${field("Lien d'inscription",inp("signup",s.signup,'type="url" placeholder="https://… (formulaire, salon Discord)"'),"Affiché comme bouton « S'inscrire » quand le statut est « Inscriptions ouvertes ».")}
     ${field("Description",area("description",s.description,'rows="4" maxlength="4000" placeholder="Format, twists, infos pratiques…"'))}`,
