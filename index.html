@@ -1766,7 +1766,7 @@ async function importRankings(j,log){
   if(j.org&&j.org.id&&!org(j.org.id)){const same=S.orgs.find(o=>normName(o.name)===normName((j.org.data||{}).name));if(same){orgAlias=same.id;log("ORG existante utilisée : "+same.name);}}
   if(j.org&&j.org.id&&!orgAlias&&!org(j.org.id)){await db.doc("orgs/"+j.org.id).set(Object.assign({createdAt:t,updatedAt:t},j.org.data||{}));log("ORG créée : "+((j.org.data||{}).name||j.org.id));}
   const fresh={};
-  for(const it of j.seasons||[]){if(!season(it.id)&&it.match&&it.match.org!=null){const o=S.orgs.find(x=>normName(x.name)===normName(it.match.org)||x.id===it.match.org);const ex=o&&S.seasons.find(x=>x.orgId===o.id&&Number(x.number)===Number(it.match.number));if(ex)it.id=ex.id;else missing.push(it.match.org+" saison "+it.match.number);}}
+  for(const it of j.seasons||[]){if(!season(it.id)&&it.match&&it.match.org!=null){const o=S.orgs.find(x=>normName(x.name)===normName(it.match.org)||x.id===it.match.org);const ex=o&&S.seasons.find(x=>x.orgId===o.id&&Number(x.number)===Number(it.match.number));if(ex)it.id=ex.id;else if(!it.create)missing.push(it.match.org+" saison "+it.match.number);}}
   for(const it of j.seasons||[]){if(orgAlias&&it.create){it.create.orgId=orgAlias;const ex=S.seasons.find(x=>x.orgId===orgAlias&&Number(x.number)===Number(it.create.number));if(ex){it.id=ex.id;continue;}}
     if(!season(it.id)&&it.create){const d=Object.assign({cast:[],rounds:[],awards:[],teams:[],createdAt:t,updatedAt:t},it.create);await db.doc("seasons/"+it.id).set(d);fresh[it.id]=Object.assign({id:it.id},d);}}
   const getSe=id=>season(id)||fresh[id];
