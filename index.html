@@ -919,6 +919,9 @@ button.ph-av{cursor:pointer}.ph-av img,.ph-av .ib-ph{width:100%;height:100%;obje
 .pin-txt{display:flex;flex-direction:column;min-width:0}.pin-txt b{font-family:var(--font-display);font-size:1.15rem;line-height:1.1}.pin-txt small{color:var(--muted);margin-top:4px}
 .pin-checks{display:flex;flex-wrap:wrap;gap:6px 14px}
 @media (max-width:640px){.pin-row{margin:14px 16px 0}}
+.spoil-wrap{display:block}.spoil-wrap .spoil-hid{display:none}.spoil-wrap.open .spoil-hid{display:flex}.spoil-wrap.open .spoil-btn{display:none}
+.spoil-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:12px;border:1px dashed color-mix(in srgb,var(--live) 70%,transparent);background:rgba(0,0,0,.45);color:var(--ink);font-weight:700;cursor:pointer;backdrop-filter:blur(4px);transition:background .15s}
+.spoil-btn:hover{background:color-mix(in srgb,var(--live) 25%,rgba(0,0,0,.5))}
 </style>
 </head>
 <body>
@@ -1380,6 +1383,8 @@ function bindCarousel(){const car=document.querySelector(".car");if(!car||car._b
   let paused=false;car.addEventListener("mouseenter",()=>paused=true);car.addEventListener("mouseleave",()=>paused=false);car.addEventListener("focusin",()=>paused=true);car.addEventListener("focusout",()=>paused=false);
   const restart=()=>{clearInterval(CAR_T);if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;CAR_T=setInterval(()=>{if(!document.body.contains(tr)){clearInterval(CAR_T);return;}if(!paused&&!document.hidden)go(cur()+1);},6500);};
   restart();}
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-spoil]");if(!b)return;e.preventDefault();e.stopPropagation();const w=b.closest(".spoil-wrap");w.classList.add("open");},true);
+document.addEventListener("keydown",e=>{const b=e.target.closest&&e.target.closest("[data-spoil]");if(b&&(e.key==="Enter"||e.key===" ")){e.preventDefault();b.closest(".spoil-wrap").classList.add("open");}});
 function spotlight(s){
   const o=org(s.orgId)||{};const u=sLogoUrl(s);const n=(s.cast||[]).length;
   let live="";
@@ -1387,7 +1392,7 @@ function spotlight(s){
     (s.cast||[]).forEach(c=>{if(Number(c.place)>1&&!out.has(c.playerId))out.add(c.playerId);});
     if(!last){const pl=(s.cast||[]).filter(c=>Number(c.place)>1).sort((a,b)=>Number(a.place)-Number(b.place));if(pl.length){const mn=Number(pl[0].place);last=pl.filter(c=>Number(c.place)===mn).map(c=>c.playerId);}}
     const left=Math.max(0,n-out.size);
-    live=`<div class="spot-live"><div class="spot-left"><b>${left}</b><span>/ ${n} encore en jeu</span><i class="spot-bar"><i style="width:${Math.round(left/n*100)}%"></i></i></div>${last&&last.length?`<div class="spot-last"><span class="spot-last-l">Dernier${last.length>1?"s":""} éliminé${last.length>1?"s":""}${lastR&&lastR.label?` · ${esc(lastR.label)}`:""}</span><span class="spot-last-p">${last.map(id=>{const pp=player(id);const c=(s.cast||[]).find(x=>x.playerId===id)||{};return pp?`<span class="spot-out">${pp.avatar||c.sAvatar?pic(c.sAvatar||avatarOf(pp),pp.pseudo,"avatar xs"):`<span class="avatar xs">${esc(initials(pp.pseudo))}</span>`}<b>${esc(sName(s,id))}</b>${c.place?`<small>${c.place}<sup>e</sup></small>`:""}</span>`:"";}).join("")}</span></div>`:""}</div>`;}
+    live=`<div class="spot-live"><div class="spot-left"><b>${left}</b><span>/ ${n} encore en jeu</span><i class="spot-bar"><i style="width:${Math.round(left/n*100)}%"></i></i></div>${last&&last.length?`<div class="spot-last"><span class="spot-last-l">Dernier${last.length>1?"s":""} éliminé${last.length>1?"s":""}${lastR&&lastR.label?` · ${esc(lastR.label)}`:""}</span><span class="spoil-wrap"><span class="spoil-btn" role="button" tabindex="0" data-spoil="1">👁 Clique pour révéler le dernier éliminé</span><span class="spot-last-p spoil-hid">${last.map(id=>{const pp=player(id);const c=(s.cast||[]).find(x=>x.playerId===id)||{};return pp?`<span class="spot-out">${pp.avatar||c.sAvatar?pic(c.sAvatar||avatarOf(pp),pp.pseudo,"avatar xs"):`<span class="avatar xs">${esc(initials(pp.pseudo))}</span>`}<b>${esc(sName(s,id))}</b>${c.place?`<small>${c.place}<sup>e</sup></small>`:""}</span>`:"";}).join("")}</span></span></div>`:""}</div>`;}
   const info=s.status==="en_cours"?(live?"":`${n?`<b>${n}</b> joueur${n>1?"s":""} en jeu`:""}`):s.status==="inscriptions"?`Candidatures ouvertes${s.slots?` · <b>${esc(s.slots)}</b> places`:""}`:`${s.start?`Début le <b>${fmtDate(s.start)}</b>`:"Bientôt"}${s.slots?` · ${esc(s.slots)} places`:""}`;
   return `<a class="spot og" href="#saison-${esc(s.id)}"${u?` data-paint="${esc(u)}"`:""}><div class="og-bg"${u?` style="background-image:url('${esc(u)}')"`:""}></div>
   <div class="spot-in"><div class="spot-logo">${pic(s.logo||o.logo,o.tag||o.name,"logo")}</div><div class="spot-txt">${chip(s.status)}<p class="spot-org">${esc(o.name||"")} · ${esc(seasonShort(s))}</p><h3>${esc(s.title||seasonShort(s))}</h3>${info?`<p class="spot-info">${info}</p>`:""}${live}${s.status==="inscriptions"?`<span class="btn primary sm">Candidater →</span>`:`<span class="btn sm">Voir la saison →</span>`}</div></div></a>`;
