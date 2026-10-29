@@ -818,6 +818,10 @@ button.ph-av{cursor:pointer}.ph-av img,.ph-av .ib-ph{width:100%;height:100%;obje
 .spot-last-p{display:flex;flex-wrap:wrap;gap:8px}
 .spot-out{display:inline-flex;align-items:center;gap:7px;padding:3px 10px 3px 3px;border-radius:999px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.1)}
 .spot-out .avatar{width:28px;height:28px;border-radius:50%;filter:grayscale(.6)}.spot-out b{text-decoration:line-through;text-decoration-color:var(--live);text-decoration-thickness:2px}.spot-out small{color:var(--muted)}
+.vt-name{display:flex;flex-direction:column;gap:4px}.vt-row{display:flex;gap:3px}
+.vedit .vt-sel{min-width:0;width:96px;padding:2px 4px;font-size:.72rem;border-left:5px solid var(--tc);border-radius:6px}
+.spot-last{gap:8px}.spot-last-l{font-size:.85rem}
+.spot-out{gap:10px;padding:5px 16px 5px 5px}.spot-out .avatar{width:52px;height:52px;font-size:1rem}.spot-out b{font-size:1.25rem;font-family:var(--font-display);letter-spacing:.01em}.spot-out small{font-size:1rem;font-weight:700}
 </style>
 </head>
 <body>
@@ -1877,6 +1881,9 @@ function votesEditor(s){
   const newRound=i=>({challenge:"",winner:"",label:"Tour "+(i+1),phase:i&&rounds[i-1]?rounds[i-1].phase:1,eliminated:"",recap:"",votes:{}});
   if(!rounds.length)rounds.push(newRound(0));
   const names=cast.map(c=>pName(c.playerId));
+  const tdraft={};cast.forEach(c=>{tdraft[c.playerId]={team:c.team||"",team2:c.team2||"",team3:c.team3||""};});let tChanged=false;
+  const tcol=id=>{const t=(s.teams||[]).find(x=>x.id===id);return t?t.color:"transparent";};
+  const tsel=(pid,k,lbl)=>`<select class="vt-sel" data-tp="${esc(pid)}" data-tk="${k}" style="--tc:${esc(tcol(tdraft[pid][k]))}" title="${lbl}" aria-label="${lbl} de ${esc(pName(pid))}"><option value="">${lbl.replace("Équipe ","É")} —</option>${(s.teams||[]).map(t=>`<option value="${esc(t.id)}"${t.id===tdraft[pid][k]?" selected":""}>${esc(t.name||"Équipe")}</option>`).join("")}</select>`;
   const dl=`<datalist id="dl-names">${names.map(n=>`<option value="${esc(n)}"></option>`).join("")}<option value="Pas de vote"></option></datalist><datalist id="dl-win">${(s.teams||[]).map(t=>`<option value="${esc(t.name)}"></option>`).join("")}${names.map(n=>`<option value="${esc(n)}"></option>`).join("")}</datalist>`;
   const cell=(i,k,val,ph,list)=>`<input id="v-${k}-${i}" data-r="${i}" data-k="${k}" value="${esc(val)}" placeholder="${ph}"${list?` list="${list}"`:""} aria-label="${ph}, colonne ${i+1}">`;
   const grid=()=>`<div class="scroll vscroll"><table class="vedit"><thead>
@@ -1886,17 +1893,17 @@ function votesEditor(s){
     <tr><th>Tour</th>${rounds.map((r,i)=>`<th>${cell(i,"label",r.label,"ex : F12, Finale")}</th>`).join("")}</tr>
     ${hasTeams?`<tr><th>Couleurs</th>${rounds.map((r,i)=>`<th><select id="v-phase-${i}" data-r="${i}" data-k="phase" aria-label="Couleurs d'équipe, colonne ${i+1}"><option value="0"${r.phase===0?" selected":""}>Aucune couleur</option><option value="1"${r.phase===1?" selected":""}>Équipe 1</option><option value="2"${r.phase===2?" selected":""}>Équipe 2</option><option value="3"${r.phase===3?" selected":""}>Équipe 3</option></select></th>`).join("")}</tr>`:""}
     </thead><tbody>
-    ${cast.map((c,ci)=>`<tr><th>${esc(pName(c.playerId))}</th>${rounds.map((r,i)=>`<td><input id="v-${ci}-${i}" data-r="${i}" data-v="${esc(c.playerId)}" value="${esc(r.votes[c.playerId]||"")}" list="dl-names" aria-label="${esc(pName(c.playerId))}, colonne ${i+1}"></td>`).join("")}</tr>`).join("")}
+    ${cast.map((c,ci)=>`<tr><th>${hasTeams?`<div class="vt-name"><span>${esc(pName(c.playerId))}</span><span class="vt-row">${tsel(c.playerId,"team","Équipe 1")}${tsel(c.playerId,"team2","Équipe 2")}${tsel(c.playerId,"team3","Équipe 3")}</span></div>`:esc(pName(c.playerId))}</th>${rounds.map((r,i)=>`<td><input id="v-${ci}-${i}" data-r="${i}" data-v="${esc(c.playerId)}" value="${esc(r.votes[c.playerId]||"")}" list="dl-names" aria-label="${esc(pName(c.playerId))}, colonne ${i+1}"></td>`).join("")}</tr>`).join("")}
     <tr><th>Éliminé·e(s)</th>${rounds.map((r,i)=>`<td>${cell(i,"eliminated",r.eliminated,"ex : Trisugo & Iron","dl-names")}</td>`).join("")}</tr>
     <tr><th>Récapitulatif</th>${rounds.map((r,i)=>`<td><textarea id="v-recap-${i}" data-r="${i}" data-k="recap" rows="7" placeholder="Points, décompte des votes, revote…" aria-label="Récapitulatif, colonne ${i+1}">${esc(r.recap)}</textarea></td>`).join("")}</tr>
     </tbody></table></div>`;
   openModal({title:"Tableau des votes · "+seasonName(s),wide:true,body:`
     <p class="hint">Une colonne par tour. Dans chaque case, écris contre qui le joueur a voté (le pseudo est reconnu et compté dans ses votes reçus) ou n'importe quel texte : un classement (« 3eme »), un score… Laisse vide si rien à afficher. Les joueurs éliminés sont grisés automatiquement dans les colonnes suivantes.</p>
-    ${dl}<div id="vgrid">${grid()}</div>
+    ${hasTeams?`<p class="hint">Les menus sous chaque pseudo changent ses équipes (départ, swap, réunification). Pour créer ou renommer les équipes : « Modifier le casting ».</p>`:""}${dl}<div id="vgrid">${grid()}</div>
     <div><button type="button" class="btn sm" id="vadd">+ Ajouter une colonne</button></div>`,
     onMount:form=>{
       const box=form.querySelector("#vgrid");const redraw=()=>{box.innerHTML=grid();};
-      const upd=e=>{const t=e.target;if(t.dataset.r===undefined)return;const r=rounds[Number(t.dataset.r)];
+      const upd=e=>{const t=e.target;if(t.dataset.tp){tdraft[t.dataset.tp][t.dataset.tk]=t.value;t.style.setProperty("--tc",tcol(t.value));tChanged=true;return;}if(t.dataset.r===undefined)return;const r=rounds[Number(t.dataset.r)];
         if(t.dataset.v){if(t.value.trim())r.votes[t.dataset.v]=t.value;else delete r.votes[t.dataset.v];}
         else if(t.dataset.k==="phase")r.phase=Number(t.value);
         else if(t.dataset.k)r[t.dataset.k]=t.value;};
@@ -1911,8 +1918,10 @@ function votesEditor(s){
     onSave:async()=>{
       const out=rounds.map(r=>{const v={};Object.entries(r.votes).forEach(([k,x])=>{x=String(x).trim();if(!x)return;const id=resolveName(s,x);v[k]=x;});
         return {challenge:r.challenge.trim(),winner:r.winner.trim(),label:r.label.trim(),phase:r.phase,eliminated:r.eliminated.trim(),recap:r.recap.replace(/\s+$/,""),votes:v};});
-      await db.doc("seasons/"+s.id).update({rounds:out,updatedAt:nowIso()});
-      toast("Tableau des votes enregistré");
+      const upd={rounds:out,updatedAt:nowIso()};
+      if(tChanged){const cur=season(s.id)||s;upd.cast=(cur.cast||[]).map(c=>tdraft[c.playerId]?Object.assign({},c,tdraft[c.playerId]):c);}
+      await db.doc("seasons/"+s.id).update(upd);
+      toast(tChanged?"Votes et équipes enregistrés":"Tableau des votes enregistré");
     }});
 }
 
