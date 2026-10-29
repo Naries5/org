@@ -1350,6 +1350,9 @@ function seasonForm(s,orgId){
       const data=Object.assign(strip(s),{orgId:v.orgId,number:Number(v.number),title:v.title,status:v.status,slots:v.slots?Number(v.slots):null,customName:v.customName,start:v.start,end:v.end,period:v.period,logo:await resolveImage(f,"logo",s.logo),signup:v.signup,description:v.description,cast:s.cast||[],rounds:s.rounds||[],awards:s.awards||[],updatedAt:t});
       if(isNew)data.createdAt=t;
       await db.doc("seasons/"+id).set(data);
+      const chk=await db.doc("seasons/"+id).get();const got=chk.exists?chk.data()||{}:null;
+      const bad=!got?"la saison n'a pas été retrouvée":["start","end","period","title","status"].filter(k=>String(got[k]||"")!==String(data[k]||"")).join(", ");
+      if(bad)throw new Error("La base n'a pas gardé la modification ("+bad+"). Envoie une capture de ce message à l'admin.");
       toast(isNew?"Saison créée":"Saison mise à jour");
       if(isNew)location.hash="saison-"+id;
     }});
