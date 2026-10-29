@@ -580,6 +580,18 @@ select[size]{padding:4px}
 @media (max-width:860px){.social{grid-template-columns:1fr}.qrow{grid-template-columns:1fr 1fr}}
 .dayin{position:relative;display:flex;gap:6px;align-items:stretch}.dayin>input[data-day]{flex:1;min-width:0}.daybtn{flex:none;width:42px;border-radius:10px;border:1px solid var(--line,#444);background:transparent;cursor:pointer;font-size:17px}.daybtn:hover{background:rgba(255,255,255,.06)}.daynat{position:absolute;right:0;bottom:0;width:42px;height:100%;opacity:0;pointer-events:none}
 .vstruck{text-decoration:line-through;text-decoration-thickness:2px;opacity:.6}
+.tk-kinds{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:14px 0}
+.tk-kind{display:flex;flex-direction:column;gap:4px;text-align:left;padding:14px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.03);color:inherit;cursor:pointer;font:inherit}
+.tk-kind b{font-size:15px}.tk-kind span{font-size:13px;opacity:.75}
+.tk-kind:hover{background:rgba(255,255,255,.06)}.tk-kind.on{border-color:var(--t1);background:var(--accent-soft);box-shadow:0 0 0 1px var(--t1) inset}
+.tk-form{max-width:760px}.tk-chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.tk-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 6px 4px 12px;border-radius:999px;background:var(--accent-soft);border:1px solid var(--line)}
+.tk-chip button{border:0;background:transparent;color:inherit;cursor:pointer;font-size:16px;line-height:1}
+.tk-card{border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:0 0 10px;background:rgba(255,255,255,.025)}
+.tk-card header{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:6px}.tk-card p{margin:4px 0}
+.tk-msg{white-space:pre-wrap}.tk-note{padding:8px 10px;border-radius:10px;background:var(--accent-soft)}
+.tk-st{font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;border:1px solid currentColor}
+.t-open{color:var(--t1)}.t-done{color:#5fd38d}.t-ref{color:#ff8a8a}
 </style>
 </head>
 <body>
@@ -592,6 +604,7 @@ select[size]{padding:4px}
       <a href="#saisons" data-nav="saisons">Saisons</a>
       <a href="#joueurs" data-nav="joueurs">Joueurs</a>
       <a href="#annonces" data-nav="annonces">Annonces</a>
+      <a href="#tickets" data-nav="tickets">Tickets</a>
     </nav>
     <div class="gsearch"><input id="gsearch" type="search" placeholder="ORG, saison, joueur…" autocomplete="off" aria-label="Rechercher sur ORG-Central"><div class="gres" hidden></div></div>
     <span class="role" id="role"></span>
@@ -810,6 +823,7 @@ async function loadAuth(){
     const {data:h}=await sb.from("org_hosts").select("org_id").eq("user_id",S.me);(h||[]).forEach(x=>S.hostOrgs.add(x.org_id));
     const {data:cl}=await sb.from("claims").select("player_id,status").eq("user_id",S.me);S.myClaims=cl||[];
   }
+  tkCount();
   S.isOwner=false;if(S.me){try{const {data:own}=await sb.rpc("is_owner");S.isOwner=own===true;}catch(e){}}
   S.canEdit=S.isHost;
   try{await loadSocial();}catch(e){console.warn(e);}
@@ -867,6 +881,7 @@ function render(){
     case "annonces":html=pageNews();break;
     case "admin":html=pageAdmin();break;
     case "journal":html=pageJournal();break;
+    case "tickets":html=pageTickets();break;
     case "social":html=pageSocial(id);break;
     default:html=pageHome();
   }
@@ -875,7 +890,7 @@ function render(){
   bindSearch(page);bindSearchBox(document.getElementById("hsearch"));
   themeFor(page,id);updateRole();if(page==="social")bindSocial();
   if(keepFocus){const s=document.getElementById("search");if(s){s.focus();s.setSelectionRange(s.value.length,s.value.length);}}
-  const title={social:"Amis & messages",orgs:"ORGs",saisons:"Saisons",joueurs:"Joueurs",annonces:"Annonces",palmares:"Palmarès"}[page];
+  const title={tickets:"Tickets",social:"Amis & messages",orgs:"ORGs",saisons:"Saisons",joueurs:"Joueurs",annonces:"Annonces",palmares:"Palmarès"}[page];
   document.title=title?title+" · ORG-Central":"ORG-Central";
   lastPage=h;
 }
@@ -1627,6 +1642,97 @@ function splitForm(p){
     }});
 }
 
+/* ---------- tickets ---------- */
+const TK_KINDS={erreur:["Erreur dans une ORG","Un classement, un vote, un award, une date… est faux."],fusion:["Plusieurs fiches = un seul joueur","La même personne a plusieurs fiches avec des pseudos différents."],separation:["Une fiche = plusieurs joueurs","Des personnes différentes ont été réunies sur une seule fiche."],autre:["Autre","Une suggestion, un bug du site, une autre demande…"]};
+const TK_ST={open:["Ouvert","t-open"],done:["Résolu","t-done"],refused:["Refusé","t-ref"]};
+let TK={kind:"",list:null,err:"",filter:"open",players:[],split:""};
+function tkLabelMap(){const m=new Map();const dup={};S.players.forEach(p=>{const k=norm(p.pseudo);dup[k]=(dup[k]||0)+1;});
+  S.players.forEach(p=>{const l=p.pseudo+(dup[norm(p.pseudo)]>1?" ("+(p.precision||historyOf(p.id).map(x=>org(x.s.orgId)?org(x.s.orgId).name:"").filter(Boolean)[0]||p.id)+")":"");m.set(l,p.id);});return m;}
+function tkFindPlayer(v){v=String(v||"").trim();if(!v)return null;const m=tkLabelMap();if(m.has(v))return m.get(v);const p=playerByName(v);return p?p.id:null;}
+function pageTickets(){
+  setTimeout(bindTickets,0);
+  const intro=`<p class="muted">Tu as vu une erreur sur le site ? Ouvre un ticket : l'admin le traite et tu peux suivre son statut ici.</p>`;
+  if(!S.me)return `<section class="block"><div class="block-head"><h1>Tickets</h1></div>${intro}<p><button class="btn primary" data-act="login">Se connecter avec Discord pour ouvrir un ticket</button></p></section>`;
+  return `<section class="block"><div class="block-head"><h1>Tickets</h1></div>${intro}
+    <div class="tk-kinds" role="radiogroup" aria-label="Type de ticket">${Object.entries(TK_KINDS).map(([k,[t,d]])=>`<button type="button" class="tk-kind${TK.kind===k?" on":""}" data-tk="${k}" role="radio" aria-checked="${TK.kind===k}"><b>${esc(t)}</b><span>${esc(d)}</span></button>`).join("")}</div>
+    <form id="tk-form" class="tk-form" novalidate>${tkFormBody()}</form></section>
+  <section class="block"><div class="block-head"><h2>${S.isAdmin?"Tous les tickets":"Mes tickets"}</h2>${S.isAdmin?`<span class="actions"><select id="tk-filter" class="search" style="max-width:180px" aria-label="Filtrer"><option value="open"${TK.filter==="open"?" selected":""}>Ouverts</option><option value="all"${TK.filter==="all"?" selected":""}>Tous</option></select></span>`:""}</div><div id="tk-list"><p class="muted">Chargement…</p></div></section>`;
+}
+function tkFormBody(){
+  const k=TK.kind;if(!k)return `<p class="hint">Choisis le type de ticket ci-dessus.</p>`;
+  const dl=`<datalist id="tk-players">${[...tkLabelMap().keys()].sort((a,b)=>a.localeCompare(b,"fr")).map(l=>`<option value="${esc(l)}"></option>`).join("")}</datalist>`;
+  const msg=(req,ph)=>field("Explique"+(req?" *":" (facultatif)"),area("message","",`rows="4" maxlength="2000" placeholder="${esc(ph)}"`));
+  let b="";
+  if(k==="erreur"){const orgs=[...S.orgs].sort((a,b)=>String(a.name).localeCompare(String(b.name),"fr"));
+    b=`<div class="frow">${field("ORG *",`<select id="tk-org" name="org"><option value="">— Choisir —</option>${orgs.map(o=>`<option value="${esc(o.id)}">${esc(o.name)}</option>`).join("")}</select>`)}${field("Saison",`<select id="tk-season" name="season"><option value="">Toute l'ORG / je ne sais pas</option></select>`)}</div>${msg(true,"ex : en saison 3, c'est Lisa qui a gagné l'award Héros, pas Even.")}`;}
+  if(k==="fusion"){b=`${dl}<p class="hint">Ajoute toutes les fiches qui sont en réalité la même personne (au moins 2).</p>
+    <div class="tk-chips">${TK.players.map((id,i)=>`<span class="tk-chip">${esc(pName(id))}<button type="button" data-tkrm="${i}" aria-label="Retirer">×</button></span>`).join("")}</div>
+    <div class="dayin"><input id="tk-padd" list="tk-players" placeholder="Pseudo d'une fiche…" autocomplete="off"><button type="button" class="btn" id="tk-add">Ajouter</button></div>${msg(false,"ex : c'est la même personne, elle a changé de pseudo.")}`;}
+  if(k==="separation"){const p=TK.split&&player(TK.split);const h=p?historyOf(p.id):[];
+    b=`${dl}${field("Fiche concernée *",`<div class="dayin"><input id="tk-psplit" list="tk-players" value="${esc(p?p.pseudo:"")}" placeholder="Pseudo de la fiche…" autocomplete="off"><button type="button" class="btn" id="tk-pick">Choisir</button></div>`)}
+    ${p?(h.length?`<p class="hint">Coche les ORGs jouées par <b>l'autre personne</b> :</p><div class="checks">${h.map(({s,c})=>`<label class="chk"><input type="checkbox" name="sp" value="${esc(s.id)}"> ${esc(fullSeasonName(s))} <span class="muted">· ${placeLabel(c.place)}</span></label>`).join("")}</div>`:`<p class="muted">Cette fiche n'a aucune participation.</p>`)+field("Pseudo de l'autre personne",inp("other","",'maxlength="40" placeholder="si tu le connais"')):""}
+    ${msg(false,"ex : le Panda d'Axioma n'est pas le même que celui de LaytORG.")}`;}
+  if(k==="autre")b=msg(true,"Décris ta demande.");
+  return b+`<p class="ferr" id="tk-err" role="alert">${esc(TK.err||"")}</p><p><button type="submit" class="btn primary">Envoyer le ticket</button></p>`;
+}
+function tkRefreshForm(){const f=document.getElementById("tk-form");if(!f)return;const m=f.querySelector("#f-message");const keep=m?m.value:"";f.innerHTML=tkFormBody();const m2=f.querySelector("#f-message");if(m2)m2.value=keep;document.querySelectorAll(".tk-kind").forEach(b=>{const on=b.dataset.tk===TK.kind;b.classList.toggle("on",on);b.setAttribute("aria-checked",on);});tkBindForm();}
+function tkBindForm(){const f=document.getElementById("tk-form");if(!f)return;
+  const o=f.querySelector("#tk-org");if(o)o.addEventListener("change",()=>{const se=f.querySelector("#tk-season");se.innerHTML=`<option value="">Toute l'ORG / je ne sais pas</option>`+seasonsOf(o.value).map(s=>`<option value="${esc(s.id)}">${esc(seasonName(s))}</option>`).join("");});
+  const add=f.querySelector("#tk-add"),pi=f.querySelector("#tk-padd");
+  const doAdd=()=>{const id=tkFindPlayer(pi.value);if(!id){TK.err="Fiche introuvable : choisis un pseudo dans la liste.";}else if(TK.players.includes(id)){TK.err="Cette fiche est déjà dans la liste.";}else{TK.players.push(id);TK.err="";}tkRefreshForm();const n=document.getElementById("tk-padd");if(n)n.focus();};
+  if(add){add.addEventListener("click",doAdd);pi.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();doAdd();}});}
+  f.querySelectorAll("[data-tkrm]").forEach(b=>b.addEventListener("click",()=>{TK.players.splice(Number(b.dataset.tkrm),1);tkRefreshForm();}));
+  const pk=f.querySelector("#tk-pick"),ps=f.querySelector("#tk-psplit");
+  const doPick=()=>{const id=tkFindPlayer(ps.value);TK.split=id||"";TK.err=id?"":"Fiche introuvable : choisis un pseudo dans la liste.";tkRefreshForm();};
+  if(pk){pk.addEventListener("click",doPick);ps.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();doPick();}});ps.addEventListener("change",doPick);}
+}
+function bindTickets(){
+  document.querySelectorAll(".tk-kind").forEach(b=>{if(b._b)return;b._b=1;b.addEventListener("click",()=>{TK.kind=b.dataset.tk;TK.err="";tkRefreshForm();});});
+  const f=document.getElementById("tk-form");
+  if(f&&!f._b){f._b=1;tkBindForm();f.addEventListener("submit",async e=>{e.preventDefault();const err=m=>{TK.err=m;const x=document.getElementById("tk-err");if(x)x.textContent=m;};
+    const msg=((f.querySelector("#f-message")||{}).value||"").trim();const k=TK.kind;const d={message:msg};
+    if(k==="erreur"){d.orgId=f.querySelector("#tk-org").value;d.seasonId=f.querySelector("#tk-season").value;if(!d.orgId)return err("Choisis l'ORG concernée.");if(!msg)return err("Explique ce qui est faux.");}
+    if(k==="fusion"){d.players=TK.players.slice();if(d.players.length<2)return err("Ajoute au moins 2 fiches.");}
+    if(k==="separation"){if(!TK.split)return err("Choisis la fiche concernée.");d.playerId=TK.split;d.seasons=[...f.querySelectorAll('input[name=sp]:checked')].map(x=>x.value);d.other=((f.querySelector("#f-other")||{}).value||"").trim();if(!d.seasons.length&&!msg)return err("Coche les ORGs de l'autre personne ou explique la situation.");}
+    if(k==="autre"&&!msg)return err("Décris ta demande.");
+    const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Envoi…";
+    const {error}=await sb.from("tickets").insert({kind:k,data:d,status:"open"});
+    if(error){btn.disabled=false;btn.textContent="Envoyer le ticket";return err(/relation|does not exist|schema cache/i.test(error.message)?"Les tickets ne sont pas encore activés : l'admin doit lancer update-6-tickets.sql dans Supabase.":errMsg(sbErr(error)));}
+    TK={kind:"",list:null,err:"",filter:TK.filter,players:[],split:""};toast("Ticket envoyé, merci !");render();tkCount();});}
+  const fl=document.getElementById("tk-filter");if(fl&&!fl._b){fl._b=1;fl.addEventListener("change",()=>{TK.filter=fl.value;loadTickets();});}
+  loadTickets();
+}
+async function loadTickets(){const box=document.getElementById("tk-list");if(!box)return;
+  if(S.isAdmin&&!ADM_PROFS.length){const {data}=await sb.from("profiles").select("*");ADM_PROFS=data||[];}
+  let q=sb.from("tickets").select("*").order("created_at",{ascending:false}).limit(200);if(!S.isAdmin)q=q.eq("user_id",S.me);else if(TK.filter==="open")q=q.eq("status","open");
+  const {data,error}=await q;
+  if(error){box.innerHTML=`<p class="muted">${/relation|does not exist|schema cache/i.test(error.message)?"Les tickets ne sont pas encore activés : lance <b>update-6-tickets.sql</b> dans Supabase.":esc(error.message)}</p>`;return;}
+  if(!data.length){box.innerHTML=`<p class="muted">${S.isAdmin&&TK.filter==="open"?"Aucun ticket ouvert. 🎉":"Aucun ticket pour l'instant."}</p>`;return;}
+  box.innerHTML=data.map(tkCard).join("");
+  box.querySelectorAll("[data-tkact]").forEach(b=>b.addEventListener("click",()=>tkAction(b.dataset.tkact,Number(b.dataset.id),data.find(x=>x.id===Number(b.dataset.id)))));
+}
+function tkCard(t){const d=t.data||{};const st=TK_ST[t.status]||TK_ST.open;const pl=id=>{const p=player(id);return p?`<a href="#joueur-${esc(id)}">${esc(p.pseudo)}</a>`:`<span class="muted">fiche supprimée</span>`;};
+  let det="";
+  if(t.kind==="erreur"){const o=org(d.orgId),se=season(d.seasonId);det=`<p>${se?`<a href="#saison-${esc(se.id)}">${esc(fullSeasonName(se))}</a>`:o?`<a href="#org-${esc(o.id)}">${esc(o.name)}</a>`:"ORG supprimée"}</p>`;}
+  if(t.kind==="fusion")det=`<p>Fiches : ${(d.players||[]).map(pl).join(" + ")}</p>`;
+  if(t.kind==="separation")det=`<p>Fiche : ${pl(d.playerId)}${d.other?` · autre personne : <b>${esc(d.other)}</b>`:""}</p>${(d.seasons||[]).length?`<p class="muted">ORGs de l'autre personne : ${(d.seasons||[]).map(id=>{const se=season(id);return se?`<a href="#saison-${esc(id)}">${esc(fullSeasonName(se))}</a>`:"?";}).join(", ")}</p>`:""}`;
+  const author=S.isAdmin?(()=>{const lp=linkedPlayer(t.user_id);const p=ADM_PROFS.find(x=>x.id===t.user_id);return ` · par ${lp?`<a href="#joueur-${esc(lp.id)}">${esc(lp.pseudo)}</a>`:esc((p&&p.discord_name)||"compte inconnu")}`;})():"";
+  const when=new Date(t.created_at).toLocaleString("fr-FR",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
+  let acts="";
+  if(S.isAdmin){if(t.kind==="fusion"&&(d.players||[]).length&&player(d.players[0]))acts+=`<button class="btn sm" data-tkact="merge" data-id="${t.id}">Fusionner…</button>`;
+    if(t.kind==="separation"&&player(d.playerId))acts+=`<button class="btn sm" data-tkact="split" data-id="${t.id}">Séparer…</button>`;
+    if(t.status==="open")acts+=`<button class="btn sm primary" data-tkact="done" data-id="${t.id}">Résolu</button><button class="btn sm ghost" data-tkact="refused" data-id="${t.id}">Refuser</button>`;else acts+=`<button class="btn sm ghost" data-tkact="open" data-id="${t.id}">Rouvrir</button>`;
+    acts+=`<button class="btn sm ghost" data-tkact="note" data-id="${t.id}">Réponse</button><button class="btn sm danger" data-tkact="del" data-id="${t.id}">Supprimer</button>`;}
+  else if(t.status==="open")acts=`<button class="btn sm ghost" data-tkact="del" data-id="${t.id}">Annuler</button>`;
+  return `<article class="tk-card"><header><span class="tk-st ${st[1]}">${st[0]}</span><b>${esc(TK_KINDS[t.kind]?TK_KINDS[t.kind][0]:t.kind)}</b><span class="muted">${esc(when)}${author}</span></header>${det}${d.message?`<p class="tk-msg">${esc(d.message)}</p>`:""}${t.admin_note?`<p class="tk-note"><b>Réponse de l'admin :</b> ${esc(t.admin_note)}</p>`:""}${acts?`<div class="actions">${acts}</div>`:""}</article>`;}
+async function tkAction(a,id,t){const d=(t&&t.data)||{};
+  if(a==="merge"){mergeForm(player(d.players[0]));return;}
+  if(a==="split"){splitForm(player(d.playerId));return;}
+  if(a==="note"){openModal({title:"Réponse au ticket",body:field("Message visible par l'auteur du ticket",area("note",t.admin_note||"",'rows="4" maxlength="1000"')),onSave:async f=>{const {error}=await sb.from("tickets").update({admin_note:vals(f).note||"",updated_at:new Date().toISOString()}).eq("id",id);if(error)throw sbErr(error);toast("Réponse enregistrée");loadTickets();}});return;}
+  if(a==="del"){confirmModal(S.isAdmin?"Supprimer le ticket":"Annuler le ticket","Ce ticket sera supprimé définitivement.",S.isAdmin?"Supprimer":"Annuler le ticket",async()=>{const {error}=await sb.from("tickets").delete().eq("id",id);if(error)throw sbErr(error);toast("Ticket supprimé");loadTickets();tkCount();});return;}
+  const {error}=await sb.from("tickets").update({status:a,updated_at:new Date().toISOString()}).eq("id",id);if(error){toast(errMsg(sbErr(error)),true);return;}
+  toast(a==="done"?"Ticket résolu":a==="refused"?"Ticket refusé":"Ticket rouvert");loadTickets();tkCount();}
+async function tkCount(){if(!S.isAdmin||!sb){S.tkOpen=0;return;}const {count,error}=await sb.from("tickets").select("id",{count:"exact",head:true}).eq("status","open");S.tkOpen=error?0:(count||0);const a=document.querySelector('[data-nav="tickets"]');if(a)a.innerHTML="Tickets"+(S.tkOpen?` <b class="badge">${S.tkOpen}</b>`:"");}
 /* ---------- comptes, demandes, inscriptions ---------- */
 function playerActions(p){
   const mine=S.me&&p.ownerUid===S.me;const pend=S.myClaims.some(c=>c.player_id===p.id&&c.status==="pending");
