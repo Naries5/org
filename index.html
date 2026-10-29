@@ -881,11 +881,12 @@ button.ph-av{cursor:pointer}.ph-av img,.ph-av .ib-ph{width:100%;height:100%;obje
 .pl-count{margin:0 0 8px;font-size:.85rem}
 .pl-ok{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:#3ba55d;color:#fff;font-size:.7rem;vertical-align:middle}
 .th-intro{font-size:15px;max-width:760px}
-.th-names{display:flex;flex-wrap:wrap;gap:8px}
-.th-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 12px 5px 5px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.04);font-weight:600}
-.th-chip>a{display:inline-flex;align-items:center;gap:6px;color:inherit}
-.th-chip .avatar.xs{width:26px;height:26px;font-size:10px}
-.th-x{background:none;border:0;color:var(--muted,#aaa);cursor:pointer;padding:0 2px;font-size:13px}
+.th-names{display:flex;flex-wrap:wrap;gap:12px}
+.th-chip{display:inline-flex;align-items:center;gap:6px;padding:7px 18px 7px 7px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.04);font-weight:700;font-size:20px}
+.th-chip>a{display:inline-flex;align-items:center;gap:10px;color:inherit}
+.th-chip{gap:10px}
+.th-chip .avatar.xs{width:40px;height:40px;font-size:14px}
+.th-x{background:none;border:0;color:var(--muted,#aaa);cursor:pointer;padding:0 2px;font-size:15px}
 .th-x:hover{color:#fff}
 .th-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
 .th-card{position:relative;display:grid;grid-template-columns:52px 1fr;gap:12px;align-items:start;padding:14px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.03)}
@@ -2296,7 +2297,6 @@ function pageThanks(){
   return `<section class="block"><div class="block-head"><h1>Merci !</h1>${S.isAdmin?`<span class="actions"><button class="btn primary" data-act="new-credit">+ Ajouter un remerciement</button></span>`:""}</div>
   <p class="muted th-intro">ORG-Central existe grâce à celles et ceux qui envoient leurs captures, corrigent les erreurs et partagent leurs archives. Un immense merci à vous ❤️</p>
   <div id="th-people"><p class="muted">Chargement…</p></div></section>
-  <section class="block"><div class="block-head"><h2>Sources</h2></div><p class="muted">Sites et wikis dont les données ont été reprises, avec l'accord de leurs équipes.</p><div id="th-sources"></div></section>
   <p class="muted" style="text-align:center"><a class="btn" href="#contribuer">Toi aussi, contribue →</a></p>`;}
 async function loadThanks(){
   const [rp,cr]=await Promise.all([sb.rpc("contributors").then(r=>r,e=>({error:e})),sb.from("credits").select("id,data").then(r=>r,e=>({error:e}))]);
@@ -2317,9 +2317,6 @@ async function loadThanks(){
   const miss=rp.error&&/contributors|function|schema/i.test(String((rp.error&&rp.error.message)||""));
   box.innerHTML=(miss&&S.isAdmin?`<p class="ferr">La liste automatique n'est pas encore active : lance le fichier <b>update-9-remerciements.sql</b> dans Supabase.</p>`:"")+
     (list.length?`<div class="th-names">${list.map(thCard).join("")}</div>`:`<p class="muted">Pas encore de contributeur… sois le premier !</p>`);
-  const src=document.getElementById("th-sources");
-  const ss=TH.credits.filter(c=>c.kind==="source").sort((a,b)=>(Number(a.order)||99)-(Number(b.order)||99)||String(a.name).localeCompare(String(b.name),"fr"));
-  if(src)src.innerHTML=ss.length?`<div class="th-grid">${ss.map(c=>{const u=safeUrl(c.url);return `<div class="th-card src${S.isAdmin?" adm":""}">${thAdm(c)}<div><div class="th-name">${u?`<a href="${esc(u)}" target="_blank" rel="noopener">${esc(c.name)} ↗</a>`:esc(c.name)}</div>${c.what?`<p class="th-what">${richText(c.what)}</p>`:""}</div></div>`;}).join("")}</div>`:`<p class="muted">Aucune source pour l'instant.</p>`;
 }
 function thAdm(c){return S.isAdmin?`<span class="th-adm"><button class="btn sm ghost" data-act="edit-credit" data-id="${esc(c.id)}" title="Modifier">✎</button><button class="btn sm ghost danger" data-act="del-credit" data-id="${esc(c.id)}" title="Supprimer">×</button></span>`:"";}
 function thCard(e){
@@ -2330,12 +2327,12 @@ function thCard(e){
 function creditForm(c){
   const isNew=!c;c=c||{kind:"personne"};
   openModal({title:isNew?"Ajouter un remerciement":"Modifier le remerciement",body:`
-    <div class="frow">${field("Type",sel("kind",[["personne","Personne"],["source","Source (site, wiki…)"]],c.kind))}${field("Nom *",inp("name",c.name,'required data-label="Nom" maxlength="80" placeholder="Pseudo ou nom du site"'))}</div>
+    <div class="frow">${field("Nom *",inp("name",c.name,'required data-label="Nom" maxlength="80" placeholder="Pseudo"'))}</div>
     ${field("Pour quoi ?",area("what",c.what,'rows="3" maxlength="500" placeholder="ex : Captures des votes de Wsequester S1 à S4"'),"Optionnel, affiché au survol du nom. Les personnes qui passent par l'onglet Contribuer apparaissent déjà toutes seules : ajoute ici celles qui ont aidé autrement (Discord, archives…).")}
-    <div class="frow">${field("Lien",inp("url",c.url,'maxlength="300" placeholder="https://…"'),"Pour une source.")}${field("Ordre",inp("order",c.order||"",'type="number" min="0" max="999"'),"Pour trier les sources.")}</div>`,
+    <div class="frow"></div>`,
     onSave:async f=>{const v=vals(f);const id=c.id||uid("cr");
-      const data=Object.assign({},c,{kind:v.kind,name:v.name,what:v.what,url:v.url,order:v.order?Number(v.order):0,updatedAt:nowIso()});delete data.id;
-      const pl=S.players.find(p=>normName(p.pseudo)===normName(v.name)||aliasesOf(p).some(a=>normName(a)===normName(v.name)));if(v.kind==="personne"&&pl)data.playerId=pl.id;else delete data.playerId;
+      const data=Object.assign({},c,{kind:"personne",name:v.name,what:v.what,updatedAt:nowIso()});delete data.id;
+      const pl=S.players.find(p=>normName(p.pseudo)===normName(v.name)||aliasesOf(p).some(a=>normName(a)===normName(v.name)));if(pl)data.playerId=pl.id;else delete data.playerId;
       const {error}=await sb.from("credits").upsert({id,data,updated_at:nowIso()});if(error)throw sbErr(error);
       toast(isNew?"Remerciement ajouté":"Remerciement mis à jour");loadThanks();}});
 }
