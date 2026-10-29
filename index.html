@@ -609,6 +609,30 @@ select[size]{padding:4px}
 .cal-logo{width:64px;height:64px;border-radius:12px;object-fit:cover;box-shadow:0 6px 16px rgba(0,0,0,.5);border:2px solid var(--line);background:var(--surface-2);display:inline-grid;place-items:center;font-family:var(--font-cond);font-size:18px;color:var(--t1)}
 .cal-hint{text-align:center;margin-top:12px}.cal-undated h2{font-size:18px}.cal-chips{display:flex;flex-wrap:wrap;gap:8px}
 .cal-chip{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:12px;border:1px solid var(--line);text-decoration:none;color:var(--ink)}
+.top-in{max-width:1280px;flex-wrap:nowrap;gap:14px}
+nav.main{flex-wrap:nowrap;gap:2px}
+nav.main a{padding:6px 11px;white-space:nowrap}
+.gsearch{flex:1 1 160px;min-width:140px;max-width:240px}
+.role{margin-left:0;gap:8px;flex:none;text-transform:none;letter-spacing:0}
+.hicon{position:relative;display:inline-grid;place-items:center;width:40px;height:40px;border-radius:999px;color:var(--muted);text-decoration:none;transition:background .15s,color .15s}
+.hicon:hover{background:rgba(255,255,255,.07);color:var(--ink)}.hicon svg{width:22px;height:22px}
+.hicon .badge{position:absolute;top:2px;right:0;min-width:18px;height:18px;padding:0 5px;font-size:11px;line-height:18px;border-radius:999px}
+.umenu{position:relative}
+.ubtn{display:inline-flex;align-items:center;gap:8px;padding:3px 10px 3px 3px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--ink);font:inherit;font-weight:700;cursor:pointer;position:relative}
+.ubtn:hover,.ubtn[aria-expanded="true"]{background:rgba(255,255,255,.1)}
+.ubtn .uname{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ubtn .caret{width:12px;height:12px;color:var(--muted)}
+.udot{position:absolute;top:0;left:26px;width:10px;height:10px;border-radius:50%;background:var(--live);box-shadow:0 0 0 2px var(--bg)}
+.udrop{position:absolute;right:0;top:calc(100% + 8px);min-width:210px;padding:6px;border-radius:14px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow-hi);z-index:40;display:flex;flex-direction:column}
+.udrop[hidden]{display:none}
+.udrop a,.udrop button{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;border-radius:10px;color:var(--ink);text-decoration:none;font:inherit;font-weight:600;background:none;border:0;text-align:left;cursor:pointer}
+.udrop a:hover,.udrop button:hover{background:rgba(255,255,255,.07)}
+.udrop hr{border:0;border-top:1px solid var(--line);margin:4px 6px;width:auto}
+.udrop button[data-act="logout"]{color:#ff8a8a}.umuted{padding:6px 12px;color:var(--muted);font-size:.85rem}
+footer.site a{color:inherit}
+@media (max-width:1100px){.top-in{flex-wrap:wrap}nav.main{order:5;flex-basis:100%;overflow-x:auto;scrollbar-width:none}.gsearch{margin-left:auto}}
+@media (max-width:560px){.gsearch{order:6;max-width:none;flex-basis:100%}.ubtn .uname{display:none}.role{margin-left:auto;width:auto}}
+.top{z-index:30}
 </style>
 </head>
 <body>
@@ -622,14 +646,13 @@ select[size]{padding:4px}
       <a href="#joueurs" data-nav="joueurs">Joueurs</a>
       <a href="#calendrier" data-nav="calendrier">Calendrier</a>
       <a href="#annonces" data-nav="annonces">Annonces</a>
-      <a href="#tickets" data-nav="tickets">Tickets</a>
     </nav>
     <div class="gsearch"><input id="gsearch" type="search" placeholder="ORG, saison, joueur…" autocomplete="off" aria-label="Rechercher sur ORG-Central"><div class="gres" hidden></div></div>
     <span class="role" id="role"></span>
   </div>
 </header>
 <main id="app"><p class="loading">Chargement du wiki…</p></main>
-<footer class="site"><span>ORG-Central · wiki communautaire</span><span>ORGs &amp; speeds FR</span></footer>
+<footer class="site"><span>ORG-Central · wiki communautaire · <a href="#tickets">Signaler une erreur</a></span><span>ORGs &amp; speeds FR</span></footer>
 <div id="modal" hidden></div>
 <div id="toast" aria-live="polite"></div>
 
@@ -805,9 +828,19 @@ function themeFor(page,id){
 function myPlayer(){return S.me?S.players.find(p=>p.ownerUid===S.me):null;}
 function pronounsOf(p){return p&&p.pronouns?String(p.pronouns):"";}
 function updateRole(){const el=document.getElementById("role");if(!el)return;
-  if(!S.me){el.innerHTML=`<button class="btn sm primary" data-act="login">Se connecter avec Discord</button>`;return;}
-  const mp=myPlayer();const pr=S.profile||{};
-  el.innerHTML=`${mp?`<a href="#joueur-${esc(mp.id)}" class="me-link" title="Mon profil">${ava(mp,"xs")}<span>${esc(mp.pseudo)}</span></a>`:`<a href="#moi" class="me-link" title="Mon profil">${pr.avatar_url?`<img class="avatar xs" src="${esc(pr.avatar_url)}" alt="">`:""}<span>${esc(pr.discord_name||"Mon profil")}</span></a>`}<a class="btn sm ghost" href="#social">Messages${(S.unread+socialPending())?` <b class="badge">${S.unread+socialPending()}</b>`:""}</a>${(S.isOwner?`<a class="btn sm ghost" href="#journal">Journal</a>`:"")+(S.isAdmin?`<a class="btn sm ghost" href="#admin">Admin</a>`:S.isHost?"<span>Host</span>":"")}<button class="btn sm ghost" data-act="logout">Déconnexion</button>`;}
+  if(!S.me){el.innerHTML=`<button class="btn sm primary" data-act="login">Se connecter</button>`;return;}
+  const mp=myPlayer();const pr=S.profile||{};const name=mp?mp.pseudo:(pr.discord_name||"Mon profil");
+  const av=mp&&avatarOf(mp)?ava(mp,"xs"):pr.avatar_url?`<img class="avatar xs" src="${esc(pr.avatar_url)}" alt="">`:`<span class="avatar xs">${esc(initials(name))}</span>`;
+  const msgN=(S.unread||0)+socialPending();const tkN=S.isAdmin?(S.tkOpen||0):0;
+  const bd=n=>n?` <b class="badge">${n}</b>`:"";
+  const item=(href,label,n,act)=>act?`<button type="button" role="menuitem" data-act="${act}">${label}</button>`:`<a role="menuitem" href="${href}">${label}${bd(n)}</a>`;
+  el.innerHTML=`<a class="hicon" href="#social" title="Messages" aria-label="Messages${msgN?" ("+msgN+" non lus)":""}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.2 3.6c-.5.4-1.3.1-1.3-.6V16A2.5 2.5 0 0 1 4 13.5z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg>${msgN?`<b class="badge">${msgN}</b>`:""}</a>
+  <div class="umenu"><button type="button" class="ubtn" aria-haspopup="menu" aria-expanded="false">${av}<span class="uname">${esc(name)}</span>${tkN?`<i class="udot" aria-label="${tkN} ticket(s) ouvert(s)"></i>`:""}<svg class="caret" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  <div class="udrop" role="menu" hidden>${item(mp?"#joueur-"+mp.id:"#moi","Mon profil")}${item("#social","Amis &amp; messages",msgN)}${item("#tickets",S.isAdmin?"Tickets":"Mes tickets",tkN)}${S.isOwner?item("#journal","Journal"):""}${S.isAdmin?item("#admin","Administration"):S.isHost?`<span class="umuted">Compte host</span>`:""}<hr>${item("","Déconnexion",0,"logout")}</div></div>`;}
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".ubtn");const open=document.querySelector(".udrop:not([hidden])");
+  if(b){const d=b.parentNode.querySelector(".udrop");const show=d.hidden;d.hidden=!show;b.setAttribute("aria-expanded",show);return;}
+  if(open&&(!e.target.closest(".udrop")||e.target.closest("a,button"))){open.hidden=true;const bb=document.querySelector(".ubtn");if(bb)bb.setAttribute("aria-expanded","false");}});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){const d=document.querySelector(".udrop:not([hidden])");if(d){d.hidden=true;const bb=document.querySelector(".ubtn");if(bb){bb.setAttribute("aria-expanded","false");bb.focus();}}}});
 /* ---------- Supabase ---------- */
 const CFG=window.ORG_CENTRAL_CONFIG||{};
 const sb=(window.supabase&&CFG.supabaseUrl&&!/XXXX/.test(CFG.supabaseUrl))?window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseAnonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:"pkce",storageKey:"org-central-auth",storage:(()=>{try{localStorage.setItem("__t","1");localStorage.removeItem("__t");return localStorage;}catch(e){return undefined;}})()}}):null;
@@ -1785,7 +1818,7 @@ async function tkAction(a,id,t){const d=(t&&t.data)||{};
   if(a==="del"){confirmModal(S.isAdmin?"Supprimer le ticket":"Annuler le ticket","Ce ticket sera supprimé définitivement.",S.isAdmin?"Supprimer":"Annuler le ticket",async()=>{const {error}=await sb.from("tickets").delete().eq("id",id);if(error)throw sbErr(error);toast("Ticket supprimé");loadTickets();tkCount();});return;}
   const {error}=await sb.from("tickets").update({status:a,updated_at:new Date().toISOString()}).eq("id",id);if(error){toast(errMsg(sbErr(error)),true);return;}
   toast(a==="done"?"Ticket résolu":a==="refused"?"Ticket refusé":"Ticket rouvert");loadTickets();tkCount();}
-async function tkCount(){if(!S.isAdmin||!sb){S.tkOpen=0;return;}const {count,error}=await sb.from("tickets").select("id",{count:"exact",head:true}).eq("status","open");S.tkOpen=error?0:(count||0);const a=document.querySelector('[data-nav="tickets"]');if(a)a.innerHTML="Tickets"+(S.tkOpen?` <b class="badge">${S.tkOpen}</b>`:"");}
+async function tkCount(){if(!S.isAdmin||!sb){S.tkOpen=0;return;}const {count,error}=await sb.from("tickets").select("id",{count:"exact",head:true}).eq("status","open");S.tkOpen=error?0:(count||0);updateRole();}
 /* ---------- comptes, demandes, inscriptions ---------- */
 function playerActions(p){
   const mine=S.me&&p.ownerUid===S.me;const pend=S.myClaims.some(c=>c.player_id===p.id&&c.status==="pending");
