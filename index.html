@@ -873,6 +873,13 @@ button.ph-av{cursor:pointer}.ph-av img,.ph-av .ib-ph{width:100%;height:100%;obje
 .dc-send{background:none;border:0;color:var(--dc-mut);width:36px;height:44px;display:grid;place-items:center;cursor:pointer}.dc-send:hover{color:var(--dc-txt)}.dc-send svg{width:20px;height:20px}
 .msg-empty h2{color:#f2f3f5}.msg-empty-i{background:#2b2d31;color:var(--dc-mut)}
 .msg-back{color:var(--dc-mut)}
+.pl-tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:4px 0 14px}
+.pl-l{font-family:var(--font-cond);font-weight:700;text-transform:uppercase;letter-spacing:.1em;font-size:.75rem;color:var(--muted)}
+.pl-seg{display:inline-flex;gap:2px;padding:3px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid var(--line);flex-wrap:wrap}
+.pl-seg button{border:0;background:none;color:var(--muted);font:inherit;font-weight:700;font-size:.85rem;padding:5px 12px;border-radius:999px;cursor:pointer}
+.pl-seg button[aria-pressed="true"]{background:var(--t1);color:var(--accent-ink)}
+.pl-count{margin:0 0 8px;font-size:.85rem}
+.pl-ok{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:#3ba55d;color:#fff;font-size:.7rem;vertical-align:middle}
 </style>
 </head>
 <body>
@@ -1207,7 +1214,7 @@ function orgCard(o){
 }
 function playerCard(p){
   const h=historyOf(p.id);const wins=h.filter(x=>Number(x.c.place)===1).length;const aw=awardsOf(p.id).length;
-  const card=`<a class="card" href="#joueur-${esc(p.id)}" style="align-items:center">${ava(p,"md")}<div class="card-body"><h3>${esc(p.pseudo)}${p.precision?` <small class="muted">(${esc(p.precision)})</small>`:""}</h3><p class="meta">${h.length} saison${h.length>1?"s":""}${wins?` · ${wins} victoire${wins>1?"s":""}`:""}${aw?` · ${aw} award${aw>1?"s":""}`:""}</p></div></a>`;
+  const card=`<a class="card" href="#joueur-${esc(p.id)}" style="align-items:center">${ava(p,"md")}<div class="card-body"><h3>${esc(p.pseudo)}${p.precision?` <small class="muted">(${esc(p.precision)})</small>`:""}${p.ownerUid?` <span class="pl-ok" title="Compte relié sur le site">✓</span>`:""}</h3><p class="meta">${h.length} saison${h.length>1?"s":""}${wins?` · ${wins} victoire${wins>1?"s":""}`:""}${aw?` · ${aw} award${aw>1?"s":""}`:""}</p></div></a>`;
   const c=claimChip(p);return c?`<div class="pcard">${card}${c}</div>`:card;
 }
 function canClaim(){return !!S.me&&!myPlayer();}
@@ -1370,7 +1377,19 @@ function orgPoster(o){
   ${uniq.length?`<p class="og-hosts">Host${uniq.length>1?"s":""} : ${uniq.slice(0,4).map(esc).join(", ")}${uniq.length>4?` +${uniq.length-4}`:""}</p>`:""}</div></a>`;
 }
 function paintOrgPosters(){document.querySelectorAll(".og[data-paint]").forEach(el=>{const u=el.dataset.paint;el.removeAttribute("data-paint");hueColors(u,r=>{if(r){el.style.setProperty("--c1",r.t1);el.style.setProperty("--c2",r.t2);}});});}
-function playerListHtml(){const cnt={};S.seasons.forEach(se=>(se.cast||[]).forEach(c=>{cnt[c.playerId]=(cnt[c.playerId]||0)+1;}));const list=filtered([...S.players].sort((a,b)=>(cnt[b.id]||0)-(cnt[a.id]||0)||String(a.pseudo).localeCompare(String(b.pseudo),"fr")),S.q.joueurs,"pseudo");return list.length?`<div class="grid small">${list.map(playerCard).join("")}</div>`:`<p class="muted">Aucun joueur ne correspond.</p>`;}
+S.psort=S.psort||"seasons";S.plink=S.plink||"all";
+function playerListHtml(){const st={};const g=id=>st[id]||(st[id]={n:0,w:0,a:0});
+  S.seasons.forEach(se=>{(se.cast||[]).forEach(c=>{const x=g(c.playerId);x.n++;if(Number(c.place)===1)x.w++;});(se.awards||[]).forEach(a=>{if(a.playerId)g(a.playerId).a++;});});
+  const k={seasons:"n",wins:"w",awards:"a"}[S.psort];const nm=(a,b)=>String(a.pseudo).localeCompare(String(b.pseudo),"fr");
+  let arr=[...S.players];if(S.plink==="linked")arr=arr.filter(p=>p.ownerUid);if(S.plink==="free")arr=arr.filter(p=>!p.ownerUid);
+  arr.sort(k?(a,b)=>(g(b.id)[k]-g(a.id)[k])||(g(b.id).n-g(a.id).n)||nm(a,b):nm);
+  const list=filtered(arr,S.q.joueurs,"pseudo");
+  return `<p class="muted pl-count">${list.length} joueur${list.length>1?"s":""}</p>`+(list.length?`<div class="grid small">${list.map(playerCard).join("")}</div>`:`<p class="muted">Aucun joueur ne correspond.</p>`);}
+function playerTools(){const seg=(key,opts)=>`<span class="seg pl-seg">${opts.map(([v,l])=>`<button type="button" data-${key}="${v}" aria-pressed="${S[key]===v}">${l}</button>`).join("")}</span>`;
+  const linked=S.players.filter(p=>p.ownerUid).length;
+  return `<div class="pl-tools"><label class="pl-l">Trier par</label>${seg("psort",[["seasons","Saisons"],["wins","Victoires"],["awards","Awards"],["name","A → Z"]])}<label class="pl-l">Afficher</label>${seg("plink",[["all","Tous"],["linked",`Inscrits sur le site · ${linked}`],["free","Pas encore liés"]])}</div>`;}
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-psort],[data-plink]");if(!b)return;const key=b.dataset.psort!==undefined?"psort":"plink";S[key]=b.dataset[key];
+  b.parentNode.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b));const l=document.getElementById("list");if(l)l.innerHTML=playerListHtml();});
 function bindSearch(page){
   const s=document.getElementById("search");if(!s)return;
   s.addEventListener("input",()=>{S.q[page]=s.value;document.getElementById("list").innerHTML=page==="orgs"?orgListHtml():playerListHtml();});
@@ -1499,6 +1518,7 @@ function pagePlayers(){
   return `<section class="block"><div class="block-head"><h1>Joueurs</h1><span class="count">${S.players.length}</span>${edit(`<span class="actions"><button class="btn primary" data-act="new-player">+ Nouveau joueur</button></span>`)}</div>
   ${claimBanner()}
   <div class="toolbar"><input id="search" class="search" type="search" placeholder="${canClaim()?"Cherche ton pseudo":"Rechercher un pseudo"}" aria-label="Rechercher un joueur" value="${esc(S.q.joueurs)}"></div>
+  ${playerTools()}
   <div id="list">${S.players.length?playerListHtml():`<div class="empty"><p class="muted">Aucun joueur pour l'instant.</p>${edit(`<button class="btn primary" data-act="new-player">+ Ajouter un joueur</button>`)}</div>`}</div></section>`;
 }
 
