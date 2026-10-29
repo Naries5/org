@@ -599,20 +599,14 @@ select[size]{padding:4px}
 .cal-head{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px}
 .cal-head span{text-align:center;font-family:var(--font-cond);font-weight:700;letter-spacing:.3em;text-transform:uppercase;font-size:15px;padding:8px 0;border-radius:10px;background:var(--surface-2);color:var(--muted)}
 .cal-head span.we{background:color-mix(in srgb,var(--t1) 22%,var(--surface-2));color:var(--ink)}
-.cal-week{display:grid;grid-template-columns:repeat(7,1fr);column-gap:0;margin-bottom:4px;position:relative}
-.cal-day{border:1px dashed var(--line);border-right:none;background:rgba(255,255,255,.015);padding:4px 8px}
-.cal-day:nth-child(7){border-right:1px dashed var(--line)}
+.cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal-day{min-height:118px;border:1px dashed var(--line);border-radius:12px;background:rgba(255,255,255,.015);padding:6px 8px;display:flex;flex-direction:column;gap:6px}
+.cal-ev{display:flex;flex-direction:column;align-items:center;gap:4px;text-decoration:none;color:var(--ink);font-weight:700;font-size:12.5px;text-align:center;line-height:1.15;border-radius:10px;padding:4px;transition:transform .15s,background .15s}
+.cal-ev:hover{background:rgba(255,255,255,.06);transform:translateY(-2px)}
 .cal-day b{font-family:var(--font-cond);font-size:18px;color:var(--muted)}
 .cal-day.we{background:color-mix(in srgb,var(--t1) 5%,transparent)}.cal-day.we b{color:color-mix(in srgb,var(--t1) 70%,var(--muted))}
 .cal-day.out b{opacity:.35}.cal-day.now{background:color-mix(in srgb,var(--t1) 14%,transparent);box-shadow:inset 0 0 0 2px var(--t1)}.cal-day.now b{color:var(--t1)}
-.cal-bar{position:relative;z-index:1;display:flex;align-items:center;gap:6px;height:22px;align-self:center;margin:0 -1px;padding:0 8px;overflow:visible;white-space:nowrap;text-decoration:none;font-weight:700;font-size:13px;line-height:22px}
-.cal-bar span{overflow:hidden;text-overflow:ellipsis;position:relative;z-index:2}
-.cal-bar.run{background:var(--cc);color:#1A0B12}
-.cal-bar.ins{background:color-mix(in srgb,var(--cc) 22%,transparent);color:var(--cc)}
-.cal-bar.ins.head{-webkit-mask:linear-gradient(90deg,transparent 0,#000 34px);mask:linear-gradient(90deg,transparent 0,#000 34px);padding-left:30px}
-.cal-bar.run.head{border-top-left-radius:6px;border-bottom-left-radius:6px;margin-left:4px}.cal-bar.run.tail{border-top-right-radius:6px;border-bottom-right-radius:6px;margin-right:4px}
-.cal-bar:hover{filter:brightness(1.12)}
-.cal-logo{width:56px;height:56px;border-radius:10px;object-fit:cover;flex:none;margin:-17px 0 -17px -6px;box-shadow:0 4px 12px rgba(0,0,0,.55);border:2px solid var(--bg);background:var(--surface-2);display:inline-grid;place-items:center;font-size:11px;color:var(--ink)}
+.cal-logo{width:64px;height:64px;border-radius:12px;object-fit:cover;box-shadow:0 6px 16px rgba(0,0,0,.5);border:2px solid var(--line);background:var(--surface-2);display:inline-grid;place-items:center;font-family:var(--font-cond);font-size:18px;color:var(--t1)}
 .cal-hint{text-align:center;margin-top:12px}.cal-undated h2{font-size:18px}.cal-chips{display:flex;flex-wrap:wrap;gap:8px}
 .cal-chip{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:12px;border:1px solid var(--line);text-decoration:none;color:var(--ink)}
 </style>
@@ -1406,13 +1400,12 @@ function seasonForm(s,orgId){
     ${field("Titre ou thème",inp("title",s.title,'maxlength="100" placeholder="ex : Les chasseurs de références"'),"Le nom complet s'affiche comme « LaytORG Speed I : Les chasseurs de références », selon les réglages de l'ORG.")}
     <div class="frow">${field("Statut",sel("status",statusOpts,s.status))}${field("Nombre de places",inp("slots",s.slots,'type="number" min="0" placeholder="ex : 18"'))}</div>
     <div class="frow">${field("Date de début",dayInp("start",s.start))}${field("Date de fin",dayInp("end",s.end))}</div>
-    <div class="frow">${field("Début des inscriptions",dayInp("signupStart",s.signupStart))}${field("Fin des inscriptions",dayInp("signupEnd",s.signupEnd))}</div>
     ${field("Période approximative",inp("period",s.period,'maxlength="40" placeholder="ex : Été 2023, Fin 2021…"'),"Toutes les dates sont facultatives. La période s'affiche si tu ne mets pas de date exacte.")}
     ${field("Lien d'inscription",inp("signup",s.signup,'type="url" placeholder="https://… (formulaire, salon Discord)"'),"Affiché comme bouton « S'inscrire » quand le statut est « Inscriptions ouvertes ».")}
     ${field("Description",area("description",s.description,'rows="4" maxlength="4000" placeholder="Format, twists, infos pratiques…"'))}`,
     onSave:async f=>{
-      const v=vals(f);v.start=isoDay(v.start,"de début");v.end=isoDay(v.end,"de fin");v.signupStart=isoDay(v.signupStart,"de début des inscriptions");v.signupEnd=isoDay(v.signupEnd,"de fin des inscriptions");const id=s.id||uid("s");const t=nowIso();
-      const data=Object.assign(strip(s),{orgId:v.orgId,number:Number(v.number),title:v.title,status:v.status,slots:v.slots?Number(v.slots):null,customName:v.customName,start:v.start,end:v.end,signupStart:v.signupStart,signupEnd:v.signupEnd,period:v.period,logo:await resolveImage(f,"logo",s.logo),signup:v.signup,description:v.description,cast:s.cast||[],rounds:s.rounds||[],awards:s.awards||[],updatedAt:t});
+      const v=vals(f);v.start=isoDay(v.start,"de début");v.end=isoDay(v.end,"de fin");const id=s.id||uid("s");const t=nowIso();
+      const data=Object.assign(strip(s),{orgId:v.orgId,number:Number(v.number),title:v.title,status:v.status,slots:v.slots?Number(v.slots):null,customName:v.customName,start:v.start,end:v.end,period:v.period,logo:await resolveImage(f,"logo",s.logo),signup:v.signup,description:v.description,cast:s.cast||[],rounds:s.rounds||[],awards:s.awards||[],updatedAt:t});
       if(isNew)data.createdAt=t;
       await db.doc("seasons/"+id).set(data);
       const chk=await db.doc("seasons/"+id).get();const got=chk.exists?chk.data()||{}:null;
@@ -1689,31 +1682,19 @@ function calLabel(s){const o=org(s.orgId)||{};return (o.name?o.name+" ":"")+seas
 function pageCalendar(id){
   const now=new Date();let y=now.getFullYear(),m=now.getMonth();const mm=String(id||"").match(/^(\d{4})-(\d{1,2})$/);if(mm){y=+mm[1];m=+mm[2]-1;}
   const first=Date.UTC(y,m,1),last=Date.UTC(y,m+1,0);const dow=(new Date(first).getUTCDay()+6)%7;const gStart=first-dow*CAL_DAY;
-  const weeks=Math.ceil((dow+(last-first)/CAL_DAY+1)/7);const gEnd=gStart+weeks*7*CAL_DAY-CAL_DAY;
-  const evs=calEvents().filter(e=>e.to>=gStart&&e.from<=gEnd);
-  const laneEnd=[];evs.forEach(e=>{let l=laneEnd.findIndex(t=>t<e.from);if(l<0){l=laneEnd.length;laneEnd.push(0);}laneEnd[l]=e.to;e.lane=l;});
-  const nL=Math.max(laneEnd.length,1);const today=calToday();
+  const weeks=Math.ceil((dow+(last-first)/CAL_DAY+1)/7);const today=calToday();
+  const byDay={};S.seasons.forEach(s=>{const t=calD(s.start);if(t==null)return;(byDay[t]=byDay[t]||[]).push(s);});
   const pm=m===0?`${y-1}-12`:`${y}-${m}`,nm=m===11?`${y+1}-1`:`${y}-${m+2}`;
   let h=`<section class="block cal"><div class="cal-top"><a class="btn ghost" href="#calendrier-${pm}" aria-label="Mois précédent">‹</a><h1 class="cal-title">${CAL_MONTHS[m]} ${y}</h1><a class="btn ghost" href="#calendrier-${nm}" aria-label="Mois suivant">›</a></div>
   <p class="cal-today"><a class="btn sm ghost" href="#calendrier-${now.getFullYear()}-${now.getMonth()+1}">Aujourd'hui</a></p>
-  <div class="cal-scroll"><div class="cal-grid"><div class="cal-head">${["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"].map((d,i)=>`<span class="${i>4?"we":""}">${d}</span>`).join("")}</div>`;
-  for(let w=0;w<weeks;w++){const ws=gStart+w*7*CAL_DAY,we=ws+6*CAL_DAY;
-    const wl=Math.max(1,...evs.filter(e=>e.to>=ws&&e.from<=we).map(e=>e.lane+1));h+=`<div class="cal-week" style="grid-template-rows:30px repeat(${wl},30px) 12px">`;
-    for(let d=0;d<7;d++){const t=ws+d*CAL_DAY;const out=t<first||t>last;h+=`<div class="cal-day${d>4?" we":""}${out?" out":""}${t===today?" now":""}" style="grid-column:${d+1};grid-row:1/-1"><b>${new Date(t).getUTCDate()}</b></div>`;}
-    evs.forEach(e=>{const s=e.s;const col=calColor(s);const lbl=calLabel(s);
-      const seg=(a,b,kind)=>{if(a==null||b==null||b<ws||a>we)return "";const sa=Math.max(a,ws),sb=Math.min(b,we);const c1=(sa-ws)/CAL_DAY+1,span=(sb-sa)/CAL_DAY+1;
-        const head=sa===a,tail=sb===b;const showLbl=head||sa===ws;
-        const logo=kind==="run"&&head&&(s.logo||(org(s.orgId)||{}).logo)?pic(s.logo||(org(s.orgId)||{}).logo,lbl,"cal-logo"):"";
-        return `<a class="cal-bar ${kind}${head?" head":""}${tail?" tail":""}" href="#saison-${esc(s.id)}" data-cal-src="${esc(imgSrc(s.logo||(org(s.orgId)||{}).logo))}" style="grid-column:${c1}/span ${span};grid-row:${e.lane+2};--cc:${col}" title="${esc(lbl+(kind==="ins"?" · inscriptions":"")+" · "+fmtDate(calIso(a))+(a!==b?" → "+fmtDate(calIso(b)):""))}">${logo}${showLbl?`<span>${esc(lbl)}${kind==="ins"?" · Inscriptions":""}</span>`:""}</a>`;};
-      h+=seg(e.is,e.ie,"ins")+seg(e.st,e.en,"run");});
-    h+=`</div>`;}
-  h+=`</div></div>`;
-  const undated=S.seasons.filter(s=>["inscriptions","annoncee","en_cours"].includes(s.status)&&!s.start&&!s.signupStart);
-  h+=`<p class="hint cal-hint">Les saisons apparaissent ici dès qu'elles ont une date de début (et, si tu veux, des dates d'inscriptions) dans « Modifier ».</p>`;
+  <div class="cal-scroll"><div class="cal-grid"><div class="cal-head">${["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"].map((d,i)=>`<span class="${i>4?"we":""}">${d}</span>`).join("")}</div><div class="cal-days">`;
+  for(let i=0;i<weeks*7;i++){const t=gStart+i*CAL_DAY;const d=i%7;const out=t<first||t>last;const list=(byDay[t]||[]).sort((a,b)=>calLabel(a).localeCompare(calLabel(b),"fr"));
+    h+=`<div class="cal-day${d>4?" we":""}${out?" out":""}${t===today?" now":""}"><b>${new Date(t).getUTCDate()}</b>${list.map(s=>{const o=org(s.orgId)||{};const lg=s.logo||orgLogoVal(o);return `<a class="cal-ev" href="#saison-${esc(s.id)}" title="${esc(fullSeasonName(s))}">${pic(lg,o.name||"?","cal-logo")}<span>${esc(calLabel(s))}</span></a>`;}).join("")}</div>`;}
+  h+=`</div></div></div>`;
+  const undated=S.seasons.filter(s=>["inscriptions","annoncee","en_cours"].includes(s.status)&&!s.start);
+  h+=`<p class="hint cal-hint">Une saison apparaît le jour de son début dès qu'elle a une date de début dans « Modifier ».</p>`;
   if(undated.length)h+=`<div class="cal-undated"><h2>Sans date pour l'instant</h2><div class="cal-chips">${undated.map(s=>`<a href="#saison-${esc(s.id)}" class="cal-chip">${esc(calLabel(s))} ${chip(s.status)}</a>`).join("")}</div></div>`;
-  h+=`</section>`;
-  setTimeout(()=>{document.querySelectorAll(".cal-bar[data-cal-src]").forEach(a=>{const u=a.dataset.calSrc;if(!u)return;hueColors(u,r=>{if(r)a.style.setProperty("--cc",r.t1);});});},0);
-  return h;}
+  return h+`</section>`;}
 /* ---------- tickets ---------- */
 const TK_KINDS={erreur:["Erreur dans une ORG","Un classement, un vote, un award, une date… est faux."],fusion:["Plusieurs fiches = un seul joueur","La même personne a plusieurs fiches avec des pseudos différents."],separation:["Une fiche = plusieurs joueurs","Des personnes différentes ont été réunies sur une seule fiche."],autre:["Autre","Une suggestion, un bug du site, une autre demande…"]};
 const TK_ST={open:["Ouvert","t-open"],done:["Résolu","t-done"],refused:["Refusé","t-ref"]};
