@@ -822,6 +822,7 @@ button.ph-av{cursor:pointer}.ph-av img,.ph-av .ib-ph{width:100%;height:100%;obje
 .vedit .vt-sel{min-width:0;width:96px;padding:2px 4px;font-size:.72rem;border-left:5px solid var(--tc);border-radius:6px}
 .spot-last{gap:8px}.spot-last-l{font-size:.85rem}
 .spot-out{gap:10px;padding:5px 16px 5px 5px}.spot-out .avatar{width:52px;height:52px;font-size:1rem}.spot-out b{font-size:1.25rem;font-family:var(--font-display);letter-spacing:.01em}.spot-out small{font-size:1rem;font-weight:700}
+.crop-wrap{margin:4px 0 10px;padding:12px;border-radius:14px;border:1px dashed var(--line);background:rgba(255,255,255,.02)}.crop-wrap .fr-box.avatar{width:180px;height:180px}.crop-wrap .fr-zoom{margin-top:10px}.crop-wrap>.btn{margin-top:6px}
 </style>
 </head>
 <body>
@@ -1549,7 +1550,7 @@ function pagePlayer(id){
   const facts=[pronounsOf(p)&&`<span>${esc(pronounsOf(p))}</span>`,p.discord&&`<span>Discord : <b>${esc(p.discord)}</b></span>`,aliasesOf(p).length&&`<span>aussi « ${aliasesOf(p).map(esc).join(" », « ")} »</span>`].filter(Boolean);
   return `<div class="crumbs"><a href="#joueurs">Joueurs</a><span>/</span><span>${esc(p.pseudo)}</span></div>
   <header class="ph${bn?" has-bn":""}">
-    <div class="ph-bn">${bn?`<img src="${esc(bn)}" alt="" style="${framing(p.bannerPos)}">`:""}${canPic?`<span class="ph-bn-btns">${bn?`<button type="button" class="btn sm" data-act="frame-banner" data-id="${esc(p.id)}">Recadrer</button>`:""}<button type="button" class="btn sm" data-act="edit-player" data-id="${esc(p.id)}">${bn?"Changer":"+ Ajouter une bannière"}</button></span>`:""}</div>
+    <div class="ph-bn">${bn?`<img src="${esc(bn)}" alt="" style="${framing(p.bannerPos)}">`:""}${canPic?`<span class="ph-bn-btns">${bn?`<button type="button" class="btn sm" data-act="frame-banner" data-id="${esc(p.id)}">Recadrer</button>`:""}<button type="button" class="btn sm" data-act="edit-banner" data-id="${esc(p.id)}">${bn?"Changer":"+ Ajouter une bannière"}</button></span>`:""}</div>
     <div class="ph-row">
       ${(()=>{const im=av?`<img src="${esc(imgSrc(av))}" alt="" style="${p.avatar&&av===p.avatar?framing(p.avatarPos):""}">`:bigImg(av,p.pseudo);return canPic?`<div class="ph-avw"><button type="button" class="ph-av picbtn" data-act="pic-player" data-id="${esc(p.id)}" aria-label="Changer la photo">${im}<span class="pb-l">Changer</span></button>${p.avatar?`<button type="button" class="ph-fr" data-act="frame-avatar" data-id="${esc(p.id)}" title="Recadrer la photo" aria-label="Recadrer la photo">⤧</button>`:""}</div>`:`<div class="ph-av">${im}</div>`;})()}
       <div class="ph-id">${p.precision?`<p class="eyebrow">${esc(p.precision)}</p>`:""}<h1>${esc(p.pseudo)}</h1>${p.tagline?`<p class="ph-tag">${esc(p.tagline)}</p>`:""}
@@ -1622,17 +1623,31 @@ document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest
 function inp(name,val,attrs){return `<input id="f-${name}" name="${name}" value="${esc(val==null?"":val)}" ${attrs||""}>`;}
 function area(name,val,attrs){return `<div class="msug-wrap"><textarea id="f-${name}" name="${name}" data-mention="1" ${attrs||""}>${esc(val||"")}</textarea><div class="psug msug" hidden></div></div>`;}
 function sel(name,opts,cur,attrs){return `<select id="f-${name}" name="${name}" ${attrs||""}>${opts.map(([v,l])=>`<option value="${esc(v)}"${String(v)===String(cur==null?"":cur)?" selected":""}>${esc(l)}</option>`).join("")}</select>`;}
-function imageField(name,current,label,round){
+function imageField(name,current,label,round,frame,pos){
   const cls=(round?"avatar":"logo")+" lg";
-  return `<div class="field"><span class="flabel">${label}</span><div class="imgpick drop" data-drop="${name}" tabindex="-1"><span data-prev="${name}">${pic(current,"+",cls)}</span><div><span class="drop-hint"><b>Colle une image (Ctrl+V)</b>, glisse-la ici, ou choisis un fichier :</span><input type="file" id="f-${name}" accept="image/png,image/jpeg,image/webp,image/gif" data-img="${name}" data-cls="${cls}" aria-label="${esc(label)}"><button type="button" class="btn sm ghost" data-clearimg="${name}" style="align-self:flex-start">Retirer l'image</button></div></div></div>`;
+  const fr=frame?`<div class="crop-wrap" data-cropw="${name}"${imgSrc(current)?"":" hidden"}><p class="hint">Fais glisser l'image pour la cadrer, zoome avec le curseur.${frame==="banner"?" Taille conseillée : 1500 × 300 px (format 5:1).":""}</p><div class="fr-box ${frame}" data-crop="${name}" data-pos="${esc(JSON.stringify(pos||{}))}">${imgSrc(current)?`<img src="${esc(imgSrc(current))}" alt="" draggable="false">`:""}</div><label class="fr-zoom"><span>Zoom</span><input type="range" min="1" max="3" step="0.01" data-cropz="${name}"></label><button type="button" class="btn sm ghost" data-cropreset="${name}">Recentrer</button></div>`:"";
+  return `<div class="field"><span class="flabel">${label}</span><div class="imgpick drop" data-drop="${name}" tabindex="-1"><span data-prev="${name}">${pic(current,"+",cls)}</span><div><span class="drop-hint"><b>Colle une image (Ctrl+V)</b>, glisse-la ici, ou choisis un fichier :</span><input type="file" id="f-${name}" accept="image/png,image/jpeg,image/webp,image/gif" data-img="${name}" data-cls="${cls}" aria-label="${esc(label)}"><button type="button" class="btn sm ghost" data-clearimg="${name}" style="align-self:flex-start">Retirer l'image</button></div></div>${fr}</div>`;
 }
+function cropBind(form,box){const name=box.dataset.crop;let f;try{f=Object.assign({x:50,y:50,z:1},JSON.parse(box.dataset.pos||"{}"));}catch(_){f={x:50,y:50,z:1};}form._pos[name]=f;
+  const z=form.querySelector(`[data-cropz="${name}"]`);z.value=f.z;
+  const apply=()=>{const im=box.querySelector("img");if(im)im.setAttribute("style",framing(f));};apply();box._apply=apply;
+  let drag=null;
+  box.addEventListener("pointerdown",e=>{if(!box.querySelector("img"))return;drag={x:e.clientX,y:e.clientY,fx:f.x,fy:f.y};box.setPointerCapture(e.pointerId);box.classList.add("on");});
+  box.addEventListener("pointermove",e=>{if(!drag)return;const r=box.getBoundingClientRect();const k=100/f.z;f.x=Math.max(0,Math.min(100,drag.fx-(e.clientX-drag.x)/r.width*k*1.6));f.y=Math.max(0,Math.min(100,drag.fy-(e.clientY-drag.y)/r.height*k*1.6));apply();});
+  const end=()=>{drag=null;box.classList.remove("on");};box.addEventListener("pointerup",end);box.addEventListener("pointercancel",end);
+  z.addEventListener("input",()=>{f.z=Number(z.value);apply();});
+  form.querySelector(`[data-cropreset="${name}"]`).addEventListener("click",()=>{f.x=50;f.y=50;f.z=1;z.value=1;apply();});}
+function cropSet(form,name,url){const box=form.querySelector(`[data-crop="${name}"]`);if(!box)return;const w=form.querySelector(`[data-cropw="${name}"]`);const f=form._pos[name];
+  f.x=50;f.y=50;f.z=1;const z=form.querySelector(`[data-cropz="${name}"]`);if(z)z.value=1;
+  if(!url){box.innerHTML="";w.hidden=true;return;}box.innerHTML=`<img src="${url}" alt="" draggable="false">`;w.hidden=false;box._apply();try{w.scrollIntoView({block:"nearest",behavior:"smooth"});}catch(_){}}
 function bindImages(form){
-  const setImg=(name,f)=>{if(!f||!/^image\//.test(f.type)){toast("Ce n'est pas une image.",true);return;}const i=form.querySelector(`[data-img="${name}"]`);form._img[name]=f;const u=URL.createObjectURL(f);form.querySelector(`[data-prev="${name}"]`).innerHTML=`<img class="${i.dataset.cls}" src="${u}" alt="">`;const z=form.querySelector(`[data-drop="${name}"]`);if(z){z.classList.add("ok");setTimeout(()=>z.classList.remove("ok"),900);}};
+  const setImg=(name,f)=>{if(!f||!/^image\//.test(f.type)){toast("Ce n'est pas une image.",true);return;}const i=form.querySelector(`[data-img="${name}"]`);form._img[name]=f;const u=URL.createObjectURL(f);form.querySelector(`[data-prev="${name}"]`).innerHTML=`<img class="${i.dataset.cls}" src="${u}" alt="">`;cropSet(form,name,u);const z=form.querySelector(`[data-drop="${name}"]`);if(z){z.classList.add("ok");setTimeout(()=>z.classList.remove("ok"),900);}};
+  form._pos=form._pos||{};form.querySelectorAll("[data-crop]").forEach(b=>cropBind(form,b));
   const fields=[...form.querySelectorAll("[data-img]")].map(i=>i.dataset.img);
   if(!fields.length)return;
   form.querySelectorAll("[data-img]").forEach(i=>{i.addEventListener("change",()=>{const f=i.files&&i.files[0];if(f)setImg(i.dataset.img,f);});});
   form.querySelectorAll("[data-clearimg]").forEach(b=>{
-    b.addEventListener("click",()=>{const n=b.dataset.clearimg;form._img[n]="clear";const i=form.querySelector(`[data-img="${n}"]`);i.value="";form.querySelector(`[data-prev="${n}"]`).innerHTML=pic("","+",i.dataset.cls);});
+    b.addEventListener("click",()=>{const n=b.dataset.clearimg;form._img[n]="clear";const i=form.querySelector(`[data-img="${n}"]`);i.value="";form.querySelector(`[data-prev="${n}"]`).innerHTML=pic("","+",i.dataset.cls);cropSet(form,n,"");});
   });
   form.querySelectorAll("[data-drop]").forEach(z=>{
     z.addEventListener("dragover",e=>{e.preventDefault();z.classList.add("over");});
@@ -1749,14 +1764,14 @@ function playerForm(p,own){
     <div class="frow">${field("Pseudo *",inp("pseudo",p.pseudo,'required data-label="Pseudo" maxlength="40"'))}${field("Précision",inp("precision",p.precision,'maxlength="30" placeholder="Si homonyme"'))}</div>
     ${field("Pronoms",`<input id="f-pronouns" name="pronouns" list="pron-list" maxlength="30" value="${esc(p.pronouns||"")}" placeholder="Choisis ou écris les tiens"><datalist id="pron-list"><option value="il/lui"></option><option value="elle/elle"></option><option value="iel/iel"></option><option value="il/elle"></option><option value="elle/il"></option><option value="tous pronoms"></option></datalist>`)}
     ${field("Autres pseudos",inp("aliases",aliasesOf(p).join(", "),'maxlength="300" placeholder="Séparés par des virgules"'),"Les anciens pseudos sont reconnus dans la recherche et les tableaux de votes.")}
-    ${imageField("avatar",p.avatar,"Photo de profil",true)}
-    ${imageField("banner",p.banner,"Bannière (en haut du profil)")}
+    ${imageField("avatar",p.avatar,"Photo de profil",true,"avatar",p.avatarPos)}
+    ${imageField("banner",p.banner,"Bannière (en haut du profil)",false,"banner",p.bannerPos)}
     <div class="frow">${field("Devise",inp("tagline",p.tagline,'maxlength="80" placeholder="ex : Je ne joue pas, je survis."'))}${field("Couleur du profil",`<span class="acc-in"><input type="color" id="f-accent" name="accent" value="${esc(/^#[0-9a-f]{6}$/i.test(p.accent||"")?p.accent:"#ffc23d")}"><label class="chk"><input type="checkbox" name="accentAuto" ${p.accent?"":"checked"}> Automatique (d'après la bannière ou la photo)</label></span>`)}</div>
     ${field("Pseudo Discord",inp("discord",p.discord,'maxlength="40" placeholder="ex : pseudo#0000 ou @pseudo"'))}
     ${field("Bio",area("bio",p.bio,'rows="4" maxlength="2000" placeholder="Style de jeu, faits marquants…"'))}`,
     onSave:async f=>{
       const v=vals(f);const id=p.id||uid("p");const t=nowIso();
-      const data=Object.assign(strip(p),{pseudo:v.pseudo,precision:v.precision,pronouns:v.pronouns,aliases:(v.aliases||"").split(",").map(x=>x.trim()).filter(Boolean),discord:v.discord,bio:v.bio,tagline:v.tagline||"",accent:f.querySelector("[name=accentAuto]").checked?"":(v.accent||""),avatar:await resolveImage(f,"avatar",p.avatar),banner:await resolveImage(f,"banner",p.banner),updatedAt:t});
+      const data=Object.assign(strip(p),{pseudo:v.pseudo,precision:v.precision,pronouns:v.pronouns,aliases:(v.aliases||"").split(",").map(x=>x.trim()).filter(Boolean),discord:v.discord,bio:v.bio,tagline:v.tagline||"",accent:f.querySelector("[name=accentAuto]").checked?"":(v.accent||""),avatar:await resolveImage(f,"avatar",p.avatar),banner:await resolveImage(f,"banner",p.banner),avatarPos:(f._pos||{}).avatar||p.avatarPos||null,bannerPos:(f._pos||{}).banner||p.bannerPos||null,updatedAt:t});
       if(isNew)data.createdAt=t;
       await db.doc("players/"+id).set(data);
       toast(isNew?(own?"Ta fiche est créée":"Joueur ajouté"):"Profil mis à jour");
@@ -2544,7 +2559,7 @@ document.addEventListener("click",e=>{
   if(!b){const tr=e.target.closest("tr[data-href]");if(tr&&!e.target.closest("a"))location.hash=tr.dataset.href.slice(1);return;}
   const id=b.dataset.id;
   const A={
-    "new-org":()=>orgForm(),"pic-org":()=>picForm("org",org(id)),"pic-player":()=>picForm("player",player(id)),"frame-banner":()=>frameEditor(player(id),"banner"),"frame-avatar":()=>frameEditor(player(id),"avatar"),"pic-season":()=>picForm("season",season(id)),"edit-org":()=>orgForm(org(id)),"del-org":()=>delOrg(id),
+    "new-org":()=>orgForm(),"pic-org":()=>picForm("org",org(id)),"pic-player":()=>picForm("player",player(id)),"frame-banner":()=>frameEditor(player(id),"banner"),"edit-banner":()=>{playerForm(player(id));setTimeout(()=>{const z=document.querySelector('[data-drop="banner"]');if(z)z.scrollIntoView({block:"center"});},120);},"frame-avatar":()=>frameEditor(player(id),"avatar"),"pic-season":()=>picForm("season",season(id)),"edit-org":()=>orgForm(org(id)),"del-org":()=>delOrg(id),
     "new-season":()=>seasonForm(null,b.dataset.org),"edit-season":()=>seasonForm(season(id)),"del-season":()=>delSeason(id),
     "cast":()=>castEditor(season(id)),"export-all":async()=>{try{await exportAll();toast("Sauvegarde téléchargée");}catch(e){toast(errMsg(e),true);}},"slooks":()=>seasonLooksEditor(season(id)),"awards":()=>awardsEditor(season(id)),
     "filter":()=>{S.f[b.dataset.k]=b.dataset.v;render();},"opal":()=>{S.f.opal=b.dataset.v;render();},"votes":()=>votesEditor(season(id)),
