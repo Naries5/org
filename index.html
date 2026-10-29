@@ -942,7 +942,7 @@ function uid(p){return p+Date.now().toString(36)+Math.random().toString(36).slic
 function nowIso(){return new Date().toISOString();}
 function today(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
 function strip(o){const r=Object.assign({},o||{});delete r.id;return r;}
-const byId=(arr,id)=>arr.find(x=>x.id===id);
+const _idx=new WeakMap();const byId=(arr,id)=>{if(!arr)return undefined;let m=_idx.get(arr);if(!m){m=new Map();for(const x of arr)m.set(x.id,x);_idx.set(arr,m);}return m.get(id);};
 const org=id=>byId(S.orgs,id), player=id=>byId(S.players,id), season=id=>byId(S.seasons,id), newsItem=id=>byId(S.news,id);
 const pName=id=>{const p=player(id);return p?(p.pseudo||"Sans pseudo"):"Joueur supprimé";};
 function initials(n){n=String(n||"?").trim();const parts=n.split(/\s+/).filter(Boolean);return ((parts[0]||"?")[0]+(parts[1]?parts[1][0]:(parts[0]||"")[1]||"")).toUpperCase();}
@@ -992,7 +992,7 @@ const AWARD_CANON=[[/^(meilleur |best )?h[ée]ros?$/,"Héros"],[/^(meilleur |bes
 function awardLabel(n){n=String(n||"").trim();const m=n.match(/^(.*?)\s*(\((?:joueurs|hosts|p|h|p\/h)\))?$/i);let base=m[1],suf=m[2]||"";
   const k=base.toLowerCase().replace(/\s+de la saison$/,"").replace(/\s+/g," ").trim();for(const [re,l] of AWARD_CANON)if(re.test(k)){base=l;break;}
   return base+(suf?" "+suf:"");}
-function awardsOf(pid){const out=[];S.seasons.forEach(s=>(s.awards||[]).forEach(a=>{if(a.playerId===pid)out.push({a,s});}));return out.sort((x,y)=>String(y.s.start||"").localeCompare(String(x.s.start||"")));}
+let _awi={src:null,map:null};function awardsOf(pid){if(_awi.src!==S.seasons){const m=new Map();S.seasons.forEach(se=>(se.awards||[]).forEach(a=>{if(!a.playerId)return;let l=m.get(a.playerId);if(!l)m.set(a.playerId,l=[]);l.push({a,s:se});}));m.forEach(l=>l.sort((x,y)=>String(y.s.start||"").localeCompare(String(x.s.start||""))));_awi={src:S.seasons,map:m};}return (_awi.map.get(pid)||[]).slice();}
 function placeLabel(p){p=Number(p);if(!p)return "—";return p===1?"Vainqueur":p+"e";}
 function chip(st){const x=STATUS[st]||STATUS.annoncee;return `<span class="chip ${x.c}">${x.l}</span>`;}
 function roman(n){n=Math.floor(Number(n));if(!n||n<1||n>3999)return String(n||"?");const m=[[1000,"M"],[900,"CM"],[500,"D"],[400,"CD"],[100,"C"],[90,"XC"],[50,"L"],[40,"XL"],[10,"X"],[9,"IX"],[5,"V"],[4,"IV"],[1,"I"]];let r="";m.forEach(([v,l])=>{while(n>=v){r+=l;n-=v;}});return r;}
@@ -1004,7 +1004,8 @@ function seasonsOf(orgId){return S.seasons.filter(s=>s.orgId===orgId).sort((a,b)
 function winnerOf(s){const c=(s.cast||[]).find(c=>Number(c.place)===1);return c?c.playerId:null;}
 function sortedCast(s){return [...(s.cast||[])].sort((a,b)=>(Number(a.place)||999)-(Number(b.place)||999));}
 function byDateDesc(a,b){return String(b.date||b.start||"").localeCompare(String(a.date||a.start||""));}
-function historyOf(pid){return S.seasons.map(s=>({s,c:(s.cast||[]).find(c=>c.playerId===pid)})).filter(x=>x.c).sort((a,b)=>byRecent(a.s,b.s));}
+let _hist={src:null,map:null};function histIndex(){if(_hist.src===S.seasons)return _hist.map;const m=new Map();S.seasons.forEach(se=>(se.cast||[]).forEach(c=>{if(!c.playerId)return;let a=m.get(c.playerId);if(!a)m.set(c.playerId,a=[]);if(!a.some(x=>x.s===se))a.push({s:se,c});}));m.forEach(a=>a.sort((x,y)=>byRecent(x.s,y.s)));_hist={src:S.seasons,map:m};return m;}
+function historyOf(pid){return (histIndex().get(pid)||[]).slice();}
 let CUR_ORG=null;
 const edit=html=>(CUR_ORG===null?S.canEdit:canOrg(CUR_ORG))?html:"";
 
@@ -1118,7 +1119,14 @@ function makeDb(){
   return {
     collection(c){return {onSnapshot(next,err){
       let t=null;const load=async()=>{try{const rows=await fetchAll(c);cache[c]=rows;next({docs:rows.map(r=>({id:r.id,exists:true,data:()=>r.data||{}}))});}catch(e){err&&err(e);}};
-      load();sb.channel("rt-"+c).on("postgres_changes",{event:"*",schema:"public",table:c},()=>{clearTimeout(t);t=setTimeout(load,250);}).subscribe();
+      load();const emit=()=>{const rows=cache[c]||[];next({docs:rows.map(r=>({id:r.id,exists:true,data:()=>r.data||{}}))});};
+      sb.channel("rt-"+c).on("postgres_changes",{event:"*",schema:"public",table:c},pl=>{const rows=cache[c];
+        if(!rows){clearTimeout(t);t=setTimeout(load,600);return;}
+        const nw=pl&&pl.new,od=pl&&pl.old;
+        if(pl&&pl.eventType==="DELETE"&&od&&od.id){cache[c]=rows.filter(r=>r.id!==od.id);}
+        else if(nw&&nw.id&&nw.data){const i=rows.findIndex(r=>r.id===nw.id);const copy=rows.slice();if(i<0)copy.push({id:nw.id,data:nw.data});else copy[i]={id:nw.id,data:nw.data};cache[c]=copy;}
+        else{clearTimeout(t);t=setTimeout(load,600);return;}
+        clearTimeout(t);t=setTimeout(emit,150);}).subscribe();
       makeDb._reload=makeDb._reload||{};makeDb._reload[c]=load;
       return ()=>{};}};},
     doc(path){const [c,id]=path.split("/");const reload=()=>makeDb._reload&&makeDb._reload[c]&&makeDb._reload[c]();
@@ -1168,7 +1176,7 @@ async function init(){
   COLS.forEach(c=>{
     db.collection(c).onSnapshot(snap=>{
       S[c]=snap.docs.map(d=>Object.assign({id:d.id},d.data()));
-      S.loaded.add(c);render();
+      S.loaded.add(c);scheduleRender();
     },err=>{S.loaded.add(c);toast("Chargement impossible ("+c+") : "+errMsg(err),true);render();});
   });
 }
@@ -1177,6 +1185,8 @@ function unavailable(){app.innerHTML=`<div class="unavailable"><h2>Données indi
 /* ---------- routeur ---------- */
 let lastPage="";
 bindSearchBox(document.getElementById("gsearch"));
+let _rt=null;function scheduleRender(){if(_rt)return;_rt=requestAnimationFrame(()=>{_rt=null;if(isTyping())return setTimeout(scheduleRender,400);render();});}
+function isTyping(){const a=document.activeElement;return !!(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)&&a.closest("main")&&a.id!=="search"&&a.id!=="hsearch");}
 function render(){
   if(S.loaded.size<COLS.length){app.innerHTML='<p class="loading">Chargement du wiki…</p>';return;}
   const h=decodeURIComponent(location.hash.slice(1))||"accueil";
@@ -1398,15 +1408,16 @@ function playerListHtml(){const st={};const g=id=>st[id]||(st[id]={n:0,w:0,a:0})
   let arr=[...S.players];if(S.plink==="linked")arr=arr.filter(p=>p.ownerUid);if(S.plink==="free")arr=arr.filter(p=>!p.ownerUid);
   arr.sort(k?(a,b)=>(g(b.id)[k]-g(a.id)[k])||(g(b.id).n-g(a.id).n)||nm(a,b):nm);
   const list=filtered(arr,S.q.joueurs,"pseudo");
-  return `<p class="muted pl-count">${list.length} joueur${list.length>1?"s":""}</p>`+(list.length?`<div class="grid small">${list.map(playerCard).join("")}</div>`:`<p class="muted">Aucun joueur ne correspond.</p>`);}
+  const lim=S.plim||120;return `<p class="muted pl-count">${list.length} joueur${list.length>1?"s":""}</p>`+(list.length?`<div class="grid small">${list.slice(0,lim).map(playerCard).join("")}</div>${list.length>lim?`<p style="text-align:center;margin-top:16px"><button type="button" class="btn" data-pmore="1">Afficher plus (${list.length-lim} restants)</button></p>`:""}`:`<p class="muted">Aucun joueur ne correspond.</p>`);}
+document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest("[data-pmore]")){S.plim=(S.plim||120)+240;const l=document.getElementById("list");if(l)l.innerHTML=playerListHtml();}});
 function playerTools(){const seg=(key,opts)=>`<span class="seg pl-seg">${opts.map(([v,l])=>`<button type="button" data-${key}="${v}" aria-pressed="${S[key]===v}">${l}</button>`).join("")}</span>`;
   const linked=S.players.filter(p=>p.ownerUid).length;
   return `<div class="pl-tools"><label class="pl-l">Trier par</label>${seg("psort",[["seasons","Saisons"],["wins","Victoires"],["awards","Awards"],["name","A → Z"]])}<label class="pl-l">Afficher</label>${seg("plink",[["all","Tous"],["linked",`Inscrits sur le site · ${linked}`],["free","Pas encore liés"]])}</div>`;}
-document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-psort],[data-plink]");if(!b)return;const key=b.dataset.psort!==undefined?"psort":"plink";S[key]=b.dataset[key];
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-psort],[data-plink]");if(!b)return;const key=b.dataset.psort!==undefined?"psort":"plink";S[key]=b.dataset[key];S.plim=120;
   b.parentNode.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b));const l=document.getElementById("list");if(l)l.innerHTML=playerListHtml();});
 function bindSearch(page){
   const s=document.getElementById("search");if(!s)return;
-  s.addEventListener("input",()=>{S.q[page]=s.value;document.getElementById("list").innerHTML=page==="orgs"?orgListHtml():playerListHtml();});
+  s.addEventListener("input",()=>{S.q[page]=s.value;S.plim=120;document.getElementById("list").innerHTML=page==="orgs"?orgListHtml():playerListHtml();});
 }
 
 function filterGroup(k,label,map,all){
@@ -1771,15 +1782,30 @@ function resizeImage(file,max){
   });
 }
 function blobToDataURL(b){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error);r.readAsDataURL(b);});}
-async function storeImage(file){
-  const b=await resizeImage(file,512);const ext=(b.type.split("/")[1]||"png").replace("jpeg","jpg");
+async function optimizeImages(){
+  const isData=v=>typeof v==="string"&&v.startsWith("data:image/");
+  const todo=[];S.orgs.forEach(o=>{if(isData(o.logo))todo.push(["orgs",o]);});S.players.forEach(p=>{if(isData(p.avatar)||isData(p.banner))todo.push(["players",p]);});
+  S.seasons.forEach(se=>{if(isData(se.logo)||(se.cast||[]).some(c=>isData(c.sAvatar)))todo.push(["seasons",se]);});
+  if(!todo.length){toast("Rien à alléger : toutes les images sont déjà optimisées.");return;}
+  if(!confirm(todo.length+" fiches contiennent des images intégrées. Les transférer vers le stockage d'images ? (une sauvegarde est téléchargée avant)"))return;
+  try{await exportAll();}catch(e){}
+  const up=async u=>{const r=await fetch(u);const b=await r.blob();const f=new File([b],"img."+((b.type.split("/")[1]||"png").replace("jpeg","jpg")),{type:b.type||"image/png"});return await storeImage(f);};
+  let n=0,ko=0;
+  for(const [col,x] of todo){try{const upd={};
+      for(const k of ["logo","avatar","banner"])if(isData(x[k]))upd[k]=await up(x[k]);
+      if(col==="seasons"&&(x.cast||[]).some(c=>isData(c.sAvatar))){upd.cast=[];for(const c of x.cast)upd.cast.push(isData(c.sAvatar)?Object.assign({},c,{sAvatar:await up(c.sAvatar)}):c);}
+      await db.doc(col+"/"+x.id).update(upd);n++;toast("Images allégées : "+n+" / "+todo.length);
+    }catch(e){ko++;console.warn(e);}}
+  toast(ko?`Terminé : ${n} fiches allégées, ${ko} en erreur.`:`Terminé : ${n} fiches allégées. Le site se charge plus vite.`,!!ko);}
+async function storeImage(file,max){
+  const b=await resizeImage(file,max||512);const ext=(b.type.split("/")[1]||"png").replace("jpeg","jpg");
   const path=(S.me||"anon")+"/"+uid("i")+"."+ext;
   const {error}=await sb.storage.from("images").upload(path,b,{contentType:b.type,upsert:false});
   if(error)throw sbErr(error);
   return sb.storage.from("images").getPublicUrl(path).data.publicUrl;
 }
 
-async function resolveImage(form,name,current){const p=form._img[name];if(p==="clear")return "";if(p instanceof File)return await storeImage(p);return current||"";}
+async function resolveImage(form,name,current){const p=form._img[name];if(p==="clear")return "";if(p instanceof File)return await storeImage(p,name==="banner"?1920:name==="logo"?800:512);return current||"";}
 
 /* ---------- formulaires ---------- */
 const statusOpts=Object.entries(STATUS).map(([k,v])=>[k,v.l]);
@@ -2416,7 +2442,7 @@ function pageAdmin(){
   return `<section class="block"><div class="block-head"><h1>Administration</h1></div>
   <section class="block"><div class="block-head"><h2>Demandes « C'est moi »</h2></div><div id="adm-claims"><p class="muted">Chargement…</p></div></section>
   <section class="block"><div class="block-head"><h2>Comptes et rôles</h2></div><p class="hint">Un <b>host</b> peut créer des joueurs et modifier uniquement les ORGs cochées. Un <b>admin</b> peut tout faire.</p><div id="adm-users"><p class="muted">Chargement…</p></div></section>
-  <section class="block"><div class="block-head"><h2>Importer des données</h2></div><p class="hint">Choisis le fichier <b>org-central-export.json</b> téléchargé depuis l'ancien site. Les éléments déjà présents avec le même identifiant sont remplacés. Tu peux aussi y mettre un fichier de <b>classements</b> préparé par Claude : il remplit les castings et crée seulement les joueurs qui n'existent pas encore.</p><p><button class="btn" data-act="export-all">Télécharger une sauvegarde complète</button></p><input type="file" id="f-import" accept="application/json,.json"><p id="imp-log" class="muted">${esc(S.impLog||"")}</p></section></section>`;
+  <section class="block"><div class="block-head"><h2>Importer des données</h2></div><p class="hint">Choisis le fichier <b>org-central-export.json</b> téléchargé depuis l'ancien site. Les éléments déjà présents avec le même identifiant sont remplacés. Tu peux aussi y mettre un fichier de <b>classements</b> préparé par Claude : il remplit les castings et crée seulement les joueurs qui n'existent pas encore.</p><p><button class="btn" data-act="export-all">Télécharger une sauvegarde complète</button> <button class="btn" data-act="optimize-images">Alléger les images (accélère le site)</button></p><input type="file" id="f-import" accept="application/json,.json"><p id="imp-log" class="muted">${esc(S.impLog||"")}</p></section></section>`;
 }
 let ADM_PROFS=[];
 const LOG_FIELDS={cast:"casting / classement",rounds:"tableau des votes",awards:"awards",teams:"tribus",logo:"logo",title:"thème",status:"statut",start:"date de début",signupStart:"début des inscriptions",signupEnd:"fin des inscriptions",end:"date de fin",number:"numéro",customName:"nom affiché",description:"description",applications:"candidatures",signup:"lien d'inscription",slots:"places",period:"période",
@@ -2719,7 +2745,7 @@ document.addEventListener("click",e=>{
   const A={
     "new-org":()=>orgForm(),"pic-org":()=>picForm("org",org(id)),"pic-player":()=>picForm("player",player(id)),"frame-banner":()=>frameEditor(player(id),"banner"),"edit-banner":()=>{playerForm(player(id));setTimeout(()=>{const z=document.querySelector('[data-drop="banner"]');if(z)z.scrollIntoView({block:"center"});},120);},"frame-avatar":()=>frameEditor(player(id),"avatar"),"pic-season":()=>picForm("season",season(id)),"edit-org":()=>orgForm(org(id)),"del-org":()=>delOrg(id),
     "new-season":()=>seasonForm(null,b.dataset.org),"edit-season":()=>seasonForm(season(id)),"del-season":()=>delSeason(id),
-    "cast":()=>castEditor(season(id)),"export-all":async()=>{try{await exportAll();toast("Sauvegarde téléchargée");}catch(e){toast(errMsg(e),true);}},"slooks":()=>seasonLooksEditor(season(id)),"awards":()=>awardsEditor(season(id)),
+    "cast":()=>castEditor(season(id)),"optimize-images":()=>optimizeImages(),"export-all":async()=>{try{await exportAll();toast("Sauvegarde téléchargée");}catch(e){toast(errMsg(e),true);}},"slooks":()=>seasonLooksEditor(season(id)),"awards":()=>awardsEditor(season(id)),
     "filter":()=>{S.f[b.dataset.k]=b.dataset.v;render();},"opal":()=>{S.f.opal=b.dataset.v;render();},"votes":()=>votesEditor(season(id)),
     "new-player":()=>playerForm(),"new-mine":()=>{if(myPlayer()){location.hash="joueur-"+myPlayer().id;return;}playerForm(null,true);},"edit-player":()=>playerForm(player(id)),"del-player":()=>delPlayer(id),"merge-player":()=>mergeForm(player(id)),"claim":()=>claimPlayer(id,true),"login":()=>login(),"fr-add":()=>friendAction("add",b.dataset.u),"block":()=>blockAction(b.dataset.u,true),"unblock":()=>blockAction(b.dataset.u,false),"fr-accept":()=>friendAction("accept",b.dataset.u),"fr-remove":()=>friendAction("remove",b.dataset.u),"appform":()=>appFormEditor(season(id)),"apptoggle":()=>toggleApps(season(id)),"logout":()=>logout(),"claim-ok":()=>claimDecision(b.dataset.p,b.dataset.u,true),"claim-no":()=>claimDecision(b.dataset.p,b.dataset.u,false),"unsign":()=>signAction(id,"unsign"),"su-ok":()=>signAction(b.dataset.s,"ok",b.dataset.u),"su-no":()=>signAction(b.dataset.s,"no",b.dataset.u),"unclaim":()=>claimPlayer(id,false),"split-player":()=>splitForm(player(id)),
     "new-news":()=>newsForm(null,b.dataset.org),"edit-news":()=>newsForm(newsItem(id)),"del-news":()=>delNews(id),
