@@ -1236,6 +1236,11 @@ function confirmModal(title,text,label,fn){openModal({title,body:`<p>${text}</p>
 
 /* champs */
 function field(label,input,hint){return `<label class="field"><span class="flabel">${label}</span>${input}${hint?`<span class="hint">${hint}</span>`:""}</label>`;}
+function frDay(d){const m=String(d||"").match(/^(\d{4})-(\d{2})-(\d{2})/);return m?m[3]+"/"+m[2]+"/"+m[1]:(d||"");}
+function isoDay(v,lbl){v=String(v||"").trim();if(!v)return "";let m=v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);let y,mo,d;
+  if(m){y=+m[1];mo=+m[2];d=+m[3];}else{m=v.match(/^(\d{1,2})[\/.\- ](\d{1,2})[\/.\- ](\d{2}|\d{4})$/);if(!m)throw new Error("Date "+lbl+" invalide : écris-la comme 15/03/2024.");d=+m[1];mo=+m[2];y=+m[3];if(y<100)y+=2000;}
+  const dt=new Date(Date.UTC(y,mo-1,d));if(dt.getUTCMonth()!==mo-1||dt.getUTCDate()!==d)throw new Error("Date "+lbl+" invalide : "+v+" n'existe pas.");
+  return y+"-"+String(mo).padStart(2,"0")+"-"+String(d).padStart(2,"0");}
 function inp(name,val,attrs){return `<input id="f-${name}" name="${name}" value="${esc(val==null?"":val)}" ${attrs||""}>`;}
 function area(name,val,attrs){return `<textarea id="f-${name}" name="${name}" ${attrs||""}>${esc(val||"")}</textarea>`;}
 function sel(name,opts,cur,attrs){return `<select id="f-${name}" name="${name}" ${attrs||""}>${opts.map(([v,l])=>`<option value="${esc(v)}"${String(v)===String(cur==null?"":cur)?" selected":""}>${esc(l)}</option>`).join("")}</select>`;}
@@ -1341,19 +1346,19 @@ function seasonForm(s,orgId){
     ${field("Nom affiché (facultatif)",inp("customName",s.customName,'maxlength="30" placeholder="Automatique"'),"Laisse vide pour le nom automatique. Remplis seulement pour une exception, par exemple « Speed AS » ou « All Stars 2 ».")}
     ${field("Titre ou thème",inp("title",s.title,'maxlength="100" placeholder="ex : Les chasseurs de références"'),"Le nom complet s'affiche comme « LaytORG Speed I : Les chasseurs de références », selon les réglages de l'ORG.")}
     <div class="frow">${field("Statut",sel("status",statusOpts,s.status))}${field("Nombre de places",inp("slots",s.slots,'type="number" min="0" placeholder="ex : 18"'))}</div>
-    <div class="frow">${field("Date de début",inp("start",s.start,'type="date"'))}${field("Date de fin",inp("end",s.end,'type="date"'))}</div>
+    <div class="frow">${field("Date de début",inp("start",frDay(s.start),'placeholder="jj/mm/aaaa" maxlength="10" autocomplete="off"'))}${field("Date de fin",inp("end",frDay(s.end),'placeholder="jj/mm/aaaa" maxlength="10" autocomplete="off"'))}</div>
     ${field("Période approximative",inp("period",s.period,'maxlength="40" placeholder="ex : Été 2023, Fin 2021…"'),"Toutes les dates sont facultatives. La période s'affiche si tu ne mets pas de date exacte.")}
     ${field("Lien d'inscription",inp("signup",s.signup,'type="url" placeholder="https://… (formulaire, salon Discord)"'),"Affiché comme bouton « S'inscrire » quand le statut est « Inscriptions ouvertes ».")}
     ${field("Description",area("description",s.description,'rows="4" maxlength="4000" placeholder="Format, twists, infos pratiques…"'))}`,
     onSave:async f=>{
-      const v=vals(f);const id=s.id||uid("s");const t=nowIso();
+      const v=vals(f);v.start=isoDay(v.start,"de début");v.end=isoDay(v.end,"de fin");const id=s.id||uid("s");const t=nowIso();
       const data=Object.assign(strip(s),{orgId:v.orgId,number:Number(v.number),title:v.title,status:v.status,slots:v.slots?Number(v.slots):null,customName:v.customName,start:v.start,end:v.end,period:v.period,logo:await resolveImage(f,"logo",s.logo),signup:v.signup,description:v.description,cast:s.cast||[],rounds:s.rounds||[],awards:s.awards||[],updatedAt:t});
       if(isNew)data.createdAt=t;
       await db.doc("seasons/"+id).set(data);
       const chk=await db.doc("seasons/"+id).get();const got=chk.exists?chk.data()||{}:null;
       const bad=!got?"la saison n'a pas été retrouvée":["start","end","period","title","status"].filter(k=>String(got[k]||"")!==String(data[k]||"")).join(", ");
       if(bad)throw new Error("La base n'a pas gardé la modification ("+bad+"). Envoie une capture de ce message à l'admin.");
-      toast(isNew?"Saison créée":"Saison mise à jour");
+      toast((isNew?"Saison créée":"Saison mise à jour")+(data.start||data.end?" · "+dateRange(data):""));
       if(isNew)location.hash="saison-"+id;
     }});
 }
