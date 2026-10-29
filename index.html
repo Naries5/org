@@ -643,6 +643,8 @@ footer.site a{color:inherit}
 .psug-new .avatar{display:inline-grid;place-items:center;font-size:20px;color:var(--t1)}
 .psug-i .avatar{width:38px;height:38px;font-size:13px}
 .cadd .psug-wrap{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:8px}.cadd .psug-wrap input{flex:1;min-width:200px}.psug{position:static;flex-basis:100%;max-height:none;box-shadow:none}
+.msug-wrap{position:relative}.msug-wrap textarea{width:100%}.msug{position:static;margin-top:6px}.msug-h{margin:2px 8px 4px;font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+a.mention{color:var(--t1);font-weight:700;text-decoration:none;border-bottom:1px dashed color-mix(in srgb,var(--t1) 60%,transparent)}a.mention:hover{border-bottom-style:solid}
 </style>
 </head>
 <body>
@@ -1252,9 +1254,27 @@ function hostLinks(t){if(!t)return "";return String(t).split(/(\s*(?:,|&|\/|\bet
 function richText(t){let h=esc(String(t||""));const links=[];
   h=h.replace(/\[([^\]\n]{1,200})\]\((https?:\/\/[^\s)]+|#[\w\-]+)\)/g,(m,a,u)=>{links.push(`<a href="${u}"${u[0]==="#"?"":' target="_blank" rel="noopener noreferrer"'}>${a}</a>`);return "\u0000"+(links.length-1)+"\u0000";});
   h=h.replace(/(^|[\s(])(https?:\/\/[^\s<]+[^\s<.,;:!?)])/g,(m,pre,u)=>`${pre}<a href="${u}" target="_blank" rel="noopener noreferrer">${u.replace(/^https?:\/\//,"").slice(0,60)}</a>`);
+  h=h.replace(/(^|[^\w@])@(?:\{([^}\n]{1,40})\}|([^\s@<>{}()\[\],;:!?.'’]+(?:[.'’-][^\s@<>{}()\[\],;:!?.'’]+)*))/g,(m,pre,br,w)=>{const n=br||w;const p=playerByName(n.replace(/&#39;|&amp;/g,x=>x==="&amp;"?"&":"'"));if(!p)return m;links.push(`<a class="mention" href="#joueur-${esc(p.id)}">${esc(br?n:p.pseudo.length&&normName(p.pseudo)===normName(n)?p.pseudo:n)}</a>`);return pre+"\u0000"+(links.length-1)+"\u0000";});
   h=h.replace(/\*\*([^*\n]+)\*\*/g,"<b>$1</b>");
   h=h.replace(/\u0000(\d+)\u0000/g,(m,i)=>links[+i]);
   return h.replace(/\n/g,"<br>");}
+
+function mentionCtx(ta){const v=ta.value.slice(0,ta.selectionStart);const m=v.match(/(?:^|[^\w@])@(\{[^}\n]*|[^\s@{}]*)$/);return m?{q:m[1].replace(/^\{/,""),start:ta.selectionStart-m[1].length-1}:null;}
+function mentionHide(box){box.hidden=true;box.innerHTML="";box._i=-1;}
+function mentionShow(ta){const box=ta.parentNode.querySelector(".msug");if(!box)return;const c=mentionCtx(ta);if(!c||!c.q&&c.q!==""){mentionHide(box);return;}
+  const v=normName(c.q);const list=S.players.map(p=>{const ns=[p.pseudo,...aliasesOf(p)].map(normName);let b=99;ns.forEach((n,i)=>{if(!v)b=Math.min(b,5);else if(n.startsWith(v))b=Math.min(b,i?2:0);else if(n.includes(v))b=Math.min(b,i?4:3);});return [p,b];}).filter(x=>x[1]<99&&(v||historyOf(x[0].id).length)).sort((a,b)=>a[1]-b[1]||historyOf(b[0].id).length-historyOf(a[0].id).length).slice(0,6).map(x=>x[0]);
+  if(!list.length){mentionHide(box);return;}
+  box._list=list;box._i=0;box._ctx=c;
+  box.innerHTML=`<p class="msug-h">Mentionner un joueur</p>`+list.map((p,i)=>`<button type="button" class="psug-i${i===0?" on":""}" data-i="${i}">${ava(p,"sm")}<span class="psug-t"><b>${esc(p.pseudo)}</b>${p.precision?` <span class="muted">(${esc(p.precision)})</span>`:""}<small>${historyOf(p.id).length} saison(s)</small></span></button>`).join("");box.hidden=false;try{box.scrollIntoView({block:"nearest"});}catch(_){}}
+function mentionPick(ta,i){const box=ta.parentNode.querySelector(".msug");const p=box._list&&box._list[i];if(!p)return;const c=box._ctx;
+  const tag=/^[^\s@<>{}()\[\],;:!?]+$/.test(p.pseudo)&&playerByName(p.pseudo)===p?"@"+p.pseudo:"@{"+p.pseudo+"}";
+  const before=ta.value.slice(0,c.start),after=ta.value.slice(ta.selectionStart).replace(/^\}/,"");ta.value=before+tag+" "+after;const pos=(before+tag+" ").length;ta.focus();ta.setSelectionRange(pos,pos);mentionHide(box);}
+document.addEventListener("input",e=>{if(e.target.dataset&&e.target.dataset.mention)mentionShow(e.target);});
+document.addEventListener("keydown",e=>{const ta=e.target;if(!(ta.dataset&&ta.dataset.mention))return;const box=ta.parentNode.querySelector(".msug");if(!box||box.hidden)return;const n=(box._list||[]).length;
+  if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault();box._i=(box._i+(e.key==="ArrowDown"?1:n-1))%n;box.querySelectorAll(".psug-i").forEach((b,i)=>b.classList.toggle("on",i===box._i));}
+  else if(e.key==="Enter"||e.key==="Tab"){e.preventDefault();mentionPick(ta,box._i);}else if(e.key==="Escape"){e.preventDefault();e.stopPropagation();mentionHide(box);}},true);
+document.addEventListener("mousedown",e=>{const b=e.target.closest&&e.target.closest(".msug .psug-i");if(b){e.preventDefault();mentionPick(b.closest(".msug-wrap").querySelector("textarea"),Number(b.dataset.i));}});
+document.addEventListener("focusout",e=>{if(e.target.dataset&&e.target.dataset.mention){const box=e.target.parentNode.querySelector(".msug");setTimeout(()=>{if(box&&document.activeElement!==e.target)mentionHide(box);},150);}});
 function descHtml(t){const e=String(t||"");const m=e.match(/^(.*?(?:Organis[ée]e? par|Affiche par)\s*)([^.\n]*)(\..*)?$/s);if(!m)return richText(e);
   return richText(m[1])+hostLinks(m[2])+descHtml(m[3]||"");}
 function hostedBy(p){const keys=new Set([p.pseudo,...aliasesOf(p)].map(normName));const orgs=S.orgs.filter(o=>splitNames(o.hosts).some(n=>keys.has(normName(n))));
@@ -1344,7 +1364,7 @@ document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest
   try{const iso=isoDay(x.value,"");if(iso)n.value=iso;}catch(_){}
   try{n.showPicker();}catch(_){n.focus();n.click();}});
 function inp(name,val,attrs){return `<input id="f-${name}" name="${name}" value="${esc(val==null?"":val)}" ${attrs||""}>`;}
-function area(name,val,attrs){return `<textarea id="f-${name}" name="${name}" ${attrs||""}>${esc(val||"")}</textarea>`;}
+function area(name,val,attrs){return `<div class="msug-wrap"><textarea id="f-${name}" name="${name}" data-mention="1" ${attrs||""}>${esc(val||"")}</textarea><div class="psug msug" hidden></div></div>`;}
 function sel(name,opts,cur,attrs){return `<select id="f-${name}" name="${name}" ${attrs||""}>${opts.map(([v,l])=>`<option value="${esc(v)}"${String(v)===String(cur==null?"":cur)?" selected":""}>${esc(l)}</option>`).join("")}</select>`;}
 function imageField(name,current,label,round){
   const cls=(round?"avatar":"logo")+" lg";
@@ -1421,7 +1441,7 @@ function orgForm(o){
     <p class="hint" style="margin-top:-6px">Utilisé tant qu'aucune saison n'a de logo. Ensuite, l'ORG affiche le logo de sa saison la plus récente.</p>
     ${field("Host(s)",inp("hosts",o.hosts,'maxlength="160" placeholder="Pseudos séparés par des virgules"'))}
     <div class="frow">${field("Lien du Discord",inp("discord",o.discord,'type="url" placeholder="https://discord.gg/…"'))}${field("Date de création",inp("founded",o.founded,'type="date"'))}</div>
-    ${field("Description",area("description",o.description,'rows="5" maxlength="4000" placeholder="Concept, format, règles particulières…"'),"Liens : [texte](https://…) ou colle directement l'adresse. Gras : **texte**.")}`,
+    ${field("Description",area("description",o.description,'rows="5" maxlength="4000" placeholder="Concept, format, règles particulières…"'),"Tape @ pour mentionner un joueur. Liens : [texte](https://…) ou colle l'adresse. Gras : **texte**.")}`,
     onMount:form=>{
       const pv=form.querySelector("#namepreview");
       const up=()=>{const n=form.querySelector("#f-name").value.trim()||"Nom de l'ORG";const w=form.querySelector("#f-seasonWord").value.trim();const r=form.querySelector("#f-numbering").value==="roman";
@@ -1451,7 +1471,7 @@ function seasonForm(s,orgId){
     <div class="frow">${field("Date de début",dayInp("start",s.start))}${field("Date de fin",dayInp("end",s.end))}</div>
     ${field("Période approximative",inp("period",s.period,'maxlength="40" placeholder="ex : Été 2023, Fin 2021…"'),"Toutes les dates sont facultatives. La période s'affiche si tu ne mets pas de date exacte.")}
     ${field("Lien d'inscription",inp("signup",s.signup,'type="url" placeholder="https://… (formulaire, salon Discord)"'),"Affiché comme bouton « S'inscrire » quand le statut est « Inscriptions ouvertes ».")}
-    ${field("Description",area("description",s.description,'rows="4" maxlength="4000" placeholder="Format, twists, infos pratiques…"'),"Liens : [texte](https://…) ou colle directement l'adresse. Gras : **texte**.")}`,
+    ${field("Description",area("description",s.description,'rows="4" maxlength="4000" placeholder="Format, twists, infos pratiques…"'),"Tape @ pour mentionner un joueur. Liens : [texte](https://…) ou colle l'adresse. Gras : **texte**.")}`,
     onSave:async f=>{
       const v=vals(f);v.start=isoDay(v.start,"de début");v.end=isoDay(v.end,"de fin");const id=s.id||uid("s");const t=nowIso();
       const data=Object.assign(strip(s),{orgId:v.orgId,number:Number(v.number),title:v.title,status:v.status,slots:v.slots?Number(v.slots):null,customName:v.customName,start:v.start,end:v.end,period:v.period,logo:await resolveImage(f,"logo",s.logo),signup:v.signup,description:v.description,cast:s.cast||[],rounds:s.rounds||[],awards:s.awards||[],updatedAt:t});
@@ -1491,7 +1511,7 @@ function newsForm(n,orgId){
   openModal({title:isNew?"Nouvelle annonce":"Modifier l'annonce",body:`
     <div class="frow">${field("ORG",sel("orgId",[["","Annonce générale"],...orgOpts()],n.orgId))}${field("Date",inp("date",n.date,'type="date"'))}</div>
     ${field("Titre *",inp("title",n.title,'required data-label="Titre" maxlength="120" placeholder="ex : Casting de la saison 3 dévoilé"'))}
-    ${field("Texte",area("body",n.body,'rows="6" maxlength="5000"'),"Liens : [texte](https://…) ou colle directement l'adresse. Gras : **texte**.")}`,
+    ${field("Texte",area("body",n.body,'rows="6" maxlength="5000"'),"Tape @ pour mentionner un joueur. Liens : [texte](https://…) ou colle l'adresse. Gras : **texte**.")}`,
     onSave:async f=>{
       const v=vals(f);const id=n.id||uid("n");const t=nowIso();
       const data=Object.assign(strip(n),{orgId:v.orgId,date:v.date||today(),title:v.title,body:v.body,updatedAt:t});
