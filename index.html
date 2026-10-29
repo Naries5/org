@@ -1651,7 +1651,7 @@ function pagePlayer(id){
   const trophies=Object.keys(awc).length?`<section class="block"><div class="block-head"><h2>Awards</h2><span class="count">${aw.length}</span></div><div class="pp-aw">${Object.entries(awc).sort((x,y)=>y[1]-x[1]||x[0].localeCompare(y[0],"fr")).map(([n,c])=>`<span class="pp-awc">${esc(n)}${c>1?` <b>×${c}</b>`:""}</span>`).join("")}</div></section>`:"";
   const hb=hostedBy(p);
   const host=hb.orgs.length?`<section class="block"><div class="block-head"><h2>Host</h2><span class="count">${hb.orgs.length}</span></div><div class="pp-hosts">${hb.orgs.map(o=>{const ss=hb.seasons.filter(x=>x.orgId===o.id);return `<a class="pp-host" href="#org-${esc(o.id)}">${pic(orgLogoVal(o),o.name,"pp-hl")}<span><b>${esc(o.name)}</b><small>${ss.length?ss.length+" saison"+(ss.length>1?"s":"")+" organisée"+(ss.length>1?"s":""):(FORMATS[o.format]||"ORG")}</small></span></a>`;}).join("")}</div></section>`:"";
-  const runs=h.slice().reverse().map(({s,c})=>{const o=org(s.orgId)||{};const n=(s.cast||[]).length;const pl=Number(c.place);const sa=(s.awards||[]).filter(a=>a.playerId===p.id);
+  const runs=h.map(({s,c})=>{const o=org(s.orgId)||{};const n=(s.cast||[]).length;const pl=Number(c.place);const sa=(s.awards||[]).filter(a=>a.playerId===p.id);
     const lg=imgSrc(s.logo||orgLogoVal(o));const med=pl===1?" m1":pl===2?" m2":pl===3?" m3":"";const fb=n>1&&pl===n;
     return `<a class="pc${med}${fb?" fb":""}" href="#saison-${esc(s.id)}" title="${esc(fullSeasonName(s))}"${lg&&!med?` data-pc-src="${esc(lg)}"`:""}>
       <div class="pc-art">${lg?`<img src="${esc(lg)}" alt="" loading="lazy">`:`<span class="pc-ph">${esc(initials(o.name||"?"))}</span>`}
@@ -2108,6 +2108,21 @@ function swapRefs(s,from,to){
   const rounds=(s.rounds||[]).map(r=>{const v={};Object.entries(r.votes||{}).forEach(([k,x])=>{v[sw(k)]=sw(x);});const o=Object.assign({},r,{votes:v});if(r.eliminatedId)o.eliminatedId=sw(r.eliminatedId);if(Array.isArray(r.eliminatedIds))o.eliminatedIds=r.eliminatedIds.map(sw);return o;});
   return hit?{cast,awards,rounds,updatedAt:nowIso()}:null;
 }
+function moveSeasonsForm(p){
+  if(!S.isAdmin){toast("Réservé à l'admin.",true);return;}if(!p)return;const h=historyOf(p.id);
+  if(!h.length){toast("Ce joueur n'a aucune participation.",true);return;}
+  const lbl=x=>x.pseudo+(x.precision?" ("+x.precision+")":"");
+  openModal({title:"Associer des saisons de "+p.pseudo+" à un autre joueur",saveLabel:"Déplacer les saisons",body:`
+    <p class="hint">Coche les saisons jouées en réalité par un autre joueur. Elles seront retirées de cette fiche et associées à celle que tu choisis, avec les votes et les awards.</p>
+    ${field("Joueur qui reçoit les saisons *",`<input id="f-mvto" list="mv-pl" placeholder="Pseudo du joueur" autocomplete="off"><datalist id="mv-pl">${S.players.filter(x=>x.id!==p.id).map(x=>`<option value="${esc(lbl(x))}"></option>`).join("")}</datalist>`,"Le joueur doit déjà avoir une fiche. Sinon, utilise « Séparer… » pour en créer une.")}
+    <div class="checks">${h.map(({s,c})=>`<label class="chk"><input type="checkbox" name="mv" value="${esc(s.id)}"> ${esc(fullSeasonName(s))} <span class="muted">· ${placeLabel(c.place)}</span></label>`).join("")}</div>`,
+    onSave:async f=>{const ids=[...f.querySelectorAll('input[name=mv]:checked')].map(x=>x.value);if(!ids.length)throw new Error("Coche au moins une saison.");
+      const v=f.querySelector("#f-mvto").value.trim();const t=S.players.find(x=>x.id!==p.id&&(lbl(x)===v))||S.players.find(x=>x.id!==p.id&&norm(x.pseudo)===norm(v));
+      if(!t)throw new Error("Joueur introuvable : choisis un pseudo dans la liste.");
+      const clash=ids.map(season).filter(se=>se&&(se.cast||[]).some(c=>c.playerId===t.id));
+      if(clash.length)throw new Error(t.pseudo+" est déjà dans le casting de : "+clash.map(fullSeasonName).join(", ")+". Décoche ces saisons.");
+      for(const sid of ids){const se=season(sid);const u=se&&swapRefs(se,p.id,t.id);if(u)await db.doc("seasons/"+sid).update(u);}
+      toast(ids.length+" saison"+(ids.length>1?"s associées":" associée")+" à "+t.pseudo);location.hash="joueur-"+t.id;}});}
 function mergeForm(keep){
   if(!S.isAdmin){toast("Seul l'admin peut fusionner des fiches.",true);return;}
   if(!keep)return;
@@ -2421,7 +2436,7 @@ function playerActions(p){
   if(S.me&&!p.ownerUid&&!myPlayer())b.push(pend?`<span class="btn ghost" aria-disabled="true">Demande envoyée</span>`:`<button class="btn primary" data-act="claim" data-id="${esc(p.id)}">C'est moi</button>`);
   if(!S.me&&!p.ownerUid)b.push(`<button class="btn ghost" data-act="login">C'est moi ? Connecte-toi</button>`);
   if(mine)b.push(`<button class="btn ghost" data-act="unclaim" data-id="${esc(p.id)}">Ce n'est pas moi</button>`);
-  if(S.isAdmin)b.push(`<details class="pp-more"><summary class="btn" aria-label="Plus d'actions">⋯</summary><div class="pp-more-m"><button type="button" data-act="merge-player" data-id="${esc(p.id)}">Fusionner avec…</button><button type="button" data-act="split-player" data-id="${esc(p.id)}">Séparer…</button><button type="button" class="dg" data-act="del-player" data-id="${esc(p.id)}">Supprimer la fiche</button></div></details>`);
+  if(S.isAdmin)b.push(`<details class="pp-more"><summary class="btn" aria-label="Plus d'actions">⋯</summary><div class="pp-more-m"><button type="button" data-act="merge-player" data-id="${esc(p.id)}">Fusionner avec…</button><button type="button" data-act="split-player" data-id="${esc(p.id)}">Séparer…</button><button type="button" data-act="move-seasons" data-id="${esc(p.id)}">Associer des saisons à un autre joueur…</button><button type="button" class="dg" data-act="del-player" data-id="${esc(p.id)}">Supprimer la fiche</button></div></details>`);
   return b.length?`<div class="actions">${b.join("")}</div>`:"";
 }
 async function claimPlayer(id,on){
@@ -2822,7 +2837,7 @@ document.addEventListener("click",e=>{
     "new-season":()=>seasonForm(null,b.dataset.org),"edit-season":()=>seasonForm(season(id)),"del-season":()=>delSeason(id),
     "cast":()=>castEditor(season(id)),"tierlist":()=>tierList(season(id)),"optimize-images":()=>optimizeImages(),"export-all":async()=>{try{await exportAll();toast("Sauvegarde téléchargée");}catch(e){toast(errMsg(e),true);}},"slooks":()=>seasonLooksEditor(season(id)),"awards":()=>awardsEditor(season(id)),
     "filter":()=>{S.f[b.dataset.k]=b.dataset.v;render();},"opal":()=>{S.f.opal=b.dataset.v;render();},"votes":()=>votesEditor(season(id)),
-    "new-player":()=>playerForm(),"new-mine":()=>{if(myPlayer()){location.hash="joueur-"+myPlayer().id;return;}playerForm(null,true);},"edit-player":()=>playerForm(player(id)),"del-player":()=>delPlayer(id),"merge-player":()=>mergeForm(player(id)),"claim":()=>claimPlayer(id,true),"login":()=>login(),"fr-add":()=>friendAction("add",b.dataset.u),"block":()=>blockAction(b.dataset.u,true),"unblock":()=>blockAction(b.dataset.u,false),"fr-accept":()=>friendAction("accept",b.dataset.u),"fr-remove":()=>friendAction("remove",b.dataset.u),"appform":()=>appFormEditor(season(id)),"apptoggle":()=>toggleApps(season(id)),"logout":()=>logout(),"claim-ok":()=>claimDecision(b.dataset.p,b.dataset.u,true),"claim-no":()=>claimDecision(b.dataset.p,b.dataset.u,false),"unsign":()=>signAction(id,"unsign"),"su-ok":()=>signAction(b.dataset.s,"ok",b.dataset.u),"su-no":()=>signAction(b.dataset.s,"no",b.dataset.u),"unclaim":()=>claimPlayer(id,false),"split-player":()=>splitForm(player(id)),
+    "new-player":()=>playerForm(),"new-mine":()=>{if(myPlayer()){location.hash="joueur-"+myPlayer().id;return;}playerForm(null,true);},"edit-player":()=>playerForm(player(id)),"del-player":()=>delPlayer(id),"merge-player":()=>mergeForm(player(id)),"claim":()=>claimPlayer(id,true),"login":()=>login(),"fr-add":()=>friendAction("add",b.dataset.u),"block":()=>blockAction(b.dataset.u,true),"unblock":()=>blockAction(b.dataset.u,false),"fr-accept":()=>friendAction("accept",b.dataset.u),"fr-remove":()=>friendAction("remove",b.dataset.u),"appform":()=>appFormEditor(season(id)),"apptoggle":()=>toggleApps(season(id)),"logout":()=>logout(),"claim-ok":()=>claimDecision(b.dataset.p,b.dataset.u,true),"claim-no":()=>claimDecision(b.dataset.p,b.dataset.u,false),"unsign":()=>signAction(id,"unsign"),"su-ok":()=>signAction(b.dataset.s,"ok",b.dataset.u),"su-no":()=>signAction(b.dataset.s,"no",b.dataset.u),"unclaim":()=>claimPlayer(id,false),"split-player":()=>splitForm(player(id)),"move-seasons":()=>moveSeasonsForm(player(id)),
     "new-news":()=>newsForm(null,b.dataset.org),"edit-news":()=>newsForm(newsItem(id)),"del-news":()=>delNews(id),
     "clear-examples":clearExamples
   };
