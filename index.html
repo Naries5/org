@@ -1652,7 +1652,8 @@ async function importRankings(j,log){
     for(let k=0;k<(it.cast||[]).length;k++){const c=it.cast[k];const pid=ids[k];if(!pid)continue;
       if(cast.some(x=>x.playerId===pid))continue;
       const o=old[pid]||{};
-      cast.push(Object.assign({team:"",team2:"",team3:""},o,{playerId:pid,place:c.place==null?null:Number(c.place),note:c.note!=null?c.note:(o.note||"")}));
+      const tm={};["team","team2","team3"].forEach(f=>tm[f]=o[f]||c[f]||"");
+      cast.push(Object.assign({team:"",team2:"",team3:""},o,tm,{playerId:pid,place:c.place==null?null:Number(c.place),note:c.note!=null?c.note:(o.note||"")}));
     }
     const upd={cast,updatedAt:t};if(it.awards)upd.awards=aw;if(Array.isArray(it.teams))upd.teams=it.teams;
     if(Array.isArray(it.rounds)){const byName={};(it.cast||[]).forEach((c,k)=>{byName[c.pseudo]=ids[k];});
