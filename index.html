@@ -2303,14 +2303,14 @@ async function loadThanks(){
   TH.credits=(cr.data||[]).map(r=>Object.assign({id:r.id},r.data||{}));
   const people=new Map();
   const keyOf=n=>normName(n)||String(n||"").toLowerCase();
-  (rp.data||[]).forEach(r=>{const pl=linkedPlayer(r.user_id);const name=pl?pl.pseudo:(r.name||"Joueur");
+  (rp.data||[]).forEach(r=>{const pl=linkedPlayer(r.user_id);const name=pl?pLabel(pl):(r.name||"Joueur");
     const k=pl?"p:"+pl.id:keyOf(name);
     people.set(k,{name,pl,avatar:r.avatar_url||"",infos:r.n_infos||0,fix:r.n_fix||0,orgs:new Set(r.orgs||[]),what:[],credits:[],last:r.last_at||""});});
   TH.credits.filter(c=>c.kind!=="source").forEach(c=>{
-    const pl=c.playerId?player(c.playerId):S.players.find(p=>normName(p.pseudo)===normName(c.name));
+    let pl=c.playerId?player(c.playerId):null;if(!pl&&!c.playerId){const m=S.players.filter(p=>normName(p.pseudo)===normName(c.name));if(m.length===1)pl=m[0];}
     const k=pl?"p:"+pl.id:keyOf(c.name);
     let e=people.get(k)||[...people.values()].find(x=>keyOf(x.name)===keyOf(c.name));
-    if(!e){e={name:pl?pl.pseudo:c.name,pl,avatar:"",infos:0,fix:0,orgs:new Set(),what:[],credits:[],last:""};people.set(k,e);}
+    if(!e){e={name:pl?pLabel(pl):c.name,pl,avatar:"",infos:0,fix:0,orgs:new Set(),what:[],credits:[],last:""};people.set(k,e);}
     if(c.what)e.what.push(c.what);(c.orgs||[]).forEach(o=>e.orgs.add(o));e.credits.push(c);e.extra=(e.extra||0)+(Number(c.count)||0);});
   const list=[...people.values()].sort((a,b)=>String(a.name).localeCompare(String(b.name),"fr",{sensitivity:"base"}));
   const box=document.getElementById("th-people");if(!box)return;
@@ -2324,15 +2324,31 @@ function thCard(e){
   const adm=S.isAdmin&&e.credits.length===1?`<button class="th-x" data-act="edit-credit" data-id="${esc(e.credits[0].id)}" title="Modifier">✎</button><button class="th-x" data-act="del-credit" data-id="${esc(e.credits[0].id)}" title="Retirer">×</button>`:"";
   const inner=`${av}<span>${esc(e.name)}</span>`;
   return `<span class="th-chip"${e.what.length?` title="${esc(e.what.join(" · "))}"`:""}>${e.pl?`<a href="#joueur-${esc(e.pl.id)}">${inner}</a>`:inner}${adm}</span>`;}
+function creditAc(f){const q=f.querySelector("#f-name"),box=f.querySelector("#cr-sug"),hid=f.querySelector("#f-playerId");let list=[],on=0;
+  const info=p=>{const ss=S.seasons.filter(s=>(s.cast||[]).some(c=>c.playerId===p.id));const os=[...new Set(ss.map(s=>(org(s.orgId)||{}).name).filter(Boolean))];return ss.length?ss.length+" saison"+(ss.length>1?"s":"")+" · "+os.slice(0,3).join(", ")+(os.length>3?"…":""):"Aucune saison";};
+  const close=()=>{box.hidden=true;q.setAttribute("aria-expanded","false");};
+  const show=()=>{const t=normName(q.value);if(!t){close();return;}
+    list=S.players.filter(p=>normName(p.pseudo).includes(t)||aliasesOf(p).some(a=>normName(a).includes(t))).sort((a,b)=>(normName(b.pseudo).startsWith(t)-normName(a.pseudo).startsWith(t))||String(a.pseudo).localeCompare(String(b.pseudo),"fr")).slice(0,8);
+    if(!list.length){close();return;}on=0;
+    box.innerHTML=list.map((p,i)=>`<button type="button" class="psug-i${i===0?" on":""}" data-i="${i}">${ava(p,"sm")}<span class="psug-t"><b>${esc(pLabel(p))}</b><small>${esc(info(p))}</small></span></button>`).join("");
+    box.hidden=false;q.setAttribute("aria-expanded","true");};
+  const pick=i=>{const p=list[i];if(!p)return;q.value=p.pseudo;hid.value=p.id;close();};
+  q.addEventListener("input",()=>{hid.value="";show();});
+  q.addEventListener("keydown",e=>{if(box.hidden)return;const its=box.querySelectorAll(".psug-i");
+    if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault();on=(on+(e.key==="ArrowDown"?1:its.length-1))%its.length;its.forEach((b,i)=>b.classList.toggle("on",i===on));}
+    else if(e.key==="Enter"){e.preventDefault();pick(on);}else if(e.key==="Escape"){e.stopPropagation();close();}});
+  box.addEventListener("mousedown",e=>{const b=e.target.closest(".psug-i");if(b){e.preventDefault();pick(Number(b.dataset.i));}});
+  q.addEventListener("blur",()=>setTimeout(close,150));}
 function creditForm(c){
   const isNew=!c;c=c||{kind:"personne"};
   openModal({title:isNew?"Ajouter un remerciement":"Modifier le remerciement",body:`
-    <div class="frow">${field("Nom *",inp("name",c.name,'required data-label="Nom" maxlength="80" placeholder="Pseudo"'))}</div>
+    <div class="frow">${field("Joueur *",`<div class="psug-wrap">${inp("name",c.name,'required data-label="Joueur" maxlength="80" placeholder="Tape un pseudo…" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="cr-sug"')}<div class="psug" id="cr-sug" role="listbox" hidden></div></div><input type="hidden" name="playerId" id="f-playerId" value="${esc(c.playerId||"")}">`,"Choisis dans la liste pour relier la bonne fiche (utile pour les homonymes). Tu peux aussi écrire un nom qui n'a pas de fiche.")}</div>
     ${field("Pour quoi ?",area("what",c.what,'rows="3" maxlength="500" placeholder="ex : Captures des votes de Wsequester S1 à S4"'),"Optionnel, affiché au survol du nom. Les personnes qui passent par l'onglet Contribuer apparaissent déjà toutes seules : ajoute ici celles qui ont aidé autrement (Discord, archives…).")}
     <div class="frow"></div>`,
+    onMount:f=>creditAc(f),
     onSave:async f=>{const v=vals(f);const id=c.id||uid("cr");
       const data=Object.assign({},c,{kind:"personne",name:v.name,what:v.what,updatedAt:nowIso()});delete data.id;
-      const pl=S.players.find(p=>normName(p.pseudo)===normName(v.name)||aliasesOf(p).some(a=>normName(a)===normName(v.name)));if(pl)data.playerId=pl.id;else delete data.playerId;
+      let pl=v.playerId?player(v.playerId):null;if(!pl){const m=S.players.filter(p=>normName(p.pseudo)===normName(v.name));if(m.length===1)pl=m[0];}if(pl){data.playerId=pl.id;data.name=pl.pseudo;}else delete data.playerId;
       const {error}=await sb.from("credits").upsert({id,data,updated_at:nowIso()});if(error)throw sbErr(error);
       toast(isNew?"Remerciement ajouté":"Remerciement mis à jour");loadThanks();}});
 }
