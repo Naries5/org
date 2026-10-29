@@ -682,7 +682,10 @@ function toast(msg,err){const t=document.createElement("div");t.className="t"+(e
 function errMsg(e){const c=e&&e.code;if(c==="invalid_argument")return "Modification refusée : ce compte n'a pas le droit de modifier le wiki.";if(c==="quota_exceeded")return "L'espace de stockage du wiki est plein.";if(c==="too_large")return "Image trop lourde (20 Mo maximum).";if(c==="unsupported_type")return "Format d'image non pris en charge (PNG, JPG, WebP ou GIF).";if(c==="resource_exhausted"||c==="rate_limited")return "Trop de modifications d'un coup, réessaie dans quelques secondes.";return (e&&e.message)||String(e);}
 
 /* ---------- ORG-Central : helpers visuels ---------- */
-function recKey(s){return String(s.end||s.start||"")+"|"+String(Number(s.number)||0).padStart(4,"0");}
+const P_MONTHS={janv:"01",fev:"02",fév:"02",mars:"03",avr:"04",mai:"05",juin:"06",juil:"07",aout:"08",août:"08",sept:"09",oct:"10",nov:"11",dec:"12",déc:"12",hiver:"01",printemps:"04",ete:"07",été:"07",automne:"10",debut:"02",début:"02",mi:"06",fin:"11"};
+function periodKey(p){p=String(p||"").toLowerCase();const y=p.match(/(19|20)\d\d/);if(!y)return "";let m="06";for(const k in P_MONTHS){if(new RegExp("(^|[^\\p{L}])"+k,"u").test(p)){m=P_MONTHS[k];break;}}return y[0]+"-"+m+"-15";}
+function dateKey(s){return String(s.end||s.start||"")||periodKey(s.period);}
+function recKey(s){return dateKey(s)+"|"+String(Number(s.number)||0).padStart(4,"0");}
 function byRecent(a,b){return recKey(b).localeCompare(recKey(a));}
 function bgVar(v){const u=imgSrc(v);return u?` style="--bgimg:url('${esc(u)}')"`:"";}
 function cover(v,label){const u=imgSrc(v);return u?`<img src="${esc(u)}" alt="" loading="lazy">`:`<span class="ph">${esc(initials(label))}</span>`;}
@@ -1000,7 +1003,7 @@ function pickOfDay(){
 
 function filtered(list,q,key){q=q.trim().toLowerCase();return q?list.filter(x=>String(x[key]||"").toLowerCase().includes(q)||String(x.tag||"").toLowerCase().includes(q)):list;}
 const ST_RANK={inscriptions:0,annoncee:0,en_cours:1,terminee:2};
-function orgActivity(o){const ss=seasonsOf(o.id);let rank=3,key="";ss.forEach(s=>{const r=ST_RANK[s.status]??2;const k=recKey(s);if(r<rank||(r===rank&&k>key)){rank=r;key=k;}});return {rank,key};}
+function orgActivity(o){const ss=seasonsOf(o.id);let rank=3,key="";ss.forEach(s=>{const r=ST_RANK[s.status]??2;const k=r>=2?dateKey(s):recKey(s);if(r<rank||(r===rank&&k>key)){rank=r;key=k;}});return {rank,key};}
 function byOrgActivity(a,b){const x=orgActivity(a),y=orgActivity(b);return x.rank-y.rank||y.key.localeCompare(x.key)||String(a.name).localeCompare(String(b.name),"fr");}
 function orgListHtml(){const list=filtered([...S.orgs].sort(byOrgActivity),S.q.orgs,"name").filter(o=>(!S.f.format||o.format===S.f.format)&&(!S.f.platform||o.platform===S.f.platform));
   if(!list.length)return `<p class="muted">Aucune ORG ne correspond.</p>`;
