@@ -643,7 +643,7 @@ function avatarOf(p){return p?(p.avatar||seasonAvatarMap()[p.id]||""):"";}
 const ava=(p,size)=>pic(avatarOf(p),p&&p.pseudo,"avatar "+size);
 function safeUrl(u){u=String(u||"").trim();return /^https?:\/\//i.test(u)?u:"";}
 function fmtDate(d){if(!d)return "";const t=new Date(d+"T12:00:00");if(isNaN(t))return esc(d);return t.toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"});}
-function dateRange(s){if(s.start&&s.end)return fmtDate(s.start)+" → "+fmtDate(s.end);if(s.start)return fmtDate(s.start);if(s.period)return esc(s.period);return "";}
+function dateRange(s){if(s.start&&s.end&&s.start===s.end)return fmtDate(s.start)+(s.period?" · "+esc(s.period):"");if(s.start&&s.end)return fmtDate(s.start)+" → "+fmtDate(s.end);if(s.start)return fmtDate(s.start);if(s.period)return esc(s.period);return "";}
 function tags(o){return [o&&FORMATS[o.format]?`<span class="tag ${o.format==="speed"?"tag-speed":""}">${FORMATS[o.format]}</span>`:"",o&&PLATFORMS[o.platform]?`<span class="tag">${PLATFORMS[o.platform]}</span>`:""].join("");}
 function norm(x){return String(x||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();}
 function teamById(s,id){return id?(s.teams||[]).find(t=>t.id===id):null;}
@@ -1618,7 +1618,7 @@ function splitForm(p){
       const v=vals(f);const nid=uid("p");const t=nowIso();
       await db.doc("players/"+nid).set({pseudo:v.npseudo,precision:v.nprec,bio:"",discord:"",avatar:"",createdAt:t,updatedAt:t});
       for(const sid of ids){const s=season(sid);const u=s&&swapRefs(s,p.id,nid);if(u)await db.doc("seasons/"+sid).update(u);}
-      if((v.oprec||"")!==(p.precision||""))await db.doc("players/"+p.id).update({precision:v.oprec,updatedAt:nowIso()});
+      {const al=aliasesOf(p),keep=al.filter(a=>normName(a)!==normName(v.npseudo));const pu={};if((v.oprec||"")!==(p.precision||""))pu.precision=v.oprec;if(keep.length!==al.length)pu.aliases=keep;if(Object.keys(pu).length){pu.updatedAt=nowIso();await db.doc("players/"+p.id).update(pu);}}
       toast("Nouvelle fiche créée");location.hash="joueur-"+nid;
     }});
 }
@@ -1672,7 +1672,8 @@ async function importRankings(j,log){
   for(const {it,se,ids,aw} of plan){
     if(!se){missing.push(it.id);continue;}
     if(Array.isArray(it.cast)&&!it.cast.length&&(se.cast||[]).length){missing.push(it.id+" (casting vide ignoré)");continue;}
-    if(!it.cast){const upd={updatedAt:t};if(it.awards)upd.awards=aw;await db.doc("seasons/"+se.id).update(upd);done++;log("Saisons mises à jour : "+done+" / "+(j.seasons||[]).length);continue;}
+    const setF={};if(it.set&&typeof it.set==="object")["start","end","period","title","status","description","customName"].forEach(k=>{if(it.set[k]!=null)setF[k]=String(it.set[k]);});
+    if(!it.cast){const upd=Object.assign({updatedAt:t},setF);if(it.awards)upd.awards=aw;await db.doc("seasons/"+se.id).update(upd);done++;log("Saisons mises à jour : "+done+" / "+(j.seasons||[]).length);continue;}
     const old={};(se.cast||[]).forEach(c=>old[c.playerId]=c);
     const cast=[];
     for(let k=0;k<(it.cast||[]).length;k++){const c=it.cast[k];const pid=ids[k];if(!pid)continue;
@@ -1681,7 +1682,7 @@ async function importRankings(j,log){
       const tm={};["team","team2","team3"].forEach(f=>tm[f]=o[f]||c[f]||"");
       cast.push(Object.assign({team:"",team2:"",team3:""},o,tm,{playerId:pid,place:c.place==null?null:Number(c.place),note:c.note!=null?c.note:(o.note||"")}));
     }
-    const upd={cast,updatedAt:t};if(it.awards)upd.awards=aw;if(Array.isArray(it.teams))upd.teams=it.teams;
+    const upd=Object.assign({cast,updatedAt:t},setF);if(it.awards)upd.awards=aw;if(Array.isArray(it.teams))upd.teams=it.teams;
     if(Array.isArray(it.rounds)){const byName={};(it.cast||[]).forEach((c,k)=>{byName[c.pseudo]=ids[k];});
       upd.rounds=it.rounds.map(r=>{const v={};Object.entries(r.votes||{}).forEach(([n,x])=>{const pid=byName[n];if(pid&&x!=null&&String(x).trim()!=="")v[pid]=String(x);});return Object.assign({},r,{votes:v});});}
     await db.doc("seasons/"+se.id).update(upd);done++;
