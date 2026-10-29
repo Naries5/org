@@ -881,6 +881,12 @@ button.ph-av{cursor:pointer}.ph-av img,.ph-av .ib-ph{width:100%;height:100%;obje
 .pl-count{margin:0 0 8px;font-size:.85rem}
 .pl-ok{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:#3ba55d;color:#fff;font-size:.7rem;vertical-align:middle}
 .th-intro{font-size:15px;max-width:760px}
+.th-names{display:flex;flex-wrap:wrap;gap:8px}
+.th-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 12px 5px 5px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.04);font-weight:600}
+.th-chip>a{display:inline-flex;align-items:center;gap:6px;color:inherit}
+.th-chip .avatar.xs{width:26px;height:26px;font-size:10px}
+.th-x{background:none;border:0;color:var(--muted,#aaa);cursor:pointer;padding:0 2px;font-size:13px}
+.th-x:hover{color:#fff}
 .th-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
 .th-card{position:relative;display:grid;grid-template-columns:52px 1fr;gap:12px;align-items:start;padding:14px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.03)}
 .th-card.top{border-color:rgba(255,200,80,.55);background:linear-gradient(135deg,rgba(255,200,80,.10),rgba(255,255,255,.02))}
@@ -2306,33 +2312,29 @@ async function loadThanks(){
     let e=people.get(k)||[...people.values()].find(x=>keyOf(x.name)===keyOf(c.name));
     if(!e){e={name:pl?pl.pseudo:c.name,pl,avatar:"",infos:0,fix:0,orgs:new Set(),what:[],credits:[],last:""};people.set(k,e);}
     if(c.what)e.what.push(c.what);(c.orgs||[]).forEach(o=>e.orgs.add(o));e.credits.push(c);e.extra=(e.extra||0)+(Number(c.count)||0);});
-  const list=[...people.values()].map(e=>Object.assign(e,{total:e.infos+e.fix+(e.extra||0)})).sort((a,b)=>b.total-a.total||b.what.length-a.what.length||String(a.name).localeCompare(String(b.name),"fr"));
+  const list=[...people.values()].sort((a,b)=>String(a.name).localeCompare(String(b.name),"fr",{sensitivity:"base"}));
   const box=document.getElementById("th-people");if(!box)return;
   const miss=rp.error&&/contributors|function|schema/i.test(String((rp.error&&rp.error.message)||""));
   box.innerHTML=(miss&&S.isAdmin?`<p class="ferr">La liste automatique n'est pas encore active : lance le fichier <b>update-9-remerciements.sql</b> dans Supabase.</p>`:"")+
-    (list.length?`<div class="th-grid">${list.map((e,i)=>thCard(e,i)).join("")}</div>`:`<p class="muted">Pas encore de contributeur… sois le premier !</p>`);
+    (list.length?`<div class="th-names">${list.map(thCard).join("")}</div>`:`<p class="muted">Pas encore de contributeur… sois le premier !</p>`);
   const src=document.getElementById("th-sources");
   const ss=TH.credits.filter(c=>c.kind==="source").sort((a,b)=>(Number(a.order)||99)-(Number(b.order)||99)||String(a.name).localeCompare(String(b.name),"fr"));
   if(src)src.innerHTML=ss.length?`<div class="th-grid">${ss.map(c=>{const u=safeUrl(c.url);return `<div class="th-card src${S.isAdmin?" adm":""}">${thAdm(c)}<div><div class="th-name">${u?`<a href="${esc(u)}" target="_blank" rel="noopener">${esc(c.name)} ↗</a>`:esc(c.name)}</div>${c.what?`<p class="th-what">${richText(c.what)}</p>`:""}</div></div>`;}).join("")}</div>`:`<p class="muted">Aucune source pour l'instant.</p>`;
 }
 function thAdm(c){return S.isAdmin?`<span class="th-adm"><button class="btn sm ghost" data-act="edit-credit" data-id="${esc(c.id)}" title="Modifier">✎</button><button class="btn sm ghost danger" data-act="del-credit" data-id="${esc(c.id)}" title="Supprimer">×</button></span>`:"";}
-function thCard(e,i){
-  const av=e.pl&&avatarOf(e.pl)?ava(e.pl,"md"):e.avatar?`<img class="avatar md" src="${esc(e.avatar)}" alt="">`:`<span class="avatar md">${esc(initials(e.name))}</span>`;
-  const st=[];const nb=e.infos+(e.extra||0);
-  if(nb)st.push(`<span class="g">${nb} contribution${nb>1?"s":""}</span>`);
-  if(e.fix)st.push(`<span>${e.fix} correction${e.fix>1?"s":""}</span>`);
-  if(i===0&&e.total>1)st.unshift(`<span class="g">⭐ Top contributeur</span>`);
-  const orgs=[...e.orgs].map(x=>{const o=org(x)||S.orgs.find(o=>normName(o.name)===normName(x));return o?`<a href="#org-${esc(o.id)}">${logo(o,"xs")}${esc(o.name)}</a>`:`<span>${esc(x)}</span>`;}).join("");
-  return `<div class="th-card${i<3&&e.total>1?" top":""}${S.isAdmin&&e.credits.length===1?" adm":""}">${e.credits.length===1?thAdm(e.credits[0]):""}${av}<div><div class="th-name">${e.pl?`<a href="#joueur-${esc(e.pl.id)}">${esc(e.name)}</a>`:esc(e.name)}</div>
-    ${st.length?`<div class="th-stats">${st.join("")}</div>`:""}${e.what.map(w=>`<p class="th-what">${richText(w)}</p>`).join("")}${orgs?`<div class="th-orgs">${orgs}</div>`:""}</div></div>`;}
+function thCard(e){
+  const av=e.pl&&avatarOf(e.pl)?ava(e.pl,"xs"):e.avatar?`<img class="avatar xs" src="${esc(e.avatar)}" alt="">`:`<span class="avatar xs">${esc(initials(e.name))}</span>`;
+  const adm=S.isAdmin&&e.credits.length===1?`<button class="th-x" data-act="edit-credit" data-id="${esc(e.credits[0].id)}" title="Modifier">✎</button><button class="th-x" data-act="del-credit" data-id="${esc(e.credits[0].id)}" title="Retirer">×</button>`:"";
+  const inner=`${av}<span>${esc(e.name)}</span>`;
+  return `<span class="th-chip"${e.what.length?` title="${esc(e.what.join(" · "))}"`:""}>${e.pl?`<a href="#joueur-${esc(e.pl.id)}">${inner}</a>`:inner}${adm}</span>`;}
 function creditForm(c){
   const isNew=!c;c=c||{kind:"personne"};
   openModal({title:isNew?"Ajouter un remerciement":"Modifier le remerciement",body:`
     <div class="frow">${field("Type",sel("kind",[["personne","Personne"],["source","Source (site, wiki…)"]],c.kind))}${field("Nom *",inp("name",c.name,'required data-label="Nom" maxlength="80" placeholder="Pseudo ou nom du site"'))}</div>
-    ${field("Pour quoi ?",area("what",c.what,'rows="3" maxlength="500" placeholder="ex : Captures des votes de Wsequester S1 à S4"'),"Les personnes qui passent par l'onglet Contribuer apparaissent déjà toutes seules : ajoute ici celles qui ont aidé autrement (Discord, archives…).")}
-    <div class="frow">${field("Lien",inp("url",c.url,'maxlength="300" placeholder="https://…"'),"Pour une source.")}${field("Nombre de contributions",inp("count",c.count||"",'type="number" min="0" max="999"'),"Optionnel, s'ajoute au compteur.")}${field("Ordre",inp("order",c.order||"",'type="number" min="0" max="999"'),"Pour trier les sources.")}</div>`,
+    ${field("Pour quoi ?",area("what",c.what,'rows="3" maxlength="500" placeholder="ex : Captures des votes de Wsequester S1 à S4"'),"Optionnel, affiché au survol du nom. Les personnes qui passent par l'onglet Contribuer apparaissent déjà toutes seules : ajoute ici celles qui ont aidé autrement (Discord, archives…).")}
+    <div class="frow">${field("Lien",inp("url",c.url,'maxlength="300" placeholder="https://…"'),"Pour une source.")}${field("Ordre",inp("order",c.order||"",'type="number" min="0" max="999"'),"Pour trier les sources.")}</div>`,
     onSave:async f=>{const v=vals(f);const id=c.id||uid("cr");
-      const data=Object.assign({},c,{kind:v.kind,name:v.name,what:v.what,url:v.url,count:v.count?Number(v.count):0,order:v.order?Number(v.order):0,updatedAt:nowIso()});delete data.id;
+      const data=Object.assign({},c,{kind:v.kind,name:v.name,what:v.what,url:v.url,order:v.order?Number(v.order):0,updatedAt:nowIso()});delete data.id;
       const pl=S.players.find(p=>normName(p.pseudo)===normName(v.name)||aliasesOf(p).some(a=>normName(a)===normName(v.name)));if(v.kind==="personne"&&pl)data.playerId=pl.id;else delete data.playerId;
       const {error}=await sb.from("credits").upsert({id,data,updated_at:nowIso()});if(error)throw sbErr(error);
       toast(isNew?"Remerciement ajouté":"Remerciement mis à jour");loadThanks();}});
