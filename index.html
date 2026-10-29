@@ -2457,6 +2457,9 @@ async function importRankings(j,log){
   const idx=new Map();S.players.forEach(p=>{[p.pseudo,...aliasesOf(p)].forEach(n=>{const k=normName(n);if(k&&!idx.has(k))idx.set(k,p.id);});});
   const created=[],missing=[],newRows=[],linked=new Set(),setDone=[];let done=0;const t=nowIso();
   let orgAlias=null;
+  if(Array.isArray(j.orgs))for(const o2 of j.orgs){if(!o2||!o2.id||org(o2.id))continue;const same=S.orgs.find(o=>normName(o.name)===normName((o2.data||{}).name));
+    if(same){(j.seasons||[]).forEach(it=>{if(it.create&&it.create.orgId===o2.id)it.create.orgId=same.id;});log("ORG existante utilisée : "+same.name);continue;}
+    await db.doc("orgs/"+o2.id).set(Object.assign({createdAt:t,updatedAt:t},o2.data||{}));S.orgs=S.orgs.concat([Object.assign({id:o2.id},o2.data||{})]);log("ORG créée : "+((o2.data||{}).name||o2.id));}
   if(j.org&&j.org.id&&!org(j.org.id)){const same=S.orgs.find(o=>normName(o.name)===normName((j.org.data||{}).name));if(same){orgAlias=same.id;log("ORG existante utilisée : "+same.name);}}
   if(j.org&&j.org.id&&!orgAlias&&!org(j.org.id)){await db.doc("orgs/"+j.org.id).set(Object.assign({createdAt:t,updatedAt:t},j.org.data||{}));log("ORG créée : "+((j.org.data||{}).name||j.org.id));}
   const fresh={};
