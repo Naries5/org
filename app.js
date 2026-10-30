@@ -467,7 +467,7 @@ function calendarHtml(list){
   const today=new Date();today.setHours(0,0,0,0);
   const months={};dated.forEach(s=>{const k=String(s.start).slice(0,7);(months[k]=months[k]||[]).push(s);});
   const row=s=>{const o=org(s.orgId)||{};const d=s.start?new Date(s.start+"T12:00:00"):null;
-    const diff=d?Math.round((d-today)/864e5):null;const rel=diff==null?"":diff<0?"Date passée":diff===0?"Aujourd'hui":diff===1?"Demain":`Dans ${diff} jours`;
+    const d0=s.start?new Date(s.start+"T00:00:00"):null;const diff=d0?Math.round((d0-today)/864e5):null;const rel=diff==null?"":diff<0?"Date passée":diff===0?"Aujourd'hui":diff===1?"Demain":`Dans ${diff} jours`;
     return `<a class="cal-i" href="#saison-${esc(s.id)}"><div class="cal-d">${d?`<small>${d.toLocaleDateString("fr-FR",{weekday:"short"})}</small><b>${d.getDate()}</b><small>${d.toLocaleDateString("fr-FR",{month:"short"})}</small>`:`<b>?</b><small>à venir</small>`}</div>
     ${pic(s.logo||o.logo,o.tag||o.name,"logo")}<div class="cal-t"><b>${esc(o.name||"")} ${esc(seasonShort(s))}</b><span>${esc(s.title||"")}</span><small>${[tags(o),s.slots?`<span class="tag">${esc(s.slots)} places</span>`:"",s.end?`<span class="tag">jusqu'au ${fmtDate(s.end)}</span>`:""].join("")}</small></div>${rel?`<span class="cal-rel${diff!=null&&diff<=7&&diff>=0?" soon":""}">${rel}</span>`:""}</a>`;};
   let h=`<div class="cal">`;
