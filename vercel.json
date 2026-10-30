@@ -2,6 +2,10 @@
   "rewrites": [
     { "source": "/s/:id", "destination": "/api/share?t=s&id=:id" },
     { "source": "/o/:id", "destination": "/api/share?t=o&id=:id" },
-    { "source": "/j/:id", "destination": "/api/share?t=j&id=:id" }
+    { "source": "/j/:id", "destination": "/api/share?t=j&id=:id" },
+    { "source": "/saison/:id", "destination": "/api/share?t=s&id=:id&page=1" },
+    { "source": "/org/:id", "destination": "/api/share?t=o&id=:id&page=1" },
+    { "source": "/joueur/:id", "destination": "/api/share?t=j&id=:id&page=1" },
+    { "source": "/((?!api/|_blob/).*)", "destination": "/index.html" }
   ]
 }

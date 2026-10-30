@@ -22,16 +22,16 @@ async function season(id) {
   const ps = await players(pod.flat());
   const names = l => l.map(i => pLabel(ps[i])).join(" & ");
   const lines = [];
-  if (pod[0].length) lines.push("🏆 Vainqueur : " + names(pod[0]));
-  const sub = [pod[1].length ? "🥈 " + names(pod[1]) : "", pod[2].length ? "🥉 " + names(pod[2]) : ""].filter(Boolean).join("   ");
+  if (pod[0].length) lines.push("Vainqueur : " + names(pod[0]));
+  const sub = [pod[1].length ? "2e : " + names(pod[1]) : "", pod[2].length ? "3e : " + names(pod[2]) : ""].filter(Boolean).join(", ");
   if (sub) lines.push(sub);
-  lines.push([cast.length ? cast.length + " joueurs" : "", dates(s), !done && !s.external && STATUS[s.status] ? STATUS[s.status] : ""].filter(Boolean).join(" · "));
+  lines.push([cast.length ? cast.length + " joueurs" : "", dates(s), !done && !s.external && STATUS[s.status] ? STATUS[s.status] : ""].filter(Boolean).join(", "));
   if (s.external) lines.push("Classement et votes sur " + String(s.external).replace(/^https?:\/\/(www\.)?/, "").split("/")[0]);
   return {
-    title: ((o && o.name) ? o.name + " — " : "") + seasonName(s, o || {}),
+    title: ((o && o.name) ? o.name + " " : "") + seasonName(s, o || {}),
     desc: lines.filter(Boolean).join("\n"),
     img: s.logo || (o && o.logo) ? "/api/img?t=s&id=" + enc(id) : "",
-    hash: "#saison-" + id,
+    hash: "/saison/" + encodeURIComponent(id),
   };
 }
 
@@ -43,10 +43,10 @@ async function orgPage(id) {
   ss.forEach(s => (Array.isArray(s.cast) ? s.cast : []).forEach(c => { all.add(c.playerId); if (!s.external && Number(c.place) === 1) wins[c.playerId] = (wins[c.playerId] || 0) + 1; }));
   const best = Object.entries(wins).sort((a, b) => b[1] - a[1])[0];
   const ps = await players(best ? [best[0]] : []);
-  const lines = [[ss.length + " saison" + (ss.length > 1 ? "s" : ""), all.size ? all.size + " joueurs" : "", o.hosts ? "Host : " + o.hosts : ""].filter(Boolean).join(" · ")];
-  if (best) lines.push("👑 Plus titré : " + pLabel(ps[best[0]]) + " (" + best[1] + " victoire" + (best[1] > 1 ? "s" : "") + ")");
+  const lines = [[ss.length + " saison" + (ss.length > 1 ? "s" : ""), all.size ? all.size + " joueurs" : "", o.hosts ? "Host : " + o.hosts : ""].filter(Boolean).join(", ")];
+  if (best) lines.push("Plus titré : " + pLabel(ps[best[0]]) + " (" + best[1] + " victoire" + (best[1] > 1 ? "s" : "") + ")");
   if (o.description) lines.push(String(o.description).replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").replace(/\*\*/g, "").slice(0, 180));
-  return { title: o.name, desc: lines.join("\n"), img: "/api/img?t=o&id=" + enc(id), hash: "#org-" + id };
+  return { title: o.name, desc: lines.join("\n"), img: "/api/img?t=o&id=" + enc(id), hash: "/org/" + encodeURIComponent(id) };
 }
 
 async function playerPage(id) {
@@ -57,27 +57,53 @@ async function playerPage(id) {
   ss.forEach(s => { const c = (s.cast || []).find(c => c.playerId === id); const pl = c && Number(c.place); if (s.status === "terminee" && pl) { if (pl === 1) w++; if (pl <= 3) top++; } });
   const orgIds = [...new Set(ss.map(s => s.orgId).filter(Boolean))];
   const os = orgIds.length ? await q("orgs?select=id,name:data->>name&id=in.(" + orgIds.map(i => '"' + i + '"').join(",") + ")") : [];
-  const lines = [[ss.length + " saison" + (ss.length > 1 ? "s" : ""), w ? "🏆 " + w + " victoire" + (w > 1 ? "s" : "") : "", top ? top + " podium" + (top > 1 ? "s" : "") : ""].filter(Boolean).join(" · ")];
+  const lines = [[ss.length + " saison" + (ss.length > 1 ? "s" : ""), w ? w + " victoire" + (w > 1 ? "s" : "") : "", top ? top + " podium" + (top > 1 ? "s" : "") : ""].filter(Boolean).join(", ")];
   if (os.length) lines.push("ORGs : " + os.map(o => o.name).slice(0, 6).join(", ") + (os.length > 6 ? "…" : ""));
   if (p.tagline) lines.push("« " + p.tagline + " »");
-  return { title: pLabel(p), desc: lines.join("\n"), img: p.hasAv ? "/api/img?t=j&id=" + enc(id) : "", hash: "#joueur-" + id };
+  return { title: pLabel(p), desc: lines.join("\n"), img: p.hasAv ? "/api/img?t=j&id=" + enc(id) : "", hash: "/joueur/" + encodeURIComponent(id) };
 }
 
+function setMeta(html, prop, value, attr) {
+  attr = attr || "property";
+  const re = new RegExp('(<meta ' + attr + '="' + prop.replace(/[.:]/g, "\\$&") + '" content=")[^"]*(")');
+  return re.test(html) ? html.replace(re, "$1" + value + "$2") : html.replace("</head>", '<meta ' + attr + '="' + prop + '" content="' + value + '">\n</head>');
+}
+async function page(req, res, d, host) {
+  let html = "";
+  try { const r = await fetch(host + "/index.html"); if (r.ok) html = await r.text(); } catch (e) { html = ""; }
+  if (!html) return false;
+  if (d) {
+    const img = d.img ? host + d.img : host + "/og.png";
+    html = html.replace(/<title>[^<]*<\/title>/, "<title>" + esc(d.title) + " | ORG-Central</title>");
+    html = setMeta(html, "description", esc(d.desc), "name");
+    html = setMeta(html, "og:title", esc(d.title));
+    html = setMeta(html, "og:description", esc(d.desc));
+    html = setMeta(html, "og:image", esc(img));
+    html = setMeta(html, "og:url", esc(host + d.hash));
+    html = setMeta(html, "twitter:card", d.img ? "summary" : "summary_large_image", "name");
+    if (d.img) html = html.replace(/<meta property="og:image:(width|height)"[^>]*>\n?/g, "");
+  }
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.setHeader("Cache-Control", "public, max-age=0, s-maxage=300, stale-while-revalidate=86400");
+  res.end(html);
+  return true;
+}
 module.exports = async (req, res) => {
   const t = String(req.query.t || ""), id = String(req.query.id || "").slice(0, 80);
   let d = null;
   try { d = t === "s" ? await season(id) : t === "o" ? await orgPage(id) : t === "j" ? await playerPage(id) : null; } catch (e) { d = null; }
   const host = "https://" + (req.headers["x-forwarded-host"] || req.headers.host || "www.orgcentral.fr");
+  if (req.query.page && await page(req, res, d, host)) return;
   const hash = d ? d.hash : "";
   const title = d ? d.title : "ORG-Central";
   const desc = d ? d.desc : "Le wiki communautaire des ORGs et speeds françaises : saisons, classements, votes, awards et palmarès.";
   const img = d && d.img ? host + d.img : host + "/og.png";
   const big = !(d && d.img);
-  const url = host + "/" + hash;
+  const url = host + (hash || "/");
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.setHeader("Cache-Control", "public, max-age=0, s-maxage=600, stale-while-revalidate=86400");
   res.end(`<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8">
-<title>${esc(title)} · ORG-Central</title>
+<title>${esc(title)} | ORG-Central</title>
 <meta name="description" content="${esc(desc)}">
 <meta property="og:site_name" content="ORG-Central">
 <meta property="og:type" content="website">
@@ -87,7 +113,7 @@ module.exports = async (req, res) => {
 <meta property="og:url" content="${esc(url)}">
 <meta name="twitter:card" content="${big ? "summary_large_image" : "summary"}">
 <meta name="theme-color" content="#FFC23D">
-<meta http-equiv="refresh" content="0;url=/${esc(hash)}">
-<script>location.replace("/"+${JSON.stringify(hash)});</script>
-</head><body style="background:#160C13;color:#FFF3E4;font-family:sans-serif"><p><a style="color:#FFC23D" href="/${esc(hash)}">Ouvrir sur ORG-Central</a></p></body></html>`);
+<meta http-equiv="refresh" content="0;url=${esc(hash || "/")}">
+<script>location.replace(${JSON.stringify(hash || "/")});</script>
+</head><body style="background:#160C13;color:#FFF3E4;font-family:sans-serif"><p><a style="color:#FFC23D" href="${esc(hash || "/")}">Ouvrir sur ORG-Central</a></p></body></html>`);
 };
