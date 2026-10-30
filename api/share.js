@@ -9,7 +9,7 @@ async function players(ids) {
   const rows = await q("players?select=id,pseudo:data->>pseudo,precision:data->>precision&id=in.(" + ids.map(i => '"' + i + '"').join(",") + ")");
   const m = {}; rows.forEach(r => (m[r.id] = r)); return m;
 }
-const SEL = "id,orgId:data->>orgId,number:data->>number,title:data->>title,customName:data->>customName,status:data->>status,start:data->>start,end:data->>end,period:data->>period,cast:data->cast";
+const SEL = "id,external:data->>external,orgId:data->>orgId,number:data->>number,title:data->>title,customName:data->>customName,status:data->>status,start:data->>start,end:data->>end,period:data->>period,cast:data->cast";
 const OSEL = "id,name:data->>name,tag:data->>tag,seasonWord:data->>seasonWord,numbering:data->>numbering,hosts:data->>hosts,description:data->>description";
 
 async function season(id) {
@@ -17,7 +17,7 @@ async function season(id) {
   if (!s) return null;
   const [o] = await q("orgs?select=" + OSEL + ",logo:data->>logo&id=eq." + enc(s.orgId || ""));
   const cast = Array.isArray(s.cast) ? s.cast : [];
-  const done = s.status === "terminee";
+  const done = s.status === "terminee" && !s.external;
   const pod = done ? [1, 2, 3].map(n => cast.filter(c => Number(c.place) === n).map(c => c.playerId)) : [[], [], []];
   const ps = await players(pod.flat());
   const names = l => l.map(i => pLabel(ps[i])).join(" & ");
@@ -25,7 +25,8 @@ async function season(id) {
   if (pod[0].length) lines.push("🏆 Vainqueur : " + names(pod[0]));
   const sub = [pod[1].length ? "🥈 " + names(pod[1]) : "", pod[2].length ? "🥉 " + names(pod[2]) : ""].filter(Boolean).join("   ");
   if (sub) lines.push(sub);
-  lines.push([cast.length ? cast.length + " joueurs" : "", dates(s), !done && STATUS[s.status] ? STATUS[s.status] : ""].filter(Boolean).join(" · "));
+  lines.push([cast.length ? cast.length + " joueurs" : "", dates(s), !done && !s.external && STATUS[s.status] ? STATUS[s.status] : ""].filter(Boolean).join(" · "));
+  if (s.external) lines.push("Classement et votes sur " + String(s.external).replace(/^https?:\/\/(www\.)?/, "").split("/")[0]);
   return {
     title: ((o && o.name) ? o.name + " — " : "") + seasonName(s, o || {}),
     desc: lines.filter(Boolean).join("\n"),
@@ -37,9 +38,9 @@ async function season(id) {
 async function orgPage(id) {
   const [o] = await q("orgs?select=" + OSEL + ",logo:data->>logo&id=eq." + enc(id));
   if (!o) return null;
-  const ss = await q("seasons?select=id,cast:data->cast,status:data->>status&data->>orgId=eq." + enc(id));
+  const ss = await q("seasons?select=id,external:data->>external,cast:data->cast,status:data->>status&data->>orgId=eq." + enc(id));
   const wins = {}, all = new Set();
-  ss.forEach(s => (Array.isArray(s.cast) ? s.cast : []).forEach(c => { all.add(c.playerId); if (Number(c.place) === 1) wins[c.playerId] = (wins[c.playerId] || 0) + 1; }));
+  ss.forEach(s => (Array.isArray(s.cast) ? s.cast : []).forEach(c => { all.add(c.playerId); if (!s.external && Number(c.place) === 1) wins[c.playerId] = (wins[c.playerId] || 0) + 1; }));
   const best = Object.entries(wins).sort((a, b) => b[1] - a[1])[0];
   const ps = await players(best ? [best[0]] : []);
   const lines = [[ss.length + " saison" + (ss.length > 1 ? "s" : ""), all.size ? all.size + " joueurs" : "", o.hosts ? "Host : " + o.hosts : ""].filter(Boolean).join(" · ")];

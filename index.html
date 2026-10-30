@@ -895,6 +895,7 @@ button.ph-av{cursor:pointer}.ph-av img,.ph-av .ib-ph{width:100%;height:100%;obje
 .pl-count{margin:0 0 8px;font-size:.85rem}
 .pl-ok{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:#3ba55d;color:#fff;font-size:.7rem;vertical-align:middle}
 .ext-site{display:flex;align-items:center;gap:16px;margin:16px 0 24px;padding:18px 22px;border:1px solid var(--accent);border-radius:16px;background:var(--accent-soft);color:var(--ink);text-decoration:none;max-width:560px}
+.ext-site.big{max-width:none;margin-top:4px}
 .ext-site:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
 .ext-ic{display:grid;place-items:center;width:46px;height:46px;border-radius:12px;background:var(--accent);color:var(--accent-ink);font-size:1.4rem;font-weight:800;flex:none}
 .ext-site b{display:block;font-size:1.1rem}
@@ -1113,6 +1114,7 @@ function seasonShort(s){return (s.customName&&String(s.customName).trim())||auto
 function seasonName(s){return seasonShort(s)+(s.title?" : "+s.title:"");}
 function fullSeasonName(s){const o=org(s.orgId)||{};return (o.name?o.name+" ":"")+seasonName(s);}
 function seasonsOf(orgId){return S.seasons.filter(s=>s.orgId===orgId).sort((a,b)=>(Number(a.number)||0)-(Number(b.number)||0));}
+function shownWinner(s){return s&&s.external?null:winnerOf(s);}
 function winnerOf(s){const c=(s.cast||[]).find(c=>Number(c.place)===1);return c?c.playerId:null;}
 function sortedCast(s){return [...(s.cast||[])].sort((a,b)=>(Number(a.place)||999)-(Number(b.place)||999));}
 function byDateDesc(a,b){return String(b.date||b.start||"").localeCompare(String(a.date||a.start||""));}
@@ -1134,7 +1136,7 @@ function bgVar(v){const u=imgSrc(v);return u?` style="--bgimg:url('${esc(u)}')"`
 function cover(v,label){const u=imgSrc(v);return u?`<img src="${esc(u)}" alt="" loading="lazy">`:`<span class="ph">${esc(initials(label))}</span>`;}
 function seasonTile(s,showOrg){
   const o=org(s.orgId)||{};const w=winnerOf(s);
-  return `<a class="stile" href="#saison-${esc(s.id)}"><span class="num">${esc(seasonShort(s))}</span><div class="cover">${cover(s.logo||o.logo,o.name)}</div><div class="body"><span class="st-t">${showOrg?esc(o.name)+" · ":""}${esc(s.title||seasonShort(s))}</span>${w&&s.status==="terminee"?`<span class="w">Vainqueur : <b>${esc(pName(w))}</b></span>`:`<span class="w">${chip(s.status)}</span>`}</div></a>`;
+  return `<a class="stile" href="#saison-${esc(s.id)}"><span class="num">${esc(seasonShort(s))}</span><div class="cover">${cover(s.logo||o.logo,o.name)}</div><div class="body"><span class="st-t">${showOrg?esc(o.name)+" · ":""}${esc(s.title||seasonShort(s))}</span>${w&&s.status==="terminee"&&!s.external?`<span class="w">Vainqueur : <b>${esc(pName(w))}</b></span>`:`<span class="w">${chip(s.status)}</span>`}</div></a>`;
 }
 function allStats(){
   const m={};const g=id=>m[id]||(m[id]={id,part:0,wins:0,top3:0,awards:0,best:null});
@@ -1422,7 +1424,7 @@ function pageHome(){
   if(ins.length)h+=`<section class="block ins-sec"><div class="ins-head"><span class="ins-kicker">Casting en cours</span><h2>Tu peux t'inscrire !</h2><p>${ins.length} saison${ins.length>1?"s cherchent":" cherche"} des joueurs en ce moment.</p></div><div class="ins-grid">${ins.map(insCard).join("")}</div></section>`;
   if(news.length||S.canEdit)h+=`<section class="block"><div class="block-head"><h2>Dernières annonces</h2><span class="actions"><a class="btn sm ghost" href="#annonces">Tout voir</a>${edit(`<button class="btn sm" data-act="new-news">+ Annonce</button>`)}</span></div>${news.length?`<div class="nw-grid">${news.map(n=>newsCard(n)).join("")}</div>`:`<p class="muted">Aucune annonce pour l'instant.</p>`}</section>`;
   if(ann.length)h+=`<section class="block"><div class="block-head"><h2>Prochainement</h2><span class="count">${ann.length}</span></div>${calendarHtml(ann)}</section>`;
-  const crowns=done.filter(s=>winnerOf(s)).slice(0,10);
+  const crowns=done.filter(s=>shownWinner(s)).slice(0,10);
   if(crowns.length)h+=`<section class="block"><div class="block-head"><h2>Derniers sacres</h2><span class="actions"><a class="btn sm ghost" href="#saisons">Toutes les saisons</a></span></div><div class="crowns">${crowns.map(crownCard).join("")}</div></section>`;
   h+=`<section class="block"><div class="block-head"><h2>ORGs</h2><span class="count">${S.orgs.length}</span><span class="actions"><a class="btn sm ghost" href="#orgs">Toutes les ORGs</a></span></div><div class="og-grid">${[...S.orgs].sort(byOrgActivity).slice(0,8).map(orgPoster).join("")}</div></section>`;
   setTimeout(paintOrgPosters,0);
@@ -1488,7 +1490,7 @@ function airItem(s){const o=org(s.orgId)||{};return `<a class="air-i" href="#sai
 function crownCard(s){const o=org(s.orgId)||{};const w=winnerOf(s);const u=imgSrc(sAvatar(s,w));
   return `<a class="crown" href="#saison-${esc(s.id)}"><span class="crown-pic">${u?`<img src="${esc(u)}" alt="" loading="lazy">`:`<i>${esc(initials(sName(s,w)))}</i>`}<span class="crown-badge">${pic(s.logo||o.logo,o.tag||o.name,"logo")}</span></span><b>${esc(sName(s,w))}</b><small>${esc(o.name||"")} · ${esc(seasonShort(s))}</small>${s.title?`<small class="crown-t">${esc(s.title)}</small>`:""}</a>`;}
 function pickOfDay(){
-  const pool=S.seasons.filter(s=>s.status==="terminee"&&(s.cast||[]).length&&winnerOf(s));if(!pool.length)return "";
+  const pool=S.seasons.filter(s=>s.status==="terminee"&&(s.cast||[]).length&&shownWinner(s));if(!pool.length)return "";
   const d=new Date();const k=d.getFullYear()*400+d.getMonth()*31+d.getDate();const s=pool[(k*2654435761>>>0)%pool.length];
   const o=org(s.orgId)||{};const cast=sortedCast(s);const pod=cast.filter(c=>Number(c.place)&&Number(c.place)<=3).slice(0,3);const aw=(s.awards||[]).length,rd=(s.rounds||[]).length;
   return `<a class="pod" href="#saison-${esc(s.id)}"><div class="pod-l">${pic(s.logo||o.logo,o.tag||o.name,"logo")}<div><p class="spot-org">${esc(o.name||"")} · ${esc(seasonShort(s))}</p><h3>${esc(s.title||seasonShort(s))}</h3><p class="muted">${cast.length} joueurs${rd?` · ${rd} tours de votes`:""}${aw?` · ${aw} awards`:""}${dateRange(s)?` · ${dateRange(s)}`:""}</p></div></div>
@@ -1507,7 +1509,7 @@ function orgListHtml(){const list=filtered([...S.orgs].sort(byOrgActivity),S.q.o
   return sec("À l'antenne",live,"on")+sec("Les archives",done,"");}
 function orgPoster(o){
   const ss=seasonsOf(o.id);const last=ss[ss.length-1];const lg=orgLogoVal(o);const u=imgSrc(lg);
-  const fin=[...ss].reverse().find(s=>s.status==="terminee"&&winnerOf(s));const w=fin?winnerOf(fin):null;
+  const fin=[...ss].reverse().find(s=>s.status==="terminee"&&shownWinner(s));const w=fin?winnerOf(fin):null;
   const hosts=String(o.hosts||"").split(/\s*[,&]\s*|\s+et\s+/).filter(Boolean);const uniq=[...new Set(hosts)];
   const rot=((o.name||"").length%5-2)*0.6;
   return `<a class="og" href="#org-${esc(o.id)}" style="--rot:${rot}deg"${u?` data-paint="${esc(u)}"`:""}>
@@ -1566,7 +1568,7 @@ function pageSeasons(){
   ${body}</section>`;
 }
 function seasonTable(list,showOrg){
-  return `<div class="table-wrap"><table><thead><tr>${showOrg?"<th>ORG</th>":""}<th>Saison</th><th>Dates</th><th>Statut</th><th class="num">Joueurs</th><th>Vainqueur</th></tr></thead><tbody>${list.map(s=>{const o=org(s.orgId)||{};const w=winnerOf(s);return `<tr class="link" data-href="#saison-${esc(s.id)}">${showOrg?`<td><span class="who">${logo(o,"xs")}${esc(o.name||"ORG inconnue")}</span></td>`:""}<td><a class="who" href="#saison-${esc(s.id)}">${slogo(s,"xs")}${esc(seasonName(s))}</a></td><td>${dateRange(s)||'<span class="muted">—</span>'}</td><td>${chip(s.status)}</td><td class="num">${(s.cast||[]).length||"—"}</td><td>${w?`<span class="who">${ava(player(w),"xs")}${esc(pName(w))}</span>`:"—"}</td></tr>`;}).join("")}</tbody></table></div>`;
+  return `<div class="table-wrap"><table><thead><tr>${showOrg?"<th>ORG</th>":""}<th>Saison</th><th>Dates</th><th>Statut</th><th class="num">Joueurs</th><th>Vainqueur</th></tr></thead><tbody>${list.map(s=>{const o=org(s.orgId)||{};const w=shownWinner(s);return `<tr class="link" data-href="#saison-${esc(s.id)}">${showOrg?`<td><span class="who">${logo(o,"xs")}${esc(o.name||"ORG inconnue")}</span></td>`:""}<td><a class="who" href="#saison-${esc(s.id)}">${slogo(s,"xs")}${esc(seasonName(s))}</a></td><td>${dateRange(s)||'<span class="muted">—</span>'}</td><td>${chip(s.status)}</td><td class="num">${(s.cast||[]).length||"—"}</td><td>${w?`<span class="who">${ava(player(w),"xs")}${esc(pName(w))}</span>`:"—"}</td></tr>`;}).join("")}</tbody></table></div>`;
 }
 document.addEventListener("change",e=>{if(e.target.id==="f-orgfilter"){S.f.org=e.target.value;render();}});
 function pageOrgs(){
@@ -1582,8 +1584,8 @@ function orgNumbers(o,ss,st){
   const withD=ss.map(s=>({s,d:days(s)})).filter(x=>x.d);const withC=ss.filter(s=>(s.cast||[]).length);
   const avg=a=>a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length):0;
   const longest=withD.sort((a,b)=>b.d-a.d)[0];const biggest=[...withC].sort((a,b)=>b.cast.length-a.cast.length)[0];
-  const done=ss.filter(s=>s.status==="terminee");const winners=new Set(done.map(winnerOf).filter(Boolean));
-  const multi=st.filter(x=>x.wins>1).sort((a,b)=>b.wins-a.wins);
+  const done=ss.filter(s=>s.status==="terminee");const winners=new Set(done.map(shownWinner).filter(Boolean));
+  const multi=ss.every(x=>x.external)?[]:st.filter(x=>x.wins>1).sort((a,b)=>b.wins-a.wins);
   const loyal=st.filter(x=>x.part>=3).length;
   const first=ss.map(s=>s.start||periodKey(s.period)).filter(Boolean).sort()[0];
   const sl=s=>`<a href="#saison-${esc(s.id)}">${esc(seasonShort(s))}</a>`;
@@ -1594,6 +1596,7 @@ function orgNumbers(o,ss,st){
     ["Durée moyenne",withD.length?avg(withD.map(x=>x.d))+" jours":"—",longest?`Plus longue : ${longest.d} j (${sl(longest.s)})`:""],
     ["Vainqueurs différents",winners.size||"—",multi.length?"Multi-titrés : "+multi.slice(0,4).map(x=>`${plink(x.id)} (${x.wins})`).join(", "):""],
     ["Depuis",first?String(first).slice(0,4):"—",first&&ss.length>1?`${ss.length} saisons en ${Math.max(1,new Date().getFullYear()-Number(String(first).slice(0,4))+1)} an${new Date().getFullYear()-Number(String(first).slice(0,4))>0?"s":""}`:""]];
+  if(ss.every(x=>x.external))tiles.splice(4,1);
   const hosts=splitNames(o.hosts||"");
   const hostRows=hosts.map(h=>{const p=S.players.find(p=>normName(p.pseudo)===normName(h)||aliasesOf(p).some(a=>normName(a)===normName(h)));const x=p&&st.find(y=>y.id===p.id);
     return `<span class="on-host">${p?`<a class="who" href="#joueur-${esc(p.id)}">${ava(p,"xs")}${esc(p.pseudo)}</a>`:`<b>${esc(h)}</b>`}<small>${x?`a aussi joué ${x.part} saison${x.part>1?"s":""}${x.wins?` · ${x.wins} victoire${x.wins>1?"s":""}`:""}`:"host"}</small></span>`;}).join("");
@@ -1606,7 +1609,8 @@ function pageOrg(id){
   const disc=safeUrl(o.discord);const st=orgStats(o.id);
   const k=S.f.opal||"wins";const labels={wins:"Victoires",top3:"Top 3",part:"Participations",awards:"Awards"};
   const list=[...st].sort((a,b)=>b[k]-a[k]||b.wins-a.wins||b.top3-a.top3||b.part-a.part).filter(x=>x[k]>0).slice(0,15);
-  const champ=[...st].sort((a,b)=>b.wins-a.wins||b.top3-a.top3)[0];
+  const extOrg=ss.length&&ss.every(x=>x.external);
+  const champ=extOrg?null:[...st].sort((a,b)=>b.wins-a.wins||b.top3-a.top3)[0];
   const box=infobox(bigImg(orgLogoVal(o),o.name),o.name,[
     ["Sigle",esc(o.tag||"")],["Host(s)",hostLinks(o.hosts||"")],["Format",FORMATS[o.format]||""],["Plateforme",PLATFORMS[o.platform]||""],
     ["Création",o.founded?fmtDate(o.founded):""],["Saisons",String(ss.length)],["Joueurs",String(st.length)],
@@ -1621,7 +1625,7 @@ function pageOrg(id){
   ${!ss.length&&web?edit(`<p><button class="btn sm" data-act="new-season" data-org="${esc(o.id)}">+ Nouvelle saison</button></p>`):`<section class="block"><div class="block-head"><h2>Saisons</h2><span class="count">${ss.length}</span>${edit(`<span class="actions"><button class="btn primary sm" data-act="new-season" data-org="${esc(o.id)}">+ Nouvelle saison</button></span>`)}</div>
   ${ss.length?`<div class="stiles">${[...ss].reverse().map(x=>seasonTile(x,false)).join("")}</div>`:`<p class="muted">Aucune saison renseignée.</p>`}</section>`}
   ${orgNumbers(o,ss,st)}
-  ${st.length?`<section class="block"><div class="block-head"><h2>Palmarès ${esc(o.name)}</h2></div>
+  ${st.length&&!extOrg?`<section class="block"><div class="block-head"><h2>Palmarès ${esc(o.name)}</h2></div>
   <div class="tabs" role="group" aria-label="Trier le palmarès">${Object.entries(labels).map(([v,l])=>`<button type="button" data-act="opal" data-v="${v}" aria-pressed="${k===v}">${l}</button>`).join("")}</div>
   <div class="table-wrap"><table class="pal"><thead><tr><th class="num">#</th><th>Joueur</th>${Object.values(labels).map(l=>`<th class="num">${l}</th>`).join("")}<th>Meilleur</th></tr></thead><tbody>
   ${list.map((x,i)=>`<tr class="link" data-href="#joueur-${esc(x.id)}"><td class="num">${i+1}</td><td><a class="who" href="#joueur-${esc(x.id)}">${ava(player(x.id),"xs")}${esc(pName(x.id))}</a></td>${Object.keys(labels).map(v=>`<td class="num${v===k?" hl":""}">${x[v]}</td>`).join("")}<td>${x.best?placeLabel(x.best):"—"}</td></tr>`).join("")}
@@ -1631,11 +1635,14 @@ function pageOrg(id){
   </div>${box}</div>`;
 }
 
+function extSeasonCard(s,o,url){const host=url.replace(/^https?:\/\/(www\.)?/,"").split("/")[0];const n=(s.cast||[]).length;
+  return `<a class="ext-site big" href="${esc(url)}" target="_blank" rel="noopener"><span class="ext-ic">↗</span><span><b>Classement, votes et awards sur le site officiel</b><small>${esc(host)}${n?` · ${n} joueurs`:""}</small></span></a>
+  <p class="hint">Les résultats de ${esc(o.name)} sont hébergés par l'ORG elle-même. Ils comptent dans les statistiques des profils, mais ne sont pas affichés ici.</p>`;}
 function pageSeason(id){
   const s=season(id);if(!s)return notFound("Saison");
   const o=org(s.orgId)||{name:"ORG inconnue"};
   const cast=sortedCast(s);const signup=safeUrl(s.signup);const awards=s.awards||[];
-  const hasVotes=(s.rounds||[]).length>0;
+  const hasVotes=(s.rounds||[]).length>0;const ext=safeUrl(s.external);
   const by=n=>cast.filter(c=>Number(c.place)===n).map(c=>splink(s,c.playerId)).join(", ");
   const ranking=cast.length?`<div class="classement">${cast.map((c,i)=>{const pl=Number(c.place);const u=imgSrc(sAvatar(s,c.playerId));const real=c.sPseudo?pName(c.playerId):"";
     const tms=[teamById(s,c.team),teamById(s,c.team2),teamById(s,c.team3)].filter((t,j,arr)=>t&&arr.indexOf(t)===j);
@@ -1646,17 +1653,19 @@ function pageSeason(id){
   const box=infobox(bigImg(s.logo||o.logo,o.name),fullSeasonName(s),[
     ["ORG",o.id?`<a href="#org-${esc(o.id)}">${esc(o.name)}</a>`:esc(o.name)],["Saison",esc(seasonShort(s))],["Thème",esc(s.title||"")],
     ["Statut",chip(s.status)],["Dates",dateRange(s)],["Format",FORMATS[o.format]||""],["Joueurs",cast.length?String(cast.length):(s.slots?esc(s.slots)+" places":"")],
-    ["Vainqueur",by(1)],["2e",by(2)],["3e",by(3)],["Précédente",prv?`<a href="#saison-${esc(prv.id)}">${esc(seasonShort(prv))}</a>`:""],["Suivante",nxt?`<a href="#saison-${esc(nxt.id)}">${esc(seasonShort(nxt))}</a>`:""]],"pic-season",s.id);
+    ...(ext?[]:[["Vainqueur",by(1)],["2e",by(2)],["3e",by(3)]]),["Précédente",prv?`<a href="#saison-${esc(prv.id)}">${esc(seasonShort(prv))}</a>`:""],["Suivante",nxt?`<a href="#saison-${esc(nxt.id)}">${esc(seasonShort(nxt))}</a>`:""]],"pic-season",s.id);
   return `<div class="crumbs"><a href="#orgs">ORGs</a><span>/</span><a href="#org-${esc(o.id||"")}">${esc(o.name)}</a><span>/</span><span>${esc(seasonShort(s))}</span>${shareBtn("s",s.id)}</div>
   <div class="page-head"><div><p class="eyebrow">${esc(o.name)} · ${esc(seasonShort(s))}</p><h1>${esc(s.title||seasonShort(s))}</h1></div>${edit(`<div class="actions">${appsOf(s).open?"":`<button class="btn" data-act="apptoggle" data-id="${esc(s.id)}">Ouvrir les candidatures</button>`}<button class="btn" data-act="edit-season" data-id="${esc(s.id)}">Modifier</button><button class="btn danger" data-act="del-season" data-id="${esc(s.id)}">Supprimer</button></div>`)}</div>
   <div class="wiki"><div class="wiki-main">
   ${s.description?`<p class="desc">${descHtml(s.description)}</p>`:""}
   ${s.status==="inscriptions"&&signup?`<a class="btn cta" href="${esc(signup)}" target="_blank" rel="noopener">Lien d'inscription externe ↗</a>`:""}${signupBlock(s)}
+  ${ext?extSeasonCard(s,o,ext):`
   <section class="block"><div class="block-head"><h2>Classement</h2><span class="count">${cast.length}</span>${cast.length>1?`<button class="btn sm primary tl-open" data-act="tierlist" data-id="${esc(s.id)}">🏆 Faire une tier list</button>`:""}${edit(`<span class="actions"><button class="btn sm" data-act="cast" data-id="${esc(s.id)}">Modifier le casting</button>${cast.length?`<button class="btn sm" data-act="slooks" data-id="${esc(s.id)}">Pseudos & photos de saison</button>`:""}</span>`)}</div>${ranking}</section>
   <section class="block"><div class="block-head"><h2>Awards</h2><span class="count">${awards.length}</span>${edit(`<span class="actions"><button class="btn sm" data-act="awards" data-id="${esc(s.id)}">${awards.length?"Modifier les awards":"Ajouter des awards"}</button></span>`)}</div>
   ${awards.length?`<div class="table-wrap"><table class="aw"><tbody>${awards.map(a=>`<tr class="link" data-href="#joueur-${esc(a.playerId)}"><th>${esc(awardLabel(a.name))}</th><td><a class="who" href="#joueur-${esc(a.playerId)}">${sAva(s,a.playerId,"xs")}${esc(sName(s,a.playerId))}</a></td></tr>`).join("")}</tbody></table></div>`:`<p class="muted">Aucun award renseigné.</p>`}</section>
+`}
   </div>${box}</div>
-  <section class="block"><div class="block-head"><h2>Tableau des votes</h2>${edit(`<span class="actions"><button class="btn sm" data-act="votes" data-id="${esc(s.id)}">${hasVotes?"Modifier les votes":"Renseigner les votes"}</button></span>`)}</div>${votesTable(s)}</section>`;
+  ${ext?"":`  <section class="block"><div class="block-head"><h2>Tableau des votes</h2>${edit(`<span class="actions"><button class="btn sm" data-act="votes" data-id="${esc(s.id)}">${hasVotes?"Modifier les votes":"Renseigner les votes"}</button></span>`)}</div>${votesTable(s)}</section>`}`;
 }
 
 function votesTable(s){
@@ -2004,10 +2013,11 @@ function seasonForm(s,orgId){
     <div class="frow">${field("Date de début",dayInp("start",s.start))}${field("Date de fin",dayInp("end",s.end))}</div>
     ${field("Période approximative",inp("period",s.period,'maxlength="40" placeholder="ex : Été 2023, Fin 2021…"'),"Toutes les dates sont facultatives. La période s'affiche si tu ne mets pas de date exacte.")}
     ${field("Lien d'inscription",inp("signup",s.signup,'type="url" placeholder="https://… (formulaire, salon Discord)"'),"Affiché comme bouton « S'inscrire » quand le statut est « Inscriptions ouvertes ».")}
+    ${field("Résultats sur un autre site",inp("external",s.external,'type="url" placeholder="https://… (laisser vide en temps normal)"'),"Si l'ORG héberge elle-même ses résultats : le classement, les votes et les awards ne sont pas affichés ici, seulement un lien vers cette page. Les places comptent quand même dans les profils.")}
     ${field("Description",area("description",s.description,'rows="4" maxlength="4000" placeholder="Format, twists, infos pratiques…"'),"Tape @ pour mentionner un joueur. Liens : [texte](https://…) ou colle l'adresse. Gras : **texte**.")}`,
     onSave:async f=>{
       const v=vals(f);v.start=isoDay(v.start,"de début");v.end=isoDay(v.end,"de fin");const id=s.id||uid("s");const t=nowIso();
-      const data=Object.assign(strip(s),{orgId:v.orgId,number:Number(v.number),title:v.title,status:v.status,slots:v.slots?Number(v.slots):null,customName:v.customName,start:v.start,end:v.end,period:v.period,logo:await resolveImage(f,"logo",s.logo),signup:v.signup,description:v.description,cast:s.cast||[],rounds:s.rounds||[],awards:s.awards||[],updatedAt:t});
+      const data=Object.assign(strip(s),{external:v.external||"",orgId:v.orgId,number:Number(v.number),title:v.title,status:v.status,slots:v.slots?Number(v.slots):null,customName:v.customName,start:v.start,end:v.end,period:v.period,logo:await resolveImage(f,"logo",s.logo),signup:v.signup,description:v.description,cast:s.cast||[],rounds:s.rounds||[],awards:s.awards||[],updatedAt:t});
       if(isNew)data.createdAt=t;
       await db.doc("seasons/"+id).set(data);
       const chk=await db.doc("seasons/"+id).get();const got=chk.exists?chk.data()||{}:null;
@@ -2442,6 +2452,7 @@ async function qaNotSame(a,b){const A=player(a);if(!A)return;await db.doc("playe
 const MISS={dates:"Dates",logo:"Logo",cast:"Casting",winner:"Gagnant",votes:"Votes",awards:"Awards",title:"Titre/thème"};
 function seasonMissing(s){const o=org(s.orgId)||{};const m=[];const fut=s.status==="annoncee"||s.status==="inscriptions";
   if(!s.start&&!s.end&&!s.period)m.push("dates");else if(s.status==="terminee"&&!s.end&&!s.period)m.push("dates");
+  if(s.external){if(!s.start&&!s.end&&!s.period&&!m.includes("dates"))m.push("dates");return m;}
   if(!s.logo&&!o.logo)m.push("logo");
   if(!fut&&!(s.cast||[]).length)m.push("cast");
   if(s.status==="terminee"){if((s.cast||[]).length&&!winnerOf(s))m.push("winner");
@@ -2466,7 +2477,7 @@ function qaTodoHtml(){const {seasons,orgs}=qaTodo();
   ${orgs.length?`<h3 class="qa-h">ORGs à compléter</h3><div class="table-wrap"><table class="qa-t"><tbody>${orgs.map(x=>`<tr><td><a class="who" href="#org-${esc(x.o.id)}">${logo(x.o,"xs")}${esc(x.o.name)}</a></td><td>${x.m.map(k=>`<span class="tag warn">${k}</span>`).join(" ")}</td><td class="num"><button class="btn sm" data-act="edit-org" data-id="${esc(x.o.id)}">Modifier</button></td></tr>`).join("")}</tbody></table></div>`:""}`;}
 
 /* --- votes --- */
-function qaVotesFor(s){
+function qaVotesFor(s){if(s.external)return [];
   const cast=(s.cast||[]).filter(c=>c.playerId);const ids=new Set(cast.map(c=>c.playerId));
   const nm=new Map();cast.forEach(c=>{const p=player(c.playerId);if(!p)return;[p.pseudo,...aliasesOf(p)].forEach(n=>{const k=normName(n);if(k&&!nm.has(k))nm.set(k,p.id);});});
   const res=t=>{t=String(t||"").trim();if(!t)return null;if(ids.has(t))return t;return nm.get(normName(t))||null;};
@@ -2798,7 +2809,7 @@ async function importRankings(j,log){
   const idx=new Map();S.players.forEach(p=>{[p.pseudo,...aliasesOf(p)].forEach(n=>{const k=normName(n);if(k&&!idx.has(k))idx.set(k,p.id);});});
   const created=[],missing=[],newRows=[],linked=new Set(),setDone=[],failed=[];let done=0;const t=nowIso();
   let orgAlias=null;
-  if(Array.isArray(j.orgs))for(const o2 of j.orgs){if(!o2||!o2.id||org(o2.id))continue;const same=S.orgs.find(o=>normName(o.name)===normName((o2.data||{}).name));
+  if(Array.isArray(j.orgs))for(const o2 of j.orgs){if(o2&&o2.id&&o2.set&&typeof o2.set==="object"&&org(o2.id)){await db.doc("orgs/"+o2.id).update(Object.assign({},o2.set,{updatedAt:t}));log("ORG mise à jour : "+org(o2.id).name);continue;}if(!o2||!o2.id||org(o2.id))continue;const same=S.orgs.find(o=>normName(o.name)===normName((o2.data||{}).name));
     if(same){(j.seasons||[]).forEach(it=>{if(it.create&&it.create.orgId===o2.id)it.create.orgId=same.id;});log("ORG existante utilisée : "+same.name);continue;}
     await db.doc("orgs/"+o2.id).set(Object.assign({createdAt:t,updatedAt:t},o2.data||{}));S.orgs=S.orgs.concat([Object.assign({id:o2.id},o2.data||{})]);log("ORG créée : "+((o2.data||{}).name||o2.id));}
   if(j.org&&j.org.id&&!org(j.org.id)){const same=S.orgs.find(o=>normName(o.name)===normName((j.org.data||{}).name));if(same){orgAlias=same.id;log("ORG existante utilisée : "+same.name);}}
@@ -2826,7 +2837,7 @@ async function importRankings(j,log){
   for(const {it,se,ids,aw} of plan){
     if(!se){missing.push(it.id);continue;}
     if(Array.isArray(it.cast)&&!it.cast.length&&(se.cast||[]).length){missing.push(it.id+" (casting vide ignoré)");continue;}
-    const setF={};if(it.set&&typeof it.set==="object")["start","end","signupStart","signupEnd","period","title","status","description","customName"].forEach(k=>{if(it.set[k]!=null)setF[k]=String(it.set[k]);});
+    const setF={};if(it.set&&typeof it.set==="object")["start","end","signupStart","signupEnd","period","title","status","description","customName","external","logo"].forEach(k=>{if(it.set[k]!=null)setF[k]=String(it.set[k]);});
     if(Object.keys(setF).length)setDone.push(fullSeasonName(se)+" ("+Object.entries(setF).map(([k,v])=>k+" = "+v).join(", ")+")");
     if(!it.cast){const upd=Object.assign({updatedAt:t},setF);if(it.awards)upd.awards=aw;if(!await impWrite(se,upd,failed,log))continue;done++;log("Saisons mises à jour : "+done+" / "+(j.seasons||[]).length);continue;}
     const old={};(se.cast||[]).forEach(c=>old[c.playerId]=c);
