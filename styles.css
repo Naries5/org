@@ -1027,3 +1027,4 @@ footer.site{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 @media (max-width:640px){.on-grid{grid-template-columns:1fr!important}}
 .crowns{padding-top:20px!important}
 .pres-sum{font-size:1.05rem;margin:0 0 12px}.pres-on{color:var(--ok)}.pres-anon{margin-top:12px;color:var(--muted)}.pres-anon summary{cursor:pointer}.pres-anon ul{margin:8px 0 0;padding-left:18px}
+.pc[hidden]{display:none!important}

@@ -784,7 +784,9 @@ function pStatsHtml(h,pid){const D=pStatsData(h,pid);
   return `<section class="block pstat-b"><div class="sb-head"><span class="sb-live">Stats</span>${modes.length>1?`<span class="pk-tabs" role="tablist">${modes.map(([k,l])=>`<button type="button" role="tab" data-pm="${k}" aria-selected="${k==="all"}">${l}</button>`).join("")}</span>`:""}</div>
   ${modes.map(([k])=>`<div class="pk-pane" data-pane="${k}"${k==="all"?"":" hidden"}>${board(D[k])}</div>`).join("")}</section>`;}
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-pm]");if(!b)return;const sec=b.closest(".pstat-b");
-  sec.querySelectorAll("[data-pm]").forEach(x=>x.setAttribute("aria-selected",x===b));sec.querySelectorAll(".pk-pane").forEach(x=>x.hidden=x.dataset.pane!==b.dataset.pm);});
+  sec.querySelectorAll("[data-pm]").forEach(x=>x.setAttribute("aria-selected",x===b));sec.querySelectorAll(".pk-pane").forEach(x=>x.hidden=x.dataset.pane!==b.dataset.pm);
+  const m=b.dataset.pm;document.querySelectorAll(".pc-grid .pc[data-fmt]").forEach(x=>x.hidden=m!=="all"&&x.dataset.fmt!==m);
+  document.querySelectorAll(".trophy[data-fmt],.tr-i[data-fmt]").forEach(x=>x.hidden=m!=="all"&&x.dataset.fmt!==m);});
 function medal(pl,n){pl=Number(pl);if(!pl)return `<span class="pp-place">—</span>`;const cls=pl===1?"m1":pl===2?"m2":pl===3?"m3":"";return `<span class="pp-place ${cls}">${pl===1?ico("trophy")+" Vainqueur":pl+"<small>e</small>"}${n&&pl!==1?`<em>/ ${n}</em>`:""}</span>`;}
 
 function frameEditor(p,kind){if(!p)return;const key=kind==="banner"?"banner":"avatar";const src=imgSrc(p[key]);if(!src)return;
@@ -814,7 +816,7 @@ function pagePlayer(id){
   const host=hb.orgs.length?`<section class="block"><div class="block-head"><h2>Host</h2><span class="count">${hb.orgs.length}</span></div><div class="pp-hosts">${hb.orgs.map(o=>{const ss=hb.seasons.filter(x=>x.orgId===o.id);return `<a class="pp-host" href="#org-${esc(o.id)}">${pic(orgLogoVal(o),o.name,"pp-hl")}<span><b>${esc(o.name)}</b><small>${ss.length?ss.length+" saison"+(ss.length>1?"s":"")+" organisée"+(ss.length>1?"s":""):(FORMATS[o.format]||"ORG")}</small></span></a>`;}).join("")}</div></section>`:"";
   const runs=h.map(({s,c})=>{const o=org(s.orgId)||{};const n=(s.cast||[]).length;const pl=Number(c.place);const sa=(s.awards||[]).filter(a=>a.playerId===p.id);
     const lg=imgSrc(s.logo||o.logo||orgLogoVal(o));const med=pl===1?" m1":pl===2?" m2":pl===3?" m3":"";const fb=n>1&&pl===n;
-    return `<a class="pc${med}${fb?" fb":""}" href="#saison-${esc(s.id)}" title="${esc(fullSeasonName(s))}"${lg&&!med?` data-pc-src="${esc(lg)}"`:""}>
+    return `<a class="pc${med}${fb?" fb":""}" data-fmt="${o.format==="speed"?"speed":"long"}" href="#saison-${esc(s.id)}" title="${esc(fullSeasonName(s))}"${lg&&!med?` data-pc-src="${esc(lg)}"`:""}>
       <div class="pc-art">${lg?`<img src="${esc(lg)}" alt="" loading="lazy">`:`<span class="pc-ph">${esc(initials(o.name||"?"))}</span>`}
         <div class="pc-rank">${pl?`<b>${pl}<sup>${pl===1?"er":"e"}</sup></b>${n?`<i>/ ${n}</i>`:""}`:`<b>—</b>`}</div>${fb?`<span class="pc-tag">First boot</span>`:""}${o.format==="speed"?`<span class="pc-fmt">Speed</span>`:""}</div>
       <p class="pc-org">${esc(o.name||"ORG")} ${esc(seasonShort(s))}</p><p class="pc-t">${esc(s.title||"")}</p>
