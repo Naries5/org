@@ -2838,7 +2838,7 @@ async function importRankings(j,log){
     if(!se){missing.push(it.id);continue;}
     if(Array.isArray(it.cast)&&!it.cast.length&&(se.cast||[]).length){missing.push(it.id+" (casting vide ignoré)");continue;}
     const setF={};if(it.set&&typeof it.set==="object")["start","end","signupStart","signupEnd","period","title","status","description","customName","external","logo"].forEach(k=>{if(it.set[k]!=null)setF[k]=String(it.set[k]);});
-    if(Object.keys(setF).length)setDone.push(fullSeasonName(se)+" ("+Object.entries(setF).map(([k,v])=>k+" = "+v).join(", ")+")");
+    if(Object.keys(setF).length)setDone.push(fullSeasonName(se)+" ("+Object.entries(setF).map(([k,v])=>k+" = "+(k==="logo"?(v?"(image)":"(vide)"):v.length>60?v.slice(0,57)+"…":v)).join(", ")+")");
     if(!it.cast){const upd=Object.assign({updatedAt:t},setF);if(it.awards)upd.awards=aw;if(!await impWrite(se,upd,failed,log))continue;done++;log("Saisons mises à jour : "+done+" / "+(j.seasons||[]).length);continue;}
     const old={};(se.cast||[]).forEach(c=>old[c.playerId]=c);
     const cast=[];
