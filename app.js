@@ -14,7 +14,7 @@ function orgHasVotes(o){return !(o&&o.noVotes);}
 const PLATFORMS={discord:"Discord",minecraft:"Minecraft",roblox:"Roblox",autre:"Autre plateforme"};
 const AWARD_IDEAS=["Meilleur joueur","Fan favori","Meilleur stratège","Meilleur confessionnal","Meilleur move","Meilleure épreuve","Révélation de la saison","Meilleur duo","Meilleur jury"];
 const PATHMODE=/^https?:$/.test(location.protocol);
-const ROUTE_PAGES=new Set(["accueil","orgs","saisons","org","saison","joueurs","joueur","annonces","admin","journal","tickets","calendrier","contribuer","social","moi","merci","qualite","comptes","palmares"]);
+const ROUTE_PAGES=new Set(["presence","accueil","orgs","saisons","org","saison","joueurs","joueur","annonces","admin","journal","tickets","calendrier","contribuer","social","moi","merci","qualite","comptes","palmares"]);
 function isRoute(r){r=String(r||"");const i=r.indexOf("-");return ROUTE_PAGES.has(i<0?r:r.slice(0,i));}
 function routePath(r){r=String(r||"");if(!r||r==="accueil")return "/";const i=r.indexOf("-");return i<0?"/"+r:"/"+r.slice(0,i)+"/"+encodeURIComponent(r.slice(i+1));}
 function routeStr(){const h=decodeURIComponent(location.hash.slice(1));if(h&&!/access_token=/.test(h))return h;
@@ -197,7 +197,7 @@ function updateRole(){const el=document.getElementById("role");if(!el)return;
   const item=(href,label,n,act)=>act?`<button type="button" role="menuitem" data-act="${act}">${label}</button>`:`<a role="menuitem" href="${href}">${label}${bd(n)}</a>`;
   el.innerHTML=`<a class="hicon" href="#social" title="Messages" aria-label="Messages${msgN?" ("+msgN+" non lus)":""}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.2 3.6c-.5.4-1.3.1-1.3-.6V16A2.5 2.5 0 0 1 4 13.5z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg>${msgN?`<b class="badge">${msgN}</b>`:""}</a>
   <div class="umenu"><button type="button" class="ubtn" aria-haspopup="menu" aria-expanded="false">${av}<span class="uname">${esc(name)}</span>${tkN?`<i class="udot" aria-label="${tkN} ticket(s) ouvert(s)"></i>`:""}<svg class="caret" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-  <div class="udrop" role="menu" hidden>${item(mp?"#joueur-"+mp.id:"#moi","Mon profil")}${item("#social","Messages",msgN)}${item("#tickets",S.isAdmin?"Tickets":"Mes tickets",tkN)}${S.isOwner?item("#journal","Journal"):""}${S.isAdmin?item("#qualite","Qualité des données")+item("#comptes","Comptes inscrits"):""}${S.isAdmin?item("#admin","Administration"):S.isHost?`<span class="umuted">Compte host</span>`:""}<hr>${item("","Déconnexion",0,"logout")}</div></div>`;}
+  <div class="udrop" role="menu" hidden>${item(mp?"#joueur-"+mp.id:"#moi","Mon profil")}${item("#social","Messages",msgN)}${item("#tickets",S.isAdmin?"Tickets":"Mes tickets",tkN)}${S.isOwner?item("#journal","Journal")+item("#presence","Qui est en ligne"):""}${S.isAdmin?item("#qualite","Qualité des données")+item("#comptes","Comptes inscrits"):""}${S.isAdmin?item("#admin","Administration"):S.isHost?`<span class="umuted">Compte host</span>`:""}<hr>${item("","Déconnexion",0,"logout")}</div></div>`;}
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".ubtn");const open=document.querySelector(".udrop:not([hidden])");
   if(b){const d=b.parentNode.querySelector(".udrop");const show=d.hidden;d.hidden=!show;b.setAttribute("aria-expanded",show);return;}
   if(open&&(!e.target.closest(".udrop")||e.target.closest("a,button"))){open.hidden=true;const bb=document.querySelector(".ubtn");if(bb)bb.setAttribute("aria-expanded","false");}});
@@ -232,6 +232,47 @@ function makeDb(){
       };}
   };
 }
+
+const PRES={ch:null,key:"",last:0,route:""};
+function presName(){const mp=S.me&&linkedPlayer(S.me);return mp?mp.pseudo:(S.profile&&S.profile.discord_name)||"";}
+function presStart(){try{if(PRES.ch){sb.removeChannel(PRES.ch);PRES.ch=null;}
+  PRES.key=S.me||("v-"+Math.random().toString(36).slice(2,10));
+  const ch=sb.channel("oc-presence",{config:{presence:{key:PRES.key}}});PRES.ch=ch;
+  if(ch.on)ch.on("presence",{event:"sync"},()=>{if(curRoute().page==="presence")drawPresence();});
+  ch.subscribe(st=>{if(st==="SUBSCRIBED")presTrack(PRES.route,true);});}catch(e){console.warn(e);}}
+function presTrack(route,force){PRES.route=route||PRES.route;const ch=PRES.ch;if(!ch||!ch.track)return;
+  try{ch.track({uid:S.me||null,name:presName(),page:PRES.route,since:PRES.since||(PRES.since=new Date().toISOString())});}catch(e){}
+  if(S.me&&(force||Date.now()-PRES.last>60000)){PRES.last=Date.now();sb.rpc("touch_seen",{p:PRES.route}).then(()=>{},()=>{});}}
+setInterval(()=>{if(document.visibilityState==="visible"&&S.me)presTrack(PRES.route,true);},120000);
+function presPageLabel(r){r=String(r||"accueil");const i=r.indexOf("-");const pg=i<0?r:r.slice(0,i),id=i<0?"":r.slice(i+1);
+  if(pg==="saison"){const x=season(id);return x?fullSeasonName(x):"une saison";}if(pg==="joueur"){const x=player(id);return x?"Profil de "+x.pseudo:"un profil";}if(pg==="org"){const x=org(id);return x?x.name:"une ORG";}
+  return ({accueil:"Accueil",orgs:"ORGs",saisons:"Saisons",joueurs:"Joueurs",calendrier:"Calendrier",annonces:"Annonces",contribuer:"Contribuer",social:"Messages",tickets:"Tickets",admin:"Administration",merci:"Remerciements",qualite:"Qualité des données",comptes:"Comptes inscrits",journal:"Journal",presence:"Qui est en ligne"})[pg]||pg;}
+function relTime(t){const d=(Date.now()-new Date(t))/1000;if(d<60)return "à l'instant";if(d<3600)return "il y a "+Math.floor(d/60)+" min";if(d<86400)return "il y a "+Math.floor(d/3600)+" h";if(d<86400*7)return "il y a "+Math.floor(d/86400)+" j";return new Date(t).toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"});}
+function pageWho(uid,name){const pl=uid&&linkedPlayer(uid);const p=uid&&ADM_PROFS.find(x=>x.id===uid);const nm=pl?pl.pseudo:(p&&p.discord_name)||name||"Compte inconnu";
+  const av=pl&&avatarOf(pl)?ava(pl,"xs"):p&&p.avatar_url?`<img class="avatar xs" src="${esc(p.avatar_url)}" alt="">`:`<span class="avatar xs">${esc(initials(nm))}</span>`;
+  return `<span class="who">${av}${pl?`<a href="#joueur-${esc(pl.id)}">${esc(nm)}</a>`:esc(nm)}</span>`;}
+let PRES_SEEN=null;
+function pagePresence(){
+  if(!S.isOwner)return `<div class="empty"><h2>Page privée</h2></div>`;
+  setTimeout(async()=>{if(!ADM_PROFS.length){const {data}=await sb.from("profiles").select("*");ADM_PROFS=data||[];}
+    const {data,error}=await sb.from("last_seen").select("*").order("at",{ascending:false}).limit(300);PRES_SEEN=error?{error}:data||[];drawPresence();},0);
+  return `<section class="block"><div class="block-head"><h1>Qui est en ligne</h1></div><div id="pres-now"><p class="muted">Chargement…</p></div></section>
+  <section class="block"><div class="block-head"><h2>Dernières connexions</h2></div><div id="pres-last"><p class="muted">Chargement…</p></div></section>`;}
+function drawPresence(){const a=document.getElementById("pres-now"),b=document.getElementById("pres-last");if(!a)return;
+  let st={};try{st=PRES.ch&&PRES.ch.presenceState?PRES.ch.presenceState():{};}catch(e){}
+  const all=Object.values(st).map(l=>l[l.length-1]).filter(Boolean);
+  const users=all.filter(x=>x.uid),anon=all.filter(x=>!x.uid);
+  const pages=x=>esc(presPageLabel(x.page));
+  a.innerHTML=`<p class="pres-sum"><b>${all.length}</b> personne${all.length>1?"s":""} sur le site en ce moment : ${users.length} connectée${users.length>1?"s":""}, ${anon.length} visiteur${anon.length>1?"s":""} non connecté${anon.length>1?"s":""}.</p>
+  ${users.length?`<div class="table-wrap"><table><thead><tr><th>Joueur</th><th>Page ouverte</th><th>Depuis</th></tr></thead><tbody>${users.sort((x,y)=>String(x.name).localeCompare(String(y.name),"fr")).map(x=>`<tr><td>${pageWho(x.uid,x.name)}</td><td>${pages(x)}</td><td>${x.since?relTime(x.since):""}</td></tr>`).join("")}</tbody></table></div>`:""}
+  ${anon.length?`<details class="pres-anon"><summary>Visiteurs non connectés (${anon.length})</summary><ul>${anon.map(x=>`<li>${pages(x)}${x.since?`, ${relTime(x.since)}`:""}</li>`).join("")}</ul></details>`:""}`;
+  if(!b||PRES_SEEN==null)return;
+  if(PRES_SEEN.error){b.innerHTML=`<p class="muted">Pour voir les dernières connexions, lance <b>update-11-presence.sql</b> dans Supabase.</p>`;return;}
+  const online=new Set(users.map(x=>x.uid));
+  const seen=new Set(PRES_SEEN.map(r=>r.user_id));
+  const never=ADM_PROFS.filter(p=>!seen.has(p.id));
+  b.innerHTML=PRES_SEEN.length?`<div class="table-wrap"><table><thead><tr><th>Joueur</th><th>Dernière visite</th><th>Dernière page</th></tr></thead><tbody>${PRES_SEEN.map(r=>`<tr><td>${pageWho(r.user_id)}</td><td>${online.has(r.user_id)?`<b class="pres-on">En ligne</b>`:`<span title="${esc(new Date(r.at).toLocaleString("fr-FR"))}">${relTime(r.at)}</span>`}</td><td class="muted">${esc(presPageLabel(r.page))}</td></tr>`).join("")}</tbody></table></div>
+  ${never.length?`<p class="hint">${never.length} compte${never.length>1?"s":""} sans visite enregistrée depuis la mise en place du suivi.</p>`:""}`:`<p class="muted">Aucune visite enregistrée pour l'instant.</p>`;}
 async function loadAuth(){
   S.me=null;S.isAdmin=false;S.isHost=false;S.hostOrgs=new Set();S.profile=null;S.myClaims=[];
   const {data:{session}}=await sb.auth.getSession();
@@ -245,6 +286,7 @@ async function loadAuth(){
   S.isOwner=false;if(S.me){try{const {data:own}=await sb.rpc("is_owner");S.isOwner=own===true;}catch(e){}}
   S.canEdit=S.isHost;
   try{await loadSocial();}catch(e){console.warn(e);}
+  presStart();
 }
 function canOrg(orgId){return S.isAdmin||(!!orgId&&S.hostOrgs.has(orgId));}
 async function login(){try{sessionStorage.setItem("oc-after-login",routeStr());}catch(e){}await sb.auth.signInWithOAuth({provider:"discord",options:{redirectTo:location.origin+(PATHMODE?"/":location.pathname)}});}
@@ -280,6 +322,7 @@ let _rt=null;function scheduleRender(){if(_rt)return;_rt=requestAnimationFrame((
 function isTyping(){const a=document.activeElement;return !!(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)&&a.closest("main")&&a.id!=="search"&&a.id!=="hsearch");}
 function render(){
   normalizeUrl();
+  try{presTrack(routeStr());}catch(e){}
   if(S.loaded.size<COLS.length){app.innerHTML='<p class="loading">Chargement…</p>';return;}
   const h=routeStr();
   const i=h.indexOf("-");const page=i<0?h:h.slice(0,i);const id=i<0?"":h.slice(i+1);
@@ -306,6 +349,7 @@ function render(){
     case "merci":html=pageThanks();break;
     case "qualite":html=pageQuality();break;
     case "comptes":html=pageAccounts();break;
+    case "presence":html=pagePresence();break;
     case "social":html=pageSocial(id);break;
     default:html=pageHome();
   }
@@ -314,7 +358,7 @@ function render(){
   bindSearch(page);bindSearchBox(document.getElementById("hsearch"));
   themeFor(page,id);updateRole();if(page==="social")bindSocial();
   if(keepFocus){const s=document.getElementById("search");if(s){s.focus();s.setSelectionRange(s.value.length,s.value.length);}}
-  const title={comptes:"Comptes inscrits",qualite:"Qualité des données",merci:"Remerciements",contribuer:"Contribuer",calendrier:"Calendrier",tickets:"Tickets",social:"Messages",orgs:"ORGs",saisons:"Saisons",joueurs:"Joueurs",annonces:"Annonces",palmares:"Palmarès"}[page];
+  const title={presence:"Qui est en ligne",comptes:"Comptes inscrits",qualite:"Qualité des données",merci:"Remerciements",contribuer:"Contribuer",calendrier:"Calendrier",tickets:"Tickets",social:"Messages",orgs:"ORGs",saisons:"Saisons",joueurs:"Joueurs",annonces:"Annonces",palmares:"Palmarès"}[page];
   document.title=title?title+" | ORG-Central":"ORG-Central";
   lastPage=h;
 }
