@@ -909,16 +909,18 @@ button.ph-av{cursor:pointer}.ph-av img,.ph-av .ib-ph{width:100%;height:100%;obje
 .wt-s{display:flex;flex-direction:column;align-items:flex-start;gap:2px;font:inherit;padding:7px 12px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--ink);cursor:pointer;text-align:left}
 .wt-s:hover{border-color:var(--accent)}
 .wt-s small{color:var(--muted);font-size:.74rem}
-.qa-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0 20px}
-.qa-card{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;font:inherit;color:var(--ink);padding:16px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.03);cursor:pointer}
+.qa-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0 16px}
+.qa-card{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;font:inherit;color:var(--ink);padding:12px 14px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.03);cursor:pointer}
 .qa-card.on{border-color:var(--accent);background:var(--accent-soft)}
-.qa-ic{font-size:1.4rem}.qa-big{font-family:var(--font-display);font-size:2rem;line-height:1;color:var(--accent)}
+.qa-ic{font-size:1.4rem}.qa-big{font-family:var(--font-display);font-size:1.5rem;line-height:1;color:var(--accent)}
 .qa-t{font-weight:800;font-size:1.05rem}.qa-card small{color:var(--muted);font-size:.82rem}.qa-card .qa-todo{color:var(--ink);opacity:.85}
-.qa-rows{display:flex;flex-direction:column;gap:8px}
-.qa-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.03)}
+.qa-rows{display:flex;flex-direction:column;gap:4px}
+.qa-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:6px 10px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.03)}
 .qa-row.col{flex-direction:column;align-items:stretch}.qa-rh{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-.qa-who{display:inline-flex;align-items:center;gap:10px;color:var(--ink);min-width:0}.qa-who span{display:flex;flex-direction:column}.qa-who small{color:var(--muted);font-size:.8rem}
-.qa-pair2{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.qa-who{display:inline-flex;align-items:center;gap:8px;color:var(--ink);min-width:0;text-decoration:none}.qa-who>span{display:flex;flex-direction:column;min-width:0}.qa-who b{font-size:.92rem}.qa-who small{color:var(--muted);font-size:.74rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px}
+.qa-who .avatar,.qa-who .logo{width:28px!important;height:28px!important;min-width:28px;flex:none;border-radius:50%;object-fit:cover;font-size:10px;display:inline-grid;place-items:center}
+.qa-row .btn.sm{padding:4px 10px;font-size:.78rem}
+.qa-pair2{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:10px;flex:1;min-width:0}
 .qa-acts{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.qa-why{font-size:.78rem;color:var(--muted);margin-right:4px}
 .qa-empty{padding:30px;text-align:center;color:var(--muted);font-size:1.05rem}
 .qa-morep{text-align:center;margin-top:12px}.qa-det{margin-top:18px}.qa-det summary{cursor:pointer;color:var(--muted);margin-bottom:8px}
@@ -2433,17 +2435,17 @@ function qaInvalidate(){QA_CACHE={};}
 function qaDups(){return memo("dups",()=>{
   const seasonsOfP=new Map(),orgsOfP=new Map();
   S.seasons.forEach(s=>(s.cast||[]).forEach(c=>{if(!c.playerId)return;(seasonsOfP.get(c.playerId)||seasonsOfP.set(c.playerId,new Set()).get(c.playerId)).add(s.id);(orgsOfP.get(c.playerId)||orgsOfP.set(c.playerId,new Set()).get(c.playerId)).add(s.orgId);}));
-  const buckets=new Map();const put=(k,pid)=>{let b=buckets.get(k);if(!b)buckets.set(k,b=new Set());b.add(pid);};
+  const buckets=new Map(),nameOf=new Map();const put=(k,pid,nm)=>{let b=buckets.get(k);if(!b)buckets.set(k,b=new Set());b.add(pid);if(!nameOf.has(k+"|"+pid))nameOf.set(k+"|"+pid,nm);};
   const names=[];
-  S.players.forEach(p=>{const ns=[...new Set([p.pseudo,...aliasesOf(p)].map(normName).filter(n=>n&&n.length>=2))];
-    ns.forEach(n=>{put("e:"+n,p.id);const d=n.replace(/\d+/g,"");if(d.length>=3&&d!==n)put("d:"+d,p.id);else if(d.length>=3)put("d:"+d,p.id);
-      if(n.length>=5){put("v:"+n,p.id);for(let i=0;i<n.length;i++)put("v:"+n.slice(0,i)+n.slice(i+1),p.id);}
-      if(n.length>=4)names.push([n,p.id]);});});
+  S.players.forEach(p=>{const raw=new Map();[p.pseudo,...aliasesOf(p)].forEach(x=>{const n=normName(x);if(n&&n.length>=2&&!raw.has(n))raw.set(n,x);});
+    raw.forEach((orig,n)=>{put("e:"+n,p.id,orig);const d=n.replace(/\d+/g,"");if(d.length>=3)put("d:"+d,p.id,orig);
+      if(n.length>=5){put("v:"+n,p.id,orig);for(let i=0;i<n.length;i++)put("v:"+n.slice(0,i)+n.slice(i+1),p.id,orig);}
+      if(n.length>=4)names.push([n,p.id,orig]);});});
   const pairs=new Map();const R={e:["Même pseudo",3],d:["Même pseudo sans les chiffres",2],v:["Pseudos presque identiques",1],x:["L'un commence comme l'autre",1]};
-  const add=(a,b,kind)=>{if(a===b)return;const k=a<b?a+"|"+b:b+"|"+a;const cur=pairs.get(k);if(!cur||R[kind][1]>R[cur.kind][1])pairs.set(k,{a:a<b?a:b,b:a<b?b:a,kind});};
-  buckets.forEach((set,k)=>{if(set.size<2||set.size>12)return;const arr=[...set];const kind=k[0];for(let i=0;i<arr.length;i++)for(let j=i+1;j<arr.length;j++)add(arr[i],arr[j],kind);});
+  const add=(a,b,kind,na,nb)=>{if(a===b)return;const sw=a>b;const k=sw?b+"|"+a:a+"|"+b;const cur=pairs.get(k);if(!cur||R[kind][1]>R[cur.kind][1])pairs.set(k,{a:sw?b:a,b:sw?a:b,kind,na:sw?nb:na,nb:sw?na:nb});};
+  buckets.forEach((set,k)=>{if(set.size<2||set.size>12)return;const arr=[...set];const kind=k[0];for(let i=0;i<arr.length;i++)for(let j=i+1;j<arr.length;j++)add(arr[i],arr[j],kind,nameOf.get(k+"|"+arr[i]),nameOf.get(k+"|"+arr[j]));});
   names.sort((x,y)=>x[0]<y[0]?-1:x[0]>y[0]?1:0);
-  for(let i=0;i<names.length;i++){for(let j=i+1;j<names.length&&j<i+30;j++){if(!names[j][0].startsWith(names[i][0]))break;add(names[i][1],names[j][1],"x");}}
+  for(let i=0;i<names.length;i++){for(let j=i+1;j<names.length&&j<i+30;j++){if(!names[j][0].startsWith(names[i][0]))break;add(names[i][1],names[j][1],"x",names[i][2],names[j][2]);}}
   const out=[];
   pairs.forEach(x=>{const A=player(x.a),B=player(x.b);if(!A||!B)return;
     if((A.notSame||[]).includes(B.id)||(B.notSame||[]).includes(A.id))return;
@@ -2453,15 +2455,15 @@ function qaDups(){return memo("dups",()=>{
     const oa=orgsOfP.get(A.id)||new Set(),ob=orgsOfP.get(B.id)||new Set();const shared=[...oa].filter(o=>ob.has(o));
     if(R[x.kind][1]<2&&!shared.length&&sa.size&&sb_.size)return;
     if(x.kind==="x"&&!shared.length)return;
-    out.push({a:A,b:B,kind:x.kind,reason:R[x.kind][0],score:R[x.kind][1]+(shared.length?1:0)+(!sa.size||!sb_.size?1:0),shared,na:sa.size,nb:sb_.size});});
+    out.push({a:A,b:B,kind:x.kind,reason:R[x.kind][0],ma:x.na,mb:x.nb,score:R[x.kind][1]+(shared.length?1:0)+(!sa.size||!sb_.size?1:0),shared,na:sa.size,nb:sb_.size});});
   return out.sort((x,y)=>y.score-x.score||String(x.a.pseudo).localeCompare(String(y.a.pseudo),"fr"));});}
 function qaWho(p,n){const orgs=[...new Set(historyOf(p.id).map(h=>h.s.orgId))].map(o=>(org(o)||{}).name).filter(Boolean);
-  return `<a class="qa-who" href="#joueur-${esc(p.id)}" target="_blank">${ava(p,"sm")}<span><b>${esc(pLabel(p))}</b><small>${n} saison${n>1?"s":""}${orgs.length?" · "+esc(orgs.slice(0,3).join(", "))+(orgs.length>3?"…":""):""}${p.ownerUid?" · ✓ compte relié":""}</small></span></a>`;}
+  return `<a class="qa-who" href="#joueur-${esc(p.id)}" target="_blank">${ava(p,"xs")}<span><b>${esc(pLabel(p))}</b><small>${n} saison${n>1?"s":""}${orgs.length?" · "+esc(orgs.slice(0,3).join(", "))+(orgs.length>3?"…":""):""}${p.ownerUid?" · ✓ compte relié":""}</small></span></a>`;}
 function qaDupsHtml(){const all=qaDups();const list=all.slice(0,QA.lim);
   if(!all.length)return `<p class="qa-empty">Aucun doublon probable 🎉</p>`;
   return `<div class="qa-rows">${list.map(x=>{const keep=x.na>=x.nb?x.a:x.b,drop=keep===x.a?x.b:x.a;
-    return `<div class="qa-row"><div class="qa-pair2">${qaWho(x.a,x.na)}<span class="qa-vs">=&nbsp;?</span>${qaWho(x.b,x.nb)}</div>
-    <div class="qa-acts"><span class="qa-why">${esc(x.reason)}${x.shared.length?" · même ORG":""}</span>
+    return `<div class="qa-row"><div class="qa-pair2">${qaWho(x.a,x.na)}<span class="qa-vs">↔</span>${qaWho(x.b,x.nb)}</div>
+    <div class="qa-acts"><span class="qa-why" title="${esc(x.reason)}">${x.ma&&x.mb?`« ${esc(x.ma)} » / « ${esc(x.mb)} »`:esc(x.reason)}${x.shared.length?" · même ORG":""}</span>
     <button type="button" class="btn sm primary" data-act="qa-merge" data-id="${esc(keep.id)}" data-o="${esc(drop.id)}" title="Garde ${esc(keep.pseudo)} et y fusionne ${esc(drop.pseudo)}">Fusionner</button>
     <button type="button" class="btn sm ghost" data-act="qa-notsame" data-id="${esc(x.a.id)}" data-o="${esc(x.b.id)}">Pas la même personne</button></div></div>`;}).join("")}</div>${qaMore(all.length,list.length)}
   <p class="hint">« Fusionner » garde la fiche qui a le plus de saisons (tu peux changer dans la fenêtre qui s'ouvre).</p>`;}
