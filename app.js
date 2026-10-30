@@ -233,17 +233,15 @@ function makeDb(){
   };
 }
 
-const PRES={ch:null,key:"",last:0,route:""};
-function presName(){const mp=S.me&&linkedPlayer(S.me);return mp?mp.pseudo:(S.profile&&S.profile.discord_name)||"";}
-function presStart(){try{if(PRES.ch){sb.removeChannel(PRES.ch);PRES.ch=null;}
-  PRES.key=S.me||("v-"+Math.random().toString(36).slice(2,10));
-  const ch=sb.channel("oc-presence",{config:{presence:{key:PRES.key}}});PRES.ch=ch;
-  if(ch.on)ch.on("presence",{event:"sync"},()=>{if(curRoute().page==="presence")drawPresence();});
-  ch.subscribe(st=>{if(st==="SUBSCRIBED")presTrack(PRES.route,true);});}catch(e){console.warn(e);}}
-function presTrack(route,force){PRES.route=route||PRES.route;const ch=PRES.ch;if(!ch||!ch.track)return;
-  try{ch.track({uid:S.me||null,name:presName(),page:PRES.route,since:PRES.since||(PRES.since=new Date().toISOString())});}catch(e){}
-  if(S.me&&(force||Date.now()-PRES.last>60000)){PRES.last=Date.now();sb.rpc("touch_seen",{p:PRES.route}).then(()=>{},()=>{});}}
-setInterval(()=>{if(document.visibilityState==="visible"&&S.me)presTrack(PRES.route,true);},120000);
+const PRES={last:0,route:"",vid:""};
+function presVid(){if(PRES.vid)return PRES.vid;try{PRES.vid=localStorage.getItem("oc-vid")||"";if(!PRES.vid){PRES.vid="v"+Math.random().toString(36).slice(2,12)+Date.now().toString(36);localStorage.setItem("oc-vid",PRES.vid);}}catch(e){PRES.vid="v"+Math.random().toString(36).slice(2,12);}return PRES.vid;}
+function presStart(){presTrack(PRES.route,true);}
+function presTrack(route,force){const changed=route&&route!==PRES.route;if(route)PRES.route=route;
+  if(!force&&!changed&&Date.now()-PRES.last<25000)return;if(!force&&changed&&Date.now()-PRES.last<4000)return;
+  PRES.last=Date.now();const pg=PRES.route||"accueil";
+  try{(S.me?sb.rpc("touch_seen",{p:pg}):sb.rpc("touch_visitor",{vid:presVid(),p:pg})).then(()=>{},()=>{});}catch(e){}}
+setInterval(()=>presTrack(PRES.route,true),30000);
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")presTrack(PRES.route,true);});
 function presPageLabel(r){r=String(r||"accueil");const i=r.indexOf("-");const pg=i<0?r:r.slice(0,i),id=i<0?"":r.slice(i+1);
   if(pg==="saison"){const x=season(id);return x?fullSeasonName(x):"une saison";}if(pg==="joueur"){const x=player(id);return x?"Profil de "+x.pseudo:"un profil";}if(pg==="org"){const x=org(id);return x?x.name:"une ORG";}
   return ({accueil:"Accueil",orgs:"ORGs",saisons:"Saisons",joueurs:"Joueurs",calendrier:"Calendrier",annonces:"Annonces",contribuer:"Contribuer",social:"Messages",tickets:"Tickets",admin:"Administration",merci:"Remerciements",qualite:"Qualité des données",comptes:"Comptes inscrits",journal:"Journal",presence:"Qui est en ligne"})[pg]||pg;}
@@ -251,27 +249,28 @@ function relTime(t){const d=(Date.now()-new Date(t))/1000;if(d<60)return "à l'i
 function pageWho(uid,name){const pl=uid&&linkedPlayer(uid);const p=uid&&ADM_PROFS.find(x=>x.id===uid);const nm=pl?pl.pseudo:(p&&p.discord_name)||name||"Compte inconnu";
   const av=pl&&avatarOf(pl)?ava(pl,"xs"):p&&p.avatar_url?`<img class="avatar xs" src="${esc(p.avatar_url)}" alt="">`:`<span class="avatar xs">${esc(initials(nm))}</span>`;
   return `<span class="who">${av}${pl?`<a href="#joueur-${esc(pl.id)}">${esc(nm)}</a>`:esc(nm)}</span>`;}
-let PRES_SEEN=null;
+let PRES_SEEN=null,PRES_VIS=[],PRES_TIMER=null;
+const ONLINE_MS=100000;
+async function loadPresence(){if(!ADM_PROFS.length){const {data}=await sb.from("profiles").select("*");ADM_PROFS=data||[];}
+  const [a,b]=await Promise.all([sb.from("last_seen").select("*").order("at",{ascending:false}).limit(300),sb.from("visitors").select("*").order("at",{ascending:false}).limit(200)]);
+  PRES_SEEN=a.error?{error:a.error}:a.data||[];PRES_VIS=b.error?null:(b.data||[]);drawPresence();}
 function pagePresence(){
   if(!S.isOwner)return `<div class="empty"><h2>Page privée</h2></div>`;
-  setTimeout(async()=>{if(!ADM_PROFS.length){const {data}=await sb.from("profiles").select("*");ADM_PROFS=data||[];}
-    const {data,error}=await sb.from("last_seen").select("*").order("at",{ascending:false}).limit(300);PRES_SEEN=error?{error}:data||[];drawPresence();},0);
+  setTimeout(()=>{presTrack(PRES.route,true);loadPresence();clearInterval(PRES_TIMER);PRES_TIMER=setInterval(()=>{if(curRoute().page!=="presence"){clearInterval(PRES_TIMER);return;}loadPresence();},15000);},300);
   return `<section class="block"><div class="block-head"><h1>Qui est en ligne</h1></div><div id="pres-now"><p class="muted">Chargement…</p></div></section>
   <section class="block"><div class="block-head"><h2>Dernières connexions</h2></div><div id="pres-last"><p class="muted">Chargement…</p></div></section>`;}
-function drawPresence(){const a=document.getElementById("pres-now"),b=document.getElementById("pres-last");if(!a)return;
-  let st={};try{st=PRES.ch&&PRES.ch.presenceState?PRES.ch.presenceState():{};}catch(e){}
-  const all=Object.values(st).map(l=>l[l.length-1]).filter(Boolean);
-  const users=all.filter(x=>x.uid),anon=all.filter(x=>!x.uid);
-  const pages=x=>esc(presPageLabel(x.page));
-  a.innerHTML=`<p class="pres-sum"><b>${all.length}</b> personne${all.length>1?"s":""} sur le site en ce moment : ${users.length} connectée${users.length>1?"s":""}, ${anon.length} visiteur${anon.length>1?"s":""} non connecté${anon.length>1?"s":""}.</p>
-  ${users.length?`<div class="table-wrap"><table><thead><tr><th>Joueur</th><th>Page ouverte</th><th>Depuis</th></tr></thead><tbody>${users.sort((x,y)=>String(x.name).localeCompare(String(y.name),"fr")).map(x=>`<tr><td>${pageWho(x.uid,x.name)}</td><td>${pages(x)}</td><td>${x.since?relTime(x.since):""}</td></tr>`).join("")}</tbody></table></div>`:""}
-  ${anon.length?`<details class="pres-anon"><summary>Visiteurs non connectés (${anon.length})</summary><ul>${anon.map(x=>`<li>${pages(x)}${x.since?`, ${relTime(x.since)}`:""}</li>`).join("")}</ul></details>`:""}`;
-  if(!b||PRES_SEEN==null)return;
-  if(PRES_SEEN.error){b.innerHTML=`<p class="muted">Pour voir les dernières connexions, lance <b>update-11-presence.sql</b> dans Supabase.</p>`;return;}
-  const online=new Set(users.map(x=>x.uid));
-  const seen=new Set(PRES_SEEN.map(r=>r.user_id));
-  const never=ADM_PROFS.filter(p=>!seen.has(p.id));
-  b.innerHTML=PRES_SEEN.length?`<div class="table-wrap"><table><thead><tr><th>Joueur</th><th>Dernière visite</th><th>Dernière page</th></tr></thead><tbody>${PRES_SEEN.map(r=>`<tr><td>${pageWho(r.user_id)}</td><td>${online.has(r.user_id)?`<b class="pres-on">En ligne</b>`:`<span title="${esc(new Date(r.at).toLocaleString("fr-FR"))}">${relTime(r.at)}</span>`}</td><td class="muted">${esc(presPageLabel(r.page))}</td></tr>`).join("")}</tbody></table></div>
+function drawPresence(){const a=document.getElementById("pres-now"),b=document.getElementById("pres-last");if(!a||PRES_SEEN==null)return;
+  if(PRES_SEEN.error){a.innerHTML=`<p class="muted">Lance <b>update-11-presence.sql</b> puis <b>update-12-en-ligne.sql</b> dans Supabase.</p>`;b.innerHTML="";return;}
+  const now=Date.now();const on=r=>now-new Date(r.at).getTime()<ONLINE_MS;
+  const users=PRES_SEEN.filter(on),anon=(PRES_VIS||[]).filter(on);
+  const n=users.length+anon.length;
+  a.innerHTML=`<p class="pres-sum"><b>${n}</b> personne${n>1?"s":""} sur le site en ce moment : ${users.length} connectée${users.length>1?"s":""}, ${anon.length} visiteur${anon.length>1?"s":""} non connecté${anon.length>1?"s":""}.</p>
+  ${PRES_VIS==null?`<p class="hint">Pour compter aussi les visiteurs non connectés, lance <b>update-12-en-ligne.sql</b> dans Supabase.</p>`:""}
+  ${users.length?`<div class="table-wrap"><table><thead><tr><th>Joueur</th><th>Page ouverte</th></tr></thead><tbody>${users.map(r=>`<tr><td>${pageWho(r.user_id)}</td><td>${esc(presPageLabel(r.page))}</td></tr>`).join("")}</tbody></table></div>`:""}
+  ${anon.length?`<details class="pres-anon"><summary>Visiteurs non connectés (${anon.length})</summary><ul>${anon.map(r=>`<li>${esc(presPageLabel(r.page))}</li>`).join("")}</ul></details>`:""}
+  <p class="hint">Mis à jour toutes les 15 secondes. Une personne compte comme en ligne tant qu'une page du site est ouverte chez elle.</p>`;
+  const seen=new Set(PRES_SEEN.map(r=>r.user_id));const never=ADM_PROFS.filter(p=>!seen.has(p.id));
+  b.innerHTML=PRES_SEEN.length?`<div class="table-wrap"><table><thead><tr><th>Joueur</th><th>Dernière visite</th><th>Dernière page</th></tr></thead><tbody>${PRES_SEEN.map(r=>`<tr><td>${pageWho(r.user_id)}</td><td>${on(r)?`<b class="pres-on">En ligne</b>`:`<span title="${esc(new Date(r.at).toLocaleString("fr-FR"))}">${relTime(r.at)}</span>`}</td><td class="muted">${esc(presPageLabel(r.page))}</td></tr>`).join("")}</tbody></table></div>
   ${never.length?`<p class="hint">${never.length} compte${never.length>1?"s":""} sans visite enregistrée depuis la mise en place du suivi.</p>`:""}`:`<p class="muted">Aucune visite enregistrée pour l'instant.</p>`;}
 async function loadAuth(){
   S.me=null;S.isAdmin=false;S.isHost=false;S.hostOrgs=new Set();S.profile=null;S.myClaims=[];
