@@ -1699,7 +1699,7 @@ async function loadContribs(){const box=document.getElementById("ct-list");if(!b
   if(S.isAdmin&&!ADM_PROFS.length){const {data}=await sb.from("profiles").select("*");ADM_PROFS=data||[];}
   let q=sb.from("tickets").select("*").eq("kind","infos").order("created_at",{ascending:false}).limit(100);if(!S.isAdmin)q=q.eq("user_id",S.me);
   const {data,error}=await q;if(error){box.innerHTML=`<p class="muted">${esc(error.message)}</p>`;return;}
-  box.innerHTML=data.length?data.map(tkCard).join(""):`<p class="muted">Aucune contribution pour l'instant.</p>`;
+  box.innerHTML=data.length?data.map(tkCard).join(""):`<p class="muted">Aucune contribution pour l'instant.</p>`;tkThreads(box);
   box.querySelectorAll("[data-tkact]").forEach(b=>b.addEventListener("click",async()=>{await tkAction(b.dataset.tkact,Number(b.dataset.id),data.find(x=>x.id===Number(b.dataset.id)));loadContribs();}));}
 const TK_KINDS={infos:["Contribution (infos de saison)","Envoyée depuis l'onglet Contribuer."],erreur:["Erreur dans une ORG","Un classement, un vote, un award, une date… est faux."],fusion:["Plusieurs fiches = un seul joueur","La même personne a plusieurs fiches avec des pseudos différents."],separation:["Une fiche = plusieurs joueurs","Des personnes différentes ont été réunies sur une seule fiche."],autre:["Autre","Une suggestion, un bug du site, une autre demande…"]};
 const TK_ST={open:["Ouvert","t-open"],done:["Résolu","t-done"],refused:["Refusé","t-ref"]};
@@ -1766,7 +1766,7 @@ async function loadTickets(){const box=document.getElementById("tk-list");if(!bo
   const {data,error}=await q;
   if(error){box.innerHTML=`<p class="muted">${/relation|does not exist|schema cache/i.test(error.message)?"Les tickets ne sont pas encore activés : lance <b>update-6-tickets.sql</b> dans Supabase.":esc(error.message)}</p>`;return;}
   if(!data.length){box.innerHTML=`<p class="muted">${S.isAdmin&&TK.filter==="open"?"Aucun ticket ouvert.":"Aucun ticket pour l'instant."}</p>`;return;}
-  box.innerHTML=data.map(tkCard).join("");
+  box.innerHTML=data.map(tkCard).join("");tkThreads(box);
   box.querySelectorAll("[data-tkact]").forEach(b=>b.addEventListener("click",()=>tkAction(b.dataset.tkact,Number(b.dataset.id),data.find(x=>x.id===Number(b.dataset.id)))));
 }
 function tkCard(t){const d=t.data||{};const st=TK_ST[t.status]||TK_ST.open;const pl=id=>{const p=player(id);return p?`<a href="#joueur-${esc(id)}">${esc(p.pseudo)}</a>`:`<span class="muted">fiche supprimée</span>`;};
@@ -1781,9 +1781,46 @@ function tkCard(t){const d=t.data||{};const st=TK_ST[t.status]||TK_ST.open;const
   if(S.isAdmin){if(t.kind==="fusion"&&(d.players||[]).length&&player(d.players[0]))acts+=`<button class="btn sm" data-tkact="merge" data-id="${t.id}">Fusionner…</button>`;
     if(t.kind==="separation"&&player(d.playerId))acts+=`<button class="btn sm" data-tkact="split" data-id="${t.id}">Séparer…</button>`;
     if(t.status==="open")acts+=`<button class="btn sm primary" data-tkact="done" data-id="${t.id}">Résolu</button><button class="btn sm ghost" data-tkact="refused" data-id="${t.id}">Refuser</button>`;else acts+=`<button class="btn sm ghost" data-tkact="open" data-id="${t.id}">Rouvrir</button>`;
-    acts+=`<button class="btn sm ghost" data-tkact="note" data-id="${t.id}">Réponse</button><button class="btn sm danger" data-tkact="del" data-id="${t.id}">Supprimer</button>`;}
+    acts+=`<button class="btn sm danger" data-tkact="del" data-id="${t.id}">Supprimer</button>`;}
   else if(t.status==="open")acts=`<button class="btn sm ghost" data-tkact="del" data-id="${t.id}">Annuler</button>`;
-  return `<article class="tk-card"><header><span class="tk-st ${st[1]}">${st[0]}</span><b>${esc(TK_KINDS[t.kind]?TK_KINDS[t.kind][0]:t.kind)}</b><span class="muted">${esc(when)}${author}</span></header>${det}${d.message?`<p class="tk-msg">${esc(d.message)}</p>`:""}${t.admin_note?`<p class="tk-note"><b>Réponse de l'admin :</b> ${esc(t.admin_note)}</p>`:""}${acts?`<div class="actions">${acts}</div>`:""}</article>`;}
+  return `<article class="tk-card"><header><span class="tk-st ${st[1]}">${st[0]}</span><b>${esc(TK_KINDS[t.kind]?TK_KINDS[t.kind][0]:t.kind)}</b><span class="muted">${esc(when)}${author}</span></header>${det}${d.message?`<p class="tk-msg">${esc(d.message)}</p>`:""}${acts?`<div class="actions">${acts}</div>`:""}<div class="tk-thread" data-tid="${t.id}" data-note="${esc(t.admin_note||"")}" data-owner="${esc(t.user_id)}"></div></article>`;}
+
+const TM={profs:{},rt:null,poll:null};
+function tmName(uid){const lp=linkedPlayer(uid);const p=TM.profs[uid]||ADM_PROFS.find(x=>x.id===uid)||(uid===S.me?S.profile:null);return {name:lp?lp.pseudo:(p&&p.discord_name)||"Joueur",admin:!!(p&&p.role==="admin"),pl:lp,av:p&&p.avatar_url};}
+function tmMsg(m){const a=tmName(m.user_id);const mine=m.user_id===S.me;
+  const av=a.pl&&avatarOf(a.pl)?ava(a.pl,"xs"):a.av?`<img class="avatar xs" src="${esc(a.av)}" alt="">`:`<span class="avatar xs">${esc(initials(a.name))}</span>`;
+  const when=new Date(m.created_at).toLocaleString("fr-FR",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
+  return `<div class="tm${mine?" me":""}${a.admin?" adm":""}" data-mid="${esc(m.id)}">${av}<div class="tm-b"><div class="tm-h"><b>${a.pl?`<a href="#joueur-${esc(a.pl.id)}">${esc(a.name)}</a>`:esc(a.name)}</b>${a.admin?`<span class="tm-role">admin</span>`:""}<span class="tm-t">${esc(when)}</span></div><p>${richText(m.body)}</p></div></div>`;}
+async function tkThreads(box){if(!box)return;if(S.me&&!S.isAdmin){try{localStorage.setItem("oc-tk-seen-"+S.me,new Date().toISOString());}catch(e){}if(S.tkOpen){S.tkOpen=0;updateRole();}}const els=[...box.querySelectorAll(".tk-thread[data-tid]")];if(!els.length)return;
+  const ids=els.map(e=>Number(e.dataset.tid));
+  const {data,error}=await sb.from("ticket_messages").select("*").in("ticket_id",ids).order("created_at",{ascending:true});
+  const missing=!!error;const msgs=data||[];
+  const uids=[...new Set(msgs.map(m=>m.user_id))].filter(u=>!TM.profs[u]);
+  if(uids.length){const {data:pr}=await sb.from("profiles").select("id,discord_name,avatar_url,role").in("id",uids);(pr||[]).forEach(p=>TM.profs[p.id]=p);}
+  els.forEach(el=>{const tid=Number(el.dataset.tid);const list=msgs.filter(m=>m.ticket_id===tid);
+    const legacy=el.dataset.note?`<div class="tm adm"><span class="avatar xs">AD</span><div class="tm-b"><div class="tm-h"><b>Admin</b><span class="tm-role">admin</span></div><p>${esc(el.dataset.note)}</p></div></div>`:"";
+    const can=S.me&&(S.isAdmin||el.dataset.owner===S.me);
+    el.innerHTML=`<div class="tm-list">${legacy}${list.map(tmMsg).join("")}</div>`+(missing?(S.isAdmin?`<p class="hint">Pour discuter dans les tickets, lance <b>update-13-discussion-tickets.sql</b> dans Supabase.</p>`:""):can?`<form class="tm-form"><label class="sr" for="tm-${tid}">Message</label><textarea id="tm-${tid}" rows="1" maxlength="2000" placeholder="${S.isAdmin&&el.dataset.owner!==S.me?"Répondre au joueur…":"Écrire à l'équipe…"}"></textarea><button type="submit" class="btn sm primary">Envoyer</button></form>`:"");
+    if(!list.length&&!legacy)el.querySelector(".tm-list").remove();
+    const f=el.querySelector(".tm-form");if(!f)return;const ta=f.querySelector("textarea");
+    ta.addEventListener("input",()=>{ta.style.height="auto";ta.style.height=Math.min(ta.scrollHeight,160)+"px";});
+    ta.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();f.requestSubmit();}});
+    f.addEventListener("submit",async e=>{e.preventDefault();const body=ta.value.trim();if(!body)return;ta.disabled=true;
+      const {data:m,error}=await sb.from("ticket_messages").insert({ticket_id:tid,body}).select().maybeSingle();ta.disabled=false;
+      if(error){toast(errMsg(sbErr(error)),true);return;}ta.value="";ta.style.height="auto";ta.focus();
+      if(m)tmAppend(m);sb.from("tickets").update({updated_at:new Date().toISOString()}).eq("id",tid).then(()=>{},()=>{});});});
+  tmLive();}
+function tmAppend(m){const el=document.querySelector(`.tk-thread[data-tid="${m.ticket_id}"]`);if(!el||el.querySelector(`[data-mid="${m.id}"]`))return;
+  let list=el.querySelector(".tm-list");if(!list){list=document.createElement("div");list.className="tm-list";el.prepend(list);}
+  list.insertAdjacentHTML("beforeend",tmMsg(m));}
+function tmLive(){if(!TM.rt){try{TM.rt=sb.channel("oc-tickets-msg");if(TM.rt.on)TM.rt.on("postgres_changes",{event:"INSERT",schema:"public",table:"ticket_messages"},async p=>{const m=p.new;if(!m)return;
+      if(!TM.profs[m.user_id]){const {data}=await sb.from("profiles").select("id,discord_name,avatar_url,role").eq("id",m.user_id).maybeSingle();if(data)TM.profs[data.id]=data;}
+      tmAppend(m);if(m.user_id!==S.me&&!document.querySelector(`.tk-thread[data-tid="${m.ticket_id}"]`))toast("Nouveau message sur un de tes tickets");});
+    TM.rt.subscribe();}catch(e){}}
+  clearInterval(TM.poll);TM.poll=setInterval(async()=>{const els=[...document.querySelectorAll(".tk-thread[data-tid]")];if(!els.length){clearInterval(TM.poll);return;}
+    const ids=els.map(e=>Number(e.dataset.tid));const {data}=await sb.from("ticket_messages").select("*").in("ticket_id",ids).order("created_at",{ascending:true});
+    const uids=[...new Set((data||[]).map(m=>m.user_id))].filter(u=>!TM.profs[u]);if(uids.length){const {data:pr}=await sb.from("profiles").select("id,discord_name,avatar_url,role").in("id",uids);(pr||[]).forEach(p=>TM.profs[p.id]=p);}
+    (data||[]).forEach(tmAppend);},15000);}
 async function tkAction(a,id,t){const d=(t&&t.data)||{};
   if(a==="merge"){mergeForm(player(d.players[0]));return;}
   if(a==="split"){splitForm(player(d.playerId));return;}
@@ -1791,7 +1828,9 @@ async function tkAction(a,id,t){const d=(t&&t.data)||{};
   if(a==="del"){confirmModal(S.isAdmin?"Supprimer le ticket":"Annuler le ticket","Ce ticket sera supprimé définitivement.",S.isAdmin?"Supprimer":"Annuler le ticket",async()=>{const {error}=await sb.from("tickets").delete().eq("id",id);if(error)throw sbErr(error);toast("Ticket supprimé");loadTickets();tkCount();});return;}
   const {error}=await sb.from("tickets").update({status:a,updated_at:new Date().toISOString()}).eq("id",id);if(error){toast(errMsg(sbErr(error)),true);return;}
   toast(a==="done"?"Ticket résolu":a==="refused"?"Ticket refusé":"Ticket rouvert");loadTickets();tkCount();}
-async function tkCount(){if(!S.isAdmin||!sb){S.tkOpen=0;return;}const {count,error}=await sb.from("tickets").select("id",{count:"exact",head:true}).eq("status","open");S.tkOpen=error?0:(count||0);updateRole();}
+async function tkCount(){if(!sb){S.tkOpen=0;return;}
+  if(!S.isAdmin){if(!S.me){S.tkOpen=0;return;}let seen="1970-01-01";try{seen=localStorage.getItem("oc-tk-seen-"+S.me)||seen;}catch(e){}
+    const {count,error}=await sb.from("ticket_messages").select("id",{count:"exact",head:true}).neq("user_id",S.me).gt("created_at",seen);S.tkOpen=error?0:(count||0);updateRole();return;}const {count,error}=await sb.from("tickets").select("id",{count:"exact",head:true}).eq("status","open");S.tkOpen=error?0:(count||0);updateRole();}
 function playerActions(p){
   const mine=S.me&&p.ownerUid===S.me;const pend=S.myClaims.some(c=>c.player_id===p.id&&c.status==="pending");
   const b=[];
