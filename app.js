@@ -362,7 +362,7 @@ function render(){
   lastPage=h;
 }
 window.addEventListener("hashchange",()=>{render();window.scrollTo(0,0);});
-const ICO={"trophy": "<path d=\"M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z\"/><path d=\"M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3\"/>", "link": "<path d=\"M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1\"/><path d=\"M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1\"/>", "eye": "<path d=\"M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/>", "pin": "<path d=\"M12 17v5M9 3h6l-1 6 4 4H6l4-4-1-6z\"/>", "cal": "<rect x=\"3\" y=\"5\" width=\"18\" height=\"16\" rx=\"2\"/><path d=\"M3 10h18M8 3v4M16 3v4\"/>", "mail": "<rect x=\"3\" y=\"5\" width=\"18\" height=\"14\" rx=\"2\"/><path d=\"m3 7 9 6 9-6\"/>"};
+const ICO={"lock": "<rect x=\"4\" y=\"11\" width=\"16\" height=\"10\" rx=\"2\"/><path d=\"M8 11V7a4 4 0 0 1 8 0v4\"/>", "trophy": "<path d=\"M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z\"/><path d=\"M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3\"/>", "link": "<path d=\"M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1\"/><path d=\"M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1\"/>", "eye": "<path d=\"M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/>", "pin": "<path d=\"M12 17v5M9 3h6l-1 6 4 4H6l4-4-1-6z\"/>", "cal": "<rect x=\"3\" y=\"5\" width=\"18\" height=\"16\" rx=\"2\"/><path d=\"M3 10h18M8 3v4M16 3v4\"/>", "mail": "<rect x=\"3\" y=\"5\" width=\"18\" height=\"14\" rx=\"2\"/><path d=\"m3 7 9 6 9-6\"/>"};
 function ico(n,sz){return `<svg class="ico" width="${sz||14}" height="${sz||14}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICO[n]||""}</svg>`;}
 function shareBtn(k,id){return `<button type="button" class="share-btn" data-act="share" data-k="${k}" data-id="${esc(id)}" title="Copier un lien qui affiche un aperçu sur Discord">${ico("link")} Partager</button>`;}
 async function shareLink(k,id){const u=location.origin+routePath(({s:"saison",o:"org",j:"joueur"}[k])+"-"+id);
@@ -670,17 +670,18 @@ function pageSeason(id){
     const tms=[teamById(s,c.team),teamById(s,c.team2),teamById(s,c.team3)].filter((t,j,arr)=>t&&arr.indexOf(t)===j);
     const sub=[tms.map(t=>`<span class="tdot" style="--tc:${esc(t.color)}">${esc(t.name)}</span>`).join(""),c.note?`<span>${esc(c.note)}</span>`:"",hasVotes&&pl!==1?`<span>${fmtN(votesAgainst(c.playerId,s))} vote${votesAgainst(c.playerId,s)>1?"s":""}</span>`:""].filter(Boolean).join("");
     const rot=(((i*37)%5)-2)*0.7;
-    return `<a class="ccard${pl&&pl<=3?" p"+pl:""}${pl?"":" dq"}" style="--rot:${rot}deg" href="#joueur-${esc(c.playerId)}"><span class="cpic">${u?`<img src="${esc(u)}" alt="" loading="lazy">`:esc(initials(sName(s,c.playerId)))}</span><span class="cnum">${pl?String(pl).padStart(2,"0"):"DQ"}</span><span class="cname">${esc(sName(s,c.playerId))}</span>${real&&real!==c.sPseudo?`<span class="creal">${esc(real)}</span>`:""}${sub?`<span class="csub">${sub}</span>`:""}</a>`;}).join("")}</div>`:`<p class="muted">Le casting n'a pas encore été renseigné.</p>`;
+    const dq=!pl&&s.status==="terminee";
+    return `<a class="ccard${pl&&pl<=3?" p"+pl:""}${dq?" dq":""}" style="--rot:${rot}deg" href="#joueur-${esc(c.playerId)}"><span class="cpic">${u?`<img src="${esc(u)}" alt="" loading="lazy">`:esc(initials(sName(s,c.playerId)))}</span>${pl||dq?`<span class="cnum">${pl?String(pl).padStart(2,"0"):"DQ"}</span>`:""}<span class="cname">${esc(sName(s,c.playerId))}</span>${real&&real!==c.sPseudo?`<span class="creal">${esc(real)}</span>`:""}${sub?`<span class="csub">${sub}</span>`:""}</a>`;}).join("")}</div>`:`<p class="muted">${secretOf(s).n?"Le casting est encore secret : les joueurs apparaîtront ici au fur et à mesure qu'ils sont révélés.":"Le casting n'a pas encore été renseigné."}</p>`;
   const sib=seasonsOf(s.orgId);const ix=sib.indexOf(s);const prv=sib[ix-1],nxt=sib[ix+1];
   const box=infobox(bigImg(s.logo||o.logo,o.name),fullSeasonName(s),[
     ["ORG",o.id?`<a href="#org-${esc(o.id)}">${esc(o.name)}</a>`:esc(o.name)],["Saison",esc(seasonShort(s))],["Thème",esc(s.title||"")],
-    ["Statut",chip(s.status)],["Dates",dateRange(s)],["Format",FORMATS[o.format]||""],["Joueurs",cast.length?String(cast.length):(s.slots?esc(s.slots)+" places":"")],
+    ["Statut",chip(s.status)],["Dates",dateRange(s)],["Format",FORMATS[o.format]||""],["Joueurs",(cast.length+secretOf(s).n)?String(cast.length+secretOf(s).n):(s.slots?esc(s.slots)+" places":"")],
     ...(ext?[]:[["Vainqueur",by(1)],["2e",by(2)],["3e",by(3)]]),["Précédente",prv?`<a href="#saison-${esc(prv.id)}">${esc(seasonShort(prv))}</a>`:""],["Suivante",nxt?`<a href="#saison-${esc(nxt.id)}">${esc(seasonShort(nxt))}</a>`:""]],"pic-season",s.id);
   return `<div class="crumbs"><a href="#orgs">ORGs</a><span>/</span><a href="#org-${esc(o.id||"")}">${esc(o.name)}</a><span>/</span><span>${esc(seasonShort(s))}</span>${shareBtn("s",s.id)}</div>
-  <div class="page-head"><div><p class="eyebrow">${esc(o.name)} ${esc(seasonShort(s))}</p><h1>${esc(s.title||seasonShort(s))}</h1></div>${edit(`<div class="actions">${appsOf(s).open?"":`<button class="btn" data-act="apptoggle" data-id="${esc(s.id)}">Ouvrir les candidatures</button>`}<button class="btn" data-act="edit-season" data-id="${esc(s.id)}">Modifier</button><button class="btn danger" data-act="del-season" data-id="${esc(s.id)}">Supprimer</button></div>`)}</div>
+  <div class="page-head"><div><p class="eyebrow">${esc(o.name)} ${esc(seasonShort(s))}</p><h1>${esc(s.title||seasonShort(s))}</h1></div>${edit(`<div class="actions">${appsOf(s).open?"":`<button class="btn" data-act="apptoggle" data-id="${esc(s.id)}">Ouvrir les candidatures</button>`}${secretOf(s).n?"":`<button class="btn" data-act="sc-edit" data-id="${esc(s.id)}">${ico("lock")} Casting secret</button>`}<button class="btn" data-act="edit-season" data-id="${esc(s.id)}">Modifier</button><button class="btn danger" data-act="del-season" data-id="${esc(s.id)}">Supprimer</button></div>`)}</div>
   <div class="wiki"><div class="wiki-main">
   ${s.description?`<p class="desc">${descHtml(s.description)}</p>`:""}
-  ${s.status==="inscriptions"&&signup?`<a class="btn cta" href="${esc(signup)}" target="_blank" rel="noopener">Lien d'inscription externe ↗</a>`:""}${signupBlock(s)}
+  ${s.status==="inscriptions"&&signup?`<a class="btn cta" href="${esc(signup)}" target="_blank" rel="noopener">Lien d'inscription externe ↗</a>`:""}${signupBlock(s)}${secretBlock(s)}
   ${ext?extSeasonCard(s,o,ext):`
   <section class="block"><div class="block-head"><h2>Classement</h2><span class="count">${cast.length}</span>${cast.length>1?`<button class="btn sm primary tl-open" data-act="tierlist" data-id="${esc(s.id)}">${ico("trophy")} Tier list</button>`:""}${edit(`<span class="actions"><button class="btn sm" data-act="cast" data-id="${esc(s.id)}">Modifier le casting</button>${cast.length?`<button class="btn sm" data-act="slooks" data-id="${esc(s.id)}">Pseudos & photos de saison</button>`:""}</span>`)}</div>${ranking}</section>
   <section class="block"><div class="block-head"><h2>Awards</h2><span class="count">${awards.length}</span>${edit(`<span class="actions"><button class="btn sm" data-act="awards" data-id="${esc(s.id)}">${awards.length?"Modifier les awards":"Ajouter des awards"}</button></span>`)}</div>
@@ -1947,7 +1948,7 @@ function pageAdmin(){
   <section class="block"><div class="block-head"><h2>Importer des données</h2></div><p class="hint">Choisis le fichier <b>org-central-export.json</b> téléchargé depuis l'ancien site. Les éléments déjà présents avec le même identifiant sont remplacés. Tu peux aussi y mettre un fichier de <b>classements</b> (JSON) : il remplit les castings et crée seulement les joueurs qui n'existent pas encore.</p><p><button class="btn" data-act="export-all">Télécharger une sauvegarde complète</button> <button class="btn" data-act="optimize-images">Alléger les images (accélère le site)</button></p><input type="file" id="f-import" accept="application/json,.json"><p id="imp-log" class="muted">${esc(S.impLog||"")}</p></section></section>`;
 }
 let ADM_PROFS=[];
-const LOG_FIELDS={cast:"casting / classement",rounds:"tableau des votes",awards:"awards",teams:"tribus",logo:"logo",title:"thème",status:"statut",start:"date de début",signupStart:"début des inscriptions",signupEnd:"fin des inscriptions",end:"date de fin",number:"numéro",customName:"nom affiché",description:"description",applications:"candidatures",signup:"lien d'inscription",slots:"places",period:"période",
+const LOG_FIELDS={cast:"casting / classement",secretCast:"casting secret",rounds:"tableau des votes",awards:"awards",teams:"tribus",logo:"logo",title:"thème",status:"statut",start:"date de début",signupStart:"début des inscriptions",signupEnd:"fin des inscriptions",end:"date de fin",number:"numéro",customName:"nom affiché",description:"description",applications:"candidatures",signup:"lien d'inscription",slots:"places",period:"période",
   pseudo:"pseudo",avatar:"photo",bio:"bio",pronouns:"pronoms",aliases:"autres pseudos",discord:"Discord",ownerUid:"compte relié",precision:"précision",name:"nom",hosts:"hosts",format:"format",platform:"plateforme",tag:"sigle",seasonWord:"nom des saisons",numbering:"numérotation",founded:"création",
   body:"texte",date:"date",orgId:"ORG",role:"rôle",discord_name:"pseudo Discord",avatar_url:"avatar",answers:"réponses",message:"message"};
 function pageJournal(){
@@ -2228,6 +2229,153 @@ async function signAction(sid,act,u){
   const s=season(sid);if(s)loadSignups(s);
 }
 
+/* ---------- Casting secret : renseigné par les hosts, révélé quand ils veulent ---------- */
+function secretOf(s){const x=(s&&s.secretCast)||{};return {n:Number(x.n)||0,requests:!!x.requests};}
+function scName(e){const p=e.playerId&&player(e.playerId);return p?p.pseudo:(e.name||"Joueur");}
+function scCard(e,host,sid){const p=e.playerId&&player(e.playerId);const u=p?imgSrc(avatarOf(p)):"";const nm=scName(e);
+  const inner=`<span class="cpic">${u?`<img src="${esc(u)}" alt="" loading="lazy">`:esc(initials(nm))}</span><span class="cname">${esc(nm)}</span>${p?"":`<span class="csub"><span>pas encore de fiche</span></span>`}${e.note?`<span class="csub"><span>${esc(e.note)}</span></span>`:""}`;
+  return `<div class="ccard sc-card">${p?`<a class="sc-link" href="#joueur-${esc(p.id)}">${inner}</a>`:inner}${host?`<button type="button" class="btn sm sc-rev" data-act="sc-reveal" data-id="${esc(sid)}" data-e="${esc(e.id)}">Révéler</button>`:""}</div>`;}
+function scMystery(n){return Array.from({length:Math.min(n,40)},(_,i)=>`<div class="ccard sc-mystery" style="--rot:${(((i*37)%5)-2)*0.7}deg" aria-hidden="true"><span class="cpic">?</span><span class="cname">Secret</span></div>`).join("");}
+function secretBlock(s){
+  if(!sb)return "";const pub=secretOf(s);const host=canOrg(s.orgId);
+  if(!pub.n&&!host)return "";
+  if(!pub.n&&host){setTimeout(()=>loadSecret(s),0);return `<div id="secretcast" data-s="${esc(s.id)}" hidden></div>`;}
+  setTimeout(()=>loadSecret(s),0);
+  return `<section class="block sc-block"><div class="block-head"><h2>${ico("lock")} Casting secret</h2><span class="count">${pub.n}</span>${host?`<span class="actions"><button class="btn sm" data-act="sc-edit" data-id="${esc(s.id)}">Modifier</button><button class="btn sm" data-act="sc-viewers" data-id="${esc(s.id)}">Qui peut voir</button><button class="btn sm primary" data-act="sc-reveal-all" data-id="${esc(s.id)}">Tout révéler</button></span>`:""}</div><div id="secretcast" data-s="${esc(s.id)}"><div class="classement">${scMystery(pub.n)}</div></div></section>`;
+}
+async function loadSecret(s){
+  let box=document.getElementById("secretcast");if(!box||box.dataset.s!==s.id)return;
+  const host=canOrg(s.orgId);const pub=secretOf(s);
+  let row=null,viewers=[],err=null;
+  if(S.me){const [a,b]=await Promise.all([sb.from("secret_casts").select("*").eq("season_id",s.id).maybeSingle(),sb.from("cast_viewers").select("*").eq("season_id",s.id)]);
+    err=a.error||b.error;row=a.data||null;viewers=b.data||[];}
+  box=document.getElementById("secretcast");if(!box||box.dataset.s!==s.id)return;
+  if(err&&host){box.hidden=false;box.innerHTML=`<p class="muted">Pour utiliser le casting secret, lance <b>update-14-casting-secret.sql</b> dans Supabase.</p>`;return;}
+  if(box.hidden)return; // host sans casting secret : rien à afficher, le bouton est dans l'en-tête
+  const entries=(row&&row.entries)||[];const mine=viewers.find(v=>v.user_id===S.me);
+  const reqs=host?viewers.filter(v=>v.status==="pending").length:0;
+  if(host){const vb=box.closest(".sc-block")&&box.closest(".sc-block").querySelector('[data-act="sc-viewers"]');if(vb)vb.innerHTML=`Qui peut voir${reqs?` <b class="badge">${reqs}</b>`:""}`;}
+  let h="";
+  if(row&&(host||mine&&mine.status==="accepted")){
+    h+=host?`<p class="hint sc-hint">Visible seulement par les hosts de l'ORG, les admins et les ${viewers.filter(v=>v.status==="accepted").length} compte(s) autorisé(s). Révèle les joueurs un par un, ou tous d'un coup.</p>`
+      :`<p class="notice sc-notice">Tu vois ce casting en avant-première. Ne le spoile pas !</p>`;
+    h+=entries.length?`<div class="classement">${entries.map(e=>scCard(e,host,s.id)).join("")}</div>`:`<p class="muted">Tous les joueurs ont été révélés.</p>`;
+  }else{
+    h+=`<div class="classement">${scMystery(pub.n)}</div><p class="muted sc-hint">${pub.n} joueur${pub.n>1?"s":""} encore secret${pub.n>1?"s":""}. Les hosts les dévoileront bientôt.</p>`;
+    if(pub.requests){
+      if(!S.me)h+=`<div class="notice"><p>Connecte-toi pour demander à voir le casting en avant-première.</p><button class="btn sm primary" data-act="login">Se connecter avec Discord</button></div>`;
+      else if(mine)h+=`<div class="notice"><p>Ta demande pour voir le casting est <b>en attente</b> de réponse des hosts.</p><button class="btn sm ghost" data-act="sc-unask" data-id="${esc(s.id)}">Annuler ma demande</button></div>`;
+      else h+=`<div class="notice"><p>Tu veux voir le casting avant tout le monde ?</p><button class="btn sm primary" data-act="sc-ask" data-id="${esc(s.id)}">Demander à voir le casting</button></div>`;
+    }
+  }
+  box.innerHTML=h;
+}
+function scReload(sid){const s=season(sid);if(s)loadSecret(s);}
+async function scFetch(sid){const {data,error}=await sb.from("secret_casts").select("*").eq("season_id",sid).maybeSingle();if(error)throw sbErr(error);return data;}
+async function scPublish(sid,n,requests){const cur=season(sid);const pub=secretOf(cur);if(pub.n===n&&pub.requests===requests)return;
+  await db.doc("seasons/"+sid).update({secretCast:{n,requests},updatedAt:nowIso()});}
+function scMatch(name){const n=normName(name);if(!n)return null;return S.players.find(p=>normName(p.pseudo)===n)||S.players.find(p=>aliasesOf(p).some(a=>normName(a)===n))||null;}
+async function secretEditor(s){
+  if(!s)return;let row;try{row=await scFetch(s.id);}catch(e){toast(/secret_casts|relation|schema/i.test(e.message)?"Lance d'abord update-14-casting-secret.sql dans Supabase.":errMsg(e),true);return;}
+  const draft=((row&&row.entries)||[]).map(e=>Object.assign({},e));const requests=!!(row&&row.allow_requests);
+  const inCast=new Set((s.cast||[]).map(c=>c.playerId));
+  const rows=()=>draft.length?draft.map((e,i)=>{const p=e.playerId&&player(e.playerId);return `<div class="sc-row" data-i="${i}">${p?ava(p,"sm"):`<span class="avatar sm" aria-hidden="true">${esc(initials(e.name))}</span>`}
+    <span class="sc-who"><b>${esc(scName(e))}</b><small class="muted">${p?"Fiche existante":"Nouvelle fiche, créée seulement au reveal"}${p&&inCast.has(p.id)?", déjà dans le classement public":""}</small></span>
+    <input data-k="note" value="${esc(e.note||"")}" maxlength="60" placeholder="Mention (affichée au reveal)" aria-label="Mention pour ${esc(scName(e))}">
+    <button type="button" class="icon-btn" data-rm="${i}" aria-label="Retirer ${esc(scName(e))}">×</button></div>`;}).join(""):`<p class="muted">Aucun joueur dans le casting secret.</p>`;
+  const opts=S.players.map(p=>`<option value="${esc(p.pseudo)}">`).join("");
+  openModal({title:"Casting secret : "+seasonName(s),wide:true,body:`
+    <p class="muted" style="margin-top:0">Ces joueurs ne sont visibles que par les hosts de l'ORG, les admins et les comptes que tu autorises (« Qui peut voir »). Quand tu les révèles, ils passent dans le classement public. Un joueur sans fiche n'apparaît nulle part avant son reveal.</p>
+    <div id="scrows">${rows()}</div>
+    <div class="cadd"><div class="quick"><input id="sc-add" list="sc-pl" placeholder="Ajouter un joueur : tape son pseudo…" maxlength="40" autocomplete="off" aria-label="Ajouter un joueur au casting secret"><datalist id="sc-pl">${opts}</datalist><button type="button" class="btn sm" id="sc-addb">Ajouter</button></div>
+    <button type="button" class="btn sm ghost" id="sc-fromapps">+ Candidatures acceptées</button></div>`,
+    saveLabel:"Enregistrer le casting secret",
+    onMount:form=>{
+      const box=form.querySelector("#scrows");const redraw=()=>{box.innerHTML=rows();};
+      box.addEventListener("input",e=>{const r=e.target.closest(".sc-row");if(r&&e.target.dataset.k)draft[Number(r.dataset.i)][e.target.dataset.k]=e.target.value;});
+      box.addEventListener("click",e=>{const b=e.target.closest("[data-rm]");if(b){draft.splice(Number(b.dataset.rm),1);redraw();}});
+      const has=(pid,name)=>draft.some(e=>(pid&&e.playerId===pid)||(!pid&&!e.playerId&&normName(e.name)===normName(name)));
+      const add=name=>{name=String(name||"").trim();if(!name)return false;const p=scMatch(name);
+        if(p&&inCast.has(p.id)){toast(p.pseudo+" est déjà dans le classement public.");return null;}if(has(p&&p.id,name))return false;draft.push(p?{id:uid("e"),playerId:p.id,note:""}:{id:uid("e"),name,note:""});return true;};
+      const q=form.querySelector("#sc-add");
+      form.querySelector("#sc-addb").addEventListener("click",()=>{if(!q.value.trim()){q.focus();return;}if(add(q.value)===false)toast("Ce joueur est déjà dans le casting secret.");q.value="";redraw();q.focus();});
+      q.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();form.querySelector("#sc-addb").click();}});
+      form.querySelector("#sc-fromapps").addEventListener("click",async ev=>{ev.target.disabled=true;
+        const {data,error}=await sb.from("signups").select("user_id,status").eq("season_id",s.id).eq("status","accepted");ev.target.disabled=false;
+        if(error){toast(sbErr(error).message,true);return;}let k=0;
+        (data||[]).forEach(r=>{const lp=linkedPlayer(r.user_id);if(lp?(!inCast.has(lp.id)&&!has(lp.id)&&draft.push({id:uid("e"),playerId:lp.id,note:""})):add(userName(r.user_id)))k++;});
+        toast(k?k+" joueur(s) ajouté(s)":"Aucune nouvelle candidature acceptée.");redraw();});
+    },
+    onSave:async()=>{
+      const entries=draft.map(e=>{const x={id:e.id||uid("e"),note:String(e.note||"").trim()};if(e.playerId)x.playerId=e.playerId;else x.name=String(e.name||"").trim();return x;}).filter(e=>e.playerId||e.name);
+      const {error}=await sb.from("secret_casts").upsert({season_id:s.id,entries,allow_requests:requests,updated_at:nowIso(),updated_by:S.me});
+      if(error)throw sbErr(error);
+      await scPublish(s.id,entries.length,requests);
+      toast("Casting secret enregistré");scReload(s.id);
+    }});
+}
+function scReveal(sid,eid){const s=season(sid);if(!s)return;
+  scFetch(sid).then(row=>{const entries=(row&&row.entries)||[];const pick=eid?entries.filter(e=>e.id===eid):entries;
+    if(!pick.length){toast("Rien à révéler.");scReload(sid);return;}
+    const who=pick.length===1?`<b>${esc(scName(pick[0]))}</b>`:`les <b>${pick.length}</b> joueurs du casting secret`;
+    confirmModal(pick.length===1?"Révéler un joueur":"Tout révéler",`Révéler ${who} ? ${pick.length===1?"Il ou elle apparaîtra":"Ils apparaîtront"} tout de suite dans le classement public de la saison, pour tout le monde.`,"Révéler",async()=>{
+      const cur=season(sid)||s;const cast=[...(cur.cast||[])];const t=nowIso();
+      for(const e of pick){let pid=e.playerId&&player(e.playerId)?e.playerId:"";
+        if(!pid){const ex=scMatch(e.name);if(ex)pid=ex.id;else{pid=uid("p");await db.doc("players/"+pid).set({pseudo:e.name||"Joueur",createdAt:t,updatedAt:t});}}
+        if(!cast.some(c=>c.playerId===pid))cast.push({playerId:pid,place:null,note:e.note||"",team:"",team2:"",team3:""});}
+      const ids=new Set(pick.map(e=>e.id));const rest=entries.filter(e=>!ids.has(e.id));
+      const {error}=await sb.from("secret_casts").update({entries:rest,updated_at:t,updated_by:S.me}).eq("season_id",sid);if(error)throw sbErr(error);
+      try{await db.doc("seasons/"+sid).update({cast,secretCast:{n:rest.length,requests:!!row.allow_requests},updatedAt:t});}
+      catch(err){await sb.from("secret_casts").update({entries}).eq("season_id",sid);throw err;}
+      toast(pick.length===1?scName(pick[0])+" est révélé·e !":"Casting révélé !");
+    });}).catch(e=>toast(errMsg(e),true));}
+async function scAsk(sid,on){const r=on?await sb.from("cast_viewers").insert({season_id:sid,user_id:S.me,status:"pending"}):await sb.from("cast_viewers").delete().eq("season_id",sid).eq("user_id",S.me);
+  if(r.error)toast(sbErr(r.error).message,true);else toast(on?"Demande envoyée aux hosts":"Demande annulée");scReload(sid);}
+async function scViewers(s){
+  if(!s)return;let row,list=[];
+  try{row=await scFetch(s.id);const {data,error}=await sb.from("cast_viewers").select("*").eq("season_id",s.id).order("created_at");if(error)throw sbErr(error);list=data||[];}
+  catch(e){toast(/secret_casts|cast_viewers|relation|schema/i.test(e.message)?"Lance d'abord update-14-casting-secret.sql dans Supabase.":errMsg(e),true);return;}
+  const accLabel=id=>{const pr=S.profiles[id];const n=userName(id);return pr&&pr.discord_name&&pr.discord_name!==n?n+" ("+pr.discord_name+")":n;};
+  const accounts=Object.keys(S.profiles).map(id=>({id,label:accLabel(id)})).sort((a,b)=>a.label.localeCompare(b.label,"fr"));
+  const line=(v,btns)=>`<div class="urow sc-vrow">${userAva(v.user_id,"sm-img")}<div class="urow-main"><b>${esc(userName(v.user_id))}</b><small class="muted">${v.status==="pending"?"Demandé le ":"Ajouté le "}${new Date(v.created_at).toLocaleDateString("fr-FR")}</small></div><span class="actions">${btns}</span></div>`;
+  const draw=()=>{const pend=list.filter(v=>v.status==="pending"),acc=list.filter(v=>v.status==="accepted");
+    return `${pend.length?`<h3>Demandes en attente (${pend.length})</h3>${pend.map(v=>line(v,`<button type="button" class="btn sm primary" data-v-ok="${esc(v.user_id)}">Accepter</button><button type="button" class="btn sm ghost" data-v-rm="${esc(v.user_id)}">Refuser</button>`)).join("")}`:""}
+    <h3>Peuvent voir le casting (${acc.length})</h3>${acc.length?acc.map(v=>line(v,`<button type="button" class="btn sm ghost" data-v-rm="${esc(v.user_id)}">Retirer</button>`)).join(""):`<p class="muted">Personne en dehors des hosts et des admins.</p>`}`;};
+  openModal({title:"Qui peut voir le casting secret",body:`
+    <p class="muted" style="margin-top:0">Les hosts de l'ORG et les admins le voient toujours. Ajoute d'autres comptes inscrits sur le site ici.</p>
+    <label class="chk"><input type="checkbox" name="requests"${row&&row.allow_requests?" checked":""}> Les joueurs inscrits sur le site peuvent demander à voir le casting (tu acceptes ou refuses chaque demande)</label>
+    <div class="cadd" style="margin-top:12px"><div class="quick"><input id="sc-acc" list="sc-accl" placeholder="Ajouter un compte : tape son pseudo…" autocomplete="off" aria-label="Ajouter un compte"><datalist id="sc-accl">${accounts.map(a=>`<option value="${esc(a.label)}">`).join("")}</datalist><button type="button" class="btn sm" id="sc-accb">Ajouter</button></div>
+    <button type="button" class="btn sm ghost" id="sc-accapps">+ Tous les candidats de la saison</button></div>
+    <div id="sc-vlist">${draw()}</div>`,
+    saveLabel:"Terminé",
+    onMount:form=>{
+      const box=form.querySelector("#sc-vlist");const redraw=()=>{box.innerHTML=draw();};
+      const refresh=async()=>{const {data}=await sb.from("cast_viewers").select("*").eq("season_id",s.id).order("created_at");list=data||[];redraw();};
+      const grant=async ids=>{ids=ids.filter(id=>!list.some(v=>v.user_id===id&&v.status==="accepted"));if(!ids.length)return 0;
+        const {error}=await sb.from("cast_viewers").upsert(ids.map(id=>({season_id:s.id,user_id:id,status:"accepted",added_by:S.me})));if(error){toast(sbErr(error).message,true);return 0;}return ids.length;};
+      box.addEventListener("click",async e=>{const ok=e.target.closest("[data-v-ok]"),rm=e.target.closest("[data-v-rm]");
+        if(ok){const {error}=await sb.from("cast_viewers").update({status:"accepted",added_by:S.me}).eq("season_id",s.id).eq("user_id",ok.dataset.vOk);if(error)toast(sbErr(error).message,true);await refresh();}
+        if(rm){const {error}=await sb.from("cast_viewers").delete().eq("season_id",s.id).eq("user_id",rm.dataset.vRm);if(error)toast(sbErr(error).message,true);await refresh();}});
+      const q=form.querySelector("#sc-acc");
+      form.querySelector("#sc-accb").addEventListener("click",async()=>{const v=q.value.trim();if(!v){q.focus();return;}
+        const a=accounts.find(x=>x.label===v)||accounts.find(x=>norm(x.label)===norm(v))||accounts.find(x=>norm(userName(x.id))===norm(v));
+        if(!a){toast("Aucun compte inscrit avec ce pseudo.",true);return;}
+        if(await grant([a.id]))toast(userName(a.id)+" peut voir le casting");else toast("Ce compte a déjà accès.");q.value="";await refresh();q.focus();});
+      q.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();form.querySelector("#sc-accb").click();}});
+      form.querySelector("#sc-accapps").addEventListener("click",async ev=>{ev.target.disabled=true;
+        const {data,error}=await sb.from("signups").select("user_id").eq("season_id",s.id);
+        if(error)toast(sbErr(error).message,true);else{const k=await grant((data||[]).map(r=>r.user_id));toast(k?k+" candidat(s) ajouté(s)":"Aucun nouveau candidat.");}
+        ev.target.disabled=false;await refresh();});
+    },
+    onSave:async f=>{
+      const want=f.querySelector("[name=requests]").checked;
+      if(!row||!!row.allow_requests!==want){
+        const {error}=await sb.from("secret_casts").upsert({season_id:s.id,entries:(row&&row.entries)||[],allow_requests:want,updated_at:nowIso(),updated_by:S.me});if(error)throw sbErr(error);
+        await scPublish(s.id,((row&&row.entries)||[]).length,want);}
+      scReload(s.id);
+    }});
+}
+
 function delOrg(id){const o=org(id);if(!o)return;const ss=seasonsOf(id);const ns=S.news.filter(n=>n.orgId===id);
   confirmModal("Supprimer l'ORG",`Supprimer <b>${esc(o.name)}</b>, ses ${ss.length} saison(s) et ses ${ns.length} annonce(s) ? Les joueurs restent dans le wiki. C'est définitif.`,"Supprimer",async()=>{
     for(const s of ss)await db.doc("seasons/"+s.id).delete();
@@ -2263,6 +2411,7 @@ document.addEventListener("click",e=>{
     "qa-merge":()=>mergeForm(player(id),b.dataset.o),"qa-notsame":()=>qaNotSame(id,b.dataset.o),"qa-ignore":()=>qaIgnore(id,b.dataset.k),
     "ct-fill":()=>ctFill(b.dataset.o,b.dataset.n),
     "share":()=>shareLink(b.dataset.k,id),"restore":()=>restoreLog(id),
+    "sc-edit":()=>secretEditor(season(id)),"sc-viewers":()=>scViewers(season(id)),"sc-reveal":()=>scReveal(id,b.dataset.e),"sc-reveal-all":()=>scReveal(id,null),"sc-ask":()=>scAsk(id,true),"sc-unask":()=>scAsk(id,false),
     "clear-examples":clearExamples
   };
   if(A[b.dataset.act])A[b.dataset.act]();

@@ -1042,3 +1042,18 @@ footer.site{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .tm-form{display:flex;gap:8px;align-items:flex-end;margin-top:8px}
 .tm-form textarea{flex:1;resize:none;min-height:36px;padding:8px 10px;background:var(--surface);border:1px solid var(--line);color:var(--ink);font:inherit}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* Casting secret */
+.sc-block .block-head h2 .ico{vertical-align:-2px;margin-right:4px}
+.sc-hint{margin:2px 0 6px}
+.sc-notice{margin:0 0 6px}
+.sc-card{transform:none}
+.sc-card .sc-link{display:flex;flex-direction:column;align-items:center;width:100%;text-decoration:none}
+.sc-card .sc-rev{margin-top:8px}
+.sc-mystery .cpic{background:repeating-linear-gradient(135deg,var(--surface-2) 0 10px,var(--surface) 10px 20px);color:var(--muted);font-size:2.4rem}
+.sc-mystery .cname{color:var(--muted)}
+.sc-row{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(140px,220px) auto;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.sc-who{display:flex;flex-direction:column;min-width:0}
+.sc-who b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sc-vrow{padding:6px 0;border-bottom:1px solid var(--line)}
+@media (max-width:620px){.sc-row{grid-template-columns:auto minmax(0,1fr) auto}.sc-row input{grid-column:1/-1}}
