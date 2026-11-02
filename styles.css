@@ -1057,3 +1057,26 @@ footer.site{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .sc-who b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sc-vrow{padding:6px 0;border-bottom:1px solid var(--line)}
 @media (max-width:620px){.sc-row{grid-template-columns:auto minmax(0,1fr) auto}.sc-row input{grid-column:1/-1}}
+
+/* Qui est la Taupe ? : rôle hors classement et scores de questionnaires */
+.taupe-panels{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px;margin:0 0 26px}
+.taupe-panel{display:flex;align-items:center;gap:18px;position:relative;min-height:118px;padding:18px 20px;border:1px solid #b84465;border-radius:16px;background:linear-gradient(110deg,rgba(144,28,66,.26),var(--surface));text-decoration:none;overflow:hidden;transition:transform .2s}
+.taupe-panel:hover{transform:translateY(-2px)}
+.taupe-emblem{position:absolute;right:14px;top:-25px;font-size:120px;font-family:var(--font-display);font-weight:900;line-height:1;color:rgba(255,110,155,.10)}
+.taupe-portrait{position:relative;display:flex;flex:none;align-items:center;justify-content:center;width:78px;height:78px;border-radius:50%;background:var(--surface-2);box-shadow:0 0 0 3px #fc6995,0 0 26px rgba(252,105,149,.24);overflow:hidden}
+.taupe-portrait .avatar{width:100%;height:100%;border-radius:50%;object-fit:cover}
+.taupe-identity{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0}
+.taupe-identity small{color:#ffb2cb;letter-spacing:.14em;font-family:var(--font-cond);font-size:.65rem;font-weight:800}
+.taupe-identity strong{font-family:var(--font-display);color:#ff9bbc;font-size:1.3rem;line-height:1.2}
+.taupe-identity span{font-weight:700;font-size:1rem;overflow-wrap:anywhere}
+.taupe-identity em{color:var(--muted);font-style:normal;font-size:.78rem}
+.pc.taupe{--pc:#fc6995}
+.pc.taupe .pc-art{box-shadow:0 0 0 2px #fc6995,0 12px 24px rgba(0,0,0,.5)}
+.pc.taupe .pc-rank b{color:#ff9bbc;font-size:1.75rem;letter-spacing:.05em}
+.sb.sb-no-votes{grid-template-columns:repeat(7,minmax(0,1fr))}
+.quiz-results td{font-variant-numeric:tabular-nums;font-weight:600}
+.quiz-results td.q-elim{background:rgba(250,90,107,.2);color:#ffb2bd;font-weight:800}
+.quiz-results td.q-immune{background:rgba(93,200,141,.18);color:#b1f7ce}
+.quiz-results td.q-tie{background:rgba(255,194,61,.13);color:#ffe4a6}
+@media(max-width:900px){.sb.sb-no-votes{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:520px){.sb.sb-no-votes{grid-template-columns:repeat(3,minmax(0,1fr))}}

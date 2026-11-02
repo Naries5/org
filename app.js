@@ -11,6 +11,10 @@ const CONCEPTS={survivor:"Survivor / Koh-Lanta",diable:"À l'épreuve du Diable"
 const CONCEPT_NOVOTES=new Set(["taupe","cinquante"]);
 function conceptLabel(o){return o&&o.concept?(o.concept==="autre"&&o.conceptOther?o.conceptOther:CONCEPTS[o.concept]||""):"";}
 function orgHasVotes(o){return !(o&&o.noVotes);}
+function isTaupeOrg(o){return !!o&&(o.concept==="taupe"||norm(o.name||"").replace(/[?!]/g,"").trim()==="qui est la taupe");}
+function isTaupeCast(s,c){return isTaupeOrg(org(s.orgId))&&!!c&&(c.role==="taupe"||c.isMole===true||/^taupe\b/i.test(String(c.note||"").trim()));}
+function hasVoteMechanic(s){const o=org(s.orgId)||{};return !isTaupeOrg(o)&&orgHasVotes(o);}
+function rankedContestants(s){return (s.cast||[]).filter(c=>!isTaupeCast(s,c));}
 const PLATFORMS={discord:"Discord",minecraft:"Minecraft",roblox:"Roblox",autre:"Autre plateforme"};
 const AWARD_IDEAS=["Meilleur joueur","Fan favori","Meilleur stratège","Meilleur confessionnal","Meilleur move","Meilleure épreuve","Révélation de la saison","Meilleur duo","Meilleur jury"];
 const PATHMODE=/^https?:$/.test(location.protocol);
@@ -81,7 +85,7 @@ function elimIds(s,r){const ids=new Set();if(r.eliminatedId)ids.add(r.eliminated
 function elimHtml(s,r){const t=elimText(r);if(!t)return "—";return t.split(/(\s*(?:&|,|\+|\bet\b)\s*)/i).map(part=>{const id=resolveName(s,part);if(!id)return esc(part);const c=(s.cast||[]).find(c=>c.playerId===id);const tm=teamFor(s,c,r.phase==null?1:r.phase);return `<b${tm?` style="color:color-mix(in srgb,${esc(tm.color)} 72%,var(--ink))"`:""}>${esc(part)}</b>`;}).join("");}
 function colorize(s,txt){let h=esc(txt||"");(s.teams||[]).filter(t=>t.name&&t.name.trim()).forEach(t=>{const re=new RegExp("(?<![\\p{L}\\p{N}])("+esc(t.name.trim()).replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+")(?![\\p{L}\\p{N}])","giu");h=h.replace(re,`<b style="color:color-mix(in srgb,${esc(t.color)} 72%,var(--ink))">$1</b>`);});return h;}
 function isFinal(r){return /finale|ftc/.test(norm(r.label)+" "+norm(r.challenge));}
-function votesAgainst(pid,s){let n=0;(s.rounds||[]).filter(r=>!isFinal(r)).forEach(r=>Object.values(r.votes||{}).forEach(v=>{voteWeights(s,v).forEach(t=>{if(t.id===pid)n+=t.w;});}));return Math.round(n*100)/100;}
+function votesAgainst(pid,s){if(!hasVoteMechanic(s))return 0;let n=0;(s.rounds||[]).filter(r=>!isFinal(r)).forEach(r=>Object.values(r.votes||{}).forEach(v=>{voteWeights(s,v).forEach(t=>{if(t.id===pid)n+=t.w;});}));return Math.round(n*100)/100;}
 function fmtN(n){return String(n).replace(".",",");}
 const AWARD_CANON=[[/^(meilleur |best )?h[ée]ros?$/,"Héros"],[/^(meilleur |best )?vill?ain$/,"Vilain"],[/^(meilleur |best )?strat[èe]ge$/,"Stratège"],[/^(meilleur |best )?social$/,"Social"],[/^(meilleur |best )?confess$/,"Meilleur confess"],[/^(meilleur |best )duo$/,"Meilleur duo"],[/^(meilleur |best )trio$/,"Meilleur trio"],[/^(meilleur |best )(joueur )?pr[ée][- ]?merge$/,"Meilleur pré-merge"],[/^(meilleur |best )(joueur )?(post[- ]?)?merge$/,"Meilleur joueur merge"],[/^(meilleur |best )pr[ée][- ]?jury$/,"Meilleur pré-jury"],[/^(meilleur |best )(move|mouv|moove)$/,"Meilleur move"],[/^pire (move|mouv|moove)$/,"Pire move"],[/^(meilleure |best )rivalit[ée]$/,"Meilleure rivalité"],[/^(meilleure |best )alliance$/,"Meilleure alliance"],[/^(meilleur |best )(buildeur|builder)$/,"Meilleur buildeur"],[/^surprise$/,"Surprise"],[/^robbed$/,"Robbed"],[/^ovni$/,"OVNI"],[/^parcou?rs? wtf$/,"Parcours WTF"],[/^m[ée]rite (un retour|de revenir)$/,"Mérite un retour"],[/^immu(nity)? runner$/,"Immu runner"],[/^relou$/,"Relou"],[/^comique$/,"Comique"],[/^target$/,"Target"],[/^mvp$/,"MVP"],[/^dans nos c(œ|oe)urs?$/,"Dans nos cœurs"],[/^fan favou?rite$/,"Fan favorite"],[/^(le )?suicidaire$/,"Le suicidaire"],[/^(meilleur |best )(spec|spectateur)$/,"Meilleur spec"],[/^(meilleur |best )(host|hosts)$/,"Meilleur host"]];
 function awardLabel(n){n=String(n||"").trim();const m=n.match(/^(.*?)\s*(\((?:joueurs|hosts|p|h|p\/h)\))?$/i);let base=m[1],suf=m[2]||"";
@@ -663,18 +667,18 @@ function extSeasonCard(s,o,url){const host=url.replace(/^https?:\/\/(www\.)?/,""
 function pageSeason(id){
   const s=season(id);if(!s)return notFound("Saison");
   const o=org(s.orgId)||{name:"ORG inconnue"};
-  const cast=sortedCast(s);const signup=safeUrl(s.signup);const awards=s.awards||[];
+  const cast=sortedCast(s);const taupes=cast.filter(c=>isTaupeCast(s,c));const ranked=cast.filter(c=>!isTaupeCast(s,c));const signup=safeUrl(s.signup);const awards=s.awards||[];
   const hasVotes=(s.rounds||[]).length>0;const ext=safeUrl(s.external);
   const by=n=>cast.filter(c=>Number(c.place)===n).map(c=>splink(s,c.playerId)).join(", ");
-  const ranking=cast.length?`<div class="classement">${cast.map((c,i)=>{const pl=Number(c.place);const u=imgSrc(sAvatar(s,c.playerId));const real=c.sPseudo?pName(c.playerId):"";
+  const ranking=cast.length?`${taupes.length?`<div class="taupe-panels">${taupes.map(c=>`<a class="taupe-panel" href="#joueur-${esc(c.playerId)}"><span class="taupe-emblem">?</span><span class="taupe-portrait">${sAva(s,c.playerId,"lg")}</span><span class="taupe-identity"><small>RÔLE SECRET RÉVÉLÉ</small><strong>LA TAUPE</strong><span>${esc(sName(s,c.playerId))}</span><em>Hors classement des questionnaires</em></span></a>`).join("")}</div>`:""}<div class="classement">${ranked.map((c,i)=>{const pl=Number(c.place);const u=imgSrc(sAvatar(s,c.playerId));const real=c.sPseudo?pName(c.playerId):"";
     const tms=[teamById(s,c.team),teamById(s,c.team2),teamById(s,c.team3)].filter((t,j,arr)=>t&&arr.indexOf(t)===j);
-    const sub=[tms.map(t=>`<span class="tdot" style="--tc:${esc(t.color)}">${esc(t.name)}</span>`).join(""),c.note?`<span>${esc(c.note)}</span>`:"",hasVotes&&pl!==1?`<span>${fmtN(votesAgainst(c.playerId,s))} vote${votesAgainst(c.playerId,s)>1?"s":""}</span>`:""].filter(Boolean).join("");
+    const sub=[tms.map(t=>`<span class="tdot" style="--tc:${esc(t.color)}">${esc(t.name)}</span>`).join(""),c.note?`<span>${esc(c.note)}</span>`:"",hasVoteMechanic(s)&&hasVotes&&pl!==1?`<span>${fmtN(votesAgainst(c.playerId,s))} vote${votesAgainst(c.playerId,s)>1?"s":""}</span>`:""].filter(Boolean).join("");
     const rot=(((i*37)%5)-2)*0.7;
     const dq=!pl&&s.status==="terminee";
     return `<a class="ccard${pl&&pl<=3?" p"+pl:""}${dq?" dq":""}" style="--rot:${rot}deg" href="#joueur-${esc(c.playerId)}"><span class="cpic">${u?`<img src="${esc(u)}" alt="" loading="lazy">`:esc(initials(sName(s,c.playerId)))}</span>${pl||dq?`<span class="cnum">${pl?String(pl).padStart(2,"0"):"DQ"}</span>`:""}<span class="cname">${esc(sName(s,c.playerId))}</span>${real&&real!==c.sPseudo?`<span class="creal">${esc(real)}</span>`:""}${sub?`<span class="csub">${sub}</span>`:""}</a>`;}).join("")}</div>`:`<p class="muted">${secretOf(s).n?"Le casting est encore secret : les joueurs apparaîtront ici au fur et à mesure qu'ils sont révélés.":"Le casting n'a pas encore été renseigné."}</p>`;
   const sib=seasonsOf(s.orgId);const ix=sib.indexOf(s);const prv=sib[ix-1],nxt=sib[ix+1];
   const box=infobox(bigImg(s.logo||o.logo,o.name),fullSeasonName(s),[
-    ["ORG",o.id?`<a href="#org-${esc(o.id)}">${esc(o.name)}</a>`:esc(o.name)],["Saison",esc(seasonShort(s))],["Thème",esc(s.title||"")],
+    ["ORG",o.id?`<a href="#org-${esc(o.id)}">${esc(o.name)}</a>`:esc(o.name)],["Saison",esc(seasonShort(s))],["Thème",esc(s.title||"")],["La taupe",taupes.length?taupes.map(c=>splink(s,c.playerId)).join(", "):""],
     ["Statut",chip(s.status)],["Dates",dateRange(s)],["Format",FORMATS[o.format]||""],["Joueurs",(cast.length+secretOf(s).n)?String(cast.length+secretOf(s).n):(s.slots?esc(s.slots)+" places":"")],
     ...(ext?[]:[["Vainqueur",by(1)],["2e",by(2)],["3e",by(3)]]),["Précédente",prv?`<a href="#saison-${esc(prv.id)}">${esc(seasonShort(prv))}</a>`:""],["Suivante",nxt?`<a href="#saison-${esc(nxt.id)}">${esc(seasonShort(nxt))}</a>`:""]],"pic-season",s.id);
   return `<div class="crumbs"><a href="#orgs">ORGs</a><span>/</span><a href="#org-${esc(o.id||"")}">${esc(o.name)}</a><span>/</span><span>${esc(seasonShort(s))}</span>${shareBtn("s",s.id)}</div>
@@ -688,9 +692,24 @@ function pageSeason(id){
   ${awards.length?`<div class="table-wrap"><table class="aw"><tbody>${awards.map(a=>`<tr class="link" data-href="#joueur-${esc(a.playerId)}"><th>${esc(awardLabel(a.name))}</th><td><a class="who" href="#joueur-${esc(a.playerId)}">${sAva(s,a.playerId,"xs")}${esc(sName(s,a.playerId))}</a></td></tr>`).join("")}</tbody></table></div>`:`<p class="muted">Aucun award renseigné.</p>`}</section>
 `}
   </div>${box}</div>
-  ${ext||(!orgHasVotes(o)&&!hasVotes)?"":`  <section class="block"><div class="block-head"><h2>Tableau des votes</h2>${edit(`<span class="actions"><button class="btn sm" data-act="votes" data-id="${esc(s.id)}">${hasVotes?"Modifier les votes":"Renseigner les votes"}</button></span>`)}</div>${votesTable(s)}</section>`}`;
+  ${ext||(!orgHasVotes(o)&&!hasVotes)?"":`  <section class="block"><div class="block-head"><h2>${isTaupeOrg(o)?"Résultats des questionnaires":"Tableau des votes"}</h2>${edit(`<span class="actions"><button class="btn sm" data-act="votes" data-id="${esc(s.id)}">${isTaupeOrg(o)?"Modifier les scores":hasVotes?"Modifier les votes":"Renseigner les votes"}</button></span>`)}</div>${isTaupeOrg(o)?quizTable(s):votesTable(s)}</section>`}`;
 }
 
+function quizTable(s){
+  const rounds=s.rounds||[],cast=rankedContestants(s);
+  if(!rounds.length||!cast.length)return '<p class="muted">Aucun score de questionnaire renseigné.</p>';
+  const eliminated={};
+  rounds.forEach((r,i)=>elimIds(s,r).forEach(id=>{if(eliminated[id]===undefined)eliminated[id]=i;}));
+  const any=k=>rounds.some(r=>String(r[k]||"").trim());
+  const head='<tr><th>Candidat</th>'+rounds.map((r,i)=>'<th>'+esc(r.label||"Questionnaire "+(i+1))+'</th>').join("")+'</tr>';
+  const rows=cast.map(c=>'<tr><th><a href="#joueur-'+esc(c.playerId)+'">'+esc(sName(s,c.playerId))+'</a></th>'+
+    rounds.map((r,i)=>{const raw=(r.votes||{})[c.playerId];const val=raw==null?"":String(raw).trim();const out=eliminated[c.playerId];
+      const cls=out===i?"q-elim":/\(I\)/i.test(val)?"q-immune":/\(T\)/i.test(val)?"q-tie":out!==undefined&&i>out?"out":"";
+      return '<td class="'+cls+'">'+esc(val)+'</td>';}).join("")+'</tr>').join("");
+  const foot='<tr class="vfoot"><th>Éliminé·e(s)</th>'+rounds.map(r=>'<td class="elim">'+elimHtml(s,r)+'</td>').join("")+'</tr>'+
+    (any("recap")?'<tr class="vfoot"><th>Récapitulatif</th>'+rounds.map(r=>'<td class="recap">'+esc(r.recap||"")+'</td>').join("")+'</tr>':"");
+  return '<p class="muted" style="margin-bottom:12px">Scores aux questionnaires · (T) égalité · (I) immunité. Il n’y a pas de votes entre candidats.</p><div class="table-wrap"><table class="votes quiz-results"><thead>'+head+'</thead><tbody>'+rows+foot+'</tbody></table></div>';
+}
 function votesTable(s){
   const rounds=s.rounds||[];const cast=sortedCast(s);
   if(!rounds.length||!cast.length)return `<p class="muted">Les votes n'ont pas été renseignés par le host.</p>`;
@@ -761,26 +780,26 @@ function hostedBy(p){const keys=new Set([p.pseudo,...aliasesOf(p)].map(normName)
 function statBlock(h,pid){
   const grp=f=>h.filter(x=>f((org(x.s.orgId)||{}).format));
   const st=arr=>{const pl=arr.map(x=>Number(x.c.place)).filter(Boolean);const n=arr.length;const sz=arr.map(x=>(x.s.cast||[]).length).filter(Boolean);
-    const rel=arr.filter(x=>Number(x.c.place)&&(x.s.cast||[]).length>1).map(x=>1-(Number(x.c.place)-1)/((x.s.cast||[]).length-1));
+    const rel=arr.filter(x=>Number(x.c.place)&&rankedContestants(x.s).length>1).map(x=>1-(Number(x.c.place)-1)/(rankedContestants(x.s).length-1));
     return {n,w:pl.filter(x=>x===1).length,t3:pl.filter(x=>x<=3).length,best:pl.length?Math.min(...pl):null,avg:pl.length?(pl.reduce((a,b)=>a+b,0)/pl.length):null,
-      perf:rel.length?Math.round(rel.reduce((a,b)=>a+b,0)/rel.length*100):null,v:Math.round(arr.reduce((a,x)=>a+votesAgainst(pid,x.s),0)*100)/100,
+      perf:rel.length?Math.round(rel.reduce((a,b)=>a+b,0)/rel.length*100):null,v:arr.some(x=>hasVoteMechanic(x.s))?Math.round(arr.reduce((a,x)=>a+votesAgainst(pid,x.s),0)*100)/100:null,
       aw:arr.reduce((a,x)=>a+(x.s.awards||[]).filter(y=>y.playerId===pid).length,0)};};
   const cols=[["Global",st(h)],["Speed",st(grp(f=>f==="speed"))],["Format long",st(grp(f=>f!=="speed"))]];
-  const rows=[["Saisons",x=>x.n],["Victoires",x=>x.w],["Top 3",x=>x.t3],["Meilleure place",x=>x.best?placeLabel(x.best):"—"],["Place moyenne",x=>x.avg?fmtN(Math.round(x.avg*10)/10):"—"],["Performance",x=>x.perf==null?"—":x.perf+" %"],["Votes reçus",x=>fmtN(x.v)],["Awards",x=>x.aw]];
+  const rows=[["Saisons",x=>x.n],["Victoires",x=>x.w],["Top 3",x=>x.t3],["Meilleure place",x=>x.best?placeLabel(x.best):"—"],["Place moyenne",x=>x.avg?fmtN(Math.round(x.avg*10)/10):"—"],["Performance",x=>x.perf==null?"—":x.perf+" %"],...(h.some(x=>hasVoteMechanic(x.s))?[["Votes reçus",x=>x.v==null?"—":fmtN(x.v)]]:[]),["Awards",x=>x.aw]];
   return `<section class="block"><div class="block-head"><h2>Statistiques</h2></div><div class="pstats"><span></span>${cols.map(([t])=>`<span class="ph">${t}</span>`).join("")}${rows.map(([l,f])=>`<span class="pl">${l}</span>${cols.map(([,x],i)=>`<span class="pv${i===0?" g":""}">${x.n?f(x):"—"}</span>`).join("")}`).join("")}</div><p class="muted" style="font-size:.8rem;margin-top:6px">Performance : 100 % = vainqueur, 0 % = premier éliminé, en moyenne sur les saisons.</p></section>`;
 }
 function pStatsData(h,pid){
   const grp=f=>h.filter(x=>f((org(x.s.orgId)||{}).format));
   const st=arr=>{const pl=arr.map(x=>Number(x.c.place)).filter(Boolean);
-    const rel=arr.filter(x=>Number(x.c.place)&&(x.s.cast||[]).length>1).map(x=>1-(Number(x.c.place)-1)/((x.s.cast||[]).length-1));
+    const rel=arr.filter(x=>Number(x.c.place)&&rankedContestants(x.s).length>1).map(x=>1-(Number(x.c.place)-1)/(rankedContestants(x.s).length-1));
     return {n:arr.length,w:pl.filter(x=>x===1).length,t3:pl.filter(x=>x<=3).length,best:pl.length?Math.min(...pl):null,avg:pl.length?(pl.reduce((a,b)=>a+b,0)/pl.length):null,
-      perf:rel.length?Math.round(rel.reduce((a,b)=>a+b,0)/rel.length*100):null,v:Math.round(arr.reduce((a,x)=>a+votesAgainst(pid,x.s),0)*100)/100,
-      fb:arr.filter(x=>{const n=(x.s.cast||[]).length;return n>1&&Number(x.c.place)===n;}).length,aw:arr.reduce((a,x)=>a+(x.s.awards||[]).filter(y=>y.playerId===pid).length,0)};};
+      perf:rel.length?Math.round(rel.reduce((a,b)=>a+b,0)/rel.length*100):null,v:arr.some(x=>hasVoteMechanic(x.s))?Math.round(arr.reduce((a,x)=>a+votesAgainst(pid,x.s),0)*100)/100:null,
+      fb:arr.filter(x=>{const n=rankedContestants(x.s).length;return n>1&&Number(x.c.place)===n;}).length,aw:arr.reduce((a,x)=>a+(x.s.awards||[]).filter(y=>y.playerId===pid).length,0)};};
   return {all:st(h),speed:st(grp(f=>f==="speed")),long:st(grp(f=>f!=="speed"))};}
-function pStatsHtml(h,pid){const D=pStatsData(h,pid);
+function pStatsHtml(h,pid){const D=pStatsData(h,pid);const showVotes=h.some(({s})=>hasVoteMechanic(s));
   const modes=[["all","Tout"],["speed","Speed"],["long","Format long"]].filter(([k])=>k==="all"||D[k].n);
   const cell=(v,l,cls)=>`<div class="sb-c${cls?" "+cls:""}"><b>${v}</b><span>${l}</span></div>`;
-  const board=x=>`<div class="sb">${cell(x.n,"saison"+(x.n>1?"s":""))}${cell(x.w,"victoire"+(x.w>1?"s":""),"gold")}${cell(x.t3,"top 3")}${cell(x.best?x.best+"<sup>"+(x.best===1?"er":"e")+"</sup>":"—","meilleure place")}${cell(x.avg?fmtN(Math.round(x.avg*10)/10)+"<sup>e</sup>":"—","place moyenne")}${cell(fmtN(x.v),"votes reçus")}${cell(x.fb,"first boot"+(x.fb>1?"s":""),x.fb?"red":"")}${cell(x.aw,"award"+(x.aw>1?"s":""))}</div>`;
+  const board=x=>`<div class="sb${showVotes?"":" sb-no-votes"}">${cell(x.n,"saison"+(x.n>1?"s":""))}${cell(x.w,"victoire"+(x.w>1?"s":""),"gold")}${cell(x.t3,"top 3")}${cell(x.best?x.best+"<sup>"+(x.best===1?"er":"e")+"</sup>":"—","meilleure place")}${cell(x.avg?fmtN(Math.round(x.avg*10)/10)+"<sup>e</sup>":"—","place moyenne")}${showVotes?cell(x.v==null?"—":fmtN(x.v),"votes reçus"):""}${cell(x.fb,"first boot"+(x.fb>1?"s":""),x.fb?"red":"")}${cell(x.aw,"award"+(x.aw>1?"s":""))}</div>`;
   return `<section class="block pstat-b"><div class="sb-head"><span class="sb-live">Stats</span>${modes.length>1?`<span class="pk-tabs" role="tablist">${modes.map(([k,l])=>`<button type="button" role="tab" data-pm="${k}" aria-selected="${k==="all"}">${l}</button>`).join("")}</span>`:""}</div>
   ${modes.map(([k])=>`<div class="pk-pane" data-pane="${k}"${k==="all"?"":" hidden"}>${board(D[k])}</div>`).join("")}</section>`;}
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-pm]");if(!b)return;const sec=b.closest(".pstat-b");
@@ -814,13 +833,13 @@ function pagePlayer(id){
   const trophies=Object.keys(awc).length?`<section class="block"><div class="block-head"><h2>Awards</h2><span class="count">${aw.length}</span></div><div class="pp-aw">${Object.entries(awc).sort((x,y)=>y[1]-x[1]||x[0].localeCompare(y[0],"fr")).map(([n,c])=>`<span class="pp-awc">${esc(n)}${c>1?` <b>×${c}</b>`:""}</span>`).join("")}</div></section>`:"";
   const hb=hostedBy(p);
   const host=hb.orgs.length?`<section class="block"><div class="block-head"><h2>Host</h2><span class="count">${hb.orgs.length}</span></div><div class="pp-hosts">${hb.orgs.map(o=>{const ss=hb.seasons.filter(x=>x.orgId===o.id);return `<a class="pp-host" href="#org-${esc(o.id)}">${pic(orgLogoVal(o),o.name,"pp-hl")}<span><b>${esc(o.name)}</b><small>${ss.length?ss.length+" saison"+(ss.length>1?"s":"")+" organisée"+(ss.length>1?"s":""):(FORMATS[o.format]||"ORG")}</small></span></a>`;}).join("")}</div></section>`:"";
-  const runs=h.map(({s,c})=>{const o=org(s.orgId)||{};const n=(s.cast||[]).length;const pl=Number(c.place);const sa=(s.awards||[]).filter(a=>a.playerId===p.id);
-    const lg=imgSrc(s.logo||o.logo||orgLogoVal(o));const med=pl===1?" m1":pl===2?" m2":pl===3?" m3":"";const fb=n>1&&pl===n;
-    return `<a class="pc${med}${fb?" fb":""}" data-fmt="${o.format==="speed"?"speed":"long"}" href="#saison-${esc(s.id)}" title="${esc(fullSeasonName(s))}"${lg&&!med?` data-pc-src="${esc(lg)}"`:""}>
+  const runs=h.map(({s,c})=>{const o=org(s.orgId)||{};const n=rankedContestants(s).length;const pl=Number(c.place);const mole=isTaupeCast(s,c);const sa=(s.awards||[]).filter(a=>a.playerId===p.id);
+    const lg=imgSrc(s.logo||o.logo||orgLogoVal(o));const med=pl===1?" m1":pl===2?" m2":pl===3?" m3":"";const fb=!mole&&n>1&&pl===n;
+    return `<a class="pc${med}${fb?" fb":""}${mole?" taupe":""}" data-fmt="${o.format==="speed"?"speed":"long"}" href="#saison-${esc(s.id)}" title="${esc(fullSeasonName(s))}"${lg&&!med?` data-pc-src="${esc(lg)}"`:""}>
       <div class="pc-art">${lg?`<img src="${esc(lg)}" alt="" loading="lazy">`:`<span class="pc-ph">${esc(initials(o.name||"?"))}</span>`}
-        <div class="pc-rank">${pl?`<b>${pl}<sup>${pl===1?"er":"e"}</sup></b>${n?`<i>/ ${n}</i>`:""}`:`<b>—</b>`}</div>${fb?`<span class="pc-tag">First boot</span>`:""}${o.format==="speed"?`<span class="pc-fmt">Speed</span>`:""}</div>
+        <div class="pc-rank">${mole?`<b>TAUPE</b>`:pl?`<b>${pl}<sup>${pl===1?"er":"e"}</sup></b>${n?`<i>/ ${n}</i>`:""}`:`<b>—</b>`}</div>${fb?`<span class="pc-tag">First boot</span>`:""}${o.format==="speed"?`<span class="pc-fmt">Speed</span>`:""}</div>
       <p class="pc-org">${esc(o.name||"ORG")} ${esc(seasonShort(s))}</p><p class="pc-t">${esc(s.title||"")}</p>
-      ${c.note?`<p class="pc-note">${esc(c.note)}</p>`:""}${sa.length?`<p class="pc-aw">${sa.map(a=>`<span>${esc(awardLabel(a.name))}</span>`).join("")}</p>`:""}</a>`;}).join("");
+      ${c.note&&!mole?`<p class="pc-note">${esc(c.note)}</p>`:""}${sa.length?`<p class="pc-aw">${sa.map(a=>`<span>${esc(awardLabel(a.name))}</span>`).join("")}</p>`:""}</a>`;}).join("");
   setTimeout(()=>document.querySelectorAll(".pc[data-pc-src],.pin-card[data-pc-src]").forEach(a=>hueColors(a.dataset.pcSrc,r=>{if(r)a.style.setProperty("--pc",r.t1);})),0);
   const bn=imgSrc(p.banner);const av=avatarOf(p);
   const facts=[pronounsOf(p)&&`<span>${esc(pronounsOf(p))}</span>`,p.discord&&`<span>Discord : <b>${esc(p.discord)}</b></span>`,aliasesOf(p).length&&`<span>aussi « ${aliasesOf(p).map(esc).join(" », « ")} »</span>`].filter(Boolean);
