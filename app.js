@@ -39,7 +39,7 @@ if(PATHMODE){new MutationObserver(ms=>{for(const m of ms)for(const n of m.addedN
   document.addEventListener("click",e=>{if(e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;const a=e.target.closest&&e.target.closest("a[data-r]");if(!a||a.target==="_blank")return;e.preventDefault();goRoute(a.dataset.r);});
   window.addEventListener("popstate",()=>render());linkify(document);}
 const COLS=["orgs","seasons","players","news"];
-const S={orgs:[],seasons:[],players:[],news:[],loaded:new Set(),canEdit:false,q:{orgs:"",joueurs:""},f:{format:"",platform:"",org:"",status:"",sort:"date"}};
+const S={orgs:[],seasons:[],players:[],news:[],loaded:new Set(),canEdit:false,q:{orgs:"",joueurs:""},f:{format:"",platform:"",org:"",status:"",sort:"date",orgSort:"recent"}};
 let db=null, assets=null, user=null;
 const app=document.getElementById("app");
 const modalRoot=document.getElementById("modal");
@@ -536,17 +536,54 @@ function pickOfDay(){
 }
 
 function filtered(list,q,key){q=q.trim().toLowerCase();return q?list.filter(x=>String(x[key]||"").toLowerCase().includes(q)||String(x.tag||"").toLowerCase().includes(q)):list;}
-const ST_RANK={inscriptions:0,annoncee:0,en_cours:1,terminee:2};
-function orgActivity(o){const ss=seasonsOf(o.id);let rank=3,key="";ss.forEach(s=>{const r=ST_RANK[s.status]??2;const k=r>=2?dateKey(s):recKey(s);if(r<rank||(r===rank&&k>key)){rank=r;key=k;}});return {rank,key};}
-function byOrgActivity(a,b){const x=orgActivity(a),y=orgActivity(b);return x.rank-y.rank||y.key.localeCompare(x.key)||String(a.name).localeCompare(String(b.name),"fr");}
-function orgListHtml(){const list=filtered([...S.orgs].sort(byOrgActivity),S.q.orgs,"name").filter(o=>(!S.f.format||o.format===S.f.format)&&(!S.f.platform||o.platform===S.f.platform)&&(!S.f.concept||o.concept===S.f.concept));
-  if(!list.length)return `<p class="muted">Aucune ORG ne correspond.</p>`;
-  const live=list.filter(o=>orgActivity(o).rank<2),done=list.filter(o=>orgActivity(o).rank>=2);
-  const sec=(t,arr,cls)=>arr.length?`<div class="og-sec"><h2 class="og-h ${cls}"><span>${t}</span><i>${arr.length}</i></h2><div class="og-grid">${arr.map(orgPoster).join("")}</div></div>`:"";
+const ST_RANK={en_cours:0,inscriptions:1,annoncee:2,terminee:3};
+function orgActivity(o){
+  const ss=seasonsOf(o.id);
+  if(!ss.length)return {rank:4,key:"",season:null};
+  let best=null;
+  ss.forEach(s=>{
+    const rank=ST_RANK[s.status]??3;
+    const key=rank===3?String(s.end||s.start||"")||periodKey(s.period):String(s.start||s.end||"")||periodKey(s.period);
+    const number=Number(s.number)||0;
+    if(!best||rank<best.rank||(rank===best.rank&&(key>best.key||(key===best.key&&number>best.number))))best={rank,key,number,season:s};
+  });
+  return best;
+}
+function byOrgActivity(a,b){
+  const x=orgActivity(a),y=orgActivity(b);
+  return x.rank-y.rank||y.key.localeCompare(x.key)||String(a.name).localeCompare(String(b.name),"fr");
+}
+function orgListHtml(){
+  const list=filtered([...S.orgs],S.q.orgs,"name")
+    .filter(o=>(!S.f.format||o.format===S.f.format)&&(!S.f.platform||o.platform===S.f.platform)&&(!S.f.concept||o.concept===S.f.concept));
+  if(!list.length)return `<p class="muted og-directory-empty">Aucune ORG ne correspond aux filtres actuels.</p>`;
+  const entries=list.map(o=>({o,activity:orgActivity(o)}));
+  const byName=(a,b)=>String(a.o.name||"").localeCompare(String(b.o.name||""),"fr");
+  const byRecent=(a,b)=>b.activity.key.localeCompare(a.activity.key)||byName(a,b);
+  const sort=S.f.orgSort==="alpha"?byName:byRecent;
+  const groups=[
+    {rank:0,key:"live",title:"En cours",subtitle:"Une saison se joue actuellement",number:"01"},
+    {rank:1,key:"recruiting",title:"Recrutement",subtitle:"Les candidatures sont ouvertes",number:"02"},
+    {rank:2,key:"upcoming",title:"Prochainement",subtitle:"Une saison est annoncée, sans recrutement ouvert",number:"03"},
+    {rank:3,key:"archives",title:"Archives",subtitle:"Toutes les saisons renseignées sont terminées",number:"04"},
+    {rank:4,key:"unlisted",title:"Sans saison",subtitle:"Ces ORG n'ont pas encore de saison renseignée",number:"05"}
+  ];
+  const sections=groups.map(g=>({...g,items:entries.filter(x=>x.activity.rank===g.rank).sort(sort)})).filter(g=>g.items.length);
   setTimeout(paintOrgPosters,0);
-  return sec("À l'antenne",live,"on")+sec("Les archives",done,"");}
+  return `<div class="og-directory">
+    <p class="og-directory-meta">${list.length} ORG${list.length>1?"s":""} affichée${list.length>1?"s":""} · Tri ${S.f.orgSort==="alpha"?"alphabétique":"par activité récente"} dans chaque catégorie</p>
+    ${sections.map(g=>`<section class="og-section og-section--${g.key}" aria-labelledby="og-section-${g.key}">
+      <header class="og-section-head">
+        <span class="og-section-number" aria-hidden="true">${g.number}</span>
+        <div class="og-section-title"><h2 id="og-section-${g.key}">${g.title}</h2><p>${g.subtitle}</p></div>
+        <span class="og-section-count">${g.items.length} ORG${g.items.length>1?"s":""}</span>
+      </header>
+      <div class="og-grid">${g.items.map(x=>orgPoster(x.o)).join("")}</div>
+    </section>`).join("")}
+  </div>`;
+}
 function orgPoster(o){
-  const ss=seasonsOf(o.id);const last=ss[ss.length-1];const lg=orgLogoVal(o);const u=imgSrc(lg);
+  const ss=seasonsOf(o.id);const last=orgActivity(o).season;const lg=orgLogoVal(o);const u=imgSrc(lg);
   const fin=[...ss].reverse().find(s=>s.status==="terminee"&&shownWinner(s));const w=fin?winnerOf(fin):null;
   const hosts=String(o.hosts||"").split(/\s*[,&]\s*|\s+et\s+/).filter(Boolean);const uniq=[...new Set(hosts)];
   const rot=((o.name||"").length%5-2)*0.6;
@@ -555,7 +592,7 @@ function orgPoster(o){
   <div class="og-top">${last?chip(last.status):""}<span class="og-tags">${tags(o)}</span></div>
   <div class="og-logo">${pic(lg,o.tag||o.name,"logo")}</div>
   <div class="og-body"><h3>${esc(o.name)}</h3>
-  ${last?`<p class="og-last">${last.status==="terminee"?"Dernière saison":"Saison actuelle"} : <b>${esc(seasonName(last))}</b></p>`:""}
+  ${last?`<p class="og-last">${({en_cours:"Saison en cours",inscriptions:"Inscriptions",annoncee:"Prochaine saison",terminee:"Dernière saison"})[last.status]||"Saison"} : <b>${esc(seasonName(last))}</b></p>`:""}
   <div class="og-stats"><span><b>${ss.length}</b> saison${ss.length>1?"s":""}</span>${w?`<span class="og-win">${ava(player(w),"xs")}<span><small>Dernier vainqueur</small>${esc(sName(fin,w))}</span></span>`:""}</div>
   ${uniq.length?`<p class="og-hosts">Host${uniq.length>1?"s":""} : ${uniq.slice(0,4).map(esc).join(", ")}${uniq.length>4?` +${uniq.length-4}`:""}</p>`:""}</div></a>`;
 }
@@ -611,8 +648,15 @@ function seasonTable(list,showOrg){
 document.addEventListener("change",e=>{if(e.target.id==="f-orgfilter"){S.f.org=e.target.value;render();}if(e.target.id==="f-concept"){const c=document.getElementById("f-noVotes");if(c)c.checked=CONCEPT_NOVOTES.has(e.target.value);}});
 function pageOrgs(){
   return `<section class="block"><div class="block-head"><h1>ORGs</h1><span class="count">${S.orgs.length}</span>${(S.isAdmin?`<span class="actions"><button class="btn primary" data-act="new-org">+ Nouvelle ORG</button></span>`:"")}</div>
+  <p class="og-directory-intro">Explore les ORG selon leur activité : saisons en cours, candidatures, annonces et archives. Chaque ORG apparaît une seule fois, dans sa catégorie prioritaire.</p>
   <div class="toolbar"><input id="search" class="search" type="search" placeholder="Rechercher une ORG" aria-label="Rechercher une ORG" value="${esc(S.q.orgs)}">
   ${filterGroup("concept","Jeu",CONCEPTS,"Tous")}${filterGroup("format","Format",FORMATS,"Tous")}${filterGroup("platform","Plateforme",PLATFORMS,"Toutes")}</div>
+  <div class="og-directory-controls"><span>Trier dans chaque catégorie</span>
+    <div class="seg" role="group" aria-label="Ordre des ORG">
+      <button type="button" class="seg-b" data-act="filter" data-k="orgSort" data-v="recent" aria-pressed="${S.f.orgSort!=="alpha"}">Activité récente</button>
+      <button type="button" class="seg-b" data-act="filter" data-k="orgSort" data-v="alpha" aria-pressed="${S.f.orgSort==="alpha"}">A → Z</button>
+    </div>
+  </div>
   <div id="list">${S.orgs.length?orgListHtml():`<div class="empty"><p class="muted">Aucune ORG pour l'instant.</p>${edit(`<button class="btn primary" data-act="new-org">+ Créer une ORG</button>`)}</div>`}</div></section>`;
 }
 

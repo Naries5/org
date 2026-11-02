@@ -1084,3 +1084,34 @@ footer.site{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 /* Qui est la Taupe : première place de l’enquêteur distincte du vainqueur */
 .pc.taupe.season-winner .pc-rank b{color:var(--gold);text-shadow:0 0 20px rgba(255,194,61,.42)}
 .pc.q1 .pc-rank b{color:#ffa7c8}
+
+/* Répertoire des ORG : cinq catégories clairement séparées */
+.og-directory-intro{max-width:780px;margin:4px 0 20px;color:var(--muted);line-height:1.55}
+.og-directory-controls{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin:20px 0 0;padding:14px 0;border-top:1px solid var(--line)}
+.og-directory-controls>span{font-size:.88rem;font-weight:700;color:var(--ink)}
+.og-directory-meta{margin:4px 0 22px;color:var(--muted);font-size:.82rem}
+.og-directory-empty{padding:26px 0}
+.og-directory{padding-top:4px}
+.og-section{--og-section-color:#9aa2af;position:relative;margin:0 0 40px;padding:22px;border:1px solid color-mix(in srgb,var(--og-section-color) 28%,var(--line));border-left:4px solid var(--og-section-color);border-radius:16px;background:linear-gradient(110deg,color-mix(in srgb,var(--og-section-color) 6%,var(--surface)) 0%,var(--surface) 55%)}
+.og-section:last-child{margin-bottom:0}
+.og-section--live{--og-section-color:#e8798b}
+.og-section--recruiting{--og-section-color:#65c4a0}
+.og-section--upcoming{--og-section-color:#e7bd74}
+.og-section--archives{--og-section-color:#aaa6c2}
+.og-section--unlisted{--og-section-color:#91a0ad}
+.og-section-head{display:flex;align-items:center;gap:15px;margin:0 0 25px;padding:0 0 20px;border-bottom:1px solid color-mix(in srgb,var(--og-section-color) 24%,var(--line))}
+.og-section-number{flex:none;display:grid;place-items:center;width:45px;height:45px;border:1px solid color-mix(in srgb,var(--og-section-color) 45%,transparent);border-radius:10px;background:color-mix(in srgb,var(--og-section-color) 10%,var(--surface));color:var(--og-section-color);font-family:var(--font-display);font-size:1.4rem}
+.og-section-title{min-width:0;flex:1}
+.og-section-title h2{font-family:var(--font-display);font-size:clamp(1.35rem,2vw,1.9rem);line-height:1.2;margin:0;color:var(--ink);letter-spacing:-.015em}
+.og-section-title p{margin:5px 0 0;color:var(--muted);font-size:.9rem}
+.og-section-count{flex:none;padding:7px 11px;border-radius:8px;background:color-mix(in srgb,var(--og-section-color) 12%,var(--surface));color:var(--ink);font-size:.84rem;font-weight:700}
+.og-section .og-grid{gap:22px}
+@media(max-width:650px){
+  .og-section{padding:16px 12px;margin-bottom:30px;border-radius:12px}
+  .og-section-head{gap:10px;align-items:flex-start;padding-bottom:15px;margin-bottom:18px;flex-wrap:wrap}
+  .og-section-number{width:36px;height:36px;font-size:1.15rem}
+  .og-section-title{flex-basis:calc(100% - 50px)}
+  .og-section-count{margin-left:46px}
+  .og-directory-controls{align-items:flex-start;flex-direction:column}
+  .og-section .og-grid{gap:14px}
+}
