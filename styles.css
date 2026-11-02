@@ -1100,7 +1100,6 @@ footer.site{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .og-section--archives{--og-section-color:#aaa6c2}
 .og-section--unlisted{--og-section-color:#91a0ad}
 .og-section-head{display:flex;align-items:center;gap:15px;margin:0 0 25px;padding:0 0 20px;border-bottom:1px solid color-mix(in srgb,var(--og-section-color) 24%,var(--line))}
-.og-section-number{flex:none;display:grid;place-items:center;width:45px;height:45px;border:1px solid color-mix(in srgb,var(--og-section-color) 45%,transparent);border-radius:10px;background:color-mix(in srgb,var(--og-section-color) 10%,var(--surface));color:var(--og-section-color);font-family:var(--font-display);font-size:1.4rem}
 .og-section-title{min-width:0;flex:1}
 .og-section-title h2{font-family:var(--font-display);font-size:clamp(1.35rem,2vw,1.9rem);line-height:1.2;margin:0;color:var(--ink);letter-spacing:-.015em}
 .og-section-title p{margin:5px 0 0;color:var(--muted);font-size:.9rem}
@@ -1109,9 +1108,6 @@ footer.site{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 @media(max-width:650px){
   .og-section{padding:16px 12px;margin-bottom:30px;border-radius:12px}
   .og-section-head{gap:10px;align-items:flex-start;padding-bottom:15px;margin-bottom:18px;flex-wrap:wrap}
-  .og-section-number{width:36px;height:36px;font-size:1.15rem}
-  .og-section-title{flex-basis:calc(100% - 50px)}
-  .og-section-count{margin-left:46px}
-  .og-directory-controls{align-items:flex-start;flex-direction:column}
+        .og-directory-controls{align-items:flex-start;flex-direction:column}
   .og-section .og-grid{gap:14px}
 }

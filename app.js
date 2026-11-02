@@ -562,11 +562,11 @@ function orgListHtml(){
   const byRecent=(a,b)=>b.activity.key.localeCompare(a.activity.key)||byName(a,b);
   const sort=S.f.orgSort==="alpha"?byName:byRecent;
   const groups=[
-    {rank:0,key:"live",title:"En cours",subtitle:"Une saison se joue actuellement",number:"01"},
-    {rank:1,key:"recruiting",title:"Recrutement",subtitle:"Les candidatures sont ouvertes",number:"02"},
-    {rank:2,key:"upcoming",title:"Prochainement",subtitle:"Une saison est annoncée, sans recrutement ouvert",number:"03"},
-    {rank:3,key:"archives",title:"Archives",subtitle:"Toutes les saisons renseignées sont terminées",number:"04"},
-    {rank:4,key:"unlisted",title:"Sans saison",subtitle:"Ces ORG n'ont pas encore de saison renseignée",number:"05"}
+    {rank:0,key:"live",title:"En cours",subtitle:"Une saison se joue actuellement"},
+    {rank:1,key:"recruiting",title:"Recrutement",subtitle:"Les candidatures sont ouvertes"},
+    {rank:2,key:"upcoming",title:"Prochainement",subtitle:"Une saison est annoncée, sans recrutement ouvert"},
+    {rank:3,key:"archives",title:"Archives",subtitle:"Toutes les saisons renseignées sont terminées"},
+    {rank:4,key:"unlisted",title:"Sans saison",subtitle:"Ces ORG n'ont pas encore de saison renseignée"}
   ];
   const sections=groups.map(g=>({...g,items:entries.filter(x=>x.activity.rank===g.rank).sort(sort)})).filter(g=>g.items.length);
   setTimeout(paintOrgPosters,0);
@@ -574,7 +574,7 @@ function orgListHtml(){
     <p class="og-directory-meta">${list.length} ORG${list.length>1?"s":""} affichée${list.length>1?"s":""} · Tri ${S.f.orgSort==="alpha"?"alphabétique":"par activité récente"} dans chaque catégorie</p>
     ${sections.map(g=>`<section class="og-section og-section--${g.key}" aria-labelledby="og-section-${g.key}">
       <header class="og-section-head">
-        <span class="og-section-number" aria-hidden="true">${g.number}</span>
+        
         <div class="og-section-title"><h2 id="og-section-${g.key}">${g.title}</h2><p>${g.subtitle}</p></div>
         <span class="og-section-count">${g.items.length} ORG${g.items.length>1?"s":""}</span>
       </header>
