@@ -9,9 +9,16 @@ async function players(ids) {
   const rows = await q("players?select=id,pseudo:data->>pseudo,precision:data->>precision&id=in.(" + ids.map(i => '"' + i + '"').join(",") + ")");
   const m = {}; rows.forEach(r => (m[r.id] = r)); return m;
 }
-const SEL = "id,external:data->>external,orgId:data->>orgId,number:data->>number,title:data->>title,customName:data->>customName,status:data->>status,start:data->>start,end:data->>end,period:data->>period,cast:data->cast";
-const OSEL = "id,name:data->>name,tag:data->>tag,seasonWord:data->>seasonWord,numbering:data->>numbering,hosts:data->>hosts,description:data->>description";
+const SEL = "id,external:data->>external,orgId:data->>orgId,number:data->>number,taupeWins:data->taupeWins,title:data->>title,customName:data->>customName,status:data->>status,start:data->>start,end:data->>end,period:data->>period,cast:data->cast";
+const OSEL = "id,name:data->>name,concept:data->>concept,tag:data->>tag,seasonWord:data->>seasonWord,numbering:data->>numbering,hosts:data->>hosts,description:data->>description";
 
+function isTaupe(o) { return !!o && (o.concept === "taupe" || String(o.name || "").toLowerCase().replace(/[?!]/g, "").trim() === "qui est la taupe"); }
+function actualWinner(s,o) {
+ const cs=Array.isArray(s.cast)?s.cast:[];
+ const win=isTaupe(o)&&(typeof s.taupeWins==="boolean"?s.taupeWins:Number(s.number)===4&&String(o.name||"").toLowerCase().replace(/[?!]/g,"").trim()==="qui est la taupe");
+ const c=win?cs.find(c=>c.role==="taupe"||c.isMole===true||/^taupe\b/i.test(String(c.note||""))):cs.find(c=>Number(c.place)===1);
+ return c?c.playerId:null;
+}
 async function season(id) {
   const [s] = await q("seasons?select=" + SEL + ",logo:data->>logo&id=eq." + enc(id));
   if (!s) return null;
@@ -19,10 +26,12 @@ async function season(id) {
   const cast = Array.isArray(s.cast) ? s.cast : [];
   const done = s.status === "terminee" && !s.external;
   const pod = done ? [1, 2, 3].map(n => cast.filter(c => Number(c.place) === n).map(c => c.playerId)) : [[], [], []];
-  const ps = await players(pod.flat());
+  const winner=done?actualWinner(s,o):null;
+  const ps = await players([...pod.flat(),winner]);
   const names = l => l.map(i => pLabel(ps[i])).join(" & ");
   const lines = [];
-  if (pod[0].length) lines.push("Vainqueur : " + names(pod[0]));
+  if (winner) lines.push("Vainqueur : " + pLabel(ps[winner]));
+  if (isTaupe(o) && pod[0].length) lines.push("Meilleur enquêteur : " + names(pod[0]));
   const sub = [pod[1].length ? "2e : " + names(pod[1]) : "", pod[2].length ? "3e : " + names(pod[2]) : ""].filter(Boolean).join(", ");
   if (sub) lines.push(sub);
   lines.push([cast.length ? cast.length + " joueurs" : "", dates(s), !done && !s.external && STATUS[s.status] ? STATUS[s.status] : ""].filter(Boolean).join(", "));
@@ -38,9 +47,9 @@ async function season(id) {
 async function orgPage(id) {
   const [o] = await q("orgs?select=" + OSEL + ",logo:data->>logo&id=eq." + enc(id));
   if (!o) return null;
-  const ss = await q("seasons?select=id,external:data->>external,cast:data->cast,status:data->>status&data->>orgId=eq." + enc(id));
+  const ss = await q("seasons?select=id,number:data->>number,taupeWins:data->taupeWins,external:data->>external,cast:data->cast,status:data->>status&data->>orgId=eq." + enc(id));
   const wins = {}, all = new Set();
-  ss.forEach(s => (Array.isArray(s.cast) ? s.cast : []).forEach(c => { all.add(c.playerId); if (!s.external && Number(c.place) === 1) wins[c.playerId] = (wins[c.playerId] || 0) + 1; }));
+  ss.forEach(s => (Array.isArray(s.cast) ? s.cast : []).forEach(c => { all.add(c.playerId); if (!s.external && actualWinner(s,o) === c.playerId) wins[c.playerId] = (wins[c.playerId] || 0) + 1; }));
   const best = Object.entries(wins).sort((a, b) => b[1] - a[1])[0];
   const ps = await players(best ? [best[0]] : []);
   const lines = [[ss.length + " saison" + (ss.length > 1 ? "s" : ""), all.size ? all.size + " joueurs" : "", o.hosts ? "Host : " + o.hosts : ""].filter(Boolean).join(", ")];
@@ -52,11 +61,12 @@ async function orgPage(id) {
 async function playerPage(id) {
   const [p] = await q("players?select=id,pseudo:data->>pseudo,precision:data->>precision,tagline:data->>tagline,hasAv:data->>avatar&id=eq." + enc(id));
   if (!p) return null;
-  const ss = await q("seasons?select=id,orgId:data->>orgId,number:data->>number,title:data->>title,customName:data->>customName,status:data->>status,cast:data->cast&data->cast=cs." + enc(JSON.stringify([{ playerId: id }])));
-  let w = 0, top = 0;
-  ss.forEach(s => { const c = (s.cast || []).find(c => c.playerId === id); const pl = c && Number(c.place); if (s.status === "terminee" && pl) { if (pl === 1) w++; if (pl <= 3) top++; } });
+  const ss = await q("seasons?select=id,orgId:data->>orgId,number:data->>number,taupeWins:data->taupeWins,title:data->>title,customName:data->>customName,status:data->>status,cast:data->cast&data->cast=cs." + enc(JSON.stringify([{ playerId: id }])));
   const orgIds = [...new Set(ss.map(s => s.orgId).filter(Boolean))];
-  const os = orgIds.length ? await q("orgs?select=id,name:data->>name&id=in.(" + orgIds.map(i => '"' + i + '"').join(",") + ")") : [];
+  const os = orgIds.length ? await q("orgs?select=id,name:data->>name,concept:data->>concept&id=in.(" + orgIds.map(i => '"' + i + '"').join(",") + ")") : [];
+  const orgMap = Object.fromEntries(os.map(o=>[o.id,o]));
+  let w=0,top=0;
+  ss.forEach(s=>{const c=(s.cast||[]).find(c=>c.playerId===id);const pl=c&&Number(c.place);if(s.status==="terminee"&&c){if(actualWinner(s,orgMap[s.orgId])===id)w++;if(pl&&pl<=3)top++;}});
   const lines = [[ss.length + " saison" + (ss.length > 1 ? "s" : ""), w ? w + " victoire" + (w > 1 ? "s" : "") : "", top ? top + " podium" + (top > 1 ? "s" : "") : ""].filter(Boolean).join(", ")];
   if (os.length) lines.push("ORGs : " + os.map(o => o.name).slice(0, 6).join(", ") + (os.length > 6 ? "…" : ""));
   if (p.tagline) lines.push("« " + p.tagline + " »");
