@@ -1080,3 +1080,7 @@ footer.site{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .quiz-results td.q-tie{background:rgba(255,194,61,.13);color:#ffe4a6}
 @media(max-width:900px){.sb.sb-no-votes{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:520px){.sb.sb-no-votes{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* Qui est la Taupe : première place de l’enquêteur distincte du vainqueur */
+.pc.taupe.season-winner .pc-rank b{color:var(--gold);text-shadow:0 0 20px rgba(255,194,61,.42)}
+.pc.q1 .pc-rank b{color:#ffa7c8}
