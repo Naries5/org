@@ -1148,12 +1148,24 @@ tr.link:active td,tr.link:active th{background:var(--accent-soft)}
 @keyframes title-in{from{opacity:0;translate:0 10px}}
 .fresh .infobox{animation:box-in .5s var(--ease) .08s both}
 @keyframes box-in{from{opacity:0;translate:12px 0}}
-/* le vainqueur reçoit un reflet doré à l'arrivée */
+/* podium : le 3e, puis le 2e, puis le vainqueur entrent comme sur un plateau,
+   chacun avec un reflet à la couleur de sa médaille ; le reflet repasse au survol */
 .cpic{position:relative}
-.fresh .ccard.p1 .cpic::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,230,160,.55) 48%,transparent 66%);translate:-120% 0;animation:sheen 1.1s var(--ease) .55s both;pointer-events:none}
-@keyframes sheen{to{translate:120% 0}}
-.fresh .ccard.p1 .cnum{animation:crown-in .6s var(--spring) .45s both}
-@keyframes crown-in{from{scale:.4;opacity:0}}
+.ccard.p1{--medal:rgba(255,226,140,.7)}.ccard.p2{--medal:rgba(235,240,250,.6)}.ccard.p3{--medal:rgba(240,180,135,.6)}
+.ccard:is(.p1,.p2,.p3) .cpic::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,var(--medal) 48%,transparent 66%);translate:-120% 0;pointer-events:none;z-index:1}
+@keyframes sheen{from{translate:-120% 0}to{translate:120% 0}}
+.ccard.p3{--pd:.35s}.ccard.p2{--pd:.6s}.ccard.p1{--pd:.9s}
+.fresh .classement>.ccard:is(.p1,.p2,.p3){animation:podium-in .7s var(--spring) both;animation-delay:var(--pd)}
+@keyframes podium-in{0%{opacity:0;translate:0 26px;scale:.82}60%{opacity:1}}
+.fresh .ccard:is(.p1,.p2,.p3) .cpic::after{animation:sheen 1s var(--ease) both;animation-delay:calc(var(--pd) + .35s)}
+.fresh .ccard:is(.p1,.p2,.p3) .cnum{animation:stamp .55s var(--spring) both;animation-delay:calc(var(--pd) + .25s)}
+@keyframes stamp{from{scale:2.2;opacity:0;rotate:-12deg}}
+/* le vainqueur : un halo doré bref quand il se pose */
+.fresh .ccard.p1 .cpic{animation:winner-glow 1.4s var(--ease) both;animation-delay:calc(var(--pd) + .2s)}
+@keyframes winner-glow{0%{filter:brightness(1)}35%{filter:brightness(1.25) drop-shadow(0 0 18px rgba(255,194,61,.75))}100%{filter:brightness(1) drop-shadow(0 0 0 rgba(255,194,61,0))}}
+@media (hover:hover) and (pointer:fine){
+  .ccard:is(.p1,.p2,.p3):hover .cpic::after{animation:sheen .85s var(--ease) both}
+}
 .fresh .crown-pic::after{content:"";position:absolute;inset:0;border-radius:50%;background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.5) 50%,transparent 65%);background-size:250% 100%;background-position:120% 0;animation:sheen-round 1.2s var(--ease) both;animation-delay:calc(var(--i,0) * 30ms + .4s);pointer-events:none}
 @keyframes sheen-round{to{background-position:-30% 0}}
 
@@ -1189,7 +1201,8 @@ tr.link:active td,tr.link:active th{background:var(--accent-soft)}
   .og:active,.stile:active,.ccard:active,.pc:active,.crown:active,.card:active,.nw:active,.cal-i:active,.pin-card:active,.btn:active,.share-btn:active,.seg-b:active,.tabs button:active,.pk-tabs button:active,.icon-btn:active,.car-b:active,.ubtn:active{scale:1}
   .og:hover,.stile:hover,.ccard:hover,.pc:hover,.pin-card:hover,a.card:hover,.spot:hover,.ins:hover,.nw:hover,.crown:hover .crown-pic{transform:none!important}
   .overlay .dialog,.t.enter,.t.leave{transform:none}
-  .fresh .ccard.p1 .cpic::after,.fresh .crown-pic::after{display:none}
+  .ccard:is(.p1,.p2,.p3) .cpic::after,.fresh .crown-pic::after{display:none}
+  .fresh .ccard.p1 .cpic{filter:none}
   ::view-transition-old(root),::view-transition-new(root){animation:none}
   html{transition:none}
 }
