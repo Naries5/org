@@ -1263,8 +1263,6 @@ nav.main a[aria-current="page"]{border-bottom-color:transparent!important}
 img{transition:opacity .45s var(--ease),filter .45s var(--ease)}
 img.ld{opacity:0;filter:blur(6px)}
 
-/* confettis */
-.confetti{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:70}
 
 /* changement de page : on glisse vers l'avant quand on va plus loin, vers l'arrière quand on revient */
 html[data-vt="fwd"]::view-transition-old(root){animation:vt-out-l .32s var(--ease-in) both}
@@ -1275,6 +1273,30 @@ html[data-vt="back"]::view-transition-new(root){animation:vt-in-l .42s var(--eas
 @keyframes vt-out-r{to{opacity:0;translate:40px 0}}
 @keyframes vt-in-r{from{opacity:0;translate:60px 0}}
 @keyframes vt-in-l{from{opacity:0;translate:-60px 0}}
+
+/* Qui est la Taupe : quand la taupe gagne, c'est elle la star */
+.taupe-panel.won{grid-column:1/-1;min-height:150px;padding:22px 26px;gap:24px;border-color:var(--gold);
+  background:linear-gradient(110deg,rgba(255,194,61,.16),rgba(144,24,72,.28) 55%,rgba(20,10,16,.6));box-shadow:0 0 0 1px rgba(255,194,61,.35),0 0 40px rgba(255,194,61,.12)}
+.taupe-panel.won .taupe-emblem{color:rgba(255,194,61,.10)}
+.taupe-panel.won .taupe-portrait{overflow:visible;width:104px;height:104px;box-shadow:0 0 0 3px var(--gold),0 0 26px rgba(255,194,61,.35);perspective:600px}
+.taupe-panel.won .taupe-identity small{color:var(--gold);font-size:.75rem}
+.taupe-panel.won .taupe-identity strong{color:var(--gold);font-size:1.7rem}
+.taupe-panel.won .taupe-identity span{font-size:1.25rem}
+.taupe-panel.won .taupe-identity em{font-size:.88rem;max-width:46ch}
+.tp-face{position:absolute;inset:0;display:grid;place-items:center;border-radius:50%;overflow:hidden;backface-visibility:hidden}
+.tp-q{background:#2a0f1d;color:#ff9bbc;font-family:var(--font-display);font-size:3rem;transform:rotateY(180deg)}
+.tp-av .avatar{width:100%;height:100%;border-radius:50%;object-fit:cover}
+.tp-crown{position:absolute;top:-22px;left:50%;translate:-50% 0;rotate:-10deg;font-size:1.7rem;font-style:normal;filter:drop-shadow(0 2px 2px rgba(0,0,0,.5))}
+.taupe-note{margin:-12px 0 18px;color:var(--muted);font-size:.92rem}
+/* révélation : le « ? » se retourne et laisse place à la taupe, la couronne se pose */
+.fresh .taupe-panel.won .tp-q{animation:tp-q-flip .9s var(--ease) .35s both}
+.fresh .taupe-panel.won .tp-av{animation:tp-av-flip .9s var(--ease) .35s both}
+@keyframes tp-q-flip{from{transform:rotateY(0deg)}to{transform:rotateY(180deg)}}
+@keyframes tp-av-flip{from{transform:rotateY(-180deg)}to{transform:rotateY(0deg)}}
+.fresh .taupe-panel.won .tp-crown{animation:tp-crown 0.6s var(--spring) 1.15s both}
+@keyframes tp-crown{from{opacity:0;translate:-50% -24px;scale:.5}}
+.fresh .taupe-panel.won{animation:tp-glow 1.6s var(--ease) 1s both}
+@keyframes tp-glow{40%{box-shadow:0 0 0 1px rgba(255,194,61,.6),0 0 60px rgba(255,194,61,.35)}}
 
 /* accessibilité */
 @media (prefers-reduced-motion:reduce){
@@ -1289,8 +1311,8 @@ html[data-vt="back"]::view-transition-new(root){animation:vt-in-l .42s var(--eas
   .pending{opacity:1;translate:none}
   img.ld{opacity:1;filter:none}
   .og::after,.stile::after,.ccard .cpic::before{display:none}
+  .tp-q{display:none}.tp-av{transform:none}
   .car-dots button[aria-current]::after{display:none}
-  .confetti{display:none}
   html[data-vt]::view-transition-old(root),html[data-vt]::view-transition-new(root){animation:none}
 }
 @media (prefers-reduced-transparency:reduce){

@@ -375,27 +375,7 @@ function heroLetters(){
   t.classList.add("lettering");
   setTimeout(()=>{if(!document.body.contains(t))return;t.textContent=txt;t.classList.remove("lettering");t.classList.add("shine");setTimeout(()=>t.classList.remove("shine"),1400);},40*txt.length+700);
 }
-function onReveal(el){
-  /* Confettis pour le vainqueur, une fois par saison et par visite */
-  const p1=el.querySelector&&el.querySelector(".classement .ccard.p1");
-  if(p1&&pageOf(lastPage)==="saison"){const sid=lastPage.slice(lastPage.indexOf("-")+1);const s=season(sid);
-    let seen=false;try{seen=sessionStorage.getItem("oc-conf-"+sid);sessionStorage.setItem("oc-conf-"+sid,"1");}catch(e){}
-    if(s&&s.status==="terminee"&&!seen)setTimeout(()=>{if(document.body.contains(p1))confetti(p1);},1250);}
-}
-function confetti(el){
-  const r=el.getBoundingClientRect();const cx=r.left+r.width/2,cy=r.top+r.height*.35;
-  const cv=document.createElement("canvas");cv.className="confetti";const dpr=Math.min(2,window.devicePixelRatio||1);
-  cv.width=innerWidth*dpr;cv.height=innerHeight*dpr;document.body.appendChild(cv);const x=cv.getContext("2d");x.scale(dpr,dpr);
-  const cs=getComputedStyle(document.documentElement);const pal=["#FFC23D","#FFE7A3","#ffffff",cs.getPropertyValue("--t1").trim()||"#FF4D6D",cs.getPropertyValue("--t2").trim()||"#FFC23D"];
-  const P=[...Array(150)].map(()=>{const a=-Math.PI/2+(Math.random()-.5)*Math.PI*1.1,v=6+Math.random()*9;
-    return {x:cx,y:cy,vx:Math.cos(a)*v,vy:Math.sin(a)*v,w:5+Math.random()*6,h:3+Math.random()*5,r:Math.random()*6.3,vr:(Math.random()-.5)*.4,c:pal[Math.random()*pal.length|0],o:1};});
-  const t0=performance.now();
-  const step=now=>{const t=(now-t0)/1000;x.clearRect(0,0,innerWidth,innerHeight);let alive=0;
-    for(const p of P){p.vy+=.28;p.vx*=.985;p.vy*=.985;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;if(t>1.6)p.o=Math.max(0,p.o-.025);
-      if(p.o>0&&p.y<innerHeight+20){alive++;x.save();x.globalAlpha=p.o;x.translate(p.x,p.y);x.rotate(p.r);x.fillStyle=p.c;x.fillRect(-p.w/2,-p.h/2,p.w,p.h*Math.abs(Math.cos(p.r*1.7)));x.restore();}}
-    if(alive&&t<4)requestAnimationFrame(step);else cv.remove();};
-  requestAnimationFrame(step);
-}
+function onReveal(el){}
 /* Barre sous l'onglet actif : elle glisse d'un onglet à l'autre */
 function moveNavInd(){
   const nav=document.querySelector("nav.main");if(!nav)return;
@@ -825,12 +805,15 @@ function pageSeason(id){
   const cast=sortedCast(s);const taupes=cast.filter(c=>isTaupeCast(s,c));const ranked=cast.filter(c=>!isTaupeCast(s,c));const signup=safeUrl(s.signup);const awards=s.awards||[];
   const hasVotes=(s.rounds||[]).length>0;const ext=safeUrl(s.external);
   const by=n=>cast.filter(c=>Number(c.place)===n).map(c=>splink(s,c.playerId)).join(", ");
-  const ranking=cast.length?`${taupes.length?`<div class="taupe-panels">${taupes.map(c=>`<a class="taupe-panel" href="#joueur-${esc(c.playerId)}"><span class="taupe-emblem">?</span><span class="taupe-portrait">${sAva(s,c.playerId,"lg")}</span><span class="taupe-identity"><small>${taupeWins(s)?"TAUPE VICTORIEUSE":"RÔLE SECRET RÉVÉLÉ"}</small><strong>LA TAUPE</strong><span>${esc(sName(s,c.playerId))}</span><em>${taupeWins(s)?"Vainqueur de la saison":"Hors classement des questionnaires"}</em></span></a>`).join("")}</div>`:""}<div class="classement">${ranked.map((c,i)=>{const pl=Number(c.place);const u=imgSrc(sAvatar(s,c.playerId));const real=c.sPseudo?pName(c.playerId):"";
+  const tw=isTaupeOrg(o)&&taupeWins(s);
+  const ranking=cast.length?`${taupes.length?`<div class="taupe-panels">${taupes.map(c=>tw
+    ?`<a class="taupe-panel won" href="#joueur-${esc(c.playerId)}"><span class="taupe-emblem">?</span><span class="taupe-portrait"><span class="tp-face tp-q">?</span><span class="tp-face tp-av">${sAva(s,c.playerId,"lg")}</span><i class="tp-crown" aria-hidden="true">👑</i></span><span class="taupe-identity"><small>VAINQUEUR DE LA SAISON</small><strong>La taupe a gagné</strong><span>${esc(sName(s,c.playerId))}</span><em>Personne ne l'a démasquée : elle remporte la saison devant tous les enquêteurs.</em></span></a>`
+    :`<a class="taupe-panel" href="#joueur-${esc(c.playerId)}"><span class="taupe-emblem">?</span><span class="taupe-portrait">${sAva(s,c.playerId,"lg")}</span><span class="taupe-identity"><small>RÔLE SECRET RÉVÉLÉ</small><strong>LA TAUPE</strong><span>${esc(sName(s,c.playerId))}</span><em>Hors classement des questionnaires</em></span></a>`).join("")}</div>`:""}${tw?`<p class="taupe-note">Ci-dessous, le classement des enquêteurs. Aucun d'eux n'a gagné : la taupe les a tous dupés.</p>`:""}<div class="classement${tw?" taupe-won":""}">${ranked.map((c,i)=>{const pl=Number(c.place);const u=imgSrc(sAvatar(s,c.playerId));const real=c.sPseudo?pName(c.playerId):"";
     const tms=[teamById(s,c.team),teamById(s,c.team2),teamById(s,c.team3)].filter((t,j,arr)=>t&&arr.indexOf(t)===j);
     const sub=[tms.map(t=>`<span class="tdot" style="--tc:${esc(t.color)}">${esc(t.name)}</span>`).join(""),c.note?`<span>${esc(c.note)}</span>`:"",isTaupeOrg(o)&&pl===1?`<span>${taupeWins(s)?"Meilleur enquêteur":"Vainqueur · meilleur enquêteur"}</span>`:"",hasVoteMechanic(s)&&hasVotes&&pl!==1?`<span>${fmtN(votesAgainst(c.playerId,s))} vote${votesAgainst(c.playerId,s)>1?"s":""}</span>`:""].filter(Boolean).join("");
     const rot=(((i*37)%5)-2)*0.7;
     const dq=!pl&&s.status==="terminee";
-    return `<a class="ccard${pl&&pl<=3?" p"+pl:""}${dq?" dq":""}" style="--rot:${rot}deg" href="#joueur-${esc(c.playerId)}"><span class="cpic">${u?`<img src="${esc(u)}" alt="" loading="lazy">`:esc(initials(sName(s,c.playerId)))}</span>${pl||dq?`<span class="cnum">${pl?String(pl).padStart(2,"0"):"DQ"}</span>`:""}<span class="cname">${esc(sName(s,c.playerId))}</span>${real&&real!==c.sPseudo?`<span class="creal">${esc(real)}</span>`:""}${sub?`<span class="csub">${sub}</span>`:""}</a>`;}).join("")}</div>`:`<p class="muted">${secretOf(s).n?"Le casting est encore secret : les joueurs apparaîtront ici au fur et à mesure qu'ils sont révélés.":"Le casting n'a pas encore été renseigné."}</p>`;
+    return `<a class="ccard${pl&&pl<=3&&!tw?" p"+pl:""}${dq?" dq":""}" style="--rot:${rot}deg" href="#joueur-${esc(c.playerId)}"><span class="cpic">${u?`<img src="${esc(u)}" alt="" loading="lazy">`:esc(initials(sName(s,c.playerId)))}</span>${pl||dq?`<span class="cnum">${pl?String(pl).padStart(2,"0"):"DQ"}</span>`:""}<span class="cname">${esc(sName(s,c.playerId))}</span>${real&&real!==c.sPseudo?`<span class="creal">${esc(real)}</span>`:""}${sub?`<span class="csub">${sub}</span>`:""}</a>`;}).join("")}</div>`:`<p class="muted">${secretOf(s).n?"Le casting est encore secret : les joueurs apparaîtront ici au fur et à mesure qu'ils sont révélés.":"Le casting n'a pas encore été renseigné."}</p>`;
   const sib=seasonsOf(s.orgId);const ix=sib.indexOf(s);const prv=sib[ix-1],nxt=sib[ix+1];
   const box=infobox(bigImg(s.logo||o.logo,o.name),fullSeasonName(s),[
     ["ORG",o.id?`<a href="#org-${esc(o.id)}">${esc(o.name)}</a>`:esc(o.name)],["Saison",esc(seasonShort(s))],["Thème",esc(s.title||"")],["La taupe",taupes.length?taupes.map(c=>splink(s,c.playerId)).join(", "):""],["Résultat",isTaupeOrg(o)?(taupeWins(s)?"Victoire de la taupe":"Victoire des enquêteurs"):""],
