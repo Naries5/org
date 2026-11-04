@@ -1131,6 +1131,10 @@ html{transition:--t1 .6s var(--ease),--t2 .6s var(--ease)}
 tr.link:active td,tr.link:active th{background:var(--accent-soft)}
 .crown-pic{transition:transform .3s var(--spring)!important}
 
+/* tuiles de saison : neutres au repos, le contour doré n'apparaît qu'au survol (c'était l'inverse) */
+.stile{box-shadow:0 0 0 0 transparent!important}
+.stile:hover,.stile:focus-visible{box-shadow:0 0 0 2px var(--gold),0 12px 26px rgba(0,0,0,.45)!important;border-color:transparent!important}
+
 /* survol : seulement avec une vraie souris ; les cartes s'inclinent vers le curseur */
 @media (hover:hover) and (pointer:fine){
   .og:hover,.stile:hover,.ccard:hover,.pc:hover,.pin-card:hover{transform:perspective(800px) translateY(-3px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg))!important}
