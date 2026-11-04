@@ -1,0 +1,331 @@
+/* =====================================================================
+   ORG-Central — « ÉDITION SPÉCIALE »
+   Proposition de refonte : le wiki traité comme un quotidien sportif.
+   Papier journal, encre noire, grands titres condensés, filets d'imprimerie,
+   chiffres en machine à écrire. La couleur de chaque saison devient l'encre
+   d'accompagnement (la « deuxième couleur ») de sa page.
+   Cette feuille se charge après styles.css et la surcharge entièrement.
+   ===================================================================== */
+
+:root{
+  --paper:#EEE8DC; --paper-2:#E4DDCD; --paper-3:#D9D0BD; --sheet:#F6F2E9;
+  --ink:#16130F; --ink-2:#3A342C; --muted:#6B6256;
+  --red:#D6281F;
+  /* la couleur de saison, assombrie pour rester lisible sur papier */
+  --spot:color-mix(in oklab,var(--t1) 62%,#1a0f08);
+  --spot-soft:color-mix(in srgb,var(--t1) 22%,var(--paper));
+  --bg:var(--paper); --surface:var(--sheet); --surface-2:var(--paper-2);
+  --line:var(--ink); --line-soft:rgba(22,19,15,.16);
+  --accent:var(--spot); --accent-ink:var(--paper); --accent-soft:var(--spot-soft);
+  --gold:#B8860B; --gold-soft:rgba(184,134,11,.14);
+  --ok:#1F7A3E; --ok-soft:rgba(31,122,62,.12); --info:#1E4FA8; --info-soft:rgba(30,79,168,.1);
+  --live:var(--red); --live-soft:rgba(214,40,31,.1); --done:var(--muted); --done-soft:rgba(22,19,15,.06);
+  --out:#16130F;
+  --font-display:"Anton","Bebas Neue",Impact,sans-serif;
+  --font-serif:"Newsreader","Georgia",serif;
+  --font-mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --font-body:"Inter Tight","Barlow",system-ui,sans-serif;
+  --font-cond:"JetBrains Mono",ui-monospace,monospace;
+  --radius:0px; --shadow:none; --shadow-hi:6px 6px 0 var(--ink);
+  color-scheme:light;
+}
+html{background:var(--paper)}
+body{background:var(--paper)!important;color:var(--ink);font-family:var(--font-body);
+  /* grain de papier */
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.09 0 0 0 0 0.07 0 0 0 0 0.05 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")!important}
+::selection{background:var(--ink);color:var(--paper)}
+:focus-visible{outline:2px solid var(--ink)!important;outline-offset:3px;border-radius:0!important}
+
+/* ---------- typographie ---------- */
+h1,h2,h3,.hx-t,.page-head h1,.og-body h3,.cname,.ib-title,.brand,.nw-org b,.ins-head h2{text-shadow:none!important}
+h1,.page-head h1{font-family:var(--font-display)!important;font-weight:400!important;text-transform:uppercase;letter-spacing:-.005em!important;line-height:.92!important;color:var(--ink)!important;font-size:clamp(2.8rem,7vw,5.6rem)!important}
+h2{font-family:var(--font-display)!important;font-weight:400!important;text-transform:uppercase!important;letter-spacing:.005em!important;color:var(--ink)!important;font-size:clamp(1.7rem,3vw,2.3rem)!important;line-height:1!important}
+h3{font-family:var(--font-body);font-weight:800;letter-spacing:-.01em}
+.muted,.hint,.note{color:var(--muted)!important}
+a{text-decoration-thickness:1px;text-underline-offset:.16em}
+.eyebrow,.crumbs,.count,.chip,.tag,thead th,.infobox dt,.seg-b,.tabs button,.pk-tabs button,footer.site,.role,.spot-org,.og-stats>span,.og-h i,.cal-d small,.ins-kicker,.nw-org small,.pc-org,.pc-fmt,.pc-tag,.sb-c span,.og-hosts,.og-last,.stile .num,.creal,.csub,.cal-rel,.legend{font-family:var(--font-mono)!important;letter-spacing:0!important}
+.eyebrow{font-size:.78rem!important;font-weight:600!important;text-transform:uppercase!important;letter-spacing:.08em!important;color:var(--spot)!important;margin-bottom:10px!important}
+.eyebrow::before{content:"■ ";color:var(--spot)}
+.lede,.desc,.ph-bio,.taupe-note,.og-directory-intro,.ins-head p{font-family:var(--font-serif)!important;color:var(--ink-2)!important}
+.desc{font-size:1.18rem!important;line-height:1.55!important;max-width:62ch}
+.desc::first-letter{font-family:var(--font-display);font-size:3.4em;float:left;line-height:.82;margin:.06em .08em 0 0;color:var(--spot)}
+
+/* ---------- barre du haut : bandeau de journal ---------- */
+.top{background:var(--paper)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;border-bottom:0!important;box-shadow:0 1px 0 var(--ink),0 4px 0 var(--paper),0 5px 0 var(--ink)}
+.top-in{max-width:1280px!important;padding:12px 24px!important}
+.brand{font-family:var(--font-display)!important;font-size:1.65rem!important;letter-spacing:.01em!important;color:var(--ink)!important;text-transform:uppercase}
+.brand .star{color:var(--red)!important;margin-right:6px!important}
+.brand b{color:var(--ink)!important;font-weight:400!important;margin-left:6px}
+nav.main a{font-family:var(--font-mono)!important;font-size:.8rem!important;font-weight:600!important;text-transform:uppercase!important;letter-spacing:.04em!important;color:var(--ink-2)!important;border-bottom:0!important}
+nav.main a:hover{color:var(--ink)!important;background:none!important}
+nav.main a[aria-current="page"]{color:var(--ink)!important}
+.nav-ind{height:4px!important;background:var(--ink)!important;border-radius:0!important}
+.gsearch input,.hero-search input{border-radius:0!important;border:1.5px solid var(--ink)!important;background:var(--sheet)!important;color:var(--ink)!important;font-family:var(--font-mono)!important;font-size:.85rem!important}
+.gsearch input::placeholder,.hero-search input::placeholder{color:var(--muted)!important}
+.gres{background:var(--sheet)!important;border:1.5px solid var(--ink)!important;border-radius:0!important;box-shadow:6px 6px 0 var(--ink)!important;backdrop-filter:none!important}
+.gres a{border-radius:0!important}
+.gres a:hover,.gres a.on{background:var(--ink)!important;color:var(--paper)!important}
+.gres a:hover small,.gres a.on small{color:var(--paper)!important}
+.ubtn,.udrop{border-radius:0!important}
+.udrop{background:var(--sheet)!important;border:1.5px solid var(--ink)!important;box-shadow:6px 6px 0 var(--ink)!important}
+
+/* ---------- boutons, champs ---------- */
+.btn,.share-btn,.car-b{border-radius:0!important;border:1.5px solid var(--ink)!important;background:transparent!important;color:var(--ink)!important;font-family:var(--font-mono)!important;font-weight:600!important;font-size:.78rem!important;text-transform:uppercase;letter-spacing:.03em;box-shadow:none!important}
+.btn:hover,.share-btn:hover,.car-b:hover{background:var(--ink)!important;color:var(--paper)!important;filter:none!important}
+.btn.primary,.tl-open{background:var(--ink)!important;color:var(--paper)!important}
+.btn.primary:hover{background:var(--red)!important;border-color:var(--red)!important}
+.btn.danger{color:var(--red)!important;border-color:var(--red)!important}
+.btn.danger.solid{background:var(--red)!important;color:#fff!important}
+input,select,textarea{border-radius:0!important;border:1.5px solid var(--ink)!important;background:var(--sheet)!important;color:var(--ink)!important}
+select option{background:var(--sheet)}
+.tabs,.seg,.pk-tabs,.pl-seg{border-radius:0!important;border:1.5px solid var(--ink)!important;background:transparent!important;padding:0!important;gap:0!important}
+.tabs button,.seg-b,.pk-tabs button,.pl-seg button{border-radius:0!important;font-size:.75rem!important;text-transform:uppercase!important;color:var(--ink)!important;padding:7px 12px!important}
+.tabs button[aria-pressed="true"],.seg-b[aria-pressed="true"],.pk-tabs button[aria-selected="true"],.pl-seg button[aria-pressed="true"]{background:var(--ink)!important;color:var(--paper)!important;box-shadow:none!important}
+
+/* ---------- étiquettes ---------- */
+.chip{font-size:.72rem!important;text-transform:uppercase!important;letter-spacing:.04em!important;font-weight:700!important}
+.st-live{color:var(--red)!important}.st-ins{color:var(--ok)!important}.st-ann{color:var(--info)!important}.st-done{color:var(--muted)!important}
+.st-live::before{display:inline-block!important;content:""!important;width:7px;height:7px;border-radius:50%;background:var(--red);margin-right:6px;animation:pulse 1.4s ease-in-out infinite}
+.tag{border-radius:0!important;border:1px solid var(--ink)!important;color:var(--ink)!important;background:transparent!important;font-size:.68rem!important;text-transform:uppercase!important;padding:1px 6px!important}
+.tag-speed{background:var(--ink)!important;color:var(--paper)!important}
+.tag-award{background:var(--gold-soft)!important;color:#6b4e00!important;border-color:#6b4e00!important}
+.count{background:none!important;color:var(--muted)!important;font-size:.85rem!important;padding:0!important;border:0!important}
+
+/* ---------- sections : filet épais + titre condensé ---------- */
+main{max-width:1280px!important;padding:24px 24px 80px!important;gap:56px!important}
+.block-head{border-top:4px solid var(--ink)!important;padding-top:12px!important;align-items:baseline!important;gap:12px!important}
+.block-head h2::before{content:none!important}
+.block-head .count{order:-1;font-size:.75rem!important;align-self:flex-start;margin-top:4px}
+.og-h.on span::before{background:var(--red)!important}
+.og-h i{background:transparent!important;border:1px solid var(--ink)!important;border-radius:0!important}
+
+/* ---------- une : en-tête de l'accueil ---------- */
+.hx2{display:block!important;padding:18px 0 0!important;border:0!important;margin:0!important}
+.hx2 .hx-t{display:block;font-size:clamp(4rem,15.2vw,13rem)!important;line-height:.8!important;letter-spacing:-.02em!important;color:var(--ink)!important;text-align:center!important;margin:0!important;padding:10px 0 6px;border-top:1px solid var(--ink);border-bottom:6px double var(--ink);white-space:nowrap}
+.hx2 .hx-t.shine{background:linear-gradient(100deg,var(--ink) 40%,var(--red) 50%,var(--ink) 60%) 0 0/300% 100% no-repeat!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important}
+.hx2>div:first-child{display:flex;flex-direction:column}
+.hx2>div:first-child::before{content:"Le quotidien des ORGs & speeds françaises";order:-1;display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;padding-bottom:8px;color:var(--ink-2)}
+.hx2 .lede{font-family:var(--font-serif)!important;font-style:italic;font-size:clamp(1.1rem,2vw,1.45rem)!important;text-align:center!important;max-width:none!important;margin:14px auto 0!important;color:var(--ink)!important}
+.hx2 .hero-search{max-width:640px!important;margin:18px auto 0!important;display:block}
+.hx2 .hero-search input{padding:14px 18px!important;font-size:.95rem!important;box-shadow:5px 5px 0 var(--ink)}
+.dateline{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin:14px 0 0;padding:6px 0;border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);font-family:var(--font-mono);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em}
+.dateline b{color:var(--red)}
+
+/* ---------- affiches d'ORG, « à l'antenne », inscriptions : cartes de presse ---------- */
+.og{border-radius:0!important;border:1.5px solid var(--ink)!important;background:var(--sheet)!important;color:var(--ink)!important;min-height:0!important}
+.og:hover{border-color:var(--ink)!important;box-shadow:7px 7px 0 var(--ink)!important}
+.og-bg{inset:0 0 auto 0!important;height:170px!important;filter:saturate(1.15) contrast(1.05)!important;transform:none!important;opacity:1!important;border-bottom:1.5px solid var(--ink)}
+.og-bg::after{background:none!important}
+.og-top{padding:10px 12px 0!important;min-height:0}
+.og-top .chip{background:var(--sheet)!important;padding:2px 6px!important;border:1px solid var(--ink)!important}
+.og-top .tag{background:var(--sheet)!important}
+.og-logo{padding:44px 0 6px!important}
+.og-logo .logo{width:104px!important;height:104px!important;border-radius:0!important;border:1.5px solid var(--ink)!important;box-shadow:5px 5px 0 var(--ink)!important}
+.og-body{text-align:left!important;padding:6px 16px 16px!important}
+.og-body h3{font-family:var(--font-display)!important;font-weight:400!important;font-size:1.9rem!important;color:var(--ink)!important;letter-spacing:0!important}
+.og-last{font-family:var(--font-serif)!important;font-size:.95rem!important;white-space:normal!important}
+.og-stats{justify-content:space-between!important;border-top:1px solid var(--ink)!important}
+.og-stats b{color:var(--spot)!important;font-family:var(--font-display);font-weight:400}
+.og-win{background:transparent!important;border:0!important}
+.og-hosts{font-size:.7rem!important}
+.og-grid{gap:22px!important}
+.og-section-head{border-top:4px solid var(--ink);padding-top:12px}
+.og-section-count{font-family:var(--font-mono)}
+
+.spot,.ins{border-radius:0!important}
+.spot .og-bg,.ins .og-bg{inset:0 auto 0 0!important;width:38%!important;height:auto!important;border-bottom:0!important;border-right:1.5px solid var(--ink)}
+.spot-in,.ins-in{padding:22px 22px 22px calc(38% + 22px)!important;min-height:250px}
+.spot-logo,.ins-logo{display:none!important}
+.spot-txt h3,.ins-txt h3{font-family:var(--font-display)!important;font-weight:400!important;font-size:clamp(2rem,4vw,3.4rem)!important;line-height:.95!important;text-transform:uppercase;color:var(--ink)!important}
+.spot-info{font-family:var(--font-serif)!important;color:var(--ink-2)!important}
+.spot-bar{background:var(--paper-3)!important;border-radius:0!important;height:8px!important}.spot-bar i{background:var(--red)!important;border-radius:0!important}
+.spot-left b{font-family:var(--font-display);font-weight:400;font-size:2.4rem;color:var(--ink)!important}
+.spoil-btn{border-radius:0!important;border:1.5px dashed var(--red)!important;background:transparent!important;color:var(--ink)!important;backdrop-filter:none!important;font-family:var(--font-mono);font-size:.78rem;text-transform:uppercase}
+.spoil-btn:hover{background:var(--red)!important;color:#fff!important}
+.spot-out{background:var(--sheet)!important;border:1px solid var(--ink)!important;border-radius:0!important}
+.car-dots button{border-radius:0!important;height:5px!important;background:var(--paper-3)!important}
+.car-dots button[aria-current]{background:var(--paper-3)!important}
+.car-dots button[aria-current]::after{background:var(--ink)!important}
+.ins-sec{background:transparent!important;border:0!important;border-top:4px solid var(--ink)!important;border-radius:0!important;padding:14px 0 0!important}
+.ins-head{text-align:left!important}
+.ins-head h2{color:var(--ink)!important;font-size:clamp(2.2rem,6vw,4.6rem)!important}
+.ins-kicker{background:var(--ok)!important;color:#fff!important;border-radius:0!important}
+.ins-meta>span{border-radius:0!important;background:transparent!important;border:1px solid var(--ink)!important}
+
+/* ---------- annonces : brèves ---------- */
+.nw{border-radius:0!important;border:0!important;border-top:1.5px solid var(--ink)!important;background:transparent!important;box-shadow:none!important}
+.nw-bg{display:none!important}
+.nw-in{padding:14px 0 0!important}
+.nw h3{font-family:var(--font-serif)!important;font-weight:700!important;font-size:1.45rem!important;line-height:1.15!important;text-transform:none!important}
+.nw p{font-family:var(--font-serif)}
+.nw-org .logo{border-radius:0!important;border:1px solid var(--ink)!important;box-shadow:none!important;width:44px!important;height:44px!important}
+.nw-org b{color:var(--ink)!important;font-size:1.1rem!important}
+.nw-date{background:var(--ink)!important;color:var(--paper)!important;border-radius:0!important}
+.nw-gen{background:var(--red)!important;border-radius:0!important}
+.news{border-radius:0!important;border:0!important;border-top:1.5px solid var(--ink)!important;background:transparent!important}
+
+/* ---------- calendrier ---------- */
+.cal-i{border-radius:0!important;border:0!important;border-bottom:1px solid var(--line-soft)!important;background:transparent!important;padding:12px 4px!important}
+.cal-i:hover{background:var(--sheet)!important}
+.cal-d{border-radius:0!important;background:var(--sheet)!important;color:var(--ink)!important;border:1.5px solid var(--ink);box-shadow:3px 3px 0 var(--ink)!important}
+.cal-d small:first-child{background:var(--ink)!important;color:var(--paper)!important}
+.cal-d b{font-weight:400}
+.cal-i .logo{border-radius:0!important;border:1px solid var(--ink)}
+.cal-m h3{font-family:var(--font-mono)!important;text-transform:uppercase;font-size:.78rem!important;color:var(--spot)!important}
+.cal-m h3::after{background:var(--ink)!important;height:1px}
+.cal-rel{border-radius:0!important;background:transparent!important;border:1px solid var(--ink);color:var(--ink)!important}
+.cal-rel.soon{background:var(--red)!important;border-color:var(--red)!important;color:#fff!important}
+.cal-day{border-radius:0!important;border:1px solid var(--line-soft)!important;background:var(--sheet)!important}
+.cal-day.now{box-shadow:inset 0 0 0 2px var(--ink)!important}
+
+/* ---------- derniers sacres : médaillons dorés sur papier ---------- */
+.crown-pic{box-shadow:4px 4px 0 var(--ink)!important}
+.crown-badge .logo{border-radius:0!important;border:1.5px solid var(--ink)!important}
+.crown b{font-family:var(--font-display);font-weight:400;font-size:1.25rem;text-transform:uppercase}
+.crown small{font-family:var(--font-mono);font-size:.68rem;color:var(--muted)}
+.crown-t{font-family:var(--font-serif)!important;font-style:italic;font-size:.85rem!important}
+
+/* ---------- page d'une saison / ORG ---------- */
+.crumbs{font-size:.72rem!important;text-transform:uppercase;letter-spacing:.06em!important}
+.crumbs a{color:var(--ink-2)!important}
+.page-head{border-bottom:6px double var(--ink);padding-bottom:16px;margin-top:-8px!important}
+.page-head h1{color:var(--ink)!important}
+.wiki{gap:44px!important;grid-template-columns:minmax(0,1fr) 300px!important}
+.infobox{border-radius:0!important;background:var(--sheet)!important;border:0!important;border-top:6px solid var(--spot)!important;box-shadow:0 0 0 1.5px var(--ink)!important;padding:12px!important;top:96px!important}
+.ib-title{font-family:var(--font-display)!important;font-weight:400!important;font-size:1.35rem!important;text-transform:uppercase!important;text-align:left!important;line-height:1!important;padding:2px 0 12px!important}
+.ib-img{border-radius:0!important;border:1.5px solid var(--ink)!important}
+.infobox dt{font-size:.68rem!important;text-transform:uppercase!important;color:var(--muted)!important}
+.infobox dd{font-family:var(--font-body);font-weight:700}
+.infobox dd a{color:var(--spot)!important}
+.infobox dt,.infobox dd{border-bottom:1px solid var(--line-soft)!important}
+
+/* tuiles de saison : couvertures de magazine */
+.stiles{gap:28px 20px!important}
+.stile{background:transparent!important;border:0!important;padding:0!important;border-radius:0!important}
+.stile .cover{border-radius:0!important;border:1.5px solid var(--ink)}
+.stile:hover{box-shadow:none!important}
+.stile:hover .cover{box-shadow:6px 6px 0 var(--ink)}
+.stile .num{top:0!important;right:auto!important;left:0!important;background:var(--ink)!important;color:var(--paper)!important;border-radius:0!important;font-size:.72rem!important;box-shadow:none!important;padding:3px 8px!important}
+.stile .body{text-align:left!important;padding:10px 0 0!important}
+.stile .st-t{font-family:var(--font-display)!important;font-weight:400!important;font-size:1.35rem!important;text-transform:uppercase!important;color:var(--ink)!important}
+.stile .w{justify-content:flex-start!important;font-family:var(--font-mono);font-size:.72rem!important}
+.stile .w b{color:var(--spot)!important}
+
+/* classement : portraits façon trombinoscope de presse, numéros géants */
+.classement{gap:34px 18px!important}
+.cpic{border-radius:0!important;box-shadow:none!important;border:1.5px solid var(--ink);background:var(--paper-2)!important;color:var(--ink-2)!important;font-family:var(--font-display)!important}
+.cpic img{filter:grayscale(.15) contrast(1.05)}
+.cnum{font-family:var(--font-display)!important;font-weight:400!important;color:var(--ink)!important;text-shadow:3px 3px 0 var(--paper),-2px -2px 0 var(--paper),2px -2px 0 var(--paper),-2px 2px 0 var(--paper)!important;font-size:2.6rem!important;top:-22px!important;right:-4px!important}
+.ccard.p1 .cnum{color:var(--red)!important;font-size:3.6rem!important;top:-32px!important}
+.ccard.p2 .cnum,.ccard.p3 .cnum{color:var(--ink)!important;font-size:3rem!important;top:-26px!important}
+.ccard.p1 .cpic{box-shadow:6px 6px 0 var(--red)!important;border-color:var(--ink)}
+.ccard.p2 .cpic{box-shadow:5px 5px 0 #8A8F99!important}
+.ccard.p3 .cpic{box-shadow:5px 5px 0 #A0613A!important}
+.cname{font-family:var(--font-display)!important;font-weight:400!important;font-size:1.15rem!important;color:var(--ink)!important;text-align:left!important;width:100%;letter-spacing:0!important}
+.ccard{align-items:flex-start!important}
+.csub{justify-content:flex-start!important;font-size:.68rem!important;color:var(--muted)!important}
+.tdot{font-family:var(--font-mono);font-size:.68rem!important}
+.ccard.dq{opacity:.45}
+.ccard.dq .cpic img{filter:grayscale(1)}
+
+/* tableaux : grille d'imprimerie */
+.table-wrap{border-radius:0!important;border:0!important;border-top:1.5px solid var(--ink)!important;border-bottom:1.5px solid var(--ink)!important;background:transparent!important;box-shadow:none!important}
+thead th{background:transparent!important;color:var(--ink)!important;font-size:.68rem!important;text-transform:uppercase!important;border-bottom:1.5px solid var(--ink)!important}
+th,td{border-bottom:1px solid var(--line-soft)!important}
+tr.link:hover td,tr.link:hover th{background:var(--sheet)!important}
+tr.win td{background:var(--gold-soft)!important}
+td.num,th.num{font-family:var(--font-mono)}
+table.pal td.hl{color:var(--red)!important}
+.votes th,.votes td{border-right:1px solid var(--line-soft)!important}
+.votes th:first-child,.votes thead th:first-child{background:var(--paper)!important}
+.votes td.out{background:repeating-linear-gradient(135deg,var(--ink) 0 2px,transparent 2px 7px)!important;opacity:.35}
+.votes td[style*="background"]{filter:none!important}
+.votes td.hit:not(.tc){background:var(--ink)!important;color:var(--paper)!important}
+.votes td.recap{background:var(--sheet)!important;font-family:var(--font-serif)}
+.sw{border-radius:0!important;border-color:var(--ink)!important}
+
+/* podium / encarts de stats */
+.sb-live{background:var(--ink)!important;color:var(--paper)!important;border-radius:0!important;font-family:var(--font-mono)!important}
+.pstats,.sb,.sb-row{border-radius:0!important;background:transparent!important;border-color:var(--ink)!important;box-shadow:none!important}
+.sb-c b{font-family:var(--font-display)!important;font-weight:400!important;color:var(--ink)!important;text-shadow:none!important;font-size:2.6rem!important}
+.sb-c.gold b{color:var(--red)!important}
+.sb-c+.sb-c::before{border-left:1px solid var(--ink)!important;top:12%!important;bottom:12%!important}
+
+/* ---------- profil joueur : une de magazine ---------- */
+.ph{border-radius:0!important;background:transparent!important;border:0!important;border-top:6px solid var(--ink)!important;border-bottom:1.5px solid var(--ink)!important;box-shadow:none!important}
+.ph-bn{height:120px!important;background:var(--spot-soft)!important;border-bottom:1.5px solid var(--ink)}
+.ph-bn::after{display:none!important}
+.ph-av{border-radius:0!important;border:1.5px solid var(--ink)!important;box-shadow:6px 6px 0 var(--spot)!important}
+.ph-id h1{font-size:clamp(3rem,8vw,6.4rem)!important}
+.ph-orgs a{border-radius:0!important;background:transparent!important;border:1px solid var(--ink)!important;color:var(--ink)!important}
+.ph-bio{border-left:4px solid var(--spot)!important;background:transparent!important;border-radius:0!important;font-size:1.1rem}
+.pc-art{border-radius:0!important;box-shadow:none!important;border:1.5px solid var(--ink);background:var(--paper-2)!important}
+.pc.win .pc-art,.pc.season-winner .pc-art{box-shadow:5px 5px 0 var(--red)!important}
+.pc.podium .pc-art{box-shadow:5px 5px 0 var(--ink)!important}
+.pc-rank{background:linear-gradient(transparent,rgba(22,19,15,.85) 60%)!important}
+.pc-rank b{font-family:var(--font-display)!important;font-weight:400!important}
+.pc-t{font-family:var(--font-display);font-weight:400;font-size:1.15rem;text-transform:uppercase;line-height:1}
+.pc-org{color:var(--muted)!important;font-size:.68rem}
+
+/* cartes génériques */
+.card{border-radius:0!important;border:1.5px solid var(--ink)!important;background:var(--sheet)!important;box-shadow:none!important}
+a.card:hover{box-shadow:5px 5px 0 var(--ink)!important}
+.logo,.avatar{border-radius:0!important}
+.avatar.xs,.who .avatar{border-radius:50%!important}
+.empty,.notice{border-radius:0!important;border:1.5px dashed var(--ink)!important;background:transparent!important}
+
+/* taupe */
+.taupe-panel{border-radius:0!important;border:1.5px solid var(--ink)!important;background:var(--sheet)!important;box-shadow:6px 6px 0 #c2185b}
+.taupe-panel.won{background:linear-gradient(90deg,var(--gold-soft),var(--sheet))!important;box-shadow:8px 8px 0 var(--gold)!important;border-color:var(--ink)!important}
+.taupe-identity strong{color:#9c1450!important;font-family:var(--font-display)!important;font-weight:400!important;text-transform:uppercase}
+.taupe-panel.won .taupe-identity strong{color:var(--ink)!important;font-size:2.4rem!important}
+.taupe-identity small{color:#9c1450!important;font-family:var(--font-mono)!important}
+.taupe-panel.won .taupe-identity small{color:#6b4e00!important}
+.taupe-emblem{color:rgba(22,19,15,.07)!important}
+.tp-q{background:var(--ink)!important;color:var(--paper)!important}
+
+/* fenêtres et notifications */
+.overlay.is-open{background:rgba(238,232,220,.72)!important;backdrop-filter:blur(2px)}
+.dialog{border-radius:0!important;background:var(--sheet)!important;border:1.5px solid var(--ink)!important;box-shadow:10px 10px 0 var(--ink)!important}
+.dhead{border-bottom:4px solid var(--ink)!important}
+.dfoot{border-top:1.5px solid var(--ink)!important}
+.t{border-radius:0!important;background:var(--ink)!important;color:var(--paper)!important;font-family:var(--font-mono);font-size:.82rem!important;box-shadow:5px 5px 0 var(--red)!important}
+
+/* reflets de survol : sur papier, un léger voile plutôt qu'une lumière */
+.og::after,.stile::after,.ccard .cpic::before{mix-blend-mode:soft-light!important}
+
+/* pied de page : bas de une */
+footer.site{border-top:0!important;box-shadow:0 -1px 0 var(--ink),0 -4px 0 var(--paper),0 -5px 0 var(--ink);font-family:var(--font-mono)!important;font-size:.75rem!important;text-transform:uppercase;letter-spacing:.04em;max-width:1280px!important;color:var(--ink-2)!important}
+footer.site a{color:var(--ink)!important}
+
+/* petits écrans */
+@media (max-width:860px){
+  .wiki{grid-template-columns:1fr!important}
+  .spot .og-bg,.ins .og-bg{width:100%!important;height:150px!important;inset:0 0 auto 0!important;border-right:0;border-bottom:1.5px solid var(--ink)}
+  .spot-in,.ins-in{padding:170px 18px 18px!important}
+  .hx2 .hx-t{font-size:15.5vw!important}
+}
+
+/* ---------- retouches ---------- */
+.hx2 .hx-t{font-size:min(21.5vw,19.5rem)!important;line-height:.78!important;overflow:hidden;padding-top:16px!important}
+.chip{border-radius:0!important}
+.sb-head{border-top:4px solid var(--ink);padding-top:12px;margin-bottom:12px!important}
+.sb-live{background:none!important;color:var(--ink)!important;padding:0!important;font-family:var(--font-display)!important;font-size:clamp(1.7rem,3vw,2.3rem)!important;letter-spacing:0!important;text-transform:uppercase!important;line-height:1}
+.ph-bn{height:96px!important;border-radius:0!important}
+.ph.has-bn .ph-bn{height:150px!important}
+.ph-row{margin-top:-48px!important;align-items:flex-end!important}
+.ph-id h1{line-height:.85!important;padding-top:56px}
+.pc-fmt{border-radius:0!important;background:var(--paper)!important;color:var(--ink)!important;border:1px solid var(--ink)}
+.pc-tag{border-radius:0!important;background:var(--red)!important}
+.on-hosts>*:not(.on-l){border-radius:0!important;border-color:var(--ink)!important}
+.on-l{font-family:var(--font-mono);text-transform:uppercase;font-size:.72rem}
+/* angles droits partout (sauf avatars ronds, médaillons, pastilles) */
+*:not(.avatar):not(.crown-pic):not(.crown-pic *):not(.tp-face):not(.taupe-portrait):not(.badge):not(.udot):not(.ph-fr){border-radius:0!important}
+.hx2 .hx-t{font-size:min(calc((100vw - 48px) / 4.85),16rem)!important;overflow:visible}
+.og-section{border:0!important;border-top:4px solid var(--ink)!important;background:transparent!important;box-shadow:none!important;padding:14px 0 0!important}
+.og-section-head{border-top:0!important;padding-top:0!important}
+.claim-banner{background:var(--sheet)!important;border:1.5px solid var(--ink)!important}
+.cal-t{min-width:0}
+.cal-t small{display:flex!important;flex-wrap:wrap;gap:4px}
+@media (max-width:600px){.cal-i{flex-wrap:wrap}.cal-rel{margin-left:76px}}
+@media (max-width:860px){.infobox .ib-img{width:140px!important;float:left;margin-right:14px}.infobox dl{clear:both}.ib-title{font-size:1.2rem!important}}

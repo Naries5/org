@@ -527,6 +527,7 @@ function pageHome(){
   const nf=n=>n.toLocaleString("fr-FR");
   let h=`<section class="hx2"><div><h1 class="hx-t">ORG-Central</h1>
   <p class="lede">Le wiki des ORGs et speeds françaises : ${nf(S.seasons.length)} saisons de ${nf(S.orgs.length)} ORGs, ${nf(S.players.length)} joueurs, avec les classements, les votes et les awards.</p></div>
+  <p class="dateline"><span>${new Date().toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}</span><span><b>${live.length}</b> saison${live.length>1?"s":""} à l'antenne</span><span>${ins.length} casting${ins.length>1?"s":""} ouvert${ins.length>1?"s":""}</span><span>N° ${nf(S.seasons.length)}</span></p>
   <div class="hero-search"><input id="hsearch" type="search" placeholder="Chercher un joueur, une ORG, une saison" autocomplete="off" aria-label="Rechercher"><div class="gres" hidden></div></div></section>`;
   if(!S.orgs.length){h+=`<div class="empty"><h2>Le wiki est vide</h2>${edit(`<button class="btn primary" data-act="new-org">+ Créer une ORG</button>`)}</div>`;return h;}
   if(live.length){
