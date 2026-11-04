@@ -343,15 +343,13 @@ function unavailable(){app.innerHTML=`<div class="unavailable"><h2>Données indi
 
 let lastPage="";
 window.addEventListener("scroll",()=>{if(lastPage)scrollPos[lastPage]=window.scrollY;},{passive:true});
-/* Entrée d'une page : cartes en cascade et chiffres qui défilent (seulement quand on arrive sur la page) */
+/* Entrée d'une page : cartes en cascade (seulement quand on arrive sur la page) */
 let freshTimer=null;
 function playEntrance(){
   if(reduceMotion.matches)return;
   app.querySelectorAll(".og-grid,.crowns,.classement,.stiles,.grid,.nw-grid,.ins-grid,.pc-grid,.cal-l").forEach(g=>{[...g.children].forEach((c,i)=>c.style.setProperty("--i",Math.min(i,18)));});
   app.classList.remove("fresh");void app.offsetWidth;app.classList.add("fresh");
   clearTimeout(freshTimer);freshTimer=setTimeout(()=>app.classList.remove("fresh"),2000);
-  app.querySelectorAll("[data-count]").forEach(el=>{const to=Number(el.dataset.count)||0;if(to<2)return;const t0=performance.now(),dur=1000;
-    const step=now=>{const p=Math.min(1,(now-t0)/dur);el.textContent=Math.round(to*(1-Math.pow(1-p,3))).toLocaleString("fr-FR");if(p<1)requestAnimationFrame(step);};requestAnimationFrame(step);});
 }
 /* Les cartes s'inclinent légèrement vers le curseur */
 if(window.matchMedia("(hover:hover) and (pointer:fine)").matches){
@@ -487,7 +485,7 @@ function pageHome(){
   const counts=[[S.orgs.length,"ORGs"],[S.seasons.length,"saisons"],[S.players.length,"joueurs"],[castN,"participations"]];
   const nf=n=>n.toLocaleString("fr-FR");
   let h=`<section class="hx2"><div><h1 class="hx-t">ORG-Central</h1>
-  <p class="lede">Le wiki des ORGs et speeds françaises : <span data-count="${S.seasons.length}">${nf(S.seasons.length)}</span> saisons de <span data-count="${S.orgs.length}">${nf(S.orgs.length)}</span> ORGs, <span data-count="${S.players.length}">${nf(S.players.length)}</span> joueurs, avec les classements, les votes et les awards.</p></div>
+  <p class="lede">Le wiki des ORGs et speeds françaises : ${nf(S.seasons.length)} saisons de ${nf(S.orgs.length)} ORGs, ${nf(S.players.length)} joueurs, avec les classements, les votes et les awards.</p></div>
   <div class="hero-search"><input id="hsearch" type="search" placeholder="Chercher un joueur, une ORG, une saison" autocomplete="off" aria-label="Rechercher"><div class="gres" hidden></div></div></section>`;
   if(!S.orgs.length){h+=`<div class="empty"><h2>Le wiki est vide</h2>${edit(`<button class="btn primary" data-act="new-org">+ Créer une ORG</button>`)}</div>`;return h;}
   if(live.length){
