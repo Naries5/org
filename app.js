@@ -497,7 +497,9 @@ function pageHome(){
   }
   if(ins.length)h+=`<section class="block ins-sec"><div class="ins-head"><span class="ins-kicker">Casting en cours</span><h2>Inscriptions ouvertes</h2><p>${ins.length} saison${ins.length>1?"s cherchent":" cherche"} des joueurs en ce moment.</p></div><div class="ins-grid">${ins.map(insCard).join("")}</div></section>`;
   if(news.length||S.canEdit)h+=`<section class="block"><div class="block-head"><h2>Dernières annonces</h2><span class="actions"><a class="btn sm ghost" href="#annonces">Tout voir</a>${edit(`<button class="btn sm" data-act="new-news">+ Annonce</button>`)}</span></div>${news.length?`<div class="nw-grid">${news.map(n=>newsCard(n)).join("")}</div>`:`<p class="muted">Aucune annonce pour l'instant.</p>`}</section>`;
-  if(ann.length)h+=`<section class="block"><div class="block-head"><h2>Prochainement</h2><span class="count">${ann.length}</span></div>${calendarHtml(ann)}</section>`;
+  // Prochainement : les saisons annoncées, et celles en inscriptions dont la date de début est connue
+  const soon=[...ann,...ins.filter(s=>s.start)];
+  if(soon.length)h+=`<section class="block"><div class="block-head"><h2>Prochainement</h2><span class="count">${soon.length}</span></div>${calendarHtml(soon)}</section>`;
   const crowns=done.filter(s=>shownWinner(s)).slice(0,10);
   if(crowns.length)h+=`<section class="block"><div class="block-head"><h2>Derniers sacres</h2><span class="actions"><a class="btn sm ghost" href="#saisons">Toutes les saisons</a></span></div><div class="crowns">${crowns.map(crownCard).join("")}</div></section>`;
   h+=`<section class="block"><div class="block-head"><h2>ORGs</h2><span class="count">${S.orgs.length}</span><span class="actions"><a class="btn sm ghost" href="#orgs">Toutes les ORGs</a></span></div><div class="og-grid">${[...S.orgs].sort(byOrgActivity).slice(0,8).map(orgPoster).join("")}</div></section>`;
@@ -520,7 +522,7 @@ function calendarHtml(list){
   const row=s=>{const o=org(s.orgId)||{};const d=s.start?new Date(s.start+"T12:00:00"):null;
     const d0=s.start?new Date(s.start+"T00:00:00"):null;const diff=d0?Math.round((d0-today)/864e5):null;const rel=diff==null?"":diff<0?"Date passée":diff===0?"Aujourd'hui":diff===1?"Demain":`Dans ${diff} jours`;
     return `<a class="cal-i" href="#saison-${esc(s.id)}"><div class="cal-d">${d?`<small>${d.toLocaleDateString("fr-FR",{weekday:"short"})}</small><b>${d.getDate()}</b><small>${d.toLocaleDateString("fr-FR",{month:"short"})}</small>`:`<b>?</b><small>à venir</small>`}</div>
-    ${pic(s.logo||o.logo,o.tag||o.name,"logo")}<div class="cal-t"><b>${esc(o.name||"")} ${esc(seasonShort(s))}</b><span>${esc(s.title||"")}</span><small>${[tags(o),s.slots?`<span class="tag">${esc(s.slots)} places</span>`:"",s.end?`<span class="tag">jusqu'au ${fmtDate(s.end)}</span>`:""].join("")}</small></div>${rel?`<span class="cal-rel${diff!=null&&diff<=7&&diff>=0?" soon":""}">${rel}</span>`:""}</a>`;};
+    ${pic(s.logo||o.logo,o.tag||o.name,"logo")}<div class="cal-t"><b>${esc(o.name||"")} ${esc(seasonShort(s))}</b><span>${esc(s.title||"")}</span><small>${[s.status==="inscriptions"?`<span class="tag">Inscriptions ouvertes</span>`:"",tags(o),s.slots?`<span class="tag">${esc(s.slots)} places</span>`:"",s.end?`<span class="tag">jusqu'au ${fmtDate(s.end)}</span>`:""].join("")}</small></div>${rel?`<span class="cal-rel${diff!=null&&diff<=7&&diff>=0?" soon":""}">${rel}</span>`:""}</a>`;};
   let h=`<div class="cal">`;
   Object.keys(months).sort().forEach(k=>{const d=new Date(k+"-15T12:00:00");h+=`<div class="cal-m"><h3>${d.toLocaleDateString("fr-FR",{month:"long",year:"numeric"})}</h3><div class="cal-l">${months[k].map(row).join("")}</div></div>`;});
   if(undated.length)h+=`<div class="cal-m"><h3>Date à venir</h3><div class="cal-l">${undated.map(row).join("")}</div></div>`;
