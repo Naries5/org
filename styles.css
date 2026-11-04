@@ -1148,9 +1148,9 @@ tr.link:active td,tr.link:active th{background:var(--accent-soft)}
 /* entrée d'une page : les cartes arrivent en cascade */
 .fresh :is(.og-grid,.crowns,.classement,.stiles,.grid,.nw-grid,.ins-grid,.pc-grid,.cal-l)>*{animation:pop-in .5s var(--spring) both;animation-delay:calc(var(--i,0) * 30ms)}
 @keyframes pop-in{from{opacity:0;translate:0 14px;scale:.95}}
-.fresh :is(.hx-t,.page-head h1){animation:title-in .55s var(--spring) both}
+.fresh .hx-t,.page-head.fresh h1{animation:title-in .55s var(--spring) both}
 @keyframes title-in{from{opacity:0;translate:0 10px}}
-.fresh .infobox{animation:box-in .5s var(--ease) .08s both}
+.infobox.fresh{animation:box-in .5s var(--ease) .08s both}
 @keyframes box-in{from{opacity:0;translate:12px 0}}
 /* podium : le 3e, puis le 2e, puis le vainqueur entrent comme sur un plateau,
    chacun avec un reflet à la couleur de sa médaille ; le reflet repasse au survol */
@@ -1199,6 +1199,83 @@ tr.link:active td,tr.link:active th{background:var(--accent-soft)}
 @keyframes vt-out{to{opacity:0}}
 @keyframes vt-in{from{opacity:0}}
 
+/* ===== Mouvement, saison 2 ===== */
+/* blocs plus bas dans la page : ils montent quand on les atteint */
+.pending{opacity:0;translate:0 32px}
+.rev{animation:section-in .75s var(--spring) both}
+@keyframes section-in{from{opacity:0;translate:0 32px}}
+
+/* titre de l'accueil : lettres qui tombent, puis reflet */
+.hx-t.lettering{animation:none!important}
+.hx-ch{display:inline-block;animation:letter-in .7s var(--spring) both;animation-delay:calc(var(--i) * 40ms)}
+@keyframes letter-in{0%{opacity:0;translate:0 -.6em;rotate:-8deg;filter:blur(6px)}60%{opacity:1;filter:blur(0)}100%{translate:0 0;rotate:0deg}}
+.hx-t.shine{background:linear-gradient(100deg,var(--t1) 35%,#fff7dc 50%,var(--t1) 65%) 0 0/300% 100% no-repeat;-webkit-background-clip:text;background-clip:text;color:transparent;animation:title-shine 1.3s var(--ease) both!important}
+@keyframes title-shine{from{background-position:100% 0}to{background-position:0 0}}
+
+/* reflet de lumière qui suit la souris sur les cartes */
+.og::after,.stile::after,.ccard .cpic::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:3;opacity:0;transition:opacity .35s var(--ease);
+  background:radial-gradient(circle at var(--mx,50%) var(--my,30%),rgba(255,255,255,.2),rgba(255,255,255,.05) 30%,transparent 55%);mix-blend-mode:screen}
+.og.tilting::after,.stile.tilting::after,.ccard.tilting .cpic::before{opacity:1}
+/* le vainqueur : carte holographique */
+.ccard.p1 .cpic::before{background:
+  radial-gradient(circle at var(--mx,50%) var(--my,30%),rgba(255,255,255,.28),transparent 45%),
+  linear-gradient(115deg,transparent 15%,rgba(255,214,90,.32) 32%,rgba(255,120,190,.24) 45%,rgba(120,210,255,.26) 58%,rgba(170,255,170,.2) 70%,transparent 85%) calc(var(--mx,50%) * 1.4 - 20%) 0/220% 100% no-repeat}
+.ccard.p1.tilting .cpic::before{opacity:.9}
+
+/* médaillons des derniers sacres : l'or tourne au survol */
+@property --ca{syntax:"<angle>";inherits:false;initial-value:210deg}
+.crown-pic{background:conic-gradient(from var(--ca),#FFC23D,#fff3c4,#E8A317,#FFC23D)!important}
+@media (hover:hover) and (pointer:fine){.crown:hover .crown-pic{animation:gold-spin 2.4s linear infinite}}
+@keyframes gold-spin{to{--ca:570deg}}
+
+/* tableau des votes : les colonnes se dévoilent tour par tour */
+.fresh table.votes :is(td,th){animation:cell-in .45s var(--ease) both;animation-delay:calc(var(--c,0) * 55ms)}
+@keyframes cell-in{from{opacity:0;translate:0 6px}}
+
+/* « encore en jeu » : la barre se remplit */
+.fresh .spot-bar i{animation:bar-in 1.2s var(--ease) .35s both}
+@keyframes bar-in{from{width:0}}
+
+/* dernier éliminé : révélation façon plateau (flou, flash rouge, mise au point) */
+.spoil-wrap.open .spot-out{animation:elim-in .8s var(--spring) both;border-radius:999px}
+.spoil-wrap.open .spot-out:nth-child(2){animation-delay:.15s}.spoil-wrap.open .spot-out:nth-child(3){animation-delay:.3s}.spoil-wrap.open .spot-out:nth-child(4){animation-delay:.45s}
+@keyframes elim-in{0%{opacity:0;scale:1.35;filter:blur(10px);box-shadow:0 0 0 0 rgba(255,84,112,0)}35%{opacity:1;filter:blur(0);box-shadow:0 0 28px 6px rgba(255,84,112,.55)}100%{scale:1;box-shadow:0 0 0 0 rgba(255,84,112,0)}}
+
+/* carrousel « À l'antenne » : le point actif se remplit comme un minuteur */
+.car-dots button[aria-current]{position:relative;overflow:hidden;background:color-mix(in srgb,var(--t1) 35%,var(--line))}
+.car-dots button[aria-current]::after{content:"";position:absolute;inset:0;background:var(--t1);transform-origin:left;animation:dot-fill 6.5s linear both}
+.car:hover~.car-dots button[aria-current]::after,.car:hover .car-dots button[aria-current]::after,.car:focus-within .car-dots button[aria-current]::after{animation-play-state:paused}
+@keyframes dot-fill{from{transform:scaleX(0)}}
+
+/* barre sous l'onglet actif : elle glisse d'un onglet à l'autre */
+nav.main{position:relative}
+nav.main a[aria-current="page"]{border-bottom-color:transparent!important}
+.nav-ind{position:absolute;left:0;height:2px;border-radius:2px;background:var(--t1);pointer-events:none;transition:transform .5s var(--spring),width .5s var(--spring),opacity .2s,background-color .6s}
+.nav-ind.instant{transition:none}
+::view-transition-old(topbar){display:none}
+::view-transition-new(topbar){animation:none}
+
+/* résultats de recherche : arrivent en cascade */
+.gres:not([hidden]) a{animation:pop-in .3s var(--ease) both}
+.gres:not([hidden]) a:nth-child(2){animation-delay:.03s}.gres:not([hidden]) a:nth-child(3){animation-delay:.06s}.gres:not([hidden]) a:nth-child(4){animation-delay:.09s}.gres:not([hidden]) a:nth-child(n+5){animation-delay:.12s}
+
+/* images : fondu à l'arrivée */
+img{transition:opacity .45s var(--ease),filter .45s var(--ease)}
+img.ld{opacity:0;filter:blur(6px)}
+
+/* confettis */
+.confetti{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:70}
+
+/* changement de page : on glisse vers l'avant quand on va plus loin, vers l'arrière quand on revient */
+html[data-vt="fwd"]::view-transition-old(root){animation:vt-out-l .32s var(--ease-in) both}
+html[data-vt="fwd"]::view-transition-new(root){animation:vt-in-r .42s var(--ease) both}
+html[data-vt="back"]::view-transition-old(root){animation:vt-out-r .32s var(--ease-in) both}
+html[data-vt="back"]::view-transition-new(root){animation:vt-in-l .42s var(--ease) both}
+@keyframes vt-out-l{to{opacity:0;translate:-40px 0}}
+@keyframes vt-out-r{to{opacity:0;translate:40px 0}}
+@keyframes vt-in-r{from{opacity:0;translate:60px 0}}
+@keyframes vt-in-l{from{opacity:0;translate:-60px 0}}
+
 /* accessibilité */
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important;animation-delay:0s!important}
@@ -1209,6 +1286,12 @@ tr.link:active td,tr.link:active th{background:var(--accent-soft)}
   .fresh .ccard.p1 .cpic{filter:none}
   ::view-transition-old(root),::view-transition-new(root){animation:none}
   html{transition:none}
+  .pending{opacity:1;translate:none}
+  img.ld{opacity:1;filter:none}
+  .og::after,.stile::after,.ccard .cpic::before{display:none}
+  .car-dots button[aria-current]::after{display:none}
+  .confetti{display:none}
+  html[data-vt]::view-transition-old(root),html[data-vt]::view-transition-new(root){animation:none}
 }
 @media (prefers-reduced-transparency:reduce){
   .top{background:var(--bg)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
