@@ -26,6 +26,14 @@ function isSeasonWinner(s,c){return !!c&&winnerOf(s)===c.playerId;}
 const PLATFORMS={discord:"Discord",minecraft:"Minecraft",roblox:"Roblox",autre:"Autre plateforme"};
 const AWARD_IDEAS=["Meilleur joueur","Fan favori","Meilleur stratège","Meilleur confessionnal","Meilleur move","Meilleure épreuve","Révélation de la saison","Meilleur duo","Meilleur jury"];
 const PATHMODE=/^https?:$/.test(location.protocol);
+/* ---------- mouvement : transitions de page, défilement mémorisé ---------- */
+const reduceMotion=window.matchMedia("(prefers-reduced-motion: reduce)");
+const scrollPos={};
+if("scrollRestoration" in history)history.scrollRestoration="manual";
+function withTransition(fn){
+  if(document.startViewTransition&&!reduceMotion.matches&&!document.hidden){try{document.startViewTransition(fn);return;}catch(e){}}
+  fn();
+}
 const ROUTE_PAGES=new Set(["presence","accueil","orgs","saisons","org","saison","joueurs","joueur","annonces","admin","journal","tickets","calendrier","contribuer","social","moi","merci","qualite","comptes","palmares"]);
 function isRoute(r){r=String(r||"");const i=r.indexOf("-");return ROUTE_PAGES.has(i<0?r:r.slice(0,i));}
 function routePath(r){r=String(r||"");if(!r||r==="accueil")return "/";const i=r.indexOf("-");return i<0?"/"+r:"/"+r.slice(0,i)+"/"+encodeURIComponent(r.slice(i+1));}
@@ -33,11 +41,11 @@ function routeStr(){const h=decodeURIComponent(location.hash.slice(1));if(h&&!/a
   if(PATHMODE){const p=location.pathname.replace(/^\/+|\/+$/g,"");if(p&&p!=="index.html"){const parts=p.split("/");return decodeURIComponent(parts[0]+(parts.length>1?"-"+parts.slice(1).join("/"):""));}}
   return "accueil";}
 function normalizeUrl(){if(!PATHMODE)return;const h=decodeURIComponent(location.hash.slice(1));if(h&&isRoute(h))history.replaceState(history.state,"",routePath(h)+location.search);}
-function goRoute(r){if(PATHMODE){history.pushState(null,"",routePath(r));render();window.scrollTo(0,0);}else location.hash=r;}
+function goRoute(r){if(PATHMODE){withTransition(()=>{history.pushState(null,"",routePath(r));render();window.scrollTo(0,0);});}else location.hash=r;}
 function linkify(root){if(!PATHMODE||!root||!root.querySelectorAll)return;root.querySelectorAll('a[href^="#"]').forEach(a=>{const r=decodeURIComponent(a.getAttribute("href").slice(1));if(r&&isRoute(r)){a.setAttribute("href",routePath(r));a.dataset.r=r;}});}
 if(PATHMODE){new MutationObserver(ms=>{for(const m of ms)for(const n of m.addedNodes){if(n.nodeType!==1)continue;if(n.matches&&n.matches('a[href^="#"]'))linkify(n.parentNode);else linkify(n);}}).observe(document.documentElement,{childList:true,subtree:true});
   document.addEventListener("click",e=>{if(e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;const a=e.target.closest&&e.target.closest("a[data-r]");if(!a||a.target==="_blank")return;e.preventDefault();goRoute(a.dataset.r);});
-  window.addEventListener("popstate",()=>render());linkify(document);}
+  window.addEventListener("popstate",()=>{const y=scrollPos[routeStr()]||0;withTransition(()=>{render();window.scrollTo(0,y);});});linkify(document);}
 const COLS=["orgs","seasons","players","news"];
 const S={orgs:[],seasons:[],players:[],news:[],loaded:new Set(),canEdit:false,q:{orgs:"",joueurs:""},f:{format:"",platform:"",org:"",status:"",sort:"date",orgSort:"recent"}};
 let db=null, assets=null, user=null;
@@ -121,7 +129,9 @@ function historyOf(pid){return (histIndex().get(pid)||[]).slice();}
 let CUR_ORG=null;
 const edit=html=>(CUR_ORG===null?S.canEdit:canOrg(CUR_ORG))?html:"";
 
-function toast(msg,err){const t=document.createElement("div");t.className="t"+(err?" err":"");t.textContent=msg;document.getElementById("toast").appendChild(t);setTimeout(()=>t.remove(),err?5000:2600);}
+function toast(msg,err){const t=document.createElement("div");t.className="t enter"+(err?" err":"");t.textContent=msg;document.getElementById("toast").appendChild(t);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>t.classList.remove("enter")));
+  setTimeout(()=>{t.classList.add("leave");setTimeout(()=>t.remove(),220);},err?5000:2600);}
 function errMsg(e){const c=e&&e.code;if(c==="invalid_argument")return "Modification refusée : ce compte n'a pas le droit de modifier le wiki.";if(c==="quota_exceeded")return "L'espace de stockage du wiki est plein.";if(c==="too_large")return "Image trop lourde (20 Mo maximum).";if(c==="unsupported_type")return "Format d'image non pris en charge (PNG, JPG, WebP ou GIF).";if(c==="resource_exhausted"||c==="rate_limited")return "Trop de modifications d'un coup, réessaie dans quelques secondes.";return (e&&e.message)||String(e);}
 
 const P_MONTHS={janv:"01",fev:"02",fév:"02",mars:"03",avr:"04",mai:"05",juin:"06",juil:"07",aout:"08",août:"08",sept:"09",oct:"10",nov:"11",dec:"12",déc:"12",hiver:"01",printemps:"04",ete:"07",été:"07",automne:"10",debut:"02",début:"02",mi:"06",fin:"11"};
@@ -332,6 +342,32 @@ async function init(){
 function unavailable(){app.innerHTML=`<div class="unavailable"><h2>Données indisponibles ici</h2><p>Ouvre cette page sur claude.ai en étant connecté pour voir et modifier le wiki.</p></div>`;}
 
 let lastPage="";
+window.addEventListener("scroll",()=>{if(lastPage)scrollPos[lastPage]=window.scrollY;},{passive:true});
+/* Entrée d'une page : cartes en cascade et chiffres qui défilent (seulement quand on arrive sur la page) */
+let freshTimer=null;
+function playEntrance(){
+  if(reduceMotion.matches)return;
+  app.querySelectorAll(".og-grid,.crowns,.classement,.stiles,.grid,.nw-grid,.ins-grid,.pc-grid,.cal-l").forEach(g=>{[...g.children].forEach((c,i)=>c.style.setProperty("--i",Math.min(i,18)));});
+  app.classList.remove("fresh");void app.offsetWidth;app.classList.add("fresh");
+  clearTimeout(freshTimer);freshTimer=setTimeout(()=>app.classList.remove("fresh"),2000);
+  app.querySelectorAll("[data-count]").forEach(el=>{const to=Number(el.dataset.count)||0;if(to<2)return;const t0=performance.now(),dur=1000;
+    const step=now=>{const p=Math.min(1,(now-t0)/dur);el.textContent=Math.round(to*(1-Math.pow(1-p,3))).toLocaleString("fr-FR");if(p<1)requestAnimationFrame(step);};requestAnimationFrame(step);});
+}
+/* Les cartes s'inclinent légèrement vers le curseur */
+if(window.matchMedia("(hover:hover) and (pointer:fine)").matches){
+  let tiltEl=null;const TILT=".og,.stile,.ccard,.pc,.pin-card";
+  const reset=()=>{if(!tiltEl)return;tiltEl.classList.remove("tilting");tiltEl.style.removeProperty("--rx");tiltEl.style.removeProperty("--ry");tiltEl=null;};
+  document.addEventListener("pointermove",e=>{
+    if(reduceMotion.matches||e.pointerType!=="mouse")return;
+    const el=e.target.closest&&e.target.closest(TILT);
+    if(tiltEl&&tiltEl!==el)reset();
+    if(!el)return;tiltEl=el;el.classList.add("tilting");
+    const r=el.getBoundingClientRect();const x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;
+    const k=r.width>260?.55:1;
+    el.style.setProperty("--rx",(-y*8*k).toFixed(2)+"deg");el.style.setProperty("--ry",(x*10*k).toFixed(2)+"deg");
+  },{passive:true});
+  document.addEventListener("pointerleave",reset);
+}
 bindSearchBox(document.getElementById("gsearch"));
 let _rt=null;function scheduleRender(){if(_rt)return;_rt=requestAnimationFrame(()=>{_rt=null;if(isTyping())return setTimeout(scheduleRender,400);render();});}
 function isTyping(){const a=document.activeElement;return !!(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)&&a.closest("main")&&a.id!=="search"&&a.id!=="hsearch");}
@@ -375,9 +411,11 @@ function render(){
   if(keepFocus){const s=document.getElementById("search");if(s){s.focus();s.setSelectionRange(s.value.length,s.value.length);}}
   const title={presence:"Qui est en ligne",comptes:"Comptes inscrits",qualite:"Qualité des données",merci:"Remerciements",contribuer:"Contribuer",calendrier:"Calendrier",tickets:"Tickets",social:"Messages",orgs:"ORGs",saisons:"Saisons",joueurs:"Joueurs",annonces:"Annonces",palmares:"Palmarès"}[page];
   document.title=title?title+" | ORG-Central":"ORG-Central";
+  const arrived=h!==lastPage;
   lastPage=h;
+  if(arrived)playEntrance();
 }
-window.addEventListener("hashchange",()=>{render();window.scrollTo(0,0);});
+window.addEventListener("hashchange",()=>{withTransition(()=>{render();window.scrollTo(0,0);});});
 const ICO={"lock": "<rect x=\"4\" y=\"11\" width=\"16\" height=\"10\" rx=\"2\"/><path d=\"M8 11V7a4 4 0 0 1 8 0v4\"/>", "trophy": "<path d=\"M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z\"/><path d=\"M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3\"/>", "link": "<path d=\"M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1\"/><path d=\"M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1\"/>", "eye": "<path d=\"M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/>", "pin": "<path d=\"M12 17v5M9 3h6l-1 6 4 4H6l4-4-1-6z\"/>", "cal": "<rect x=\"3\" y=\"5\" width=\"18\" height=\"16\" rx=\"2\"/><path d=\"M3 10h18M8 3v4M16 3v4\"/>", "mail": "<rect x=\"3\" y=\"5\" width=\"18\" height=\"14\" rx=\"2\"/><path d=\"m3 7 9 6 9-6\"/>"};
 function ico(n,sz){return `<svg class="ico" width="${sz||14}" height="${sz||14}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICO[n]||""}</svg>`;}
 function shareBtn(k,id){return `<button type="button" class="share-btn" data-act="share" data-k="${k}" data-id="${esc(id)}" title="Copier un lien qui affiche un aperçu sur Discord">${ico("link")} Partager</button>`;}
@@ -449,7 +487,7 @@ function pageHome(){
   const counts=[[S.orgs.length,"ORGs"],[S.seasons.length,"saisons"],[S.players.length,"joueurs"],[castN,"participations"]];
   const nf=n=>n.toLocaleString("fr-FR");
   let h=`<section class="hx2"><div><h1 class="hx-t">ORG-Central</h1>
-  <p class="lede">Le wiki des ORGs et speeds françaises : ${nf(S.seasons.length)} saisons de ${nf(S.orgs.length)} ORGs, ${nf(S.players.length)} joueurs, avec les classements, les votes et les awards.</p></div>
+  <p class="lede">Le wiki des ORGs et speeds françaises : <span data-count="${S.seasons.length}">${nf(S.seasons.length)}</span> saisons de <span data-count="${S.orgs.length}">${nf(S.orgs.length)}</span> ORGs, <span data-count="${S.players.length}">${nf(S.players.length)}</span> joueurs, avec les classements, les votes et les awards.</p></div>
   <div class="hero-search"><input id="hsearch" type="search" placeholder="Chercher un joueur, une ORG, une saison" autocomplete="off" aria-label="Rechercher"><div class="gres" hidden></div></div></section>`;
   if(!S.orgs.length){h+=`<div class="empty"><h2>Le wiki est vide</h2>${edit(`<button class="btn primary" data-act="new-org">+ Créer une ORG</button>`)}</div>`;return h;}
   if(live.length){
@@ -933,15 +971,45 @@ modalRoot.addEventListener("click",e=>{
   if(t.classList&&t.classList.contains("overlay")){if(downOnOverlay)closeModal();return;}
   if(t.closest&&t.closest("[data-close]"))closeModal();
 });
-document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!modalRoot.hidden)closeModal();});
-function closeModal(){modalRoot.hidden=true;modalRoot.innerHTML="";document.body.classList.remove("noscroll");}
+let modalTrigger=null,closeTimer=null,lastPress=null,lastPressAt=0;
+/* Safari ne donne pas le focus aux boutons cliqués : on retient le dernier élément appuyé */
+document.addEventListener("pointerdown",e=>{lastPress=e.target.closest&&e.target.closest("button,a,label,[data-act]");lastPressAt=Date.now();},true);
+document.addEventListener("keydown",e=>{
+  if(modalRoot.hidden)return;
+  if(e.key==="Escape"){closeModal();return;}
+  if(e.key==="Tab"){ /* le focus reste dans la fenêtre */
+    const f=[...modalRoot.querySelectorAll('button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])')].filter(x=>!x.disabled&&x.offsetParent!==null);
+    if(!f.length)return;const first=f[0],last=f[f.length-1];
+    if(e.shiftKey&&document.activeElement===first){last.focus();e.preventDefault();}
+    else if(!e.shiftKey&&document.activeElement===last){first.focus();e.preventDefault();}
+  }
+});
+function closeModal(){
+  if(modalRoot.hidden)return;
+  const ov=modalRoot.querySelector(".overlay");const t=modalTrigger;modalTrigger=null;
+  const done=()=>{clearTimeout(closeTimer);closeTimer=null;modalRoot.hidden=true;modalRoot.innerHTML="";document.body.classList.remove("noscroll");
+    if(t&&document.body.contains(t))t.focus({preventScroll:true});};
+  if(!ov||reduceMotion.matches){done();return;}
+  ov.classList.add("is-closing");ov.classList.remove("is-open");
+  closeTimer=setTimeout(done,200);
+}
+function anchorDialog(ov,trigger){
+  const d=ov&&ov.querySelector(".dialog");if(!d||!trigger||!document.body.contains(trigger))return;
+  const r=trigger.getBoundingClientRect();if(!r.width&&!r.height)return;
+  const b=d.getBoundingClientRect();
+  d.style.transformOrigin=`${Math.round(r.left+r.width/2-b.left)}px ${Math.round(r.top+r.height/2-b.top)}px`;
+}
 function openModal(o){
+  if(closeTimer){clearTimeout(closeTimer);closeTimer=null;}
+  const active=(lastPress&&Date.now()-lastPressAt<1500&&!modalRoot.contains(lastPress))?lastPress:document.activeElement;
+  if(!modalTrigger&&active&&active!==document.body&&!modalRoot.contains(active))modalTrigger=active;
   const saveLabel=o.saveLabel||"Enregistrer";
   modalRoot.innerHTML=`<div class="overlay"><div class="dialog${o.wide?" wide":""}" role="dialog" aria-modal="true" aria-labelledby="mtitle"><form id="mform" novalidate>
   <header class="dhead"><h2 id="mtitle">${esc(o.title)}</h2><button type="button" class="icon-btn" data-close="1" aria-label="Fermer">×</button></header>
   <div class="dbody">${o.body}</div>
   <footer class="dfoot"><span class="ferr" id="ferr" role="alert"></span><button type="button" class="btn ghost" data-close="1">Annuler</button><button type="submit" class="btn ${o.danger?"danger solid":"primary"}" id="msave">${esc(saveLabel)}</button></footer></form></div></div>`;
   modalRoot.hidden=false;document.body.classList.add("noscroll");
+  {const ov=modalRoot.querySelector(".overlay");anchorDialog(ov,modalTrigger);if(reduceMotion.matches)ov.classList.add("is-open");else requestAnimationFrame(()=>requestAnimationFrame(()=>ov.classList.add("is-open")));}
   const form=document.getElementById("mform");form._img={};
   form.addEventListener("submit",async ev=>{
     ev.preventDefault();
@@ -954,7 +1022,7 @@ function openModal(o){
   });
   bindImages(form);
   if(o.onMount)o.onMount(form);
-  const first=form.querySelector(".dbody input:not([type=file]),.dbody select,.dbody textarea");if(first)first.focus();
+  const first=form.querySelector(".dbody input:not([type=file]),.dbody select,.dbody textarea");if(first)first.focus({preventScroll:true});
 }
 function confirmModal(title,text,label,fn){openModal({title,body:`<p>${text}</p>`,saveLabel:label,danger:true,onSave:fn});}
 
