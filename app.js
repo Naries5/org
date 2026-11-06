@@ -228,8 +228,8 @@ function updateRole(){const el=document.getElementById("role");if(!el)return;
   const bd=n=>n?` <b class="badge">${n}</b>`:"";
   const item=(href,label,n,act)=>act?`<button type="button" role="menuitem" data-act="${act}">${label}</button>`:`<a role="menuitem" href="${href}">${label}${bd(n)}</a>`;
   el.innerHTML=`<a class="hicon" href="#social" title="Messages" aria-label="Messages${msgN?" ("+msgN+" non lus)":""}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.2 3.6c-.5.4-1.3.1-1.3-.6V16A2.5 2.5 0 0 1 4 13.5z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg>${msgN?`<b class="badge">${msgN}</b>`:""}</a>
-  <div class="umenu"><button type="button" class="ubtn" aria-haspopup="menu" aria-expanded="false">${av}<span class="uname">${esc(name)}</span>${tkN?`<i class="udot" aria-label="${tkN} ticket(s) ouvert(s)"></i>`:""}<svg class="caret" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-  <div class="udrop" role="menu" hidden>${item(mp?"#joueur-"+mp.id:"#moi","Mon profil")}${item("#social","Messages",msgN)}${item("#tickets",S.isAdmin?"Tickets":"Mes tickets",tkN)}${S.isOwner?item("#journal","Journal")+item("#presence","Qui est en ligne"):""}${S.isAdmin?item("#qualite","Qualité des données")+item("#comptes","Comptes inscrits"):""}${S.isAdmin?item("#admin","Administration"):S.isHost?`<span class="umuted">Compte host</span>`:""}<hr>${item("","Déconnexion",0,"logout")}</div></div>`;}
+  <div class="umenu"><button type="button" class="ubtn" aria-haspopup="menu" aria-expanded="false">${av}<span class="uname">${esc(name)}</span>${tkN?`<i class="udot" aria-label="${tkN} demande(s) ou message(s) en attente"></i>`:""}<svg class="caret" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  <div class="udrop" role="menu" hidden>${item(mp?"#joueur-"+mp.id:"#moi","Mon profil")}${item("#social","Messages",msgN)}${item("#contribuer",S.isAdmin?"Demandes reçues":"Mes demandes",tkN)}${S.isOwner?item("#journal","Journal")+item("#presence","Qui est en ligne"):""}${S.isAdmin?item("#qualite","Qualité des données")+item("#comptes","Comptes inscrits"):""}${S.isAdmin?item("#admin","Administration"):S.isHost?`<span class="umuted">Compte host</span>`:""}<hr>${item("","Déconnexion",0,"logout")}</div></div>`;}
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".ubtn");const open=document.querySelector(".udrop:not([hidden])");
   if(b){const d=b.parentNode.querySelector(".udrop");const show=d.hidden;d.hidden=!show;b.setAttribute("aria-expanded",show);return;}
   if(open&&(!e.target.closest(".udrop")||e.target.closest("a,button"))){open.hidden=true;const bb=document.querySelector(".ubtn");if(bb)bb.setAttribute("aria-expanded","false");}});
@@ -276,7 +276,7 @@ setInterval(()=>presTrack(PRES.route,true),30000);
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")presTrack(PRES.route,true);});
 function presPageLabel(r){r=String(r||"accueil");const i=r.indexOf("-");const pg=i<0?r:r.slice(0,i),id=i<0?"":r.slice(i+1);
   if(pg==="saison"){const x=season(id);return x?fullSeasonName(x):"une saison";}if(pg==="joueur"){const x=player(id);return x?"Profil de "+x.pseudo:"un profil";}if(pg==="org"){const x=org(id);return x?x.name:"une ORG";}
-  return ({accueil:"Accueil",orgs:"ORGs",saisons:"Saisons",joueurs:"Joueurs",calendrier:"Calendrier",annonces:"Annonces",contribuer:"Contribuer",social:"Messages",tickets:"Tickets",admin:"Administration",merci:"Remerciements",guide:"Comment ça marche",qualite:"Qualité des données",comptes:"Comptes inscrits",journal:"Journal",presence:"Qui est en ligne"})[pg]||pg;}
+  return ({accueil:"Accueil",orgs:"ORGs",saisons:"Saisons",joueurs:"Joueurs",calendrier:"Calendrier",annonces:"Annonces",contribuer:"Contribuer",social:"Messages",tickets:"Contribuer",admin:"Administration",merci:"Remerciements",guide:"Comment ça marche",qualite:"Qualité des données",comptes:"Comptes inscrits",journal:"Journal",presence:"Qui est en ligne"})[pg]||pg;}
 function relTime(t){const d=(Date.now()-new Date(t))/1000;if(d<60)return "à l'instant";if(d<3600)return "il y a "+Math.floor(d/60)+" min";if(d<86400)return "il y a "+Math.floor(d/3600)+" h";if(d<86400*7)return "il y a "+Math.floor(d/86400)+" j";return new Date(t).toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"});}
 function pageWho(uid,name){const pl=uid&&linkedPlayer(uid);const p=uid&&ADM_PROFS.find(x=>x.id===uid);const nm=pl?pl.pseudo:(p&&p.discord_name)||name||"Compte inconnu";
   const av=pl&&avatarOf(pl)?ava(pl,"xs"):p&&p.avatar_url?`<img class="avatar xs" src="${esc(p.avatar_url)}" alt="">`:`<span class="avatar xs">${esc(initials(nm))}</span>`;
@@ -432,7 +432,7 @@ function render(){
     case "annonces":html=pageNews();break;
     case "admin":html=pageAdmin();break;
     case "journal":html=pageJournal();break;
-    case "tickets":html=pageTickets();break;
+    case "tickets":location.replace("#contribuer");return;
     case "calendrier":html=pageCalendar(id);break;
     case "contribuer":html=pageContrib();break;
     case "merci":html=pageThanks();break;
@@ -448,7 +448,7 @@ function render(){
   bindSearch(page);bindSearchBox(document.getElementById("hsearch"));
   themeFor(page,id);updateRole();if(page==="social")bindSocial();
   if(keepFocus){const s=document.getElementById("search");if(s){s.focus();s.setSelectionRange(s.value.length,s.value.length);}}
-  const title={guide:"Comment ça marche",presence:"Qui est en ligne",comptes:"Comptes inscrits",qualite:"Qualité des données",merci:"Remerciements",contribuer:"Contribuer",calendrier:"Calendrier",tickets:"Tickets",social:"Messages",orgs:"ORGs",saisons:"Saisons",joueurs:"Joueurs",annonces:"Annonces",palmares:"Palmarès"}[page];
+  const title={guide:"Comment ça marche",presence:"Qui est en ligne",comptes:"Comptes inscrits",qualite:"Qualité des données",merci:"Remerciements",contribuer:"Contribuer",calendrier:"Calendrier",tickets:"Contribuer",social:"Messages",orgs:"ORGs",saisons:"Saisons",joueurs:"Joueurs",annonces:"Annonces",palmares:"Palmarès"}[page];
   document.title=title?title+" | ORG-Central":"ORG-Central";
   const arrived=h!==lastPage;
   lastPage=h;
@@ -1759,7 +1759,7 @@ function pageGuide(){
   <p>Tu n'as jamais été casté ? Tu peux créer ta fiche toi-même.</p></section>
 
   <section id="hosts" class="g-host"><h2>Pour les hosts</h2>
-  <p>Si tu organises une ORG, tu peux réclamer ses droits sur le site. Va sur la page de ton ORG et clique sur « Réclame l'ORG », ou envoie une demande depuis les tickets. Un admin vérifie que tu en es bien host, puis il active ton accès.</p>
+  <p>Si tu organises une ORG, tu peux réclamer ses droits sur le site. Va sur la page de ton ORG et clique sur « Réclame l'ORG », ou choisis « Réclamer mon ORG » dans <a href="#contribuer">Contribuer</a>. Un admin vérifie que tu en es bien host, puis il active ton accès.</p>
   <p>Une fois validé, tu peux :</p>
   <ul>
     <li>publier les annonces de ton ORG (casting, date de lancement, résultats…), qui apparaissent sur sa page et sur l'accueil ;</li>
@@ -1771,7 +1771,7 @@ function pageGuide(){
   <p class="g-cta">${hostBtn}</p></section>
 
   <section><h2>Contribuer</h2>
-  <p>Le site se remplit grâce à la communauté. Il manque une saison ou une ORG ? Envoie les infos et les captures depuis <a href="#contribuer">Contribuer</a>. Tu vois une erreur, un doublon de fiche ou deux joueurs mélangés ? Ouvre un <a href="#tickets">ticket</a>. Tu peux discuter avec l'admin qui s'en occupe directement dans le ticket.</p>
+  <p>Le site se remplit grâce à la communauté. Il manque une saison ou une ORG ? Envoie les infos et les captures depuis <a href="#contribuer">Contribuer</a>. Tu vois une erreur, un doublon de fiche ou deux joueurs mélangés ? Fais une demande au même endroit. Tu peux discuter avec l'admin qui s'en occupe directement dans ta demande.</p>
   <p>Tous ceux qui ont aidé sont cités dans les <a href="#merci">remerciements</a>.</p></section>
   </article>`;}
 async function loadThanks(){
@@ -1846,13 +1846,7 @@ function wantedHtml(){
   <p class="muted">Ces saisons sont incomplètes. Tu as des captures ou tu te souviens des dates ? Clique sur une saison pour la préremplir dans le formulaire.</p>
   <div class="wt-list">${orgs.map(x=>`<details class="wt-org"><summary>${logo(x.o,"xs")}<b>${esc(x.o.name)}</b><span class="count">${x.l.length}</span></summary><div class="wt-ss">${x.l.map(y=>`<button type="button" class="wt-s" data-act="ct-fill" data-o="${esc(x.o.name)}" data-n="${esc(y.s.number)}" title="Il manque : ${esc(y.m.filter(k=>W[k]).map(k=>W[k]).join(", "))}"><b>${esc(seasonShort(y.s))}</b><small>${y.m.filter(k=>W[k]).map(k=>W[k]).join(", ")}</small></button>`).join("")}</div></details>`).join("")}</div></section>`;}
 function ctFill(o,n){if(!S.me){login();return;}const a=document.getElementById("ct-org"),b=document.getElementById("ct-num");if(!a||!b)return;a.value=o;b.value=n;[a,b].forEach(x=>x.dispatchEvent(new Event("input")));const sg=document.getElementById("ct-sug");if(sg)sg.hidden=true;document.getElementById("ct-form").scrollIntoView({behavior:"smooth",block:"start"});toast("Saison préremplie : ajoute tes captures");}
-function pageContrib(){
-  setTimeout(bindContrib,0);
-  const intro=`<p class="muted">Tu as les infos d'une saison qui manque sur le wiki, ou des captures pour la compléter ? Envoie-les ici : l'équipe s'occupe de tout mettre en ligne. <a href="#merci">Voir les remerciements →</a></p>`;
-  if(!S.me)return `<section class="block"><div class="block-head"><h1>Contribuer</h1></div>${intro}<p><button class="btn primary" data-act="login">Se connecter avec Discord pour contribuer</button></p></section>`;
-  const orgs=[...S.orgs].sort((a,b)=>String(a.name).localeCompare(String(b.name),"fr"));
-  return `<section class="block"><div class="block-head"><h1>Contribuer</h1></div>${intro}
-  <form id="ct-form" class="ct-form" novalidate>
+function ctFormHtml(){return `<form id="ct-form" class="ct-form" novalidate>
     <div class="ct-step"><span class="ct-n">1</span><div><h3>La saison</h3>
       <div class="frow">${field("ORG *",`<div class="ct-ac"><input id="ct-org" placeholder="Commence à écrire le nom de l'ORG…" autocomplete="off" maxlength="60" role="combobox" aria-expanded="false" aria-controls="ct-sug"><div class="psug" id="ct-sug" role="listbox" hidden></div></div>`,"Choisis dans la liste, ou écris le nom si l'ORG n'est pas encore sur le site.")}${field("Numéro de saison *",`<input id="ct-num" placeholder="ex : 3, V2, All Stars" maxlength="20">`)}</div>
       <div class="frow">${field("Nom / thème de la saison",`<input id="ct-title" placeholder="ex : Wizarding World" maxlength="100">`)}${field("Date de début",dayInp("ctstart",""))}${field("Date de fin",dayInp("ctend",""))}</div>
@@ -1861,11 +1855,26 @@ function pageContrib(){
       <div class="ct-drops">${CT_KINDS.map(([k,l,d])=>`<div class="ct-drop" data-ct="${k}" tabindex="0"><b>${l}</b><small>${d}</small><div class="ct-thumbs" id="ct-t-${k}"></div><label class="btn sm">+ Ajouter<input type="file" accept="image/*" multiple hidden data-ctin="${k}"></label></div>`).join("")}</div></div></div>
     <div class="ct-step"><span class="ct-n">3</span><div><h3>Autre chose à préciser ?</h3>${field("Message",`<textarea id="ct-msg" rows="3" maxlength="2000" placeholder="Hosts, règles spéciales, pseudos à corriger…"></textarea>`)}</div></div>
     <p class="ferr" id="ct-err" role="alert"></p><p><button type="submit" class="btn primary" id="ct-send">Envoyer</button></p>
-  </form></section>
-  <section class="block"><div class="block-head"><h2>${S.isAdmin?"Contributions reçues":"Mes contributions"}</h2>${S.isAdmin?`<span class="actions"><label class="chk"><input type="checkbox" id="ct-onlyopen" checked> Seulement les ouvertes</label><button type="button" class="btn sm primary" id="ct-zip">Tout télécharger (.zip)</button></span>`:""}</div><div id="ct-list"><p class="muted">Chargement…</p></div></section>`;}
+  </form>`;}
+function cxFormHtml(){const k=TK.kind;if(!k)return `<p class="hint cx-pick">Choisis ci-dessus ce que tu veux faire.</p>`;if(k==="infos")return ctFormHtml();return `<form id="tk-form" class="tk-form" novalidate>${tkFormBody()}</form>`;}
+function pageContrib(){
+  setTimeout(cxBind,0);
+  const intro=`<p class="muted">Le site se remplit grâce à la communauté. Ajoute une saison qui manque, signale une erreur ou réclame les droits sur ton ORG : un admin s'en occupe et tu peux discuter avec lui dans ta demande. <a href="#guide">Comment ça marche</a></p>`;
+  if(!S.me)return `<section class="block"><div class="block-head"><h1>Contribuer</h1></div>${intro}<p><button class="btn primary" data-act="login">Se connecter avec Discord pour contribuer</button></p></section>`;
+  return `<section class="block"><div class="block-head"><h1>Contribuer</h1></div>${intro}
+    <div class="tk-kinds cx-kinds" role="radiogroup" aria-label="Que veux-tu faire ?">${Object.entries(TK_KINDS).map(([k,[t,d]])=>`<button type="button" class="tk-kind${TK.kind===k?" on":""}" data-tk="${k}" role="radio" aria-checked="${TK.kind===k}"><b>${esc(t)}</b><span>${esc(d)}</span></button>`).join("")}</div>
+    <div id="cx-form">${cxFormHtml()}</div></section>
+  <section class="block"><div class="block-head"><h2>${S.isAdmin?"Demandes reçues":"Mes demandes"}</h2>${S.isAdmin?`<span class="actions"><select id="tk-filter" class="search" style="max-width:180px" aria-label="Filtrer"><option value="open"${TK.filter==="open"?" selected":""}>Ouvertes</option><option value="all"${TK.filter==="all"?" selected":""}>Toutes</option></select><button type="button" class="btn sm" id="ct-zip">Télécharger les ajouts de saisons (.zip)</button></span>`:""}</div><div id="tk-list"><p class="muted">Chargement…</p></div></section>`;}
+function cxBind(){
+  document.querySelectorAll(".cx-kinds .tk-kind").forEach(b=>{if(b._b)return;b._b=1;b.addEventListener("click",()=>{const prev=TK.kind;TK.kind=b.dataset.tk;TK.err="";
+    document.querySelectorAll(".cx-kinds .tk-kind").forEach(x=>{const on=x.dataset.tk===TK.kind;x.classList.toggle("on",on);x.setAttribute("aria-checked",on);});
+    const box=document.getElementById("cx-form");if(prev!==TK.kind||!box.firstElementChild||box.firstElementChild.tagName!=="FORM"){box.innerHTML=cxFormHtml();}
+    bindContrib();bindTickets();});});
+  bindContrib();bindTickets();loadTickets();
+}
 function ctRender(k){const box=document.getElementById("ct-t-"+k);if(!box)return;box.innerHTML=CT.files[k].map((f,i)=>`<span class="ct-th"><img src="${f._u||(f._u=URL.createObjectURL(f))}" alt=""><button type="button" data-ctrm="${k}:${i}" aria-label="Retirer">×</button></span>`).join("");}
 function ctAdd(k,files){[...files].filter(f=>/^image\//.test(f.type)).forEach(f=>CT.files[k].push(f));ctRender(k);}
-function bindContrib(){const f=document.getElementById("ct-form");loadContribs();const zb=document.getElementById("ct-zip");if(zb&&!zb._b){zb._b=1;zb.addEventListener("click",async()=>{zb.disabled=true;try{await exportContribs(document.getElementById("ct-onlyopen").checked,zb);}catch(e){toast(errMsg(e),true);}zb.disabled=false;zb.textContent="Tout télécharger (.zip)";});}if(!f||f._b)return;f._b=1;
+function bindContrib(){const f=document.getElementById("ct-form");const zb=document.getElementById("ct-zip");if(zb&&!zb._b){zb._b=1;zb.addEventListener("click",async()=>{zb.disabled=true;try{await exportContribs(TK.filter==="open",zb);}catch(e){toast(errMsg(e),true);}zb.disabled=false;zb.textContent="Télécharger les ajouts de saisons (.zip)";});}if(!f||f._b)return;f._b=1;
   let last="votes";
   f.querySelectorAll("[data-ct]").forEach(z=>{const k=z.dataset.ct;z.addEventListener("focus",()=>last=k);z.addEventListener("click",()=>last=k);
     z.addEventListener("dragover",e=>{e.preventDefault();z.classList.add("over");});z.addEventListener("dragleave",()=>z.classList.remove("over"));
@@ -1902,7 +1911,7 @@ function bindContrib(){const f=document.getElementById("ct-form");loadContribs()
       const o=S.orgs.find(x=>norm(x.name)===norm(orgName));
       const {error}=await sb.from("tickets").insert({kind:"infos",status:"open",data:{orgId:o?o.id:"",orgName,number:num,title:document.getElementById("ct-title").value.trim(),start:st,end:en,images:imgs,message:msg}});
       if(error)throw /check constraint|tickets_kind/i.test(error.message)?new Error("Les contributions ne sont pas encore activées : l'admin doit lancer update-8-contributions.sql dans Supabase."):/relation|does not exist/i.test(error.message)?new Error("Lance d'abord update-6-tickets.sql dans Supabase."):sbErr(error);
-      CT={files:{votes:[],awards:[],logo:[],autres:[]}};toast("Contribution envoyée");render();tkCount();
+      CT={files:{votes:[],awards:[],logo:[],autres:[]}};TK.kind="";toast("Contribution envoyée");render();tkCount();
     }catch(x){err(errMsg(x));btn.disabled=false;btn.textContent="Envoyer";}});}
 function loadScript(u){return new Promise((ok,ko)=>{if(document.querySelector(`script[src="${u}"]`)){ok();return;}const sc=document.createElement("script");sc.src=u;sc.onload=ok;sc.onerror=()=>ko(new Error("Impossible de charger "+u));document.head.appendChild(sc);});}
 async function exportContribs(onlyOpen,btn){
@@ -1928,23 +1937,14 @@ async function loadContribs(){const box=document.getElementById("ct-list");if(!b
   const {data,error}=await q;if(error){box.innerHTML=`<p class="muted">${esc(error.message)}</p>`;return;}
   box.innerHTML=data.length?data.map(tkCard).join(""):`<p class="muted">Aucune contribution pour l'instant.</p>`;tkThreads(box);
   box.querySelectorAll("[data-tkact]").forEach(b=>b.addEventListener("click",async()=>{await tkAction(b.dataset.tkact,Number(b.dataset.id),data.find(x=>x.id===Number(b.dataset.id)));loadContribs();}));}
-const TK_KINDS={infos:["Contribution (infos de saison)","Envoyée depuis l'onglet Contribuer."],erreur:["Erreur dans une ORG","Un classement, un vote, un award, une date… est faux."],fusion:["Plusieurs fiches = un seul joueur","La même personne a plusieurs fiches avec des pseudos différents."],separation:["Une fiche = plusieurs joueurs","Des personnes différentes ont été réunies sur une seule fiche."],host:["Je suis host d'une ORG","Demande les droits sur ton ORG pour publier ses annonces et tenir sa page à jour."],autre:["Autre","Une suggestion, un bug du site, une autre demande…"]};
-const TK_ST={open:["Ouvert","t-open"],done:["Résolu","t-done"],refused:["Refusé","t-ref"]};
+const TK_KINDS={infos:["Ajouter une saison","Une saison ou une ORG manque, ou elle est incomplète : envoie les infos et les captures."],erreur:["Corriger une erreur","Un classement, un vote, un award, une date… est faux."],fusion:["Fusionner des fiches","La même personne a plusieurs fiches avec des pseudos différents."],separation:["Séparer une fiche","Des personnes différentes ont été réunies sur une seule fiche."],host:["Réclamer mon ORG","Tu organises une ORG : demande les droits pour publier ses annonces et tenir sa page à jour."],autre:["Autre demande","Une suggestion, un bug du site, autre chose…"]};
+const TK_ST={open:["Ouverte","t-open"],done:["Résolue","t-done"],refused:["Refusée","t-ref"]};
 let TK={kind:"",list:null,err:"",filter:"open",players:[],split:"",org:""};
 function tkLabelMap(){const m=new Map();const dup={};S.players.forEach(p=>{const k=norm(p.pseudo);dup[k]=(dup[k]||0)+1;});
   S.players.forEach(p=>{const l=p.pseudo+(dup[norm(p.pseudo)]>1?" ("+(p.precision||historyOf(p.id).map(x=>org(x.s.orgId)?org(x.s.orgId).name:"").filter(Boolean)[0]||p.id)+")":"");m.set(l,p.id);});return m;}
 function tkFindPlayer(v){v=String(v||"").trim();if(!v)return null;const m=tkLabelMap();if(m.has(v))return m.get(v);const p=playerByName(v);return p?p.id:null;}
-function pageTickets(){
-  setTimeout(bindTickets,0);
-  const intro=`<p class="muted">Tu as vu une erreur sur le site ? Ouvre un ticket : l'admin le traite et tu peux suivre son statut ici.</p>`;
-  if(!S.me)return `<section class="block"><div class="block-head"><h1>Tickets</h1></div>${intro}<p><button class="btn primary" data-act="login">Se connecter avec Discord pour ouvrir un ticket</button></p></section>`;
-  return `<section class="block"><div class="block-head"><h1>Tickets</h1></div>${intro}
-    <div class="tk-kinds" role="radiogroup" aria-label="Type de ticket">${Object.entries(TK_KINDS).filter(([k])=>k!=="infos").map(([k,[t,d]])=>`<button type="button" class="tk-kind${TK.kind===k?" on":""}" data-tk="${k}" role="radio" aria-checked="${TK.kind===k}"><b>${esc(t)}</b><span>${esc(d)}</span></button>`).join("")}</div>
-    <form id="tk-form" class="tk-form" novalidate>${tkFormBody()}</form></section>
-  <section class="block"><div class="block-head"><h2>${S.isAdmin?"Tous les tickets":"Mes tickets"}</h2>${S.isAdmin?`<span class="actions"><select id="tk-filter" class="search" style="max-width:180px" aria-label="Filtrer"><option value="open"${TK.filter==="open"?" selected":""}>Ouverts</option><option value="all"${TK.filter==="all"?" selected":""}>Tous</option></select></span>`:""}</div><div id="tk-list"><p class="muted">Chargement…</p></div></section>`;
-}
 function tkFormBody(){
-  const k=TK.kind;if(!k)return `<p class="hint">Choisis le type de ticket ci-dessus.</p>`;
+  const k=TK.kind;if(!k)return `<p class="hint">Choisis ci-dessus ce que tu veux faire.</p>`;
   const dl=`<datalist id="tk-players">${[...tkLabelMap().keys()].sort((a,b)=>a.localeCompare(b,"fr")).map(l=>`<option value="${esc(l)}"></option>`).join("")}</datalist>`;
   const msg=(req,ph)=>field("Explique"+(req?" *":" (facultatif)"),area("message","",`rows="4" maxlength="2000" placeholder="${esc(ph)}"`));
   let b="";
@@ -1958,9 +1958,9 @@ function tkFormBody(){
     ${p?(h.length?`<p class="hint">Coche les ORGs jouées par <b>l'autre personne</b> :</p><div class="checks">${h.map(({s,c})=>`<label class="chk"><input type="checkbox" name="sp" value="${esc(s.id)}"> ${esc(fullSeasonName(s))} <span class="muted">· ${placeLabel(c.place)}</span></label>`).join("")}</div>`:`<p class="muted">Cette fiche n'a aucune participation.</p>`)+field("Pseudo de l'autre personne",inp("other","",'maxlength="40" placeholder="si tu le connais"')):""}
     ${msg(false,"ex : le Panda d'Axioma n'est pas le même que celui de LaytORG.")}`;}
   if(k==="host"){const orgs=[...S.orgs].filter(o=>!S.hostOrgs.has(o.id)).sort((a,b)=>String(a.name).localeCompare(String(b.name),"fr"));
-    b=`<p class="hint">Une fois la demande validée par un admin, tu pourras publier les annonces de ton ORG, modifier sa page et gérer ses saisons et candidatures. <a href="#guide">En savoir plus</a></p>${field("Ton ORG *",`<select id="tk-horg" name="horg"><option value="">— Choisir —</option>${orgs.map(o=>`<option value="${esc(o.id)}"${TK.org===o.id?" selected":""}>${esc(o.name)}</option>`).join("")}</select>`,"Ton ORG n'est pas encore sur le site ? Ajoute-la d'abord depuis l'onglet Contribuer, ou précise son nom ci-dessous.")}${msg(false,"ex : j'organise cette ORG depuis la saison 2, tu peux vérifier sur notre Discord.")}`;}
+    b=`<p class="hint">Une fois la demande validée par un admin, tu pourras publier les annonces de ton ORG, modifier sa page et gérer ses saisons et candidatures. <a href="#guide">En savoir plus</a></p>${field("Ton ORG *",`<select id="tk-horg" name="horg"><option value="">— Choisir —</option>${orgs.map(o=>`<option value="${esc(o.id)}"${TK.org===o.id?" selected":""}>${esc(o.name)}</option>`).join("")}</select>`,"Ton ORG n'est pas encore sur le site ? Ajoute-la d'abord avec « Ajouter une saison », ou précise son nom ci-dessous.")}${msg(false,"ex : j'organise cette ORG depuis la saison 2, tu peux vérifier sur notre Discord.")}`;}
   if(k==="autre")b=msg(true,"Décris ta demande.");
-  return b+`<p class="ferr" id="tk-err" role="alert">${esc(TK.err||"")}</p><p><button type="submit" class="btn primary">Envoyer le ticket</button></p>`;
+  return b+`<p class="ferr" id="tk-err" role="alert">${esc(TK.err||"")}</p><p><button type="submit" class="btn primary">Envoyer</button></p>`;
 }
 function tkRefreshForm(){const f=document.getElementById("tk-form");if(!f)return;const m=f.querySelector("#f-message");const keep=m?m.value:"";f.innerHTML=tkFormBody();const m2=f.querySelector("#f-message");if(m2)m2.value=keep;document.querySelectorAll(".tk-kind").forEach(b=>{const on=b.dataset.tk===TK.kind;b.classList.toggle("on",on);b.setAttribute("aria-checked",on);});tkBindForm();}
 function tkBindForm(){const f=document.getElementById("tk-form");if(!f)return;
@@ -1974,7 +1974,6 @@ function tkBindForm(){const f=document.getElementById("tk-form");if(!f)return;
   if(pk){pk.addEventListener("click",doPick);ps.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();doPick();}});ps.addEventListener("change",doPick);}
 }
 function bindTickets(){
-  document.querySelectorAll(".tk-kind").forEach(b=>{if(b._b)return;b._b=1;b.addEventListener("click",()=>{TK.kind=b.dataset.tk;TK.err="";tkRefreshForm();});});
   const f=document.getElementById("tk-form");
   if(f&&!f._b){f._b=1;tkBindForm();f.addEventListener("submit",async e=>{e.preventDefault();const err=m=>{TK.err=m;const x=document.getElementById("tk-err");if(x)x.textContent=m;};
     const msg=((f.querySelector("#f-message")||{}).value||"").trim();const k=TK.kind;const d={message:msg};
@@ -1985,17 +1984,16 @@ function bindTickets(){
     if(k==="autre"&&!msg)return err("Décris ta demande.");
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Envoi…";
     const {error}=await sb.from("tickets").insert({kind:k,data:d,status:"open"});
-    if(error){btn.disabled=false;btn.textContent="Envoyer le ticket";return err(k==="host"&&/check constraint|tickets_kind/i.test(error.message)?"Les demandes de host ne sont pas encore activées : l'admin doit lancer update-14-hosts.sql dans Supabase.":/relation|does not exist|schema cache/i.test(error.message)?"Les tickets ne sont pas encore activés : l'admin doit lancer update-6-tickets.sql dans Supabase.":errMsg(sbErr(error)));}
-    TK={kind:"",list:null,err:"",filter:TK.filter,players:[],split:"",org:""};toast("Ticket envoyé");render();tkCount();});}
+    if(error){btn.disabled=false;btn.textContent="Envoyer";return err(k==="host"&&/check constraint|tickets_kind/i.test(error.message)?"Les demandes de host ne sont pas encore activées : l'admin doit lancer update-14-hosts.sql dans Supabase.":/relation|does not exist|schema cache/i.test(error.message)?"Les tickets ne sont pas encore activés : l'admin doit lancer update-6-tickets.sql dans Supabase.":errMsg(sbErr(error)));}
+    TK={kind:"",list:null,err:"",filter:TK.filter,players:[],split:"",org:""};toast("Demande envoyée");render();tkCount();});}
   const fl=document.getElementById("tk-filter");if(fl&&!fl._b){fl._b=1;fl.addEventListener("change",()=>{TK.filter=fl.value;loadTickets();});}
-  loadTickets();
 }
 async function loadTickets(){const box=document.getElementById("tk-list");if(!box)return;
   if(S.isAdmin&&!ADM_PROFS.length){const {data}=await sb.from("profiles").select("*");ADM_PROFS=data||[];}
   let q=sb.from("tickets").select("*").order("created_at",{ascending:false}).limit(200);if(!S.isAdmin)q=q.eq("user_id",S.me);else if(TK.filter==="open")q=q.eq("status","open");
   const {data,error}=await q;
   if(error){box.innerHTML=`<p class="muted">${/relation|does not exist|schema cache/i.test(error.message)?"Les tickets ne sont pas encore activés : lance <b>update-6-tickets.sql</b> dans Supabase.":esc(error.message)}</p>`;return;}
-  if(!data.length){box.innerHTML=`<p class="muted">${S.isAdmin&&TK.filter==="open"?"Aucun ticket ouvert.":"Aucun ticket pour l'instant."}</p>`;return;}
+  if(!data.length){box.innerHTML=`<p class="muted">${S.isAdmin&&TK.filter==="open"?"Aucune demande ouverte.":"Aucune demande pour l'instant."}</p>`;return;}
   box.innerHTML=data.map(tkCard).join("");tkThreads(box);
   box.querySelectorAll("[data-tkact]").forEach(b=>b.addEventListener("click",()=>tkAction(b.dataset.tkact,Number(b.dataset.id),data.find(x=>x.id===Number(b.dataset.id)))));
 }
@@ -2047,7 +2045,7 @@ function tmAppend(m){const el=document.querySelector(`.tk-thread[data-tid="${m.t
   list.insertAdjacentHTML("beforeend",tmMsg(m));}
 function tmLive(){if(!TM.rt){try{TM.rt=sb.channel("oc-tickets-msg");if(TM.rt.on)TM.rt.on("postgres_changes",{event:"INSERT",schema:"public",table:"ticket_messages"},async p=>{const m=p.new;if(!m)return;
       if(!TM.profs[m.user_id]){const {data}=await sb.from("profiles").select("id,discord_name,avatar_url,role").eq("id",m.user_id).maybeSingle();if(data)TM.profs[data.id]=data;}
-      tmAppend(m);if(m.user_id!==S.me&&!document.querySelector(`.tk-thread[data-tid="${m.ticket_id}"]`))toast("Nouveau message sur un de tes tickets");});
+      tmAppend(m);if(m.user_id!==S.me&&!document.querySelector(`.tk-thread[data-tid="${m.ticket_id}"]`))toast("Nouveau message sur une de tes demandes");});
     TM.rt.subscribe();}catch(e){}}
   clearInterval(TM.poll);TM.poll=setInterval(async()=>{const els=[...document.querySelectorAll(".tk-thread[data-tid]")];if(!els.length){clearInterval(TM.poll);return;}
     const ids=els.map(e=>Number(e.dataset.tid));const {data}=await sb.from("ticket_messages").select("*").in("ticket_id",ids).order("created_at",{ascending:true});
@@ -2064,9 +2062,9 @@ async function tkAction(a,id,t){const d=(t&&t.data)||{};
       await sb.from("ticket_messages").insert({ticket_id:id,body:`C'est validé : tu es maintenant host de ${o.name} sur le site. Recharge la page, tu verras les boutons « + Annonce » et « Modifier » sur la page de l'ORG.`});
       ADM_PROFS=[];toast("Droits donnés pour "+o.name);loadTickets();tkCount();});return;}
   if(a==="note"){openModal({title:"Réponse au ticket",body:field("Message visible par l'auteur du ticket",area("note",t.admin_note||"",'rows="4" maxlength="1000"')),onSave:async f=>{const {error}=await sb.from("tickets").update({admin_note:vals(f).note||"",updated_at:new Date().toISOString()}).eq("id",id);if(error)throw sbErr(error);toast("Réponse enregistrée");loadTickets();}});return;}
-  if(a==="del"){confirmModal(S.isAdmin?"Supprimer le ticket":"Annuler le ticket","Ce ticket sera supprimé définitivement.",S.isAdmin?"Supprimer":"Annuler le ticket",async()=>{const {error}=await sb.from("tickets").delete().eq("id",id);if(error)throw sbErr(error);toast("Ticket supprimé");loadTickets();tkCount();});return;}
+  if(a==="del"){confirmModal(S.isAdmin?"Supprimer la demande":"Annuler la demande","Cette demande sera supprimée définitivement.",S.isAdmin?"Supprimer":"Annuler la demande",async()=>{const {error}=await sb.from("tickets").delete().eq("id",id);if(error)throw sbErr(error);toast("Demande supprimée");loadTickets();tkCount();});return;}
   const {error}=await sb.from("tickets").update({status:a,updated_at:new Date().toISOString()}).eq("id",id);if(error){toast(errMsg(sbErr(error)),true);return;}
-  toast(a==="done"?"Ticket résolu":a==="refused"?"Ticket refusé":"Ticket rouvert");loadTickets();tkCount();}
+  toast(a==="done"?"Demande résolue":a==="refused"?"Demande refusée":"Demande rouverte");loadTickets();tkCount();}
 async function tkCount(){if(!sb){S.tkOpen=0;return;}
   if(!S.isAdmin){if(!S.me){S.tkOpen=0;return;}let seen="1970-01-01";try{seen=localStorage.getItem("oc-tk-seen-"+S.me)||seen;}catch(e){}
     const {count,error}=await sb.from("ticket_messages").select("id",{count:"exact",head:true}).neq("user_id",S.me).gt("created_at",seen);S.tkOpen=error?0:(count||0);updateRole();return;}const {count,error}=await sb.from("tickets").select("id",{count:"exact",head:true}).eq("status","open");S.tkOpen=error?0:(count||0);updateRole();}
@@ -2638,7 +2636,7 @@ document.addEventListener("click",e=>{
   if(!b){const tr=e.target.closest("tr[data-href]");if(tr&&!e.target.closest("a"))location.hash=tr.dataset.href.slice(1);return;}
   const id=b.dataset.id;
   const A={
-    "new-org":()=>orgForm(),"claim-org":()=>{if(!S.me){login();return;}TK.kind="host";TK.org=id||"";TK.err="";if(routeStr()==="tickets")render();else location.hash="tickets";},"pic-org":()=>picForm("org",org(id)),"pic-player":()=>picForm("player",player(id)),"frame-banner":()=>frameEditor(player(id),"banner"),"edit-banner":()=>{playerForm(player(id));setTimeout(()=>{const z=document.querySelector('[data-drop="banner"]');if(z)z.scrollIntoView({block:"center"});},120);},"frame-avatar":()=>frameEditor(player(id),"avatar"),"pic-season":()=>picForm("season",season(id)),"edit-org":()=>orgForm(org(id)),"del-org":()=>delOrg(id),
+    "new-org":()=>orgForm(),"claim-org":()=>{if(!S.me){login();return;}TK.kind="host";TK.org=id||"";TK.err="";if(routeStr()==="contribuer")render();else location.hash="contribuer";},"pic-org":()=>picForm("org",org(id)),"pic-player":()=>picForm("player",player(id)),"frame-banner":()=>frameEditor(player(id),"banner"),"edit-banner":()=>{playerForm(player(id));setTimeout(()=>{const z=document.querySelector('[data-drop="banner"]');if(z)z.scrollIntoView({block:"center"});},120);},"frame-avatar":()=>frameEditor(player(id),"avatar"),"pic-season":()=>picForm("season",season(id)),"edit-org":()=>orgForm(org(id)),"del-org":()=>delOrg(id),
     "new-season":()=>seasonForm(null,b.dataset.org),"edit-season":()=>seasonForm(season(id)),"del-season":()=>delSeason(id),
     "cast":()=>castEditor(season(id)),"tierlist":()=>tierList(season(id)),"optimize-images":()=>optimizeImages(),"export-all":async()=>{try{await exportAll();toast("Sauvegarde téléchargée");}catch(e){toast(errMsg(e),true);}},"slooks":()=>seasonLooksEditor(season(id)),"awards":()=>awardsEditor(season(id)),
     "filter":()=>{S.f[b.dataset.k]=b.dataset.v;render();},"opal":()=>{S.f.opal=b.dataset.v;render();},"votes":()=>votesEditor(season(id)),
