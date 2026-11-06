@@ -1318,3 +1318,22 @@ html[data-vt="back"]::view-transition-new(root){animation:vt-in-l .42s var(--eas
 @media (prefers-reduced-transparency:reduce){
   .top{background:var(--bg)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 }
+
+/* Comment ça marche */
+.guide{max-width:760px}
+.guide h1{margin:0 0 12px}
+.guide .lede{font-size:1.05rem;margin:0 0 28px}
+.guide section{border-top:1px solid var(--line,rgba(255,255,255,.1));padding:22px 0 6px}
+.guide h2{font-size:1.2rem;margin:0 0 12px}
+.guide p,.guide li,.guide dd{line-height:1.6}
+.guide p{margin:0 0 10px}
+.guide ul{margin:0 0 12px;padding-left:20px}
+.guide li{margin:4px 0}
+.g-list{margin:0;display:grid;gap:12px}
+.g-list>div{display:grid;grid-template-columns:200px 1fr;gap:16px}
+.g-list dt{font-weight:600}
+.g-list dd{margin:0}
+.g-cta{margin-top:16px}
+@media(max-width:640px){.g-list>div{grid-template-columns:1fr;gap:2px}}
+.org-claim{margin:14px 0 0;font-size:.92rem;color:var(--muted,#aaa)}
+.linkbtn{background:none;border:0;padding:0;font:inherit;color:var(--accent,inherit);text-decoration:underline;text-underline-offset:2px;cursor:pointer}

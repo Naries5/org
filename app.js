@@ -40,7 +40,7 @@ function withTransition(fn,from,to){
     try{const t=document.startViewTransition(fn);t.finished.finally(()=>{document.documentElement.dataset.vt="";});return;}catch(e){}}
   fn();
 }
-const ROUTE_PAGES=new Set(["presence","accueil","orgs","saisons","org","saison","joueurs","joueur","annonces","admin","journal","tickets","calendrier","contribuer","social","moi","merci","qualite","comptes","palmares"]);
+const ROUTE_PAGES=new Set(["presence","accueil","orgs","saisons","org","saison","joueurs","joueur","annonces","admin","journal","tickets","calendrier","contribuer","social","moi","merci","guide","qualite","comptes","palmares"]);
 function isRoute(r){r=String(r||"");const i=r.indexOf("-");return ROUTE_PAGES.has(i<0?r:r.slice(0,i));}
 function routePath(r){r=String(r||"");if(!r||r==="accueil")return "/";const i=r.indexOf("-");return i<0?"/"+r:"/"+r.slice(0,i)+"/"+encodeURIComponent(r.slice(i+1));}
 function routeStr(){const h=decodeURIComponent(location.hash.slice(1));if(h&&!/access_token=/.test(h))return h;
@@ -276,7 +276,7 @@ setInterval(()=>presTrack(PRES.route,true),30000);
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")presTrack(PRES.route,true);});
 function presPageLabel(r){r=String(r||"accueil");const i=r.indexOf("-");const pg=i<0?r:r.slice(0,i),id=i<0?"":r.slice(i+1);
   if(pg==="saison"){const x=season(id);return x?fullSeasonName(x):"une saison";}if(pg==="joueur"){const x=player(id);return x?"Profil de "+x.pseudo:"un profil";}if(pg==="org"){const x=org(id);return x?x.name:"une ORG";}
-  return ({accueil:"Accueil",orgs:"ORGs",saisons:"Saisons",joueurs:"Joueurs",calendrier:"Calendrier",annonces:"Annonces",contribuer:"Contribuer",social:"Messages",tickets:"Tickets",admin:"Administration",merci:"Remerciements",qualite:"Qualité des données",comptes:"Comptes inscrits",journal:"Journal",presence:"Qui est en ligne"})[pg]||pg;}
+  return ({accueil:"Accueil",orgs:"ORGs",saisons:"Saisons",joueurs:"Joueurs",calendrier:"Calendrier",annonces:"Annonces",contribuer:"Contribuer",social:"Messages",tickets:"Tickets",admin:"Administration",merci:"Remerciements",guide:"Comment ça marche",qualite:"Qualité des données",comptes:"Comptes inscrits",journal:"Journal",presence:"Qui est en ligne"})[pg]||pg;}
 function relTime(t){const d=(Date.now()-new Date(t))/1000;if(d<60)return "à l'instant";if(d<3600)return "il y a "+Math.floor(d/60)+" min";if(d<86400)return "il y a "+Math.floor(d/3600)+" h";if(d<86400*7)return "il y a "+Math.floor(d/86400)+" j";return new Date(t).toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"});}
 function pageWho(uid,name){const pl=uid&&linkedPlayer(uid);const p=uid&&ADM_PROFS.find(x=>x.id===uid);const nm=pl?pl.pseudo:(p&&p.discord_name)||name||"Compte inconnu";
   const av=pl&&avatarOf(pl)?ava(pl,"xs"):p&&p.avatar_url?`<img class="avatar xs" src="${esc(p.avatar_url)}" alt="">`:`<span class="avatar xs">${esc(initials(nm))}</span>`;
@@ -436,6 +436,7 @@ function render(){
     case "calendrier":html=pageCalendar(id);break;
     case "contribuer":html=pageContrib();break;
     case "merci":html=pageThanks();break;
+    case "guide":html=pageGuide();break;
     case "qualite":html=pageQuality();break;
     case "comptes":html=pageAccounts();break;
     case "presence":html=pagePresence();break;
@@ -447,7 +448,7 @@ function render(){
   bindSearch(page);bindSearchBox(document.getElementById("hsearch"));
   themeFor(page,id);updateRole();if(page==="social")bindSocial();
   if(keepFocus){const s=document.getElementById("search");if(s){s.focus();s.setSelectionRange(s.value.length,s.value.length);}}
-  const title={presence:"Qui est en ligne",comptes:"Comptes inscrits",qualite:"Qualité des données",merci:"Remerciements",contribuer:"Contribuer",calendrier:"Calendrier",tickets:"Tickets",social:"Messages",orgs:"ORGs",saisons:"Saisons",joueurs:"Joueurs",annonces:"Annonces",palmares:"Palmarès"}[page];
+  const title={guide:"Comment ça marche",presence:"Qui est en ligne",comptes:"Comptes inscrits",qualite:"Qualité des données",merci:"Remerciements",contribuer:"Contribuer",calendrier:"Calendrier",tickets:"Tickets",social:"Messages",orgs:"ORGs",saisons:"Saisons",joueurs:"Joueurs",annonces:"Annonces",palmares:"Palmarès"}[page];
   document.title=title?title+" | ORG-Central":"ORG-Central";
   const arrived=h!==lastPage;
   lastPage=h;
@@ -526,7 +527,7 @@ function pageHome(){
   const counts=[[S.orgs.length,"ORGs"],[S.seasons.length,"saisons"],[S.players.length,"joueurs"],[castN,"participations"]];
   const nf=n=>n.toLocaleString("fr-FR");
   let h=`<section class="hx2"><div><h1 class="hx-t">ORG-Central</h1>
-  <p class="lede">Le wiki des ORGs et speeds françaises : ${nf(S.seasons.length)} saisons de ${nf(S.orgs.length)} ORGs, ${nf(S.players.length)} joueurs, avec les classements, les votes et les awards.</p></div>
+  <p class="lede">Le wiki des ORGs et speeds françaises : ${nf(S.seasons.length)} saisons de ${nf(S.orgs.length)} ORGs, ${nf(S.players.length)} joueurs, avec les classements, les votes et les awards. <a href="#guide">Comment ça marche</a></p></div>
   <div class="hero-search"><input id="hsearch" type="search" placeholder="Chercher un joueur, une ORG, une saison" autocomplete="off" aria-label="Rechercher"><div class="gres" hidden></div></div></section>`;
   if(!S.orgs.length){h+=`<div class="empty"><h2>Le wiki est vide</h2>${edit(`<button class="btn primary" data-act="new-org">+ Créer une ORG</button>`)}</div>`;return h;}
   if(live.length){
@@ -779,7 +780,7 @@ function pageOrg(id){
   const web=safeUrl(o.website);
   const webCard=web?`<a class="ext-site" href="${esc(web)}" target="_blank" rel="noopener"><span class="ext-ic">↗</span><span><b>${ss.length?"Voir aussi le site officiel":"Tout est sur leur site officiel"}</b><small>${esc(web.replace(/^https?:\/\/(www\.)?/,"").replace(/\/$/,""))}</small></span></a>`:"";
   return `<div class="crumbs"><a href="#orgs">ORGs</a><span>/</span><span>${esc(o.name)}</span>${shareBtn("o",o.id)}</div>
-  <div class="page-head"><h1>${esc(o.name)}</h1>${edit(`<div class="actions"><button class="btn" data-act="edit-org" data-id="${esc(o.id)}">Modifier</button><button class="btn danger" data-act="del-org" data-id="${esc(o.id)}">Supprimer</button></div>`)}</div>
+  <div class="page-head"><h1>${esc(o.name)}</h1>${edit(`<div class="actions"><button class="btn" data-act="edit-org" data-id="${esc(o.id)}">Modifier</button>${S.isAdmin?`<button class="btn danger" data-act="del-org" data-id="${esc(o.id)}">Supprimer</button>`:""}</div>`)}</div>
   <div class="wiki"><div class="wiki-main">
   ${o.description?`<p class="desc">${richText(o.description)}</p>`:""}
   ${webCard}
@@ -792,7 +793,8 @@ function pageOrg(id){
   ${list.map((x,i)=>`<tr class="link" data-href="#joueur-${esc(x.id)}"><td class="num">${i+1}</td><td><a class="who" href="#joueur-${esc(x.id)}">${ava(player(x.id),"xs")}${esc(pName(x.id))}</a></td>${Object.keys(labels).map(v=>`<td class="num${v===k?" hl":""}">${x[v]}</td>`).join("")}<td>${x.best?placeLabel(x.best):"—"}</td></tr>`).join("")}
   </tbody></table></div></section>`:""}
   <section class="block"><div class="block-head"><h2>Annonces</h2><span class="count">${news.length}</span>${edit(`<span class="actions"><button class="btn sm" data-act="new-news" data-org="${esc(o.id)}">+ Annonce</button></span>`)}</div>
-  ${news.length?`<div class="news-list">${news.map(n=>newsHtml(n,false)).join("")}</div>`:`<p class="muted">Aucune annonce pour cette ORG.</p>`}</section>
+  ${news.length?`<div class="news-list">${news.map(n=>newsHtml(n,false)).join("")}</div>`:`<p class="muted">Aucune annonce pour cette ORG.</p>`}
+  ${canOrg(o.id)?"":`<p class="org-claim">Tu organises ${esc(o.name)} ? <button type="button" class="linkbtn" data-act="claim-org" data-id="${esc(o.id)}">Réclame l'ORG</button> pour publier ses annonces et tenir sa page à jour.</p>`}</section>
   </div>${box}</div>`;
 }
 
@@ -1268,7 +1270,7 @@ function playerForm(p,own){
 function newsForm(n,orgId){
   const isNew=!n;n=n||{orgId:orgId||"",date:today()};
   openModal({title:isNew?"Nouvelle annonce":"Modifier l'annonce",body:`
-    <div class="frow">${field("ORG",sel("orgId",[["","Annonce générale"],...orgOpts()],n.orgId))}${field("Date",inp("date",n.date,'type="date"'))}</div>
+    <div class="frow">${field("ORG",sel("orgId",S.isAdmin?[["","Annonce générale"],...orgOpts()]:orgOpts().filter(([i])=>canOrg(i)),n.orgId))}${field("Date",inp("date",n.date,'type="date"'))}</div>
     ${field("Titre *",inp("title",n.title,'required data-label="Titre" maxlength="120" placeholder="ex : Casting de la saison 3 dévoilé"'))}
     ${field("Texte",area("body",n.body,'rows="6" maxlength="5000"'),"Tape @ pour mentionner un joueur. Liens : [texte](https://…) ou colle l'adresse. Gras : **texte**.")}`,
     onSave:async f=>{
@@ -1737,6 +1739,41 @@ function pageThanks(){
   <p class="muted th-intro">Les personnes qui ont envoyé des infos, des captures ou des corrections.</p>
   <div id="th-people"><p class="muted">Chargement…</p></div></section>
   <p class="muted" style="text-align:center"><a class="btn" href="#contribuer">Toi aussi, contribue →</a></p>`;}
+function pageGuide(){
+  const nf=n=>Number(n).toLocaleString("fr-FR");const nO=S.orgs.length,nS=S.seasons.length,nP=S.players.length;
+  const hostBtn=S.me?`<button class="btn primary" data-act="claim-org" data-id="">Réclamer mon ORG</button>`:`<button class="btn primary" data-act="login">Se connecter avec Discord</button>`;
+  return `<article class="guide">
+  <h1>Comment ça marche</h1>
+  <p class="lede">ORG-Central est un wiki communautaire des ORGs et des speeds francophones. On y retrouve chaque saison avec son classement, ses votes, ses tribus et ses awards, et chaque joueur avec tout son parcours. Aujourd'hui : ${nf(nS)} saisons, ${nf(nO)} ORGs et ${nf(nP)} joueurs.</p>
+
+  <section><h2>Ce qu'on trouve sur le site</h2>
+  <dl class="g-list">
+    <div><dt><a href="#orgs">ORGs</a></dt><dd>La page de chaque ORG : son jeu d'origine, ses hosts, son Discord, toutes ses saisons et son palmarès.</dd></div>
+    <div><dt><a href="#saisons">Saisons</a></dt><dd>Le classement complet, le détail des votes épisode par épisode, les tribus et les awards.</dd></div>
+    <div><dt><a href="#joueurs">Joueurs</a></dt><dd>Une fiche par joueur avec ses placements, ses victoires, ses awards et les votes reçus, en speed comme en format long.</dd></div>
+    <div><dt><a href="#calendrier">Calendrier</a> et <a href="#annonces">Annonces</a></dt><dd>Les saisons en cours et à venir, les castings ouverts et les nouvelles publiées par les ORGs.</dd></div>
+  </dl></section>
+
+  <section><h2>Pour les joueurs</h2>
+  <p>Connecte-toi avec Discord, cherche ton pseudo et clique sur « C'est moi ». Un admin vérifie, puis la fiche est reliée à ton compte. Tu peux alors changer ta photo, ta bannière et ta description, ajouter des amis, envoyer des messages et candidater aux saisons qui ouvrent leur casting.</p>
+  <p>Tu n'as jamais été casté ? Tu peux créer ta fiche toi-même.</p></section>
+
+  <section id="hosts" class="g-host"><h2>Pour les hosts</h2>
+  <p>Si tu organises une ORG, tu peux réclamer ses droits sur le site. Va sur la page de ton ORG et clique sur « Réclame l'ORG », ou envoie une demande depuis les tickets. Un admin vérifie que tu en es bien host, puis il active ton accès.</p>
+  <p>Une fois validé, tu peux :</p>
+  <ul>
+    <li>publier les annonces de ton ORG (casting, date de lancement, résultats…), qui apparaissent sur sa page et sur l'accueil ;</li>
+    <li>modifier la page de l'ORG : logo, description, Discord, site officiel, hosts ;</li>
+    <li>ajouter et compléter tes saisons : casting, classement, votes, tribus, awards ;</li>
+    <li>ouvrir les candidatures d'une saison et les trier directement sur le site.</li>
+  </ul>
+  <p>Plusieurs hosts peuvent avoir les droits sur la même ORG. Les droits ne concernent que ton ORG, pas les autres.</p>
+  <p class="g-cta">${hostBtn}</p></section>
+
+  <section><h2>Contribuer</h2>
+  <p>Le site se remplit grâce à la communauté. Il manque une saison ou une ORG ? Envoie les infos et les captures depuis <a href="#contribuer">Contribuer</a>. Tu vois une erreur, un doublon de fiche ou deux joueurs mélangés ? Ouvre un <a href="#tickets">ticket</a>. Tu peux discuter avec l'admin qui s'en occupe directement dans le ticket.</p>
+  <p>Tous ceux qui ont aidé sont cités dans les <a href="#merci">remerciements</a>.</p></section>
+  </article>`;}
 async function loadThanks(){
   const [rp,cr]=await Promise.all([sb.rpc("contributors").then(r=>r,e=>({error:e})),sb.from("credits").select("id,data").then(r=>r,e=>({error:e}))]);
   TH.credits=(cr.data||[]).map(r=>Object.assign({id:r.id},r.data||{}));
@@ -1891,9 +1928,9 @@ async function loadContribs(){const box=document.getElementById("ct-list");if(!b
   const {data,error}=await q;if(error){box.innerHTML=`<p class="muted">${esc(error.message)}</p>`;return;}
   box.innerHTML=data.length?data.map(tkCard).join(""):`<p class="muted">Aucune contribution pour l'instant.</p>`;tkThreads(box);
   box.querySelectorAll("[data-tkact]").forEach(b=>b.addEventListener("click",async()=>{await tkAction(b.dataset.tkact,Number(b.dataset.id),data.find(x=>x.id===Number(b.dataset.id)));loadContribs();}));}
-const TK_KINDS={infos:["Contribution (infos de saison)","Envoyée depuis l'onglet Contribuer."],erreur:["Erreur dans une ORG","Un classement, un vote, un award, une date… est faux."],fusion:["Plusieurs fiches = un seul joueur","La même personne a plusieurs fiches avec des pseudos différents."],separation:["Une fiche = plusieurs joueurs","Des personnes différentes ont été réunies sur une seule fiche."],autre:["Autre","Une suggestion, un bug du site, une autre demande…"]};
+const TK_KINDS={infos:["Contribution (infos de saison)","Envoyée depuis l'onglet Contribuer."],erreur:["Erreur dans une ORG","Un classement, un vote, un award, une date… est faux."],fusion:["Plusieurs fiches = un seul joueur","La même personne a plusieurs fiches avec des pseudos différents."],separation:["Une fiche = plusieurs joueurs","Des personnes différentes ont été réunies sur une seule fiche."],host:["Je suis host d'une ORG","Demande les droits sur ton ORG pour publier ses annonces et tenir sa page à jour."],autre:["Autre","Une suggestion, un bug du site, une autre demande…"]};
 const TK_ST={open:["Ouvert","t-open"],done:["Résolu","t-done"],refused:["Refusé","t-ref"]};
-let TK={kind:"",list:null,err:"",filter:"open",players:[],split:""};
+let TK={kind:"",list:null,err:"",filter:"open",players:[],split:"",org:""};
 function tkLabelMap(){const m=new Map();const dup={};S.players.forEach(p=>{const k=norm(p.pseudo);dup[k]=(dup[k]||0)+1;});
   S.players.forEach(p=>{const l=p.pseudo+(dup[norm(p.pseudo)]>1?" ("+(p.precision||historyOf(p.id).map(x=>org(x.s.orgId)?org(x.s.orgId).name:"").filter(Boolean)[0]||p.id)+")":"");m.set(l,p.id);});return m;}
 function tkFindPlayer(v){v=String(v||"").trim();if(!v)return null;const m=tkLabelMap();if(m.has(v))return m.get(v);const p=playerByName(v);return p?p.id:null;}
@@ -1920,6 +1957,8 @@ function tkFormBody(){
     b=`${dl}${field("Fiche concernée *",`<div class="dayin"><input id="tk-psplit" list="tk-players" value="${esc(p?p.pseudo:"")}" placeholder="Pseudo de la fiche…" autocomplete="off"><button type="button" class="btn" id="tk-pick">Choisir</button></div>`)}
     ${p?(h.length?`<p class="hint">Coche les ORGs jouées par <b>l'autre personne</b> :</p><div class="checks">${h.map(({s,c})=>`<label class="chk"><input type="checkbox" name="sp" value="${esc(s.id)}"> ${esc(fullSeasonName(s))} <span class="muted">· ${placeLabel(c.place)}</span></label>`).join("")}</div>`:`<p class="muted">Cette fiche n'a aucune participation.</p>`)+field("Pseudo de l'autre personne",inp("other","",'maxlength="40" placeholder="si tu le connais"')):""}
     ${msg(false,"ex : le Panda d'Axioma n'est pas le même que celui de LaytORG.")}`;}
+  if(k==="host"){const orgs=[...S.orgs].filter(o=>!canOrg(o.id)).sort((a,b)=>String(a.name).localeCompare(String(b.name),"fr"));
+    b=`<p class="hint">Une fois la demande validée par un admin, tu pourras publier les annonces de ton ORG, modifier sa page et gérer ses saisons et candidatures. <a href="#guide">En savoir plus</a></p>${field("Ton ORG *",`<select id="tk-horg" name="horg"><option value="">— Choisir —</option>${orgs.map(o=>`<option value="${esc(o.id)}"${TK.org===o.id?" selected":""}>${esc(o.name)}</option>`).join("")}</select>`,"Ton ORG n'est pas encore sur le site ? Ajoute-la d'abord depuis l'onglet Contribuer, ou précise son nom ci-dessous.")}${msg(false,"ex : j'organise cette ORG depuis la saison 2, tu peux vérifier sur notre Discord.")}`;}
   if(k==="autre")b=msg(true,"Décris ta demande.");
   return b+`<p class="ferr" id="tk-err" role="alert">${esc(TK.err||"")}</p><p><button type="submit" class="btn primary">Envoyer le ticket</button></p>`;
 }
@@ -1942,11 +1981,12 @@ function bindTickets(){
     if(k==="erreur"){d.orgId=f.querySelector("#tk-org").value;d.seasonId=f.querySelector("#tk-season").value;if(!d.orgId)return err("Choisis l'ORG concernée.");if(!msg)return err("Explique ce qui est faux.");}
     if(k==="fusion"){d.players=TK.players.slice();if(d.players.length<2)return err("Ajoute au moins 2 fiches.");}
     if(k==="separation"){if(!TK.split)return err("Choisis la fiche concernée.");d.playerId=TK.split;d.seasons=[...f.querySelectorAll('input[name=sp]:checked')].map(x=>x.value);d.other=((f.querySelector("#f-other")||{}).value||"").trim();if(!d.seasons.length&&!msg)return err("Coche les ORGs de l'autre personne ou explique la situation.");}
+    if(k==="host"){d.orgId=f.querySelector("#tk-horg").value;if(!d.orgId)return err("Choisis ton ORG.");}
     if(k==="autre"&&!msg)return err("Décris ta demande.");
     const btn=f.querySelector("button[type=submit]");btn.disabled=true;btn.textContent="Envoi…";
     const {error}=await sb.from("tickets").insert({kind:k,data:d,status:"open"});
-    if(error){btn.disabled=false;btn.textContent="Envoyer le ticket";return err(/relation|does not exist|schema cache/i.test(error.message)?"Les tickets ne sont pas encore activés : l'admin doit lancer update-6-tickets.sql dans Supabase.":errMsg(sbErr(error)));}
-    TK={kind:"",list:null,err:"",filter:TK.filter,players:[],split:""};toast("Ticket envoyé");render();tkCount();});}
+    if(error){btn.disabled=false;btn.textContent="Envoyer le ticket";return err(k==="host"&&/check constraint|tickets_kind/i.test(error.message)?"Les demandes de host ne sont pas encore activées : l'admin doit lancer update-14-hosts.sql dans Supabase.":/relation|does not exist|schema cache/i.test(error.message)?"Les tickets ne sont pas encore activés : l'admin doit lancer update-6-tickets.sql dans Supabase.":errMsg(sbErr(error)));}
+    TK={kind:"",list:null,err:"",filter:TK.filter,players:[],split:"",org:""};toast("Ticket envoyé");render();tkCount();});}
   const fl=document.getElementById("tk-filter");if(fl&&!fl._b){fl._b=1;fl.addEventListener("change",()=>{TK.filter=fl.value;loadTickets();});}
   loadTickets();
 }
@@ -1963,12 +2003,14 @@ function tkCard(t){const d=t.data||{};const st=TK_ST[t.status]||TK_ST.open;const
   let det="";
   if(t.kind==="erreur"){const o=org(d.orgId),se=season(d.seasonId);det=`<p>${se?`<a href="#saison-${esc(se.id)}">${esc(fullSeasonName(se))}</a>`:o?`<a href="#org-${esc(o.id)}">${esc(o.name)}</a>`:"ORG supprimée"}</p>`;}
   if(t.kind==="infos"){const o=org(d.orgId);const im=d.images||{};det=`<p><b>${o?`<a href="#org-${esc(o.id)}">${esc(o.name)}</a>`:esc(d.orgName||"?")+(d.orgId?"":` <span class="tag">nouvelle ORG</span>`)}</b>, saison ${esc(d.number||"?")}${d.title?`, ${esc(d.title)}`:""}${d.start||d.end?`, ${d.start?fmtDate(d.start):"?"} → ${d.end?fmtDate(d.end):"?"}`:""}</p>${CT_KINDS.filter(([k])=>(im[k]||[]).length).map(([k,l])=>`<div class="ct-shots"><span class="msg-lbl" style="margin:6px 0 4px">${l}</span><div>${im[k].map(u=>`<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" alt="${esc(l)}" loading="lazy"></a>`).join("")}</div></div>`).join("")}`;}
+  if(t.kind==="host"){const o=org(d.orgId);det=`<p>ORG : ${o?`<a href="#org-${esc(o.id)}">${esc(o.name)}</a>`:"ORG supprimée"}</p>`;}
   if(t.kind==="fusion")det=`<p>Fiches : ${(d.players||[]).map(pl).join(" + ")}</p>`;
   if(t.kind==="separation")det=`<p>Fiche : ${pl(d.playerId)}${d.other?`, autre personne : <b>${esc(d.other)}</b>`:""}</p>${(d.seasons||[]).length?`<p class="muted">ORGs de l'autre personne : ${(d.seasons||[]).map(id=>{const se=season(id);return se?`<a href="#saison-${esc(id)}">${esc(fullSeasonName(se))}</a>`:"?";}).join(", ")}</p>`:""}`;
   const author=S.isAdmin?(()=>{const lp=linkedPlayer(t.user_id);const p=ADM_PROFS.find(x=>x.id===t.user_id);return `, par ${lp?`<a href="#joueur-${esc(lp.id)}">${esc(lp.pseudo)}</a>`:esc((p&&p.discord_name)||"compte inconnu")}`;})():"";
   const when=new Date(t.created_at).toLocaleString("fr-FR",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
   let acts="";
   if(S.isAdmin){if(t.kind==="fusion"&&(d.players||[]).length&&player(d.players[0]))acts+=`<button class="btn sm" data-tkact="merge" data-id="${t.id}">Fusionner…</button>`;
+    if(t.kind==="host"&&t.status==="open"&&org(d.orgId))acts+=`<button class="btn sm" data-tkact="grant" data-id="${t.id}">Donner les droits</button>`;
     if(t.kind==="separation"&&player(d.playerId))acts+=`<button class="btn sm" data-tkact="split" data-id="${t.id}">Séparer…</button>`;
     if(t.status==="open")acts+=`<button class="btn sm primary" data-tkact="done" data-id="${t.id}">Résolu</button><button class="btn sm ghost" data-tkact="refused" data-id="${t.id}">Refuser</button>`;else acts+=`<button class="btn sm ghost" data-tkact="open" data-id="${t.id}">Rouvrir</button>`;
     acts+=`<button class="btn sm danger" data-tkact="del" data-id="${t.id}">Supprimer</button>`;}
@@ -2014,6 +2056,13 @@ function tmLive(){if(!TM.rt){try{TM.rt=sb.channel("oc-tickets-msg");if(TM.rt.on)
 async function tkAction(a,id,t){const d=(t&&t.data)||{};
   if(a==="merge"){mergeForm(player(d.players[0]));return;}
   if(a==="split"){splitForm(player(d.playerId));return;}
+  if(a==="grant"){const o=org(d.orgId);if(!o)return;const u=ADM_PROFS.find(x=>x.id===t.user_id);const nm=(linkedPlayer(t.user_id)||{}).pseudo||(u&&u.discord_name)||"ce compte";
+    confirmModal("Donner les droits",`${nm} pourra publier les annonces de ${o.name}, modifier sa page et gérer ses saisons et candidatures.`,"Donner les droits",async()=>{
+      if(!u||u.role==="player"){const {error}=await sb.from("profiles").update({role:"host"}).eq("id",t.user_id);if(error)throw sbErr(error);}
+      const {error:e2}=await sb.from("org_hosts").insert({org_id:o.id,user_id:t.user_id});if(e2&&e2.code!=="23505")throw sbErr(e2);
+      await sb.from("tickets").update({status:"done",updated_at:new Date().toISOString()}).eq("id",id);
+      await sb.from("ticket_messages").insert({ticket_id:id,body:`C'est validé : tu es maintenant host de ${o.name} sur le site. Recharge la page, tu verras les boutons « + Annonce » et « Modifier » sur la page de l'ORG.`});
+      ADM_PROFS=[];toast("Droits donnés pour "+o.name);loadTickets();tkCount();});return;}
   if(a==="note"){openModal({title:"Réponse au ticket",body:field("Message visible par l'auteur du ticket",area("note",t.admin_note||"",'rows="4" maxlength="1000"')),onSave:async f=>{const {error}=await sb.from("tickets").update({admin_note:vals(f).note||"",updated_at:new Date().toISOString()}).eq("id",id);if(error)throw sbErr(error);toast("Réponse enregistrée");loadTickets();}});return;}
   if(a==="del"){confirmModal(S.isAdmin?"Supprimer le ticket":"Annuler le ticket","Ce ticket sera supprimé définitivement.",S.isAdmin?"Supprimer":"Annuler le ticket",async()=>{const {error}=await sb.from("tickets").delete().eq("id",id);if(error)throw sbErr(error);toast("Ticket supprimé");loadTickets();tkCount();});return;}
   const {error}=await sb.from("tickets").update({status:a,updated_at:new Date().toISOString()}).eq("id",id);if(error){toast(errMsg(sbErr(error)),true);return;}
@@ -2589,7 +2638,7 @@ document.addEventListener("click",e=>{
   if(!b){const tr=e.target.closest("tr[data-href]");if(tr&&!e.target.closest("a"))location.hash=tr.dataset.href.slice(1);return;}
   const id=b.dataset.id;
   const A={
-    "new-org":()=>orgForm(),"pic-org":()=>picForm("org",org(id)),"pic-player":()=>picForm("player",player(id)),"frame-banner":()=>frameEditor(player(id),"banner"),"edit-banner":()=>{playerForm(player(id));setTimeout(()=>{const z=document.querySelector('[data-drop="banner"]');if(z)z.scrollIntoView({block:"center"});},120);},"frame-avatar":()=>frameEditor(player(id),"avatar"),"pic-season":()=>picForm("season",season(id)),"edit-org":()=>orgForm(org(id)),"del-org":()=>delOrg(id),
+    "new-org":()=>orgForm(),"claim-org":()=>{if(!S.me){login();return;}TK.kind="host";TK.org=id||"";TK.err="";if(routeStr()==="tickets")render();else location.hash="tickets";},"pic-org":()=>picForm("org",org(id)),"pic-player":()=>picForm("player",player(id)),"frame-banner":()=>frameEditor(player(id),"banner"),"edit-banner":()=>{playerForm(player(id));setTimeout(()=>{const z=document.querySelector('[data-drop="banner"]');if(z)z.scrollIntoView({block:"center"});},120);},"frame-avatar":()=>frameEditor(player(id),"avatar"),"pic-season":()=>picForm("season",season(id)),"edit-org":()=>orgForm(org(id)),"del-org":()=>delOrg(id),
     "new-season":()=>seasonForm(null,b.dataset.org),"edit-season":()=>seasonForm(season(id)),"del-season":()=>delSeason(id),
     "cast":()=>castEditor(season(id)),"tierlist":()=>tierList(season(id)),"optimize-images":()=>optimizeImages(),"export-all":async()=>{try{await exportAll();toast("Sauvegarde téléchargée");}catch(e){toast(errMsg(e),true);}},"slooks":()=>seasonLooksEditor(season(id)),"awards":()=>awardsEditor(season(id)),
     "filter":()=>{S.f[b.dataset.k]=b.dataset.v;render();},"opal":()=>{S.f.opal=b.dataset.v;render();},"votes":()=>votesEditor(season(id)),
