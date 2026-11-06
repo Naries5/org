@@ -8,6 +8,14 @@ async function q(path) {
     return await r.json();
   } catch (e) { return []; }
 }
+// Même requête sur la vue allégée (images remplacées par des liens courts), si elle existe.
+async function qv(path) {
+  try {
+    const r = await fetch(SB + "/rest/v1/oc_" + path, { headers: { apikey: KEY, Authorization: "Bearer " + KEY } });
+    if (r.ok) return await r.json();
+  } catch (e) {}
+  return q(path);
+}
 const enc = encodeURIComponent;
 function roman(n) { n = Math.floor(Number(n)); if (!n || n < 1 || n > 3999) return String(n || "?"); const m = [[1000,"M"],[900,"CM"],[500,"D"],[400,"CD"],[100,"C"],[90,"XC"],[50,"L"],[40,"XL"],[10,"X"],[9,"IX"],[5,"V"],[4,"IV"],[1,"I"]]; let r = ""; m.forEach(([v, l]) => { while (n >= v) { r += l; n -= v; } }); return r; }
 function seasonName(s, o) {
@@ -22,4 +30,4 @@ function fmtDate(d) { const m = String(d || "").match(/^(\d{4})-(\d{2})-(\d{2})/
 function dates(s) { if (s.start && s.end) return fmtDate(s.start) + " → " + fmtDate(s.end); if (s.start) return "Depuis le " + fmtDate(s.start); return s.period || ""; }
 function esc(t) { return String(t == null ? "" : t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]); }
 function pLabel(p) { return p ? p.pseudo + (p.precision ? " (" + p.precision + ")" : "") : "?"; }
-module.exports = { q, enc, seasonName, dates, esc, pLabel };
+module.exports = { q, qv, enc, seasonName, dates, esc, pLabel };

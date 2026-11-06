@@ -67,7 +67,7 @@ const _idx=new WeakMap();const byId=(arr,id)=>{if(!arr)return undefined;let m=_i
 const org=id=>byId(S.orgs,id), player=id=>byId(S.players,id), season=id=>byId(S.seasons,id), newsItem=id=>byId(S.news,id);
 const pName=id=>{const p=player(id);return p?(p.pseudo||"Sans pseudo"):"Joueur supprimé";};
 function initials(n){n=String(n||"?").trim();const parts=n.split(/\s+/).filter(Boolean);return ((parts[0]||"?")[0]+(parts[1]?parts[1][0]:(parts[0]||"")[1]||"")).toUpperCase();}
-function imgSrc(v){if(!v)return "";v=String(v);if(v.startsWith("data:image/")||/^https:\/\//.test(v))return v;if(/^[A-Za-z0-9_-]{8,64}$/.test(v))return "/_blob/"+v;return "";}
+function imgSrc(v){if(!v)return "";v=String(v);if(v.startsWith("data:image/")||/^https:\/\//.test(v)||v.startsWith("/api/blob?")||v.startsWith("/api/st?"))return v;if(/^[A-Za-z0-9_-]{8,64}$/.test(v))return "/_blob/"+v;return "";}
 function pic(v,name,cls,st){const s=imgSrc(v);return s?`<img class="${cls}" src="${esc(s)}" alt=""${st?` style="${st}"`:""}>`:`<span class="${cls}" aria-hidden="true">${esc(initials(name))}</span>`;}
 function latestSeasonWithLogo(o){if(!o||!o.id)return null;const ss=seasonsOf(o.id).filter(s=>s.logo);return ss[ss.length-1]||null;}
 function orgLogoVal(o){const s=latestSeasonWithLogo(o);return s?s.logo:(o&&o.logo);}
@@ -238,27 +238,45 @@ const CFG=window.ORG_CENTRAL_CONFIG||{};
 const sb=(window.supabase&&CFG.supabaseUrl&&!/XXXX/.test(CFG.supabaseUrl))?window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseAnonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:"pkce",storageKey:"org-central-auth",storage:(()=>{try{localStorage.setItem("__t","1");localStorage.removeItem("__t");return localStorage;}catch(e){return undefined;}})()}}):null;
 S.isAdmin=false;S.hostOrgs=new Set();S.isHost=false;S.profile=null;S.myClaims=[];
 function sbErr(e){const m=(e&&e.message)||String(e);const x=new Error(/row-level security|permission|42501/i.test(m)?"Tu n'as pas le droit de faire ça (réservé aux hosts de cette ORG ou à l'admin).":m);x.code=e&&e.code;return x;}
-async function fetchAll(table){let out=[],from=0;for(;;){const {data,error}=await sb.from(table).select("id,data").range(from,from+999);if(error)throw sbErr(error);out=out.concat(data);if(data.length<1000)break;from+=1000;}return out;}
+let DIRECT=false;const ST_PUB="/storage/v1/object/public/images/";
+function bust(){try{const b=Number(localStorage.getItem("oc-bust")||0);return Date.now()-b<15*60e3?b:0;}catch(e){return 0;}}
+function markBust(){try{localStorage.setItem("oc-bust",String(Date.now()));}catch(e){}}
+async function fetchPublic(table){let out=[],from=0;const b=bust();
+  for(let n=0;n<200;n++){const r=await fetch("/api/data?t="+table+"&from="+from+(b?"&b="+b:""));if(!r.ok)throw new Error("Données indisponibles ("+r.status+")");const j=await r.json();out=out.concat(j.rows||[]);if(j.next==null)break;from=j.next;}return out;}
+async function fetchAll(table){if(!DIRECT&&PATHMODE){try{return await fetchPublic(table);}catch(e){console.warn("cache indisponible, lecture directe",e);}}let out=[],from=0;for(;;){const {data,error}=await sb.from(table).select("id,data").range(from,from+999);if(error)throw sbErr(error);out=out.concat(data);if(data.length<1000)break;from+=1000;}return out;}
+// En mode public, les images arrivent sous forme de liens courts (/api/blob, /api/st).
+// Avant d'écrire, on remet les vraies valeurs pour ne jamais enregistrer ces liens dans la base.
+async function restoreRefs(d){const refs=new Map();
+  const scan=v=>{if(Array.isArray(v))v.forEach(scan);else if(v&&typeof v==="object")Object.values(v).forEach(scan);else if(typeof v==="string"&&v.startsWith("/api/blob?")){const q=new URLSearchParams(v.slice(10));refs.set(q.get("t")+"|"+q.get("id"),null);}};scan(d);
+  for(const k of refs.keys()){const [t,id]=k.split("|");const {data}=await sb.from(t).select("data").eq("id",id).maybeSingle();refs.set(k,data?data.data:null);}
+  const at=(o,p)=>p.split(".").reduce((x,s)=>x==null?x:x[s],o);
+  const fix=v=>{if(Array.isArray(v))return v.map(fix);if(v&&typeof v==="object"){const o={};for(const k of Object.keys(v))o[k]=fix(v[k]);return o;}
+    if(typeof v==="string"&&v.startsWith("/api/blob?")){const q=new URLSearchParams(v.slice(10));const r=refs.get(q.get("t")+"|"+q.get("id"));const x=r?at(r,q.get("p")||""):"";return typeof x==="string"&&x.startsWith("data:image/")?x:"";}
+    if(typeof v==="string"&&v.startsWith("/api/st?p="))return String(CFG.supabaseUrl||"").replace(/\/$/,"")+ST_PUB+v.slice(10);return v;};
+  return fix(d);}
+function goDirect(){if(DIRECT||!PATHMODE)return;DIRECT=true;(makeDb._subs||[]).forEach(f=>f());makeDb._subs=[];Object.values(makeDb._reload||{}).forEach(f=>f());}
 function makeDb(){
   const cache={};
   return {
     collection(c){return {onSnapshot(next,err){
       let t=null;const load=async()=>{try{const rows=await fetchAll(c);cache[c]=rows;next({docs:rows.map(r=>({id:r.id,exists:true,data:()=>r.data||{}}))});}catch(e){err&&err(e);}};
       load();const emit=()=>{const rows=cache[c]||[];next({docs:rows.map(r=>({id:r.id,exists:true,data:()=>r.data||{}}))});};
-      sb.channel("rt-"+c).on("postgres_changes",{event:"*",schema:"public",table:c},pl=>{const rows=cache[c];
+      const sub=()=>sb.channel("rt-"+c).on("postgres_changes",{event:"*",schema:"public",table:c},pl=>{const rows=cache[c];
         if(!rows){clearTimeout(t);t=setTimeout(load,600);return;}
         const nw=pl&&pl.new,od=pl&&pl.old;
         if(pl&&pl.eventType==="DELETE"&&od&&od.id){cache[c]=rows.filter(r=>r.id!==od.id);}
         else if(nw&&nw.id&&nw.data){const i=rows.findIndex(r=>r.id===nw.id);const copy=rows.slice();if(i<0)copy.push({id:nw.id,data:nw.data});else copy[i]={id:nw.id,data:nw.data};cache[c]=copy;}
         else{clearTimeout(t);t=setTimeout(load,600);return;}
         clearTimeout(t);t=setTimeout(emit,150);}).subscribe();
+      if(DIRECT||!PATHMODE)sub();else{makeDb._subs=makeDb._subs||[];makeDb._subs.push(sub);}
       makeDb._reload=makeDb._reload||{};makeDb._reload[c]=load;
+      makeDb._patch=makeDb._patch||{};makeDb._patch[c]=async id=>{const {data}=await sb.from(c).select("id,data").eq("id",id).maybeSingle();const rows=(cache[c]||[]).filter(r=>r.id!==id);if(data)rows.push({id:data.id,data:data.data});cache[c]=rows;emit();};
       return ()=>{};}};},
-    doc(path){const [c,id]=path.split("/");const reload=()=>makeDb._reload&&makeDb._reload[c]&&makeDb._reload[c]();
+    doc(path){const [c,id]=path.split("/");const reload=()=>{if(!DIRECT&&PATHMODE){markBust();return makeDb._patch&&makeDb._patch[c]&&makeDb._patch[c](id);}return makeDb._reload&&makeDb._reload[c]&&makeDb._reload[c]();};
       return {
         async get(){const {data,error}=await sb.from(c).select("data").eq("id",id).maybeSingle();if(error)throw sbErr(error);return {id,exists:!!data,data:()=>data&&data.data};},
-        async set(d){const now=new Date().toISOString();const u=await sb.from(c).update({data:d,updated_at:now}).eq("id",id).select("id");if(u.error)throw sbErr(u.error);if(!u.data.length){const {error}=await sb.from(c).insert({id,data:d,updated_at:now});if(error)throw sbErr(error);}reload();},
-        async update(d){const {data:cur,error:e1}=await sb.from(c).select("data").eq("id",id).maybeSingle();if(e1)throw sbErr(e1);if(!cur)throw new Error("Élément introuvable.");
+        async set(d){d=await restoreRefs(d);const now=new Date().toISOString();const u=await sb.from(c).update({data:d,updated_at:now}).eq("id",id).select("id");if(u.error)throw sbErr(u.error);if(!u.data.length){const {error}=await sb.from(c).insert({id,data:d,updated_at:now});if(error)throw sbErr(error);}reload();},
+        async update(d){d=await restoreRefs(d);const {data:cur,error:e1}=await sb.from(c).select("data").eq("id",id).maybeSingle();if(e1)throw sbErr(e1);if(!cur)throw new Error("Élément introuvable.");
           const {error}=await sb.from(c).update({data:Object.assign({},cur.data,d),updated_at:new Date().toISOString()}).eq("id",id);if(error)throw sbErr(error);reload();},
         async delete(){const {error}=await sb.from(c).delete().eq("id",id);if(error)throw sbErr(error);reload();}
       };}
@@ -316,6 +334,7 @@ async function loadAuth(){
   tkCount();
   S.isOwner=false;if(S.me){try{const {data:own}=await sb.rpc("is_owner");S.isOwner=own===true;}catch(e){}}
   S.canEdit=S.isHost;
+  if(S.isHost||S.hostOrgs.size)goDirect();
   try{await loadSocial();}catch(e){console.warn(e);}
   presStart();
 }

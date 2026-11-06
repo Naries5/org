@@ -1,12 +1,12 @@
 // Page d'aperçu pour les liens partagés : /s/<saison>, /o/<org>, /j/<joueur>.
 // Discord & co lisent les balises og:*, les visiteurs sont redirigés vers la vraie page.
-const { q, enc, seasonName, dates, esc, pLabel } = require("./_lib");
+const { q, qv, enc, seasonName, dates, esc, pLabel } = require("./_lib");
 const STATUS = { annoncee: "Annoncée", inscriptions: "Inscriptions ouvertes", encours: "En cours", en_cours: "En cours", terminee: "Terminée" };
 
 async function players(ids) {
   ids = [...new Set(ids.filter(Boolean))];
   if (!ids.length) return {};
-  const rows = await q("players?select=id,pseudo:data->>pseudo,precision:data->>precision&id=in.(" + ids.map(i => '"' + i + '"').join(",") + ")");
+  const rows = await qv("players?select=id,pseudo:data->>pseudo,precision:data->>precision&id=in.(" + ids.map(i => '"' + i + '"').join(",") + ")");
   const m = {}; rows.forEach(r => (m[r.id] = r)); return m;
 }
 const SEL = "id,external:data->>external,orgId:data->>orgId,number:data->>number,taupeWins:data->taupeWins,title:data->>title,customName:data->>customName,status:data->>status,start:data->>start,end:data->>end,period:data->>period,cast:data->cast";
@@ -20,9 +20,9 @@ function actualWinner(s,o) {
  return c?c.playerId:null;
 }
 async function season(id) {
-  const [s] = await q("seasons?select=" + SEL + ",logo:data->>logo&id=eq." + enc(id));
+  const [s] = await qv("seasons?select=" + SEL + ",logo:data->>logo&id=eq." + enc(id));
   if (!s) return null;
-  const [o] = await q("orgs?select=" + OSEL + ",logo:data->>logo&id=eq." + enc(s.orgId || ""));
+  const [o] = await qv("orgs?select=" + OSEL + ",logo:data->>logo&id=eq." + enc(s.orgId || ""));
   const cast = Array.isArray(s.cast) ? s.cast : [];
   const done = s.status === "terminee" && !s.external;
   const pod = done ? [1, 2, 3].map(n => cast.filter(c => Number(c.place) === n).map(c => c.playerId)) : [[], [], []];
@@ -45,9 +45,9 @@ async function season(id) {
 }
 
 async function orgPage(id) {
-  const [o] = await q("orgs?select=" + OSEL + ",logo:data->>logo&id=eq." + enc(id));
+  const [o] = await qv("orgs?select=" + OSEL + ",logo:data->>logo&id=eq." + enc(id));
   if (!o) return null;
-  const ss = await q("seasons?select=id,number:data->>number,taupeWins:data->taupeWins,external:data->>external,cast:data->cast,status:data->>status&data->>orgId=eq." + enc(id));
+  const ss = await qv("seasons?select=id,number:data->>number,taupeWins:data->taupeWins,external:data->>external,cast:data->cast,status:data->>status&data->>orgId=eq." + enc(id));
   const wins = {}, all = new Set();
   ss.forEach(s => (Array.isArray(s.cast) ? s.cast : []).forEach(c => { all.add(c.playerId); if (!s.external && actualWinner(s,o) === c.playerId) wins[c.playerId] = (wins[c.playerId] || 0) + 1; }));
   const best = Object.entries(wins).sort((a, b) => b[1] - a[1])[0];
@@ -59,11 +59,11 @@ async function orgPage(id) {
 }
 
 async function playerPage(id) {
-  const [p] = await q("players?select=id,pseudo:data->>pseudo,precision:data->>precision,tagline:data->>tagline,hasAv:data->>avatar&id=eq." + enc(id));
+  const [p] = await qv("players?select=id,pseudo:data->>pseudo,precision:data->>precision,tagline:data->>tagline,hasAv:data->>avatar&id=eq." + enc(id));
   if (!p) return null;
-  const ss = await q("seasons?select=id,orgId:data->>orgId,number:data->>number,taupeWins:data->taupeWins,title:data->>title,customName:data->>customName,status:data->>status,cast:data->cast&data->cast=cs." + enc(JSON.stringify([{ playerId: id }])));
+  const ss = await qv("seasons?select=id,orgId:data->>orgId,number:data->>number,taupeWins:data->taupeWins,title:data->>title,customName:data->>customName,status:data->>status,cast:data->cast&data->cast=cs." + enc(JSON.stringify([{ playerId: id }])));
   const orgIds = [...new Set(ss.map(s => s.orgId).filter(Boolean))];
-  const os = orgIds.length ? await q("orgs?select=id,name:data->>name,concept:data->>concept&id=in.(" + orgIds.map(i => '"' + i + '"').join(",") + ")") : [];
+  const os = orgIds.length ? await qv("orgs?select=id,name:data->>name,concept:data->>concept&id=in.(" + orgIds.map(i => '"' + i + '"').join(",") + ")") : [];
   const orgMap = Object.fromEntries(os.map(o=>[o.id,o]));
   let w=0,top=0;
   ss.forEach(s=>{const c=(s.cast||[]).find(c=>c.playerId===id);const pl=c&&Number(c.place);if(s.status==="terminee"&&c){if(actualWinner(s,orgMap[s.orgId])===id)w++;if(pl&&pl<=3)top++;}});
