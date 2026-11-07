@@ -1342,3 +1342,4 @@ html[data-vt="back"]::view-transition-new(root){animation:vt-in-l .42s var(--eas
 @media(max-width:520px){.cx-kinds{grid-template-columns:1fr!important}}
 #cx-form{margin-top:18px;max-width:840px}
 .msg-banned{margin:0;padding:14px 16px;border-top:1px solid var(--line,rgba(255,255,255,.1));color:var(--muted,#aaa);font-size:.92rem}
+.clk-h{font-size:1.05rem;margin:18px 0 10px}

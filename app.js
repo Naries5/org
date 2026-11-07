@@ -40,7 +40,7 @@ function withTransition(fn,from,to){
     try{const t=document.startViewTransition(fn);t.finished.finally(()=>{document.documentElement.dataset.vt="";});return;}catch(e){}}
   fn();
 }
-const ROUTE_PAGES=new Set(["presence","accueil","orgs","saisons","org","saison","joueurs","joueur","annonces","admin","journal","tickets","calendrier","contribuer","social","moi","merci","guide","qualite","comptes","palmares"]);
+const ROUTE_PAGES=new Set(["presence","clics","accueil","orgs","saisons","org","saison","joueurs","joueur","annonces","admin","journal","tickets","calendrier","contribuer","social","moi","merci","guide","qualite","comptes","palmares"]);
 function isRoute(r){r=String(r||"");const i=r.indexOf("-");return ROUTE_PAGES.has(i<0?r:r.slice(0,i));}
 function routePath(r){r=String(r||"");if(!r||r==="accueil")return "/";const i=r.indexOf("-");return i<0?"/"+r:"/"+r.slice(0,i)+"/"+encodeURIComponent(r.slice(i+1));}
 function routeStr(){const h=decodeURIComponent(location.hash.slice(1));if(h&&!/access_token=/.test(h))return h;
@@ -229,7 +229,7 @@ function updateRole(){const el=document.getElementById("role");if(!el)return;
   const item=(href,label,n,act)=>act?`<button type="button" role="menuitem" data-act="${act}">${label}</button>`:`<a role="menuitem" href="${href}">${label}${bd(n)}</a>`;
   el.innerHTML=`<a class="hicon" href="#social" title="Messages" aria-label="Messages${msgN?" ("+msgN+" non lus)":""}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.2 3.6c-.5.4-1.3.1-1.3-.6V16A2.5 2.5 0 0 1 4 13.5z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg>${msgN?`<b class="badge">${msgN}</b>`:""}</a>
   <div class="umenu"><button type="button" class="ubtn" aria-haspopup="menu" aria-expanded="false">${av}<span class="uname">${esc(name)}</span>${tkN?`<i class="udot" aria-label="${tkN} demande(s) ou message(s) en attente"></i>`:""}<svg class="caret" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-  <div class="udrop" role="menu" hidden>${item(mp?"#joueur-"+mp.id:"#moi","Mon profil")}${item("#social","Messages",msgN)}${item("#contribuer",S.isAdmin?"Demandes reçues":"Mes demandes",tkN)}${S.isOwner?item("#journal","Journal")+item("#presence","Qui est en ligne"):""}${S.isAdmin?item("#qualite","Qualité des données")+item("#comptes","Comptes inscrits"):""}${S.isAdmin?item("#admin","Administration"):S.isHost?`<span class="umuted">Compte host</span>`:""}<hr>${item("","Déconnexion",0,"logout")}</div></div>`;}
+  <div class="udrop" role="menu" hidden>${item(mp?"#joueur-"+mp.id:"#moi","Mon profil")}${item("#social","Messages",msgN)}${item("#contribuer",S.isAdmin?"Demandes reçues":"Mes demandes",tkN)}${S.isOwner?item("#journal","Journal")+item("#presence","Qui est en ligne")+item("#clics","Clics sur les liens"):""}${S.isAdmin?item("#qualite","Qualité des données")+item("#comptes","Comptes inscrits"):""}${S.isAdmin?item("#admin","Administration"):S.isHost?`<span class="umuted">Compte host</span>`:""}<hr>${item("","Déconnexion",0,"logout")}</div></div>`;}
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".ubtn");const open=document.querySelector(".udrop:not([hidden])");
   if(b){const d=b.parentNode.querySelector(".udrop");const show=d.hidden;d.hidden=!show;b.setAttribute("aria-expanded",show);return;}
   if(open&&(!e.target.closest(".udrop")||e.target.closest("a,button"))){open.hidden=true;const bb=document.querySelector(".ubtn");if(bb)bb.setAttribute("aria-expanded","false");}});
@@ -310,6 +310,35 @@ const ONLINE_MS=100000;
 async function loadPresence(){if(!ADM_PROFS.length){const {data}=await sb.from("profiles").select("*");ADM_PROFS=data||[];}
   const [a,b]=await Promise.all([sb.from("last_seen").select("*").order("at",{ascending:false}).limit(300),sb.from("visitors").select("*").order("at",{ascending:false}).limit(200)]);
   PRES_SEEN=a.error?{error:a.error}:a.data||[];PRES_VIS=b.error?null:(b.data||[]);drawPresence();}
+// Historique des clics vers l'extérieur (réservé au propriétaire)
+document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest("a[href]");if(!a||!sb)return;const h=a.getAttribute("href")||"";
+  if(!/^https?:\/\//i.test(h))return;try{if(new URL(h).host===location.host)return;}catch(err){return;}
+  const row={url:h.slice(0,600),label:(a.innerText||a.textContent||"").replace(/[↗]/g,"").replace(/\s+/g," ").trim().slice(0,120),page:routeStr().slice(0,120),vid:S.me?"":presVid()};
+  try{sb.from("link_clicks").insert(row).then(()=>{},()=>{});}catch(err){}},true);
+const CLK={f:"all"};
+function pageClicks(){
+  if(!S.isOwner)return `<div class="empty"><h2>Page privée</h2></div>`;
+  setTimeout(loadClicks,0);
+  return `<section class="block"><div class="block-head"><h1>Clics sur les liens</h1><span class="actions"><select id="clk-f" class="search" style="max-width:200px" aria-label="Filtrer"><option value="all">Tous les liens</option><option value="discord"${CLK.f==="discord"?" selected":""}>Discord seulement</option><option value="other"${CLK.f==="other"?" selected":""}>Autres liens</option></select><button class="btn sm ghost" id="clk-r">Actualiser</button></span></div>
+  <p class="hint">Chaque clic vers un site extérieur : Discord des ORGs, sites officiels, inscriptions, liens dans les annonces. Les 400 derniers.</p>
+  <div id="clk-top"></div><div id="clk-list"><p class="muted">Chargement…</p></div></section>`;}
+async function loadClicks(){const box=document.getElementById("clk-list");if(!box)return;
+  const f=document.getElementById("clk-f"),r=document.getElementById("clk-r");if(f&&!f._b){f._b=1;f.addEventListener("change",()=>{CLK.f=f.value;loadClicks();});r.addEventListener("click",loadClicks);}
+  if(!ADM_PROFS.length){const {data}=await sb.from("profiles").select("*");ADM_PROFS=data||[];}
+  let q=sb.from("link_clicks").select("*").order("at",{ascending:false}).limit(400);
+  if(CLK.f==="discord")q=q.or("url.ilike.%discord.gg%,url.ilike.%discord.com%");if(CLK.f==="other")q=q.not("url","ilike","%discord.gg%").not("url","ilike","%discord.com%");
+  const {data,error}=await q;
+  if(error){box.innerHTML=`<p class="muted">Lance <b>update-17-clics-liens.sql</b> dans Supabase. (${esc(error.message)})</p>`;return;}
+  if(!data.length){box.innerHTML=`<p class="muted">Aucun clic enregistré pour l'instant.</p>`;document.getElementById("clk-top").innerHTML="";return;}
+  const who=r=>{if(!r.user_id)return `<span class="muted">Visiteur non connecté</span>`;const pl=linkedPlayer(r.user_id);const pr=ADM_PROFS.find(x=>x.id===r.user_id);const nm=pl?pl.pseudo:(pr&&pr.discord_name)||"Compte inconnu";
+    return `<span class="who">${pl&&avatarOf(pl)?ava(pl,"xs"):pr&&pr.avatar_url?`<img class="avatar xs" src="${esc(pr.avatar_url)}" alt="">`:""}${pl?`<a href="#joueur-${esc(pl.id)}">${esc(nm)}</a>`:esc(nm)}</span>`;};
+  const host=u=>{try{return new URL(u).host.replace(/^www\./,"");}catch(e){return u;}};
+  const from=pg=>{const m=/^(org|saison|joueur)-(.+)$/.exec(pg||"");if(m&&m[1]==="org"&&org(m[2]))return `<a href="#org-${esc(m[2])}">${esc(org(m[2]).name)}</a>`;if(m&&m[1]==="saison"&&season(m[2]))return `<a href="#saison-${esc(m[2])}">${esc(fullSeasonName(season(m[2])))}</a>`;if(m&&m[1]==="joueur"&&player(m[2]))return `<a href="#joueur-${esc(m[2])}">${esc(player(m[2]).pseudo)}</a>`;return esc(presPageLabel(pg));};
+  const fmt=t=>{const d=new Date(t);return `<span title="${esc(d.toLocaleString("fr-FR"))}">${d.toLocaleDateString("fr-FR",{day:"numeric",month:"short"})} ${d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})}</span>`;};
+  const cnt={};data.forEach(r=>{const k=r.url;cnt[k]=cnt[k]||{n:0,users:new Set(),r};cnt[k].n++;cnt[k].users.add(r.user_id||r.vid);});
+  const top=Object.values(cnt).sort((a,b)=>b.n-a.n).slice(0,8);
+  document.getElementById("clk-top").innerHTML=`<h2 class="clk-h">Les plus cliqués</h2><div class="table-wrap"><table><thead><tr><th>Lien</th><th>Depuis</th><th>Clics</th><th>Personnes</th></tr></thead><tbody>${top.map(x=>`<tr><td><a href="${esc(x.r.url)}" target="_blank" rel="noopener">${esc(host(x.r.url))}</a> <span class="muted">${esc(x.r.label)}</span></td><td>${from(x.r.page)}</td><td>${x.n}</td><td>${x.users.size}</td></tr>`).join("")}</tbody></table></div><h2 class="clk-h">Historique</h2>`;
+  box.innerHTML=`<div class="table-wrap"><table><thead><tr><th>Quand</th><th>Qui</th><th>Lien</th><th>Depuis</th></tr></thead><tbody>${data.map(r=>`<tr><td>${fmt(r.at)}</td><td>${who(r)}</td><td><a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(host(r.url))}</a>${r.label?` <span class="muted">${esc(r.label)}</span>`:""}</td><td>${from(r.page)}</td></tr>`).join("")}</tbody></table></div>`;}
 function pagePresence(){
   if(!S.isOwner)return `<div class="empty"><h2>Page privée</h2></div>`;
   setTimeout(()=>{presTrack(PRES.route,true);loadPresence();clearInterval(PRES_TIMER);PRES_TIMER=setInterval(()=>{if(curRoute().page!=="presence"){clearInterval(PRES_TIMER);return;}loadPresence();},15000);},300);
@@ -467,6 +496,7 @@ function render(){
     case "qualite":html=pageQuality();break;
     case "comptes":html=pageAccounts();break;
     case "presence":html=pagePresence();break;
+    case "clics":html=pageClicks();break;
     case "social":html=pageSocial(id);break;
     default:html=pageHome();
   }
@@ -475,7 +505,7 @@ function render(){
   bindSearch(page);bindSearchBox(document.getElementById("hsearch"));
   themeFor(page,id);updateRole();if(page==="social")bindSocial();
   if(keepFocus){const s=document.getElementById("search");if(s){s.focus();s.setSelectionRange(s.value.length,s.value.length);}}
-  const title={guide:"Comment ça marche",presence:"Qui est en ligne",comptes:"Comptes inscrits",qualite:"Qualité des données",merci:"Remerciements",contribuer:"Contribuer",calendrier:"Calendrier",tickets:"Contribuer",social:"Messages",orgs:"ORGs",saisons:"Saisons",joueurs:"Joueurs",annonces:"Annonces",palmares:"Palmarès"}[page];
+  const title={guide:"Comment ça marche",presence:"Qui est en ligne",clics:"Clics sur les liens",comptes:"Comptes inscrits",qualite:"Qualité des données",merci:"Remerciements",contribuer:"Contribuer",calendrier:"Calendrier",tickets:"Contribuer",social:"Messages",orgs:"ORGs",saisons:"Saisons",joueurs:"Joueurs",annonces:"Annonces",palmares:"Palmarès"}[page];
   document.title=title?title+" | ORG-Central":"ORG-Central";
   const arrived=h!==lastPage;
   lastPage=h;
