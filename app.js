@@ -254,6 +254,12 @@ async function restoreRefs(d){const refs=new Map();
     if(typeof v==="string"&&v.startsWith("/api/blob?")){const q=new URLSearchParams(v.slice(10));const r=refs.get(q.get("t")+"|"+q.get("id"));const x=r?at(r,q.get("p")||""):"";return typeof x==="string"&&x.startsWith("data:image/")?x:"";}
     if(typeof v==="string"&&v.startsWith("/api/st?p="))return String(CFG.supabaseUrl||"").replace(/\/$/,"")+ST_PUB+v.slice(10);return v;};
   return fix(d);}
+async function loadInvites(){if(!S.me||S.banned){S.invites=null;return;}try{const {data,error}=await sb.from("org_invites").select("org_id,url");S.invites=error?null:Object.fromEntries((data||[]).map(r=>[r.org_id,r.url]));}catch(e){S.invites=null;}}
+function inviteOf(o){return (S.invites&&S.invites[o.id])||o.discord||"";}
+function discordCell(o){if(!(o.hasDiscord||o.discord||(S.invites&&S.invites[o.id])))return "";
+  if(!S.me)return `<button type="button" class="linkbtn" data-act="login">Connecte-toi avec Discord</button> pour rejoindre`;
+  if(S.banned)return `<span class="muted">Indisponible pour ton compte</span>`;
+  const u=safeUrl(inviteOf(o));return u?`<a href="${esc(u)}" target="_blank" rel="noopener">Rejoindre</a>`:"";}
 function goDirect(){if(DIRECT||!PATHMODE)return;DIRECT=true;(makeDb._subs||[]).forEach(f=>f());makeDb._subs=[];Object.values(makeDb._reload||{}).forEach(f=>f());}
 function makeDb(){
   const cache={};
@@ -323,13 +329,15 @@ function drawPresence(){const a=document.getElementById("pres-now"),b=document.g
   b.innerHTML=PRES_SEEN.length?`<div class="table-wrap"><table><thead><tr><th>Joueur</th><th>Dernière visite</th><th>Dernière page</th></tr></thead><tbody>${PRES_SEEN.map(r=>`<tr><td>${pageWho(r.user_id)}</td><td>${on(r)?`<b class="pres-on">En ligne</b>`:`<span title="${esc(new Date(r.at).toLocaleString("fr-FR"))}">${relTime(r.at)}</span>`}</td><td class="muted">${esc(presPageLabel(r.page))}</td></tr>`).join("")}</tbody></table></div>
   ${never.length?`<p class="hint">${never.length} compte${never.length>1?"s":""} sans visite enregistrée depuis la mise en place du suivi.</p>`:""}`:`<p class="muted">Aucune visite enregistrée pour l'instant.</p>`;}
 async function loadAuth(){
-  S.me=null;S.isAdmin=false;S.isHost=false;S.hostOrgs=new Set();S.profile=null;S.myClaims=[];
+  S.me=null;S.isAdmin=false;S.isHost=false;S.hostOrgs=new Set();S.profile=null;S.myClaims=[];S.banned=false;S.invites=null;
   const {data:{session}}=await sb.auth.getSession();
   if(session){S.me=session.user.id;
     const {data:prof}=await sb.from("profiles").select("*").eq("id",S.me).maybeSingle();S.profile=prof||{discord_name:session.user.user_metadata.full_name,avatar_url:session.user.user_metadata.avatar_url,role:"player"};
     S.isAdmin=S.profile.role==="admin";S.isHost=S.isAdmin||S.profile.role==="host";
     const {data:h}=await sb.from("org_hosts").select("org_id").eq("user_id",S.me);(h||[]).forEach(x=>S.hostOrgs.add(x.org_id));
     const {data:cl}=await sb.from("claims").select("player_id,status").eq("user_id",S.me);S.myClaims=cl||[];
+    try{const {data:bn,error:be}=await sb.from("bans").select("reason").eq("user_id",S.me).maybeSingle();S.banned=!be&&!!bn;}catch(e){}
+    await loadInvites();
   }
   tkCount();
   S.isOwner=false;if(S.me){try{const {data:own}=await sb.rpc("is_owner");S.isOwner=own===true;}catch(e){}}
@@ -787,7 +795,7 @@ function orgNumbers(o,ss,st){
 function pageOrg(id){
   const o=org(id);if(!o)return notFound("ORG");
   const ss=seasonsOf(o.id);const news=S.news.filter(n=>n.orgId===o.id).sort(byDateDesc);
-  const disc=safeUrl(o.discord);const st=orgStats(o.id);
+  const st=orgStats(o.id);
   const k=S.f.opal||"wins";const labels={wins:"Victoires",top3:"Top 3",part:"Participations",awards:"Awards"};
   const list=[...st].sort((a,b)=>b[k]-a[k]||b.wins-a.wins||b.top3-a.top3||b.part-a.part).filter(x=>x[k]>0).slice(0,15);
   const extOrg=ss.length&&ss.every(x=>x.external);
@@ -795,7 +803,7 @@ function pageOrg(id){
   const box=infobox(bigImg(orgLogoVal(o),o.name),o.name,[
     ["Sigle",esc(o.tag||"")],["Jeu",esc(conceptLabel(o))],["Host(s)",hostLinks(o.hosts||"")],["Format",FORMATS[o.format]||""],["Plateforme",PLATFORMS[o.platform]||""],
     ["Création",o.founded?fmtDate(o.founded):""],["Saisons",String(ss.length)],["Joueurs",String(st.length)],
-    ["Plus titré",champ&&champ.wins?`${plink(champ.id)} (${champ.wins})`:""],["Discord",disc?`<a href="${esc(disc)}" target="_blank" rel="noopener">Rejoindre</a>`:""],["Site officiel",safeUrl(o.website)?`<a href="${esc(safeUrl(o.website))}" target="_blank" rel="noopener">${esc(safeUrl(o.website).replace(/^https?:\/\/(www\.)?/,"").replace(/\/$/,""))} ↗</a>`:""]],"pic-org",o.id);
+    ["Plus titré",champ&&champ.wins?`${plink(champ.id)} (${champ.wins})`:""],["Discord",discordCell(o)],["Site officiel",safeUrl(o.website)?`<a href="${esc(safeUrl(o.website))}" target="_blank" rel="noopener">${esc(safeUrl(o.website).replace(/^https?:\/\/(www\.)?/,"").replace(/\/$/,""))} ↗</a>`:""]],"pic-org",o.id);
   const web=safeUrl(o.website);
   const webCard=web?`<a class="ext-site" href="${esc(web)}" target="_blank" rel="noopener"><span class="ext-ic">↗</span><span><b>${ss.length?"Voir aussi le site officiel":"Tout est sur leur site officiel"}</b><small>${esc(web.replace(/^https?:\/\/(www\.)?/,"").replace(/\/$/,""))}</small></span></a>`:"";
   return `<div class="crumbs"><a href="#orgs">ORGs</a><span>/</span><span>${esc(o.name)}</span>${shareBtn("o",o.id)}</div>
@@ -1212,7 +1220,7 @@ function orgForm(o){
     ${imageField("logo",o.logo,"Logo par défaut")}
     <p class="hint" style="margin-top:-6px">Utilisé tant qu'aucune saison n'a de logo. Ensuite, l'ORG affiche le logo de sa saison la plus récente.</p>
     ${field("Host(s)",inp("hosts",o.hosts,'maxlength="160" placeholder="Pseudos séparés par des virgules"'))}
-    <div class="frow">${field("Lien du Discord",inp("discord",o.discord,'type="url" placeholder="https://discord.gg/…"'))}${field("Date de création",inp("founded",o.founded,'type="date"'))}</div>
+    <div class="frow">${field("Lien du Discord",inp("discord",inviteOf(o),'type="url" placeholder="https://discord.gg/…"'))}${field("Date de création",inp("founded",o.founded,'type="date"'))}</div>
     ${field("Site officiel",inp("website",o.website,'type="url" placeholder="https://…"'),"Si l'ORG a son propre site (classements, votes…), un lien direct s'affiche sur sa page.")}
     ${field("Description",area("description",o.description,'rows="5" maxlength="4000" placeholder="Concept, format, règles particulières…"'),"Tape @ pour mentionner un joueur. Liens : [texte](https://…) ou colle l'adresse. Gras : **texte**.")}`,
     onMount:form=>{
@@ -1225,7 +1233,7 @@ function orgForm(o){
       const v=vals(f);const id=o.id||uid("o");const t=nowIso();
       const data=Object.assign(strip(o),{name:v.name,tag:v.tag,seasonWord:v.seasonWord,numbering:v.numbering,format:v.format,platform:v.platform,hosts:v.hosts,discord:v.discord,website:v.website,concept:v.concept||"",conceptOther:v.concept==="autre"?(v.conceptOther||""):"",noVotes:!!f.querySelector("#f-noVotes").checked,founded:v.founded,description:v.description,logo:await resolveImage(f,"logo",o.logo),updatedAt:t});
       if(isNew)data.createdAt=t;
-      await db.doc("orgs/"+id).set(data);
+      await db.doc("orgs/"+id).set(data);await loadInvites();
       toast(isNew?"ORG créée":"ORG mise à jour");
       if(isNew)location.hash="org-"+id;
     }});
@@ -1767,7 +1775,7 @@ function pageGuide(){
 
   <section><h2>Ce qu'on trouve sur le site</h2>
   <dl class="g-list">
-    <div><dt><a href="#orgs">ORGs</a></dt><dd>La page de chaque ORG : son jeu d'origine, ses hosts, son Discord, toutes ses saisons et son palmarès.</dd></div>
+    <div><dt><a href="#orgs">ORGs</a></dt><dd>La page de chaque ORG : son jeu d'origine, ses hosts, toutes ses saisons et son palmarès. Le lien de son Discord s'affiche une fois connecté avec Discord.</dd></div>
     <div><dt><a href="#saisons">Saisons</a></dt><dd>Le classement complet, le détail des votes épisode par épisode, les tribus et les awards.</dd></div>
     <div><dt><a href="#joueurs">Joueurs</a></dt><dd>Une fiche par joueur avec ses placements, ses victoires, ses awards et les votes reçus, en speed comme en format long.</dd></div>
     <div><dt><a href="#calendrier">Calendrier</a> et <a href="#annonces">Annonces</a></dt><dd>Les saisons en cours et à venir, les castings ouverts et les nouvelles publiées par les ORGs.</dd></div>
@@ -2167,6 +2175,7 @@ async function importRankings(j,log){
 async function exportAll(){
   const out={type:"org-central-sauvegarde",date:new Date().toISOString()};
   for(const c of ["orgs","seasons","players","news"]){out[c]={};(await fetchAll(c)).forEach(r=>{out[c][r.id]=r.data;});}
+  await loadInvites();if(S.invites)Object.entries(S.invites).forEach(([id,u])=>{if(out.orgs[id])out.orgs[id].discord=u;});
   const b=new Blob([JSON.stringify(out)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);
   a.download="org-central-sauvegarde-"+new Date().toISOString().slice(0,16).replace(/[:T]/g,"-")+".json";document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},2000);
 }
@@ -2254,7 +2263,8 @@ async function loadAdmin(){
   const box1=document.getElementById("adm-claims"),box2=document.getElementById("adm-users");if(!box1&&!box2)return;
   const fi=document.getElementById("f-import");if(fi&&!fi._b){fi._b=1;fi.addEventListener("change",async()=>{const f=fi.files[0];if(!f)return;const lg={set textContent(m){S.impLog=m;const e=document.getElementById("imp-log");if(e)e.textContent=m;}};fi.disabled=true;
     try{const n=await importExport(f,m=>{lg.textContent=m;});if(n>=0)lg.textContent="Import terminé ("+n+" images).";toast("Import terminé");}catch(e){lg.textContent="Erreur : "+errMsg(e);}fi.disabled=false;});}
-  const [{data:claims},{data:profs},{data:hosts}]=await Promise.all([sb.from("claims").select("*").eq("status","pending"),sb.from("profiles").select("*").order("created_at"),sb.from("org_hosts").select("*")]);
+  const [{data:claims},{data:profs},{data:hosts},bansR]=await Promise.all([sb.from("claims").select("*").eq("status","pending"),sb.from("profiles").select("*").order("created_at"),sb.from("org_hosts").select("*"),box2?sb.from("bans").select("*"):Promise.resolve({data:[]})]);
+  const bans=bansR.error?null:(bansR.data||[]);
   const pn=id=>{const p=(profs||[]).find(x=>x.id===id);return p?(p.discord_name||"?"):"?";};
   ADM_PROFS=profs||[];
   if(box1)box1.innerHTML=(claims||[]).length?`<div class="table-wrap"><table><thead><tr><th>Compte Discord</th><th>Fiche demandée</th><th></th></tr></thead><tbody>${claims.map(c=>`<tr><td>${esc(pn(c.user_id))}</td><td><a href="#joueur-${esc(c.player_id)}">${esc(pName(c.player_id))}</a></td><td><span class="actions"><button class="btn sm primary" data-act="claim-ok" data-p="${esc(c.player_id)}" data-u="${esc(c.user_id)}">Valider</button><button class="btn sm ghost" data-act="claim-no" data-p="${esc(c.player_id)}" data-u="${esc(c.user_id)}">Refuser</button></span></td></tr>`).join("")}</tbody></table></div>`:`<p class="muted">Aucune demande en attente.</p>`;
@@ -2266,9 +2276,14 @@ async function loadAdmin(){
     const pend=(claims||[]).find(c=>c.user_id===u.id);const pp=pend&&player(pend.player_id);
     return `<span class="muted">Non relié</span>${pp?` <span class="tag">demande : ${esc(pp.pseudo)}</span>`:""}<span class="adm-link"><input list="adm-free" data-linkfor="${esc(u.id)}" placeholder="Relier à…" aria-label="Relier ${esc(u.discord_name||"")} à une fiche"></span>`;};
   box2.innerHTML=`<p class="muted" style="margin:0 0 10px"><b>${(profs||[]).length}</b> comptes inscrits, <b>${nLinked}</b> reliés à une fiche joueur, <b>${(profs||[]).length-nLinked}</b> non reliés</p><datalist id="adm-free">${free.map(p=>`<option value="${esc(p.pseudo)}${p.precision?` (${esc(p.precision)})`:""}"></option>`).join("")}</datalist>
-  <div class="table-wrap"><table><thead><tr><th>Compte</th><th>Fiche joueur</th><th>Rôle</th><th>ORGs hostées</th></tr></thead><tbody>${[...(profs||[])].sort((a,b)=>(linkedPlayer(a.id)?1:0)-(linkedPlayer(b.id)?1:0)).map(u=>`<tr><td><span class="who">${u.avatar_url?`<img class="avatar xs" src="${esc(u.avatar_url)}" alt="">`:""}${esc(u.discord_name||"?")}</span></td><td>${linkCell(u)}</td>
+  <div class="table-wrap"><table><thead><tr><th>Compte</th><th>Fiche joueur</th><th>Rôle</th><th>ORGs hostées</th><th>Accès</th></tr></thead><tbody>${[...(profs||[])].sort((a,b)=>(linkedPlayer(a.id)?1:0)-(linkedPlayer(b.id)?1:0)).map(u=>`<tr><td><span class="who">${u.avatar_url?`<img class="avatar xs" src="${esc(u.avatar_url)}" alt="">`:""}${esc(u.discord_name||"?")}</span></td><td>${linkCell(u)}</td>
     <td><select data-role="${esc(u.id)}" aria-label="Rôle de ${esc(u.discord_name||"")}" ${u.id===S.me?"disabled":""}>${["player","host","admin"].map(r=>`<option value="${r}"${u.role===r?" selected":""}>${{player:"Joueur",host:"Host",admin:"Admin"}[r]}</option>`).join("")}</select></td>
-    <td>${u.role==="host"?orgsSorted.map(o=>`<label class="chk" style="display:inline-flex;margin-right:12px"><input type="checkbox" data-host="${esc(u.id)}" value="${esc(o.id)}"${(hosts||[]).some(h=>h.user_id===u.id&&h.org_id===o.id)?" checked":""}> ${esc(o.name)}</label>`).join(""):u.role==="admin"?'<span class="muted">Toutes</span>':'<span class="muted">—</span>'}</td></tr>`).join("")}</tbody></table></div>`;
+    <td>${u.role==="host"?orgsSorted.map(o=>`<label class="chk" style="display:inline-flex;margin-right:12px"><input type="checkbox" data-host="${esc(u.id)}" value="${esc(o.id)}"${(hosts||[]).some(h=>h.user_id===u.id&&h.org_id===o.id)?" checked":""}> ${esc(o.name)}</label>`).join(""):u.role==="admin"?'<span class="muted">Toutes</span>':'<span class="muted">—</span>'}</td>
+    <td>${bans==null?'<span class="muted" title="Lance update-16-discord-bannissement.sql">—</span>':u.id===S.me||u.role==="admin"?'<span class="muted">—</span>':(()=>{const b=bans.find(x=>x.user_id===u.id);return b?`<span class="tag t-ref" title="${esc(b.reason||"")}">Banni</span> <button class="btn sm ghost" data-unban="${esc(u.id)}">Débannir</button>`:`<button class="btn sm ghost" data-ban="${esc(u.id)}">Bannir</button>`;})()}</td></tr>`).join("")}</tbody></table></div>`;
+  box2.querySelectorAll("[data-ban]").forEach(b=>b.addEventListener("click",()=>{const u=(profs||[]).find(x=>x.id===b.dataset.ban);const nm=(linkedPlayer(u.id)||{}).pseudo||u.discord_name||"ce compte";
+    openModal({title:"Bannir "+nm,saveLabel:"Bannir",danger:true,body:`<p class="hint">Il pourra toujours consulter le site, mais ne pourra plus envoyer de messages privés ni voir les liens des Discords des ORGs.</p>${field("Raison (visible seulement par les admins)",'<input id="ban-r" maxlength="200" placeholder="facultatif">')}`,
+      onSave:async f=>{const {error}=await sb.from("bans").insert({user_id:u.id,reason:f.querySelector("#ban-r").value.trim()});if(error)throw sbErr(error);toast(nm+" est banni");loadAdmin();}});}));
+  box2.querySelectorAll("[data-unban]").forEach(b=>b.addEventListener("click",async()=>{const {error}=await sb.from("bans").delete().eq("user_id",b.dataset.unban);if(error){toast(errMsg(sbErr(error)),true);return;}toast("Compte débanni");loadAdmin();}));
   box2.querySelectorAll("[data-linkfor]").forEach(inp=>inp.addEventListener("change",async()=>{const v=inp.value.trim();if(!v)return;
     const pl=free.find(p=>(p.pseudo+(p.precision?` (${p.precision})`:""))===v)||playerByName(v);
     if(!pl||pl.ownerUid){toast("Fiche introuvable ou déjà reliée.",true);return;}
@@ -2367,7 +2382,7 @@ function pageSocial(id){
     <section class="msg-main">${open?`<div class="msg-head"><a class="msg-back" href="#social" aria-label="Retour aux conversations">‹</a><span class="dc-at">@</span><div class="msg-head-n"><b>${esc(userName(open))}</b><small>${lp?`<a href="#joueur-${esc(lp.id)}">Voir la fiche joueur</a>`:esc((S.profiles[open]||{}).discord_name||"")}${st==="friends"?", ami":""}</small></div>
         <span class="actions">${st==="none"?`<button class="btn sm" data-act="fr-add" data-u="${esc(open)}">Ajouter en ami</button>`:st==="received"?`<button class="btn sm primary" data-act="fr-accept" data-u="${esc(open)}">Accepter en ami</button>`:""}<button class="btn sm ghost" data-act="${S.blocks.includes(open)?"unblock":"block"}" data-u="${esc(open)}">${S.blocks.includes(open)?"Débloquer":"Bloquer"}</button></span></div>
       <div id="thread" class="msg-thread"><p class="muted">Chargement…</p></div>
-      <form id="msgform" class="msg-form"><div class="dc-input"><textarea id="f-msg" rows="1" maxlength="2000" placeholder="Envoyer un message à @${esc(userName(open))}" aria-label="Message"></textarea><button class="dc-send" type="submit" aria-label="Envoyer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20.5 21 12 3 3.5l2.5 8.5L3 20.5Zm2.5-8.5H13" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg></button></div></form>`
+      ${S.banned?`<p class="msg-banned">Ton compte est restreint : tu ne peux plus envoyer de messages privés.</p>`:`<form id="msgform" class="msg-form"><div class="dc-input"><textarea id="f-msg" rows="1" maxlength="2000" placeholder="Envoyer un message à @${esc(userName(open))}" aria-label="Message"></textarea><button class="dc-send" type="submit" aria-label="Envoyer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20.5 21 12 3 3.5l2.5 8.5L3 20.5Zm2.5-8.5H13" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg></button></div></form>`}`
       :`<div class="msg-empty"><div class="msg-empty-i">${ico("mail",28)}</div><h2>Tes messages</h2><p class="muted">Choisis une conversation, ou cherche n'importe quel joueur à gauche pour lui écrire, même s'il n'est pas ton ami.</p></div>`}</section>
   </div>`;
 }
@@ -2383,7 +2398,7 @@ function bindSocial(){
     inp.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();f.requestSubmit();}});
     f.addEventListener("submit",async e=>{e.preventDefault();const body=inp.value.trim();if(!body)return;
     const to=curRoute().id;inp.value="";grow();const {error}=await sb.from("messages").insert({sender:S.me,recipient:to,body});
-    if(error){toast(/row-level|42501|permission/i.test(error.message)?"Message impossible : cette personne t'a bloqué, ou les messages ouverts ne sont pas encore activés (update-7-messages-ouverts.sql).":sbErr(error).message,true);inp.value=body;return;}loadThread(to);loadConvos();});
+    if(error){toast(/row-level|42501|permission/i.test(error.message)?"Message impossible : cette personne t'a bloqué, ton compte est restreint, ou les messages ouverts ne sont pas encore activés (update-7-messages-ouverts.sql).":sbErr(error).message,true);inp.value=body;return;}loadThread(to);loadConvos();});
     setTimeout(()=>inp.focus(),50);}
 }
 async function blockAction(uid,on){const {error}=on?await sb.from("blocks").insert({blocker:S.me,blocked:uid}):await sb.from("blocks").delete().eq("blocker",S.me).eq("blocked",uid);
