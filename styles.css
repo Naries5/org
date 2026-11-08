@@ -1343,3 +1343,14 @@ html[data-vt="back"]::view-transition-new(root){animation:vt-in-l .42s var(--eas
 #cx-form{margin-top:18px;max-width:840px}
 .msg-banned{margin:0;padding:14px 16px;border-top:1px solid var(--line,rgba(255,255,255,.1));color:var(--muted,#aaa);font-size:.92rem}
 .clk-h{font-size:1.05rem;margin:18px 0 10px}
+/* Réorganiser les saisons d'une ORG */
+.reorder-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;margin:0 0 16px;padding:10px 14px;border:1px dashed color-mix(in srgb,var(--gold) 60%,transparent);border-radius:10px;font-size:.92rem}
+.stiles.reorder .stile{cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+.stiles.reorder .stile img{pointer-events:none;-webkit-user-drag:none}
+.stiles.reorder .stile.dragging{cursor:grabbing;z-index:20;opacity:.92;pointer-events:none;transition:none!important;box-shadow:0 0 0 2px var(--gold),0 18px 36px rgba(0,0,0,.55)}
+.stile .ro-btns{display:none}
+.stiles.reorder .stile .ro-btns{display:flex;justify-content:center;gap:8px;padding:6px 0 2px}
+.stiles.reorder .ro-btns button{width:34px;height:28px;border-radius:7px;border:1px solid color-mix(in srgb,var(--gold) 50%,transparent);background:transparent;color:var(--ink);font:inherit;cursor:pointer}
+.stiles.reorder .ro-btns button:hover{background:color-mix(in srgb,var(--gold) 18%,transparent)}
+.stiles.reorder .stile:hover{transform:none!important}
+.stiles.reorder .stile.dragging{box-shadow:0 0 0 2px var(--gold),0 18px 36px rgba(0,0,0,.55)!important}

@@ -121,7 +121,31 @@ function autoShort(s){const o=org(s.orgId)||{};const word=(o.seasonWord==null?"S
 function seasonShort(s){return (s.customName&&String(s.customName).trim())||autoShort(s);}
 function seasonName(s){return seasonShort(s)+(s.title?" : "+s.title:"");}
 function fullSeasonName(s){const o=org(s.orgId)||{};return (o.name?o.name+" ":"")+seasonName(s);}
-function seasonsOf(orgId){return S.seasons.filter(s=>s.orgId===orgId).sort((a,b)=>(Number(a.number)||0)-(Number(b.number)||0));}
+// Ordre d'ancienneté : "order" (fixé par glisser-déposer sur la page de l'ORG) sinon le numéro.
+const sOrd=s=>s.order!=null&&s.order!==""?Number(s.order):(Number(s.number)||0);
+function startReorder(orgId){const g=document.getElementById("org-stiles");if(!g||g.classList.contains("reorder"))return;
+  g.classList.add("reorder");
+  const bar=document.createElement("div");bar.className="reorder-bar";bar.innerHTML=`<span>Fais glisser les saisons pour les remettre dans l'ordre, <b>de la plus récente à la plus ancienne</b>. Les flèches déplacent une saison d'un cran.</span><span class="actions"><button type="button" class="btn sm ghost" data-ro="cancel">Annuler</button><button type="button" class="btn sm primary" data-ro="save">Enregistrer l'ordre</button></span>`;
+  g.parentNode.insertBefore(bar,g);
+  g.querySelectorAll(".stile").forEach(t=>{t.setAttribute("draggable","false");t.insertAdjacentHTML("beforeend",`<span class="ro-btns"><button type="button" data-mv="-1" aria-label="Plus récente">←</button><button type="button" data-mv="1" aria-label="Plus ancienne">→</button></span>`);});
+  const block=e=>{if(g.classList.contains("reorder"))e.preventDefault();};g.addEventListener("click",block,true);
+  g.addEventListener("click",e=>{const b=e.target.closest("[data-mv]");if(!b)return;const t=b.closest(".stile");if(b.dataset.mv==="-1"&&t.previousElementSibling)g.insertBefore(t,t.previousElementSibling);else if(b.dataset.mv==="1"&&t.nextElementSibling)g.insertBefore(t.nextElementSibling,t);b.focus();});
+  let drag=null,ox=0,oy=0;
+  const place=e=>{drag.style.translate="";const r=drag.getBoundingClientRect();drag.style.translate=`${e.clientX-ox-r.left}px ${e.clientY-oy-r.top}px`;};
+  const move=e=>{if(!drag)return;e.preventDefault();const el=document.elementFromPoint(e.clientX,e.clientY);const over=el&&el.closest(".stile");
+    if(over&&over!==drag&&over.parentNode===g){const r=over.getBoundingClientRect();const after=e.clientX>r.left+r.width/2;g.insertBefore(drag,after?over.nextElementSibling:over);}place(e);};
+  const up=()=>{if(!drag)return;drag.style.translate="";drag.classList.remove("dragging");drag=null;window.removeEventListener("pointermove",move);window.removeEventListener("pointerup",up);window.removeEventListener("pointercancel",up);};
+  g.addEventListener("pointerdown",e=>{if(!g.classList.contains("reorder")||e.button>0||e.target.closest(".ro-btns"))return;const t=e.target.closest(".stile");if(!t)return;e.preventDefault();
+    const r=t.getBoundingClientRect();ox=e.clientX-r.left;oy=e.clientY-r.top;drag=t;t.classList.add("dragging");
+    window.addEventListener("pointermove",move,{passive:false});window.addEventListener("pointerup",up);window.addEventListener("pointercancel",up);});
+  bar.addEventListener("click",async e=>{const b=e.target.closest("[data-ro]");if(!b)return;
+    if(b.dataset.ro==="cancel"){render();return;}
+    b.disabled=true;b.textContent="Enregistrement…";
+    const ids=[...g.querySelectorAll(".stile")].map(t=>t.dataset.sid);
+    try{for(let i=0;i<ids.length;i++){const v=ids.length-i;const x=season(ids[i]);if(x&&Number(x.order)!==v)await db.doc("seasons/"+ids[i]).update({order:v});}
+      toast("Ordre des saisons enregistré");render();}catch(err){b.disabled=false;b.textContent="Enregistrer l'ordre";toast(errMsg(err),true);}});
+}
+function seasonsOf(orgId){return S.seasons.filter(s=>s.orgId===orgId).sort((a,b)=>sOrd(a)-sOrd(b)||(Number(a.number)||0)-(Number(b.number)||0));}
 function shownWinner(s){return s&&s.external?null:winnerOf(s);}
 function winnerOf(s){
  if(!s)return null;
@@ -149,7 +173,7 @@ function bgVar(v){const u=imgSrc(v);return u?` style="--bgimg:url('${esc(u)}')"`
 function cover(v,label){const u=imgSrc(v);return u?`<img src="${esc(u)}" alt="" loading="lazy">`:`<span class="ph">${esc(initials(label))}</span>`;}
 function seasonTile(s,showOrg){
   const o=org(s.orgId)||{};const w=winnerOf(s);
-  return `<a class="stile" href="#saison-${esc(s.id)}"><span class="num">${esc(seasonShort(s))}</span><div class="cover">${cover(s.logo||o.logo,o.name)}</div><div class="body"><span class="st-t">${showOrg?esc(o.name)+" : ":""}${esc(s.title||seasonShort(s))}</span>${w&&s.status==="terminee"&&!s.external?`<span class="w">Vainqueur : <b>${esc(pName(w))}</b></span>`:`<span class="w">${chip(s.status)}</span>`}</div></a>`;
+  return `<a class="stile" data-sid="${esc(s.id)}" href="#saison-${esc(s.id)}"><span class="num">${esc(seasonShort(s))}</span><div class="cover">${cover(s.logo||o.logo,o.name)}</div><div class="body"><span class="st-t">${showOrg?esc(o.name)+" : ":""}${esc(s.title||seasonShort(s))}</span>${w&&s.status==="terminee"&&!s.external?`<span class="w">Vainqueur : <b>${esc(pName(w))}</b></span>`:`<span class="w">${chip(s.status)}</span>`}</div></a>`;
 }
 function allStats(){
   const m={};const g=id=>m[id]||(m[id]={id,part:0,wins:0,top3:0,awards:0,best:null});
@@ -841,8 +865,8 @@ function pageOrg(id){
   <div class="wiki"><div class="wiki-main">
   ${o.description?`<p class="desc">${richText(o.description)}</p>`:""}
   ${webCard}
-  ${!ss.length&&web?edit(`<p><button class="btn sm" data-act="new-season" data-org="${esc(o.id)}">+ Nouvelle saison</button></p>`):`<section class="block"><div class="block-head"><h2>Saisons</h2><span class="count">${ss.length}</span>${edit(`<span class="actions"><button class="btn primary sm" data-act="new-season" data-org="${esc(o.id)}">+ Nouvelle saison</button></span>`)}</div>
-  ${ss.length?`<div class="stiles">${[...ss].reverse().map(x=>seasonTile(x,false)).join("")}</div>`:`<p class="muted">Aucune saison renseignée.</p>`}</section>`}
+  ${!ss.length&&web?edit(`<p><button class="btn sm" data-act="new-season" data-org="${esc(o.id)}">+ Nouvelle saison</button></p>`):`<section class="block"><div class="block-head"><h2>Saisons</h2><span class="count">${ss.length}</span>${edit(`<span class="actions">${ss.length>1?`<button class="btn sm ghost" data-act="reorder-seasons" data-id="${esc(o.id)}">Réorganiser</button>`:""}<button class="btn primary sm" data-act="new-season" data-org="${esc(o.id)}">+ Nouvelle saison</button></span>`)}</div>
+  ${ss.length?`<div class="stiles" id="org-stiles">${[...ss].reverse().map(x=>seasonTile(x,false)).join("")}</div>`:`<p class="muted">Aucune saison renseignée.</p>`}</section>`}
   ${orgNumbers(o,ss,st)}
   ${st.length&&!extOrg?`<section class="block"><div class="block-head"><h2>Palmarès ${esc(o.name)}</h2></div>
   <div class="tabs" role="group" aria-label="Trier le palmarès">${Object.entries(labels).map(([v,l])=>`<button type="button" data-act="opal" data-v="${v}" aria-pressed="${k===v}">${l}</button>`).join("")}</div>
@@ -2700,7 +2724,7 @@ document.addEventListener("click",e=>{
   if(!b){const tr=e.target.closest("tr[data-href]");if(tr&&!e.target.closest("a"))location.hash=tr.dataset.href.slice(1);return;}
   const id=b.dataset.id;
   const A={
-    "new-org":()=>orgForm(),"claim-org":()=>{if(!S.me){login();return;}TK.kind="host";TK.org=id||"";TK.err="";if(routeStr()==="contribuer")render();else location.hash="contribuer";},"pic-org":()=>picForm("org",org(id)),"pic-player":()=>picForm("player",player(id)),"frame-banner":()=>frameEditor(player(id),"banner"),"edit-banner":()=>{playerForm(player(id));setTimeout(()=>{const z=document.querySelector('[data-drop="banner"]');if(z)z.scrollIntoView({block:"center"});},120);},"frame-avatar":()=>frameEditor(player(id),"avatar"),"pic-season":()=>picForm("season",season(id)),"edit-org":()=>orgForm(org(id)),"del-org":()=>delOrg(id),
+    "new-org":()=>orgForm(),"reorder-seasons":()=>startReorder(id),"claim-org":()=>{if(!S.me){login();return;}TK.kind="host";TK.org=id||"";TK.err="";if(routeStr()==="contribuer")render();else location.hash="contribuer";},"pic-org":()=>picForm("org",org(id)),"pic-player":()=>picForm("player",player(id)),"frame-banner":()=>frameEditor(player(id),"banner"),"edit-banner":()=>{playerForm(player(id));setTimeout(()=>{const z=document.querySelector('[data-drop="banner"]');if(z)z.scrollIntoView({block:"center"});},120);},"frame-avatar":()=>frameEditor(player(id),"avatar"),"pic-season":()=>picForm("season",season(id)),"edit-org":()=>orgForm(org(id)),"del-org":()=>delOrg(id),
     "new-season":()=>seasonForm(null,b.dataset.org),"edit-season":()=>seasonForm(season(id)),"del-season":()=>delSeason(id),
     "cast":()=>castEditor(season(id)),"tierlist":()=>tierList(season(id)),"optimize-images":()=>optimizeImages(),"export-all":async()=>{try{await exportAll();toast("Sauvegarde téléchargée");}catch(e){toast(errMsg(e),true);}},"slooks":()=>seasonLooksEditor(season(id)),"awards":()=>awardsEditor(season(id)),
     "filter":()=>{S.f[b.dataset.k]=b.dataset.v;render();},"opal":()=>{S.f.opal=b.dataset.v;render();},"votes":()=>votesEditor(season(id)),
