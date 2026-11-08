@@ -49,6 +49,15 @@ function routeStr(){const h=decodeURIComponent(location.hash.slice(1));if(h&&!/a
 function normalizeUrl(){if(!PATHMODE)return;const h=decodeURIComponent(location.hash.slice(1));if(h&&isRoute(h))history.replaceState(history.state,"",routePath(h)+location.search);}
 function goRoute(r){if(PATHMODE){withTransition(()=>{history.pushState(null,"",routePath(r));render();window.scrollTo(0,0);},routeStr(),r);}else location.hash=r;}
 function linkify(root){if(!PATHMODE||!root||!root.querySelectorAll)return;root.querySelectorAll('a[href^="#"]').forEach(a=>{const r=decodeURIComponent(a.getAttribute("href").slice(1));if(r&&isRoute(r)){a.setAttribute("href",routePath(r));a.dataset.r=r;}});}
+// Liens d'invitation Discord (où qu'ils soient : inscriptions, annonces, sites) : réservés aux comptes connectés et non bannis.
+const DISCORD_INV=/^https?:\/\/(www\.)?(discord\.gg|discord\.me|dsc\.gg|discord(app)?\.com\/invite)\//i;
+function gateDiscord(root){if(!root||!root.querySelectorAll)return;const ok=typeof S!=="undefined"&&S.me&&!S.banned;if(ok)return;
+  const list=root.matches&&root.matches("a[href]")?[root]:root.querySelectorAll("a[href]");
+  list.forEach(a=>{const h=a.getAttribute("href")||"";if(!DISCORD_INV.test(h))return;a.removeAttribute("href");a.removeAttribute("target");a.dataset.dgate="1";a.setAttribute("role","button");a.tabIndex=0;
+    a.title=S.banned?"Indisponible pour ton compte":"Connecte-toi avec Discord pour rejoindre";
+    if(/^https?:\/\//i.test((a.textContent||"").trim()))a.textContent=S.banned?"Lien Discord indisponible":"Lien Discord (connecte-toi pour le voir)";});}
+new MutationObserver(ms=>{for(const m of ms)for(const n of m.addedNodes){if(n.nodeType===1)gateDiscord(n);}}).observe(document.documentElement,{childList:true,subtree:true});
+document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest("[data-dgate]");if(!a)return;e.preventDefault();e.stopPropagation();if(S.banned)toast("Ton compte ne peut pas rejoindre de Discord.",true);else login();},true);
 if(PATHMODE){new MutationObserver(ms=>{for(const m of ms)for(const n of m.addedNodes){if(n.nodeType!==1)continue;if(n.matches&&n.matches('a[href^="#"]'))linkify(n.parentNode);else linkify(n);}}).observe(document.documentElement,{childList:true,subtree:true});
   document.addEventListener("click",e=>{if(e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;const a=e.target.closest&&e.target.closest("a[data-r]");if(!a||a.target==="_blank")return;e.preventDefault();goRoute(a.dataset.r);});
   window.addEventListener("popstate",()=>{const to=routeStr(),y=scrollPos[to]||0;withTransition(()=>{render();window.scrollTo(0,y);},lastPage,to);});linkify(document);}
