@@ -912,7 +912,7 @@ function pageSeason(id){
     ["Statut",chip(s.status)],["Dates",dateRange(s)],["Format",FORMATS[o.format]||""],["Joueurs",(cast.length+secretOf(s).n)?String(cast.length+secretOf(s).n):(s.slots?esc(s.slots)+" places":"")],
     ...(ext?[]:[["Vainqueur",winnerOf(s)?splink(s,winnerOf(s)):""],...(isTaupeOrg(o)?[["Meilleur enquêteur",by(1)],["2e enquêteur",by(2)],["3e enquêteur",by(3)]]:[["2e",by(2)],["3e",by(3)]])]),["Précédente",prv?`<a href="#saison-${esc(prv.id)}">${esc(seasonShort(prv))}</a>`:""],["Suivante",nxt?`<a href="#saison-${esc(nxt.id)}">${esc(seasonShort(nxt))}</a>`:""]],"pic-season",s.id);
   return `<div class="crumbs"><a href="#orgs">ORGs</a><span>/</span><a href="#org-${esc(o.id||"")}">${esc(o.name)}</a><span>/</span><span>${esc(seasonShort(s))}</span>${shareBtn("s",s.id)}</div>
-  <div class="page-head"><div><p class="eyebrow">${esc(o.name)} ${esc(seasonShort(s))}</p><h1>${esc(s.title||seasonShort(s))}</h1></div>${edit(`<div class="actions">${appsOf(s).open?"":`<button class="btn" data-act="apptoggle" data-id="${esc(s.id)}">Ouvrir les candidatures</button>`}${secretOf(s).n?"":`<button class="btn" data-act="sc-edit" data-id="${esc(s.id)}">${ico("lock")} Casting secret</button>`}<button class="btn" data-act="edit-season" data-id="${esc(s.id)}">Modifier</button><button class="btn danger" data-act="del-season" data-id="${esc(s.id)}">Supprimer</button></div>`)}</div>
+  <div class="page-head"><div><p class="eyebrow">${esc(o.name)} ${esc(seasonShort(s))}</p><h1>${esc(s.title||seasonShort(s))}</h1></div>${edit(`<div class="actions">${appsOf(s).open?"":`<button class="btn" data-act="apptoggle" data-id="${esc(s.id)}">Ouvrir les candidatures</button>`}${secretOf(s).n||!scHost(s.orgId)?"":`<button class="btn" data-act="sc-edit" data-id="${esc(s.id)}">${ico("lock")} Casting secret</button>`}<button class="btn" data-act="edit-season" data-id="${esc(s.id)}">Modifier</button><button class="btn danger" data-act="del-season" data-id="${esc(s.id)}">Supprimer</button></div>`)}</div>
   <div class="wiki"><div class="wiki-main">
   ${s.description?`<p class="desc">${descHtml(s.description)}</p>`:""}
   ${s.status==="inscriptions"&&signup?`<a class="btn cta" href="${esc(signup)}" target="_blank" rel="noopener">Lien d'inscription externe ↗</a>`:""}${signupBlock(s)}${secretBlock(s)}
@@ -2563,6 +2563,8 @@ async function signAction(sid,act,u){
 }
 
 /* ---------- Casting secret : renseigné par les hosts, révélé quand ils veulent ---------- */
+// Seuls les vrais hosts de l'ORG gèrent et voient le casting secret : être admin du site ne suffit pas.
+function scHost(orgId){return !!(S.me&&S.hostOrgs.has(orgId));}
 function secretOf(s){const x=(s&&s.secretCast)||{};return {n:Number(x.n)||0,requests:!!x.requests};}
 function scName(e){const p=e.playerId&&player(e.playerId);return p?p.pseudo:(e.name||"Joueur");}
 function scCard(e,host,sid){const p=e.playerId&&player(e.playerId);const u=p?imgSrc(avatarOf(p)):"";const nm=scName(e);
@@ -2570,7 +2572,7 @@ function scCard(e,host,sid){const p=e.playerId&&player(e.playerId);const u=p?img
   return `<div class="ccard sc-card">${p?`<a class="sc-link" href="#joueur-${esc(p.id)}">${inner}</a>`:inner}${host?`<button type="button" class="btn sm sc-rev" data-act="sc-reveal" data-id="${esc(sid)}" data-e="${esc(e.id)}">Révéler</button>`:""}</div>`;}
 function scMystery(n){return Array.from({length:Math.min(n,40)},(_,i)=>`<div class="ccard sc-mystery" style="--rot:${(((i*37)%5)-2)*0.7}deg" aria-hidden="true"><span class="cpic">?</span><span class="cname">Secret</span></div>`).join("");}
 function secretBlock(s){
-  if(!sb)return "";const pub=secretOf(s);const host=canOrg(s.orgId);
+  if(!sb)return "";const pub=secretOf(s);const host=scHost(s.orgId);
   if(!pub.n&&!host)return "";
   if(!pub.n&&host){setTimeout(()=>loadSecret(s),0);return `<div id="secretcast" data-s="${esc(s.id)}" hidden></div>`;}
   setTimeout(()=>loadSecret(s),0);
@@ -2578,7 +2580,7 @@ function secretBlock(s){
 }
 async function loadSecret(s){
   let box=document.getElementById("secretcast");if(!box||box.dataset.s!==s.id)return;
-  const host=canOrg(s.orgId);const pub=secretOf(s);
+  const host=scHost(s.orgId);const pub=secretOf(s);
   let row=null,viewers=[],err=null;
   if(S.me){const [a,b]=await Promise.all([sb.from("secret_casts").select("*").eq("season_id",s.id).maybeSingle(),sb.from("cast_viewers").select("*").eq("season_id",s.id)]);
     err=a.error||b.error;row=a.data||null;viewers=b.data||[];}
@@ -2590,7 +2592,7 @@ async function loadSecret(s){
   if(host){const vb=box.closest(".sc-block")&&box.closest(".sc-block").querySelector('[data-act="sc-viewers"]');if(vb)vb.innerHTML=`Qui peut voir${reqs?` <b class="badge">${reqs}</b>`:""}`;}
   let h="";
   if(row&&(host||mine&&mine.status==="accepted")){
-    h+=host?`<p class="hint sc-hint">Visible seulement par les hosts de l'ORG, les admins et les ${viewers.filter(v=>v.status==="accepted").length} compte(s) autorisé(s). Révèle les joueurs un par un, ou tous d'un coup.</p>`
+    h+=host?`<p class="hint sc-hint">Visible seulement par les hosts de l'ORG et les ${viewers.filter(v=>v.status==="accepted").length} compte(s) autorisé(s). Révèle les joueurs un par un, ou tous d'un coup.</p>`
       :`<p class="notice sc-notice">Tu vois ce casting en avant-première. Ne le spoile pas !</p>`;
     h+=entries.length?`<div class="classement">${entries.map(e=>scCard(e,host,s.id)).join("")}</div>`:`<p class="muted">Tous les joueurs ont été révélés.</p>`;
   }else{
