@@ -2209,16 +2209,18 @@ function normName(x){return String(x||"").normalize("NFD").replace(/[\u0300-\u03
 async function impWrite(se,upd,failed,log){for(let k=0;k<4;k++){try{await db.doc("seasons/"+se.id).update(upd);return true;}catch(e){console.warn(e);if(k===3){failed.push(fullSeasonName(se)+" ("+errMsg(e)+")");log("Erreur sur "+fullSeasonName(se)+" : "+errMsg(e));return false;}await new Promise(r=>setTimeout(r,1500*(k+1)));}}}
 async function importRankings(j,log){
   const idx=new Map();S.players.forEach(p=>{[p.pseudo,...aliasesOf(p)].forEach(n=>{const k=normName(n);if(k&&!idx.has(k))idx.set(k,p.id);});});
-  const created=[],missing=[],newRows=[],linked=new Set(),setDone=[],failed=[];let done=0;const t=nowIso();
+  const created=[],missing=[],newRows=[],linked=new Set(),setDone=[],failed=[],unknownVotes=[];let done=0;const t=nowIso();
   let orgAlias=null;
-  if(Array.isArray(j.orgs))for(const o2 of j.orgs){if(o2&&o2.id&&o2.set&&typeof o2.set==="object"&&org(o2.id)){await db.doc("orgs/"+o2.id).update(Object.assign({},o2.set,{updatedAt:t}));log("ORG mise à jour : "+org(o2.id).name);continue;}if(!o2||!o2.id||org(o2.id))continue;const same=S.orgs.find(o=>normName(o.name)===normName((o2.data||{}).name));
+  if(Array.isArray(j.orgs))for(const o2 of j.orgs){if(o2&&o2.data&&!o2.set&&!String(o2.data.name||"").trim()){missing.push("ORG sans nom ignorée ("+o2.id+") : indique le nom de l'ORG dans le fichier");continue;}if(o2&&o2.id&&o2.set&&typeof o2.set==="object"&&org(o2.id)){await db.doc("orgs/"+o2.id).update(Object.assign({},o2.set,{updatedAt:t}));log("ORG mise à jour : "+org(o2.id).name);continue;}if(!o2||!o2.id||org(o2.id))continue;const same=S.orgs.find(o=>normName(o.name)===normName((o2.data||{}).name));
     if(same){(j.seasons||[]).forEach(it=>{if(it.create&&it.create.orgId===o2.id)it.create.orgId=same.id;});log("ORG existante utilisée : "+same.name);continue;}
     await db.doc("orgs/"+o2.id).set(Object.assign({createdAt:t,updatedAt:t},o2.data||{}));S.orgs=S.orgs.concat([Object.assign({id:o2.id},o2.data||{})]);log("ORG créée : "+((o2.data||{}).name||o2.id));}
   if(j.org&&j.org.id&&!org(j.org.id)){const same=S.orgs.find(o=>normName(o.name)===normName((j.org.data||{}).name));if(same){orgAlias=same.id;log("ORG existante utilisée : "+same.name);}}
   if(j.org&&j.org.id&&!orgAlias&&!org(j.org.id)){await db.doc("orgs/"+j.org.id).set(Object.assign({createdAt:t,updatedAt:t},j.org.data||{}));log("ORG créée : "+((j.org.data||{}).name||j.org.id));}
   const fresh={};
+  j.seasons=(j.seasons||[]).filter(it=>{if(it&&it.match&&!String(it.match.org||"").trim()){missing.push("saison "+(it.match.number||"?")+" sans nom d'ORG ignorée");return false;}return true;});
   for(const it of j.seasons||[]){if(!season(it.id)&&it.match&&it.match.org!=null){const o=S.orgs.find(x=>normName(x.name)===normName(it.match.org)||x.id===it.match.org);const ex=o&&S.seasons.find(x=>x.orgId===o.id&&Number(x.number)===Number(it.match.number));if(ex)it.id=ex.id;else if(!it.create)missing.push(it.match.org+" saison "+it.match.number);}}
   for(const it of j.seasons||[]){if(orgAlias&&it.create){it.create.orgId=orgAlias;const ex=S.seasons.find(x=>x.orgId===orgAlias&&Number(x.number)===Number(it.create.number));if(ex){it.id=ex.id;continue;}}
+    if(!season(it.id)&&it.create&&!S.orgs.some(o=>o.id===it.create.orgId)){missing.push((it.match&&it.match.org||"ORG sans nom")+" saison "+(it.create.number||"?")+" (ORG introuvable, saison non créée)");continue;}
     if(!season(it.id)&&it.create){const d=Object.assign({cast:[],rounds:[],awards:[],teams:[],createdAt:t,updatedAt:t},it.create);await db.doc("seasons/"+it.id).set(d);fresh[it.id]=Object.assign({id:it.id},d);}}
   const getSe=id=>season(id)||fresh[id];
   const newIds=new Set();
@@ -2241,7 +2243,8 @@ async function importRankings(j,log){
     if(Array.isArray(it.cast)&&!it.cast.length&&(se.cast||[]).length){missing.push(it.id+" (casting vide ignoré)");continue;}
     const setF={};if(it.set&&typeof it.set==="object")["start","end","signupStart","signupEnd","period","title","status","description","customName","external","logo"].forEach(k=>{if(it.set[k]!=null)setF[k]=String(it.set[k]);});
     if(Object.keys(setF).length)setDone.push(fullSeasonName(se)+" ("+Object.entries(setF).map(([k,v])=>k+" = "+(k==="logo"?(v?"(image)":"(vide)"):v.length>60?v.slice(0,57)+"…":v)).join(", ")+")");
-    if(!it.cast){const upd=Object.assign({updatedAt:t},setF);if(it.awards)upd.awards=aw;if(!await impWrite(se,upd,failed,log))continue;done++;log("Saisons mises à jour : "+done+" / "+(j.seasons||[]).length);continue;}
+    if(!it.cast){const upd=Object.assign({updatedAt:t},setF);if(it.awards)upd.awards=aw;if(Array.isArray(it.teams))upd.teams=it.teams;
+      if(Array.isArray(it.rounds)){const nm=impNameIdx((se.cast||[]).map(c=>c.playerId));upd.rounds=impRounds(it.rounds,n=>nm.get(normName(n)),fullSeasonName(se),unknownVotes);}if(!await impWrite(se,upd,failed,log))continue;done++;log("Saisons mises à jour : "+done+" / "+(j.seasons||[]).length);continue;}
     const old={};(se.cast||[]).forEach(c=>old[c.playerId]=c);
     const cast=[];
     for(let k=0;k<(it.cast||[]).length;k++){const c=it.cast[k];const pid=ids[k];if(!pid)continue;
@@ -2251,14 +2254,20 @@ async function importRankings(j,log){
       cast.push(Object.assign({team:"",team2:"",team3:""},o,tm,{playerId:pid,place:c.place==null?null:Number(c.place),note:c.note!=null?c.note:(o.note||"")}));
     }
     const upd=Object.assign({cast,updatedAt:t},setF);if(it.awards)upd.awards=aw;if(Array.isArray(it.teams))upd.teams=it.teams;
-    if(Array.isArray(it.rounds)){const byName={};(it.cast||[]).forEach((c,k)=>{byName[c.pseudo]=ids[k];});
-      upd.rounds=it.rounds.map(r=>{const v={};Object.entries(r.votes||{}).forEach(([n,x])=>{const pid=byName[n];if(pid&&x!=null&&String(x).trim()!=="")v[pid]=String(x);});return Object.assign({},r,{votes:v});});}
+    if(Array.isArray(it.rounds)){const byName={};(it.cast||[]).forEach((c,k)=>{byName[c.pseudo]=ids[k];});const nm=impNameIdx(cast.map(c=>c.playerId));
+      upd.rounds=impRounds(it.rounds,n=>byName[n]||nm.get(normName(n)),fullSeasonName(se),unknownVotes);}
     if(!await impWrite(se,upd,failed,log))continue;done++;
     log("Saisons mises à jour : "+done+" / "+(j.seasons||[]).length);
   }
   Object.values(makeDb._reload||{}).forEach(f=>f());
-  return {done,created,missing,linked:[...linked],setDone,failed};
+  if(unknownVotes.length)log("ATTENTION, votants introuvables dans le casting (leurs votes n'ont pas été importés) : "+unknownVotes.join(" ; "));
+  return {done,created,missing,linked:[...linked],setDone,failed,unknownVotes};
 }
+// Index pseudo/alias -> joueur, limité au casting d'une saison
+function impNameIdx(pids){const m=new Map();pids.forEach(pid=>{const p=player(pid);if(!p)return;[p.pseudo,...aliasesOf(p)].forEach(n=>{const k=normName(n);if(k&&!m.has(k))m.set(k,pid);});});return m;}
+function impRounds(rounds,find,label,unknown){const miss=new Set();
+  const out=rounds.map(r=>{const v={};Object.entries(r.votes||{}).forEach(([n,x])=>{if(x==null||String(x).trim()==="")return;const pid=player(n)?n:find(n);if(pid)v[pid]=String(x);else miss.add(n);});return Object.assign({phase:1,label:"",eliminated:"",recap:"",winner:"",challenge:""},r,{votes:v});});
+  if(miss.size)unknown.push(label+" : "+[...miss].join(", "));return out;}
 async function exportAll(){
   const out={type:"org-central-sauvegarde",date:new Date().toISOString()};
   for(const c of ["orgs","seasons","players","news"]){out[c]={};(await fetchAll(c)).forEach(r=>{out[c][r.id]=r.data;});}
@@ -2269,7 +2278,7 @@ async function exportAll(){
 async function importExport(file,log){
   const j=JSON.parse(await file.text());
   log("Sauvegarde automatique avant import…");try{await exportAll();}catch(e){throw new Error("Sauvegarde impossible, import annulé : "+errMsg(e));}
-  if(j&&j.type==="org-central-classements"){const r=await importRankings(j,log);log(`Classements importés : ${r.done} saison(s).`+(r.failed&&r.failed.length?` ÉCHEC pour ${r.failed.length} saison(s) : ${r.failed.join(", ")}. Réimporte le même fichier pour les compléter.`:"")+(r.setDone&&r.setDone.length?` Dates/infos mises à jour : ${r.setDone.join(" ; ")}.`:"")+(r.created.length?` Nouveaux joueurs (${r.created.length}) : ${r.created.join(", ")}.`:" Aucun nouveau joueur.")+(r.missing.length?` Saisons introuvables : ${r.missing.join(", ")}.`:"")+(r.linked&&r.linked.length?` Reliés à des fiches existantes (${r.linked.length}) : ${r.linked.join(", ")}. Si l'un d'eux n'est pas la même personne, utilise « Séparer… » sur sa fiche.`:""));return -1;}
+  if(j&&j.type==="org-central-classements"){const r=await importRankings(j,log);log(`Classements importés : ${r.done} saison(s).`+(r.failed&&r.failed.length?` ÉCHEC pour ${r.failed.length} saison(s) : ${r.failed.join(", ")}. Réimporte le même fichier pour les compléter.`:"")+(r.setDone&&r.setDone.length?` Dates/infos mises à jour : ${r.setDone.join(" ; ")}.`:"")+(r.created.length?` Nouveaux joueurs (${r.created.length}) : ${r.created.join(", ")}.`:" Aucun nouveau joueur.")+(r.missing.length?` Ignoré : ${r.missing.join(" ; ")}.`:"")+(r.unknownVotes&&r.unknownVotes.length?` ATTENTION, votants introuvables dans le casting (votes non importés) : ${r.unknownVotes.join(" ; ")}.`:"")+(r.linked&&r.linked.length?` Reliés à des fiches existantes (${r.linked.length}) : ${r.linked.join(", ")}. Si l'un d'eux n'est pas la même personne, utilise « Séparer… » sur sa fiche.`:""));return -1;}
   if(!j||!j.orgs||!j.seasons||!j.players)throw new Error("Ce fichier n'est pas un export ORG-Central.");
   const up=async v=>{if(typeof v!=="string"||!v.startsWith("data:image/"))return v||"";const b=await dataUrlToBlob(v);const ext=(b.type.split("/")[1]||"png").replace("jpeg","jpg");const path="import/"+uid("i")+"."+ext;
     const {error}=await sb.storage.from("images").upload(path,b,{contentType:b.type});if(error)throw sbErr(error);return sb.storage.from("images").getPublicUrl(path).data.publicUrl;};
