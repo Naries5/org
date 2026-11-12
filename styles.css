@@ -1354,3 +1354,8 @@ html[data-vt="back"]::view-transition-new(root){animation:vt-in-l .42s var(--eas
 .stiles.reorder .ro-btns button:hover{background:color-mix(in srgb,var(--gold) 18%,transparent)}
 .stiles.reorder .stile:hover{transform:none!important}
 .stiles.reorder .stile.dragging{box-shadow:0 0 0 2px var(--gold),0 18px 36px rgba(0,0,0,.55)!important}
+/* Pop-up des 100 comptes */
+.merci100{text-align:center;padding:4px 6px 0}
+.merci100 p{margin:0 0 12px;line-height:1.6}
+.m100-n{font-family:var(--font-display,inherit);font-size:4.5rem;line-height:1;margin:6px 0 14px!important;color:var(--gold);font-weight:800;letter-spacing:-.02em}
+.m100-sign{margin-top:18px!important;color:var(--muted,#aaa);font-size:.92rem}

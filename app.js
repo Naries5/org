@@ -402,6 +402,7 @@ async function loadAuth(){
     await loadInvites();
   }
   tkCount();
+  if(S.me)setTimeout(thanks100,900);
   S.isOwner=false;if(S.me){try{const {data:own}=await sb.rpc("is_owner");S.isOwner=own===true;}catch(e){}}
   S.canEdit=S.isHost;
   if(S.isHost||S.hostOrgs.size)goDirect();
@@ -1135,6 +1136,21 @@ function anchorDialog(ov,trigger){
   const b=d.getBoundingClientRect();
   d.style.transformOrigin=`${Math.round(r.left+r.width/2-b.left)}px ${Math.round(r.top+r.height/2-b.top)}px`;
 }
+// Remerciement pour les 100 comptes inscrits : affiché une seule fois par compte, jusqu'au 14 novembre 2026 à 10 h 58 (heure de Paris).
+const THANKS100_END=Date.parse("2026-11-14T09:58:00Z");
+function thanks100(){if(!S.me||Date.now()>THANKS100_END)return;const k="oc-merci100-"+S.me;
+  try{if(localStorage.getItem(k))return;}catch(e){return;}
+  if(!modalRoot.hidden){setTimeout(thanks100,3000);return;}
+  try{localStorage.setItem(k,"1");}catch(e){}
+  const nm=(linkedPlayer(S.me)||{}).pseudo||(S.profile&&S.profile.discord_name)||"";
+  openModal({title:"100 comptes inscrits",saveLabel:"Continuer",body:`<div class="merci100">
+    <p class="m100-n">100</p>
+    <p>${nm?`Merci ${esc(nm)} !`:"Merci !"} ORG-Central vient de passer les <b>100 comptes inscrits</b>.</p>
+    <p>Chaque saison ajoutée, chaque erreur signalée, chaque fiche complétée rend le site plus juste pour toute la communauté. Rien de tout ça n'existerait sans vous.</p>
+    <p>On continue : s'il manque une saison, une ORG ou un détail, passez par <a href="#contribuer" data-close="1">Contribuer</a>.</p>
+    <p class="m100-sign">Naries et toute l'équipe d'ORG-Central</p></div>`,
+    onSave:async()=>{}});
+  const c=modalRoot.querySelector('.dfoot .btn.ghost');if(c)c.remove();}
 function openModal(o){
   if(closeTimer){clearTimeout(closeTimer);closeTimer=null;}
   const active=(lastPress&&Date.now()-lastPressAt<1500&&!modalRoot.contains(lastPress))?lastPress:document.activeElement;
