@@ -1138,17 +1138,25 @@ function anchorDialog(ov,trigger){
 }
 // Remerciement pour les 100 comptes inscrits : affiché une seule fois par compte, jusqu'au 14 novembre 2026 à 10 h 58 (heure de Paris).
 const THANKS100_END=Date.parse("2026-11-14T09:58:00Z");
-function thanks100(){if(!S.me||Date.now()>THANKS100_END)return;const k="oc-merci100-"+S.me;
+async function contribCount(){const [rp,cr]=await Promise.all([sb.rpc("contributors").then(r=>r,e=>({})),sb.from("credits").select("id,data").then(r=>r,e=>({}))]);
+  const keys=new Set();const keyOf=n=>normName(n)||String(n||"").toLowerCase();
+  (rp.data||[]).forEach(r=>{const pl=linkedPlayer(r.user_id);keys.add(pl?"p:"+pl.id:keyOf(r.name||r.user_id));});
+  (cr.data||[]).map(r=>r.data||{}).filter(c=>c.kind!=="source").forEach(c=>{let pl=c.playerId?player(c.playerId):null;if(!pl&&!c.playerId){const m=S.players.filter(p=>normName(p.pseudo)===normName(c.name));if(m.length===1)pl=m[0];}keys.add(pl?"p:"+pl.id:keyOf(c.name));});
+  return keys.size;}
+async function thanks100(){if(!S.me||Date.now()>THANKS100_END)return;const k="oc-merci100b-"+S.me;
   try{if(localStorage.getItem(k))return;}catch(e){return;}
-  if(!modalRoot.hidden){setTimeout(thanks100,3000);return;}
+  if(!modalRoot.hidden||!S.loaded.has("seasons")||!S.loaded.has("orgs")){setTimeout(thanks100,2000);return;}
   try{localStorage.setItem(k,"1");}catch(e){}
+  const nf=n=>Number(n).toLocaleString("fr-FR");
+  const [acc,contrib]=await Promise.all([sb.from("profiles").select("id",{count:"exact",head:true}).then(r=>r.count,()=>null),contribCount().catch(()=>null)]);
+  const nOrg=S.orgs.length,nSpeed=S.orgs.filter(o=>o.format==="speed").length;
+  const parts=S.seasons.reduce((t,x)=>t+(Array.isArray(x.cast)?x.cast.length:0),0);
   const nm=(linkedPlayer(S.me)||{}).pseudo||(S.profile&&S.profile.discord_name)||"";
-  openModal({title:"100 comptes inscrits",saveLabel:"Continuer",body:`<div class="merci100">
-    <p class="m100-n">100</p>
-    <p>${nm?`Merci ${esc(nm)} !`:"Merci !"} ORG-Central vient de passer les <b>100 comptes inscrits</b>.</p>
-    <p>Chaque saison ajoutée, chaque erreur signalée, chaque fiche complétée rend le site plus juste pour toute la communauté. Rien de tout ça n'existerait sans vous.</p>
-    <p>On continue : s'il manque une saison, une ORG ou un détail, passez par <a href="#contribuer" data-close="1">Contribuer</a>.</p>
-    <p class="m100-sign">Naries et toute l'équipe d'ORG-Central</p></div>`,
+  const tile=(v,l,sub)=>`<div class="m100-t"><b>${v==null?"—":nf(v)}</b><span>${l}</span>${sub?`<small>${sub}</small>`:""}</div>`;
+  openModal({title:"Merci pour les 100 comptes",saveLabel:"Continuer",body:`<div class="merci100">
+    <p>${nm?`Merci ${esc(nm)} !`:"Merci !"} ORG-Central vient de passer les <b>100 comptes inscrits</b>. Chaque saison ajoutée, chaque erreur signalée, chaque fiche complétée rend le site plus juste pour toute la communauté.</p>
+    <div class="m100-grid">${tile(Math.max(acc||0,100),"comptes inscrits")}${tile(nOrg,"ORGs et speeds renseignées",`dont ${nf(nSpeed)} speed${nSpeed>1?"s":""}`)}${tile(parts,"participations")}${tile(contrib,"contributeurs")}</div>
+    <p>S'il manque une saison, une ORG ou un détail, passe par <a href="#contribuer" data-close="1">Contribuer</a>.</p></div>`,
     onSave:async()=>{}});
   const c=modalRoot.querySelector('.dfoot .btn.ghost');if(c)c.remove();}
 function openModal(o){

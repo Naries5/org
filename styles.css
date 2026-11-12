@@ -1356,6 +1356,9 @@ html[data-vt="back"]::view-transition-new(root){animation:vt-in-l .42s var(--eas
 .stiles.reorder .stile.dragging{box-shadow:0 0 0 2px var(--gold),0 18px 36px rgba(0,0,0,.55)!important}
 /* Pop-up des 100 comptes */
 .merci100{text-align:center;padding:4px 6px 0}
-.merci100 p{margin:0 0 12px;line-height:1.6}
-.m100-n{font-family:var(--font-display,inherit);font-size:4.5rem;line-height:1;margin:6px 0 14px!important;color:var(--gold);font-weight:800;letter-spacing:-.02em}
-.m100-sign{margin-top:18px!important;color:var(--muted,#aaa);font-size:.92rem}
+.merci100 p{margin:0 0 14px;line-height:1.6}
+.m100-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:6px 0 18px}
+.m100-t{display:flex;flex-direction:column;align-items:center;gap:2px;padding:14px 10px;border:1px solid color-mix(in srgb,var(--gold) 35%,transparent);border-radius:10px}
+.m100-t b{font-size:2rem;line-height:1.1;color:var(--gold);font-weight:800;font-variant-numeric:tabular-nums}
+.m100-t span{font-size:.9rem}
+.m100-t small{font-size:.78rem;color:var(--muted,#aaa)}
