@@ -1679,7 +1679,12 @@ function pageCalendar(id){
   h+=`<p class="hint cal-hint">Une saison apparaît le jour de son début dès qu'elle a une date de début dans « Modifier ».</p>`;
   if(undated.length)h+=`<div class="cal-undated"><h2>Sans date pour l'instant</h2><div class="cal-chips">${undated.map(s=>`<a href="#saison-${esc(s.id)}" class="cal-chip">${esc(calLabel(s))} ${chip(s.status)}</a>`).join("")}</div></div>`;
   return h+`</section>`;}
-const TL_DEF=[["S","#ff7f7f"],["A","#ffbf7f"],["B","#ffdf7f"],["C","#ffff7f"],["D","#bfff7f"],["E","#7fff7f"]];
+const TL_DEF=[["S","#ff6b6b"],["A","#ff9f5a"],["B","#ffd166"],["C","#c6e377"],["D","#6fd3a8"],["E","#6aa9ff"]];
+// Couleurs de ligne calculées ici (html2canvas ne sait pas lire color-mix)
+function tlRgb(hex){const m=/^#?([0-9a-f]{6})$/i.exec(String(hex||"").trim());const n=m?parseInt(m[1],16):0xb39cff;return [n>>16&255,n>>8&255,n&255];}
+function tlMix(hex,to,a){const c=tlRgb(hex);return "rgb("+c.map((v,i)=>Math.round(v+(to[i]-v)*a)).join(",")+")";}
+function tlRowStyle(hex){const [r,g,b]=tlRgb(hex);return {lab:`background:linear-gradient(160deg,${tlMix(hex,[255,255,255],.18)},rgb(${r},${g},${b}) 55%,${tlMix(hex,[0,0,0],.22)})`,drop:`background:linear-gradient(90deg,rgba(${r},${g},${b},.15),rgba(${r},${g},${b},0) 60%)`};}
+const tlHue=t=>{let h=0;for(const c of String(t))h=(h*31+c.charCodeAt(0))%360;return h;};
 function tlKey(sid){return "oc-tier-"+sid;}
 function tlLoad(s){let st=null;try{st=JSON.parse(localStorage.getItem(tlKey(s.id))||"null");}catch(_){}
   const ids=sortedCast(s).map(c=>c.playerId);
@@ -1688,11 +1693,12 @@ function tlLoad(s){let st=null;try{st=JSON.parse(localStorage.getItem(tlKey(s.id
   st.pool=ids.filter(id=>!placed.has(id));return st;}
 function tierList(s){if(!s)return;let st=tlLoad(s);const o=org(s.orgId)||{};
   const save=()=>{try{localStorage.setItem(tlKey(s.id),JSON.stringify({rows:st.rows}));}catch(_){}};
-  const tile=id=>{const src=imgSrc(sAvatar(s,id));return `<div class="tl-it" draggable="true" data-pid="${esc(id)}" title="${esc(sName(s,id))}">${src?`<img src="${esc(src)}" alt="" draggable="false" crossorigin="anonymous">`:`<span>${esc(initials(sName(s,id)))}</span>`}<b>${esc(sName(s,id))}</b></div>`;};
-  const body=()=>`<div class="tl" id="tl-cap"><div class="tl-head">${pic(s.logo||o.logo||orgLogoVal(o),o.name,"tl-logo")}<div><b>${esc(fullSeasonName(s))}</b><small>Ma tier list, orgcentral.fr</small></div></div>
-    ${st.rows.map((r,i)=>`<div class="tl-row"><div class="tl-lab" style="background:${esc(r.color)}"><span contenteditable="true" spellcheck="false" data-rn="${i}">${esc(r.name)}</span></div><div class="tl-drop" data-row="${i}">${r.items.map(tile).join("")}</div><div class="tl-ctl"><button type="button" data-tlup="${i}" title="Monter">▲</button><button type="button" data-tldn="${i}" title="Descendre">▼</button><input type="color" value="${esc(r.color)}" data-tlc="${i}" title="Couleur"><button type="button" data-tlrm="${i}" title="Supprimer la ligne">✕</button></div></div>`).join("")}</div>
+  const tile=id=>{const src=imgSrc(sAvatar(s,id));const nm=sName(s,id);const h=tlHue(nm);return `<div class="tl-it" draggable="true" data-pid="${esc(id)}" title="${esc(nm)}">${src?`<img src="${esc(src)}" alt="" draggable="false" crossorigin="anonymous">`:`<span style="--h:${h}">${esc(initials(nm))}</span>`}<b>${esc(nm)}</b></div>`;};
+  const me=S.me&&linkedPlayer(S.me);const who=me?me.pseudo:"";
+  const body=()=>`<div class="tl" id="tl-cap"><div class="tl-head">${pic(s.logo||o.logo||orgLogoVal(o),o.name,"tl-logo")}<div class="tl-ttl"><small>${esc(o.name||"")}</small><b>${esc(s.title||fullSeasonName(s))}</b><span>${who?`Tier list de ${esc(who)}`:"Ma tier list"}</span></div><div class="tl-mark">orgcentral.fr</div></div>
+    <div class="tl-rows">${st.rows.map((r,i)=>{const rs=tlRowStyle(r.color);return `<div class="tl-row"><div class="tl-lab" style="${rs.lab}"><span contenteditable="true" spellcheck="false" data-rn="${i}">${esc(r.name)}</span></div><div class="tl-drop" data-row="${i}" style="${rs.drop}">${r.items.map(tile).join("")}</div><div class="tl-ctl"><button type="button" data-tlup="${i}" title="Monter" aria-label="Monter la ligne">▲</button><button type="button" data-tldn="${i}" title="Descendre" aria-label="Descendre la ligne">▼</button><label class="tl-sw" title="Couleur" style="background:${esc(r.color)}"><input type="color" value="${esc(r.color)}" data-tlc="${i}" aria-label="Couleur de la ligne"></label><button type="button" data-tlrm="${i}" title="Supprimer la ligne" aria-label="Supprimer la ligne">✕</button></div></div>`;}).join("")}</div></div>
     <p class="hint">Glisse les joueurs dans les lignes (sur téléphone : touche un joueur puis une ligne). Clique sur une lettre pour la renommer.</p>
-    <div class="tl-pool tl-drop" data-row="pool">${st.pool.map(tile).join("")||`<span class="muted">Tous les joueurs sont classés.</span>`}</div>`;
+    <div class="tl-poolwrap"><div class="tl-poolh">À classer <span>${st.pool.length}</span></div><div class="tl-pool tl-drop" data-row="pool">${st.pool.map(tile).join("")||`<span class="muted">Tous les joueurs sont classés.</span>`}</div></div>`;
   openModal({title:"Tier list : "+fullSeasonName(s),wide:true,saveLabel:"Télécharger l'image",body:`<div id="tl-root">${body()}</div><p class="tl-bar"><button type="button" class="btn sm" id="tl-add">+ Ajouter une ligne</button><button type="button" class="btn sm ghost" id="tl-reset">Tout remettre en bas</button></p>`,
     onMount:form=>{const root=form.querySelector("#tl-root");let sel=null,drag=null;
       const redraw=()=>{root.innerHTML=body();save();};
@@ -1709,13 +1715,13 @@ function tierList(s){if(!s)return;let st=tlLoad(s);const o=org(s.orgId)||{};
         if(b.dataset.tlup){const i=+b.dataset.tlup;if(i>0){[st.rows[i-1],st.rows[i]]=[st.rows[i],st.rows[i-1]];redraw();}}
         if(b.dataset.tldn){const i=+b.dataset.tldn;if(i<st.rows.length-1){[st.rows[i+1],st.rows[i]]=[st.rows[i],st.rows[i+1]];redraw();}}
         if(b.dataset.tlrm){const i=+b.dataset.tlrm;st.pool.push(...st.rows[i].items);st.rows.splice(i,1);redraw();}});
-      root.addEventListener("input",e=>{if(e.target.dataset.tlc){st.rows[+e.target.dataset.tlc].color=e.target.value;e.target.closest(".tl-row").querySelector(".tl-lab").style.background=e.target.value;save();}
+      root.addEventListener("input",e=>{if(e.target.dataset.tlc){st.rows[+e.target.dataset.tlc].color=e.target.value;{const row=e.target.closest(".tl-row"),rs=tlRowStyle(e.target.value);row.querySelector(".tl-lab").setAttribute("style",rs.lab);row.querySelector(".tl-drop").setAttribute("style",rs.drop);e.target.closest(".tl-sw").style.background=e.target.value;}save();}
         if(e.target.dataset.rn!==undefined){st.rows[+e.target.dataset.rn].name=e.target.textContent.slice(0,20);save();}});
       root.addEventListener("keydown",e=>{if(e.target.dataset.rn!==undefined&&e.key==="Enter"){e.preventDefault();e.target.blur();}});
-      form.querySelector("#tl-add").addEventListener("click",()=>{st.rows.push({name:"?",color:"#c9c9ff",items:[]});redraw();});
+      form.querySelector("#tl-add").addEventListener("click",()=>{st.rows.push({name:"?",color:"#b39cff",items:[]});redraw();});
       form.querySelector("#tl-reset").addEventListener("click",()=>{st=tlLoad({id:"__none",cast:s.cast});st.rows=TL_DEF.map(([n,c])=>({name:n,color:c,items:[]}));st.pool=sortedCast(s).map(c=>c.playerId);redraw();});},
     onSave:async()=>{await loadScript("https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js");const el=document.getElementById("tl-cap");el.classList.add("snap");
-      try{const cv=await html2canvas(el,{backgroundColor:"#1a0d16",scale:2,useCORS:true});const a=document.createElement("a");a.href=cv.toDataURL("image/png");a.download="tierlist-"+(fullSeasonName(s).replace(/[^\wÀ-ÿ]+/g,"-"))+".png";document.body.appendChild(a);a.click();a.remove();toast("Image téléchargée");}
+      try{const cv=await html2canvas(el,{backgroundColor:"#140a11",scale:2,useCORS:true});const a=document.createElement("a");a.href=cv.toDataURL("image/png");a.download="tierlist-"+(fullSeasonName(s).replace(/[^\wÀ-ÿ]+/g,"-"))+".png";document.body.appendChild(a);a.click();a.remove();toast("Image téléchargée");}
       finally{el.classList.remove("snap");}throw Object.assign(new Error(""),{keep:true});}});}
 const QA={tab:"dups",miss:"",org:"",lim:15};
 function pageQuality(){
