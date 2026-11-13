@@ -1683,7 +1683,7 @@ const TL_DEF=[["S","#ff6b6b"],["A","#ff9f5a"],["B","#ffd166"],["C","#c6e377"],["
 // Couleurs de ligne calculées ici (html2canvas ne sait pas lire color-mix)
 function tlRgb(hex){const m=/^#?([0-9a-f]{6})$/i.exec(String(hex||"").trim());const n=m?parseInt(m[1],16):0xb39cff;return [n>>16&255,n>>8&255,n&255];}
 function tlMix(hex,to,a){const c=tlRgb(hex);return "rgb("+c.map((v,i)=>Math.round(v+(to[i]-v)*a)).join(",")+")";}
-function tlRowStyle(hex){const [r,g,b]=tlRgb(hex);return {lab:`background:linear-gradient(160deg,${tlMix(hex,[255,255,255],.18)},rgb(${r},${g},${b}) 55%,${tlMix(hex,[0,0,0],.22)})`,drop:`background:linear-gradient(90deg,rgba(${r},${g},${b},.15),rgba(${r},${g},${b},0) 60%)`};}
+function tlRowStyle(hex){const [r,g,b]=tlRgb(hex);return {lab:`background:rgb(${r},${g},${b})`,drop:`background:rgba(${r},${g},${b},.06)`};}
 const tlHue=t=>{let h=0;for(const c of String(t))h=(h*31+c.charCodeAt(0))%360;return h;};
 function tlKey(sid){return "oc-tier-"+sid;}
 function tlLoad(s){let st=null;try{st=JSON.parse(localStorage.getItem(tlKey(s.id))||"null");}catch(_){}
@@ -1695,7 +1695,7 @@ function tierList(s){if(!s)return;let st=tlLoad(s);const o=org(s.orgId)||{};
   const save=()=>{try{localStorage.setItem(tlKey(s.id),JSON.stringify({rows:st.rows}));}catch(_){}};
   const tile=id=>{const src=imgSrc(sAvatar(s,id));const nm=sName(s,id);const h=tlHue(nm);return `<div class="tl-it" draggable="true" data-pid="${esc(id)}" title="${esc(nm)}">${src?`<img src="${esc(src)}" alt="" draggable="false" crossorigin="anonymous">`:`<span style="--h:${h}">${esc(initials(nm))}</span>`}<b>${esc(nm)}</b></div>`;};
   const me=S.me&&linkedPlayer(S.me);const who=me?me.pseudo:"";
-  const body=()=>`<div class="tl" id="tl-cap"><div class="tl-head">${pic(s.logo||o.logo||orgLogoVal(o),o.name,"tl-logo")}<div class="tl-ttl"><small>${esc(o.name||"")}</small><b>${esc(s.title||fullSeasonName(s))}</b><span>${who?`Tier list de ${esc(who)}`:"Ma tier list"}</span></div><div class="tl-mark">orgcentral.fr</div></div>
+  const body=()=>`<div class="tl" id="tl-cap"><div class="tl-head">${pic(s.logo||o.logo||orgLogoVal(o),o.name,"tl-logo")}<div class="tl-ttl"><b>${esc(fullSeasonName(s))}</b><span>${who?`Tier list de ${esc(who)}`:"Tier list"}</span></div><div class="tl-mark">orgcentral.fr</div></div>
     <div class="tl-rows">${st.rows.map((r,i)=>{const rs=tlRowStyle(r.color);return `<div class="tl-row"><div class="tl-lab" style="${rs.lab}"><span contenteditable="true" spellcheck="false" data-rn="${i}">${esc(r.name)}</span></div><div class="tl-drop" data-row="${i}" style="${rs.drop}">${r.items.map(tile).join("")}</div><div class="tl-ctl"><button type="button" data-tlup="${i}" title="Monter" aria-label="Monter la ligne">▲</button><button type="button" data-tldn="${i}" title="Descendre" aria-label="Descendre la ligne">▼</button><label class="tl-sw" title="Couleur" style="background:${esc(r.color)}"><input type="color" value="${esc(r.color)}" data-tlc="${i}" aria-label="Couleur de la ligne"></label><button type="button" data-tlrm="${i}" title="Supprimer la ligne" aria-label="Supprimer la ligne">✕</button></div></div>`;}).join("")}</div></div>
     <p class="hint">Glisse les joueurs dans les lignes (sur téléphone : touche un joueur puis une ligne). Clique sur une lettre pour la renommer.</p>
     <div class="tl-poolwrap"><div class="tl-poolh">À classer <span>${st.pool.length}</span></div><div class="tl-pool tl-drop" data-row="pool">${st.pool.map(tile).join("")||`<span class="muted">Tous les joueurs sont classés.</span>`}</div></div>`;
