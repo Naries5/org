@@ -19,6 +19,11 @@ function actualWinner(s,o) {
  const c=win?cs.find(c=>c.role==="taupe"||c.isMole===true||/^taupe\b/i.test(String(c.note||""))):cs.find(c=>Number(c.place)===1);
  return c?c.playerId:null;
 }
+function actualWinners(s,o) {
+ const cs=Array.isArray(s.cast)?s.cast:[];
+ const win=isTaupe(o)&&(typeof s.taupeWins==="boolean"?s.taupeWins:Number(s.number)===4&&String(o.name||"").toLowerCase().replace(/[?!]/g,"").trim()==="qui est la taupe");
+ return (win?cs.filter(c=>c.role==="taupe"||c.isMole===true||/^taupe\b/i.test(String(c.note||""))):cs.filter(c=>Number(c.place)===1)).map(c=>c.playerId);
+}
 async function season(id) {
   const [s] = await qv("seasons?select=" + SEL + ",logo:data->>logo&id=eq." + enc(id));
   if (!s) return null;
@@ -66,7 +71,7 @@ async function playerPage(id) {
   const os = orgIds.length ? await qv("orgs?select=id,name:data->>name,concept:data->>concept&id=in.(" + orgIds.map(i => '"' + i + '"').join(",") + ")") : [];
   const orgMap = Object.fromEntries(os.map(o=>[o.id,o]));
   let w=0,top=0;
-  ss.forEach(s=>{const c=(s.cast||[]).find(c=>c.playerId===id);const pl=c&&Number(c.place);if(s.status==="terminee"&&c){if(actualWinner(s,orgMap[s.orgId])===id)w++;if(pl&&pl<=3)top++;}});
+  ss.forEach(s=>{const c=(s.cast||[]).find(c=>c.playerId===id);const pl=c&&Number(c.place);if(s.status==="terminee"&&c){if(actualWinners(s,orgMap[s.orgId]).includes(id))w++;if(pl&&pl<=3)top++;}});
   const lines = [[ss.length + " saison" + (ss.length > 1 ? "s" : ""), w ? w + " victoire" + (w > 1 ? "s" : "") : "", top ? top + " podium" + (top > 1 ? "s" : "") : ""].filter(Boolean).join(", ")];
   if (os.length) lines.push("ORGs : " + os.map(o => o.name).slice(0, 6).join(", ") + (os.length > 6 ? "…" : ""));
   if (p.tagline) lines.push("« " + p.tagline + " »");

@@ -22,7 +22,7 @@ function taupeWins(s){
  if(typeof s.taupeWins==="boolean")return s.taupeWins;
  return Number(s.number)===4&&norm(o.name||"").replace(/[?!]/g,"").trim()==="qui est la taupe";
 }
-function isSeasonWinner(s,c){return !!c&&winnerOf(s)===c.playerId;}
+function isSeasonWinner(s,c){return !!c&&winnersOf(s).includes(c.playerId);}
 const PLATFORMS={discord:"Discord",minecraft:"Minecraft",roblox:"Roblox",autre:"Autre plateforme"};
 const AWARD_IDEAS=["Meilleur joueur","Fan favori","Meilleur stratège","Meilleur confessionnal","Meilleur move","Meilleure épreuve","Révélation de la saison","Meilleur duo","Meilleur jury"];
 const PATHMODE=/^https?:$/.test(location.protocol);
@@ -156,6 +156,11 @@ function startReorder(orgId){const g=document.getElementById("org-stiles");if(!g
 }
 function seasonsOf(orgId){return S.seasons.filter(s=>s.orgId===orgId).sort((a,b)=>sOrd(a)-sOrd(b)||(Number(a.number)||0)-(Number(b.number)||0));}
 function shownWinner(s){return s&&s.external?null:winnerOf(s);}
+// Tous les vainqueurs d'une saison (plusieurs en cas de co-victoire : plusieurs joueurs classés 1er)
+function winnersOf(s){if(!s)return [];
+  const l=taupeWins(s)?(s.cast||[]).filter(c=>isTaupeCast(s,c)):rankedContestants(s).filter(c=>Number(c.place)===1);
+  return [...new Set(l.map(c=>c.playerId).filter(Boolean))];}
+function winnersLabel(s){return winnersOf(s).map(pName).join(" & ");}
 function winnerOf(s){
  if(!s)return null;
  const c=taupeWins(s)?(s.cast||[]).find(c=>isTaupeCast(s,c)):rankedContestants(s).find(c=>Number(c.place)===1);
@@ -182,7 +187,7 @@ function bgVar(v){const u=imgSrc(v);return u?` style="--bgimg:url('${esc(u)}')"`
 function cover(v,label){const u=imgSrc(v);return u?`<img src="${esc(u)}" alt="" loading="lazy">`:`<span class="ph">${esc(initials(label))}</span>`;}
 function seasonTile(s,showOrg){
   const o=org(s.orgId)||{};const w=winnerOf(s);
-  return `<a class="stile" data-sid="${esc(s.id)}" href="#saison-${esc(s.id)}"><span class="num">${esc(seasonShort(s))}</span><div class="cover">${cover(s.logo||o.logo,o.name)}</div><div class="body"><span class="st-t">${showOrg?esc(o.name)+" : ":""}${esc(s.title||seasonShort(s))}</span>${w&&s.status==="terminee"&&!s.external?`<span class="w">Vainqueur : <b>${esc(pName(w))}</b></span>`:`<span class="w">${chip(s.status)}</span>`}</div></a>`;
+  return `<a class="stile" data-sid="${esc(s.id)}" href="#saison-${esc(s.id)}"><span class="num">${esc(seasonShort(s))}</span><div class="cover">${cover(s.logo||o.logo,o.name)}</div><div class="body"><span class="st-t">${showOrg?esc(o.name)+" : ":""}${esc(s.title||seasonShort(s))}</span>${w&&s.status==="terminee"&&!s.external?`<span class="w">${winnersOf(s).length>1?"Vainqueurs":"Vainqueur"} : <b>${esc(winnersLabel(s))}</b></span>`:`<span class="w">${chip(s.status)}</span>`}</div></a>`;
 }
 function allStats(){
   const m={};const g=id=>m[id]||(m[id]={id,part:0,wins:0,top3:0,awards:0,best:null});
@@ -697,7 +702,7 @@ function spotlight(s){
 }
 function airItem(s){const o=org(s.orgId)||{};return `<a class="air-i" href="#saison-${esc(s.id)}">${pic(s.logo||o.logo,o.tag||o.name,"logo")}<span><b>${esc(o.name||"")} ${esc(seasonShort(s))}</b><small>${esc(s.title||"")}</small></span>${chip(s.status)}</a>`;}
 function crownCard(s){const o=org(s.orgId)||{};const w=winnerOf(s);const u=imgSrc(sAvatar(s,w));
-  return `<a class="crown" href="#saison-${esc(s.id)}"><span class="crown-pic">${u?`<img src="${esc(u)}" alt="" loading="lazy">`:`<i>${esc(initials(sName(s,w)))}</i>`}<span class="crown-badge">${pic(s.logo||o.logo,o.tag||o.name,"logo")}</span></span><b>${esc(sName(s,w))}</b><small>${esc(o.name||"")} ${esc(seasonShort(s))}</small>${s.title?`<small class="crown-t">${esc(s.title)}</small>`:""}</a>`;}
+  return `<a class="crown" href="#saison-${esc(s.id)}"><span class="crown-pic">${u?`<img src="${esc(u)}" alt="" loading="lazy">`:`<i>${esc(initials(sName(s,w)))}</i>`}<span class="crown-badge">${pic(s.logo||o.logo,o.tag||o.name,"logo")}</span></span><b>${esc(winnersOf(s).map(x=>sName(s,x)).join(" & ")||sName(s,w))}</b><small>${esc(o.name||"")} ${esc(seasonShort(s))}</small>${s.title?`<small class="crown-t">${esc(s.title)}</small>`:""}</a>`;}
 function pickOfDay(){
   const pool=S.seasons.filter(s=>s.status==="terminee"&&(s.cast||[]).length&&shownWinner(s));if(!pool.length)return "";
   const d=new Date();const k=d.getFullYear()*400+d.getMonth()*31+d.getDate();const s=pool[(k*2654435761>>>0)%pool.length];
@@ -764,7 +769,7 @@ function orgPoster(o){
   <div class="og-logo">${pic(lg,o.tag||o.name,"logo")}</div>
   <div class="og-body"><h3>${esc(o.name)}</h3>
   ${last?`<p class="og-last">${({en_cours:"Saison en cours",inscriptions:"Inscriptions",annoncee:"Prochaine saison",terminee:"Dernière saison"})[last.status]||"Saison"} : <b>${esc(seasonName(last))}</b></p>`:""}
-  <div class="og-stats"><span><b>${ss.length}</b> saison${ss.length>1?"s":""}</span>${w?`<span class="og-win">${ava(player(w),"xs")}<span><small>Dernier vainqueur</small>${esc(sName(fin,w))}</span></span>`:""}</div>
+  <div class="og-stats"><span><b>${ss.length}</b> saison${ss.length>1?"s":""}</span>${w?`<span class="og-win">${ava(player(w),"xs")}<span><small>${winnersOf(fin).length>1?"Derniers vainqueurs":"Dernier vainqueur"}</small>${esc(winnersOf(fin).map(x=>sName(fin,x)).join(" & "))}</span></span>`:""}</div>
   ${uniq.length?`<p class="og-hosts">Host${uniq.length>1?"s":""} : ${uniq.slice(0,4).map(esc).join(", ")}${uniq.length>4?` +${uniq.length-4}`:""}</p>`:""}</div></a>`;
 }
 function paintOrgPosters(){document.querySelectorAll(".og[data-paint]").forEach(el=>{const u=el.dataset.paint;el.removeAttribute("data-paint");hueColors(u,r=>{if(r){el.style.setProperty("--c1",r.t1);el.style.setProperty("--c2",r.t2);}});});}
@@ -814,7 +819,7 @@ function pageSeasons(){
   ${body}</section>`;
 }
 function seasonTable(list,showOrg){
-  return `<div class="table-wrap"><table><thead><tr>${showOrg?"<th>ORG</th>":""}<th>Saison</th><th>Dates</th><th>Statut</th><th class="num">Joueurs</th><th>Vainqueur</th></tr></thead><tbody>${list.map(s=>{const o=org(s.orgId)||{};const w=shownWinner(s);return `<tr class="link" data-href="#saison-${esc(s.id)}">${showOrg?`<td><span class="who">${logo(o,"xs")}${esc(o.name||"ORG inconnue")}</span></td>`:""}<td><a class="who" href="#saison-${esc(s.id)}">${slogo(s,"xs")}${esc(seasonName(s))}</a></td><td>${dateRange(s)||'<span class="muted">—</span>'}</td><td>${chip(s.status)}</td><td class="num">${(s.cast||[]).length||"—"}</td><td>${w?`<span class="who">${ava(player(w),"xs")}${esc(pName(w))}</span>`:"—"}</td></tr>`;}).join("")}</tbody></table></div>`;
+  return `<div class="table-wrap"><table><thead><tr>${showOrg?"<th>ORG</th>":""}<th>Saison</th><th>Dates</th><th>Statut</th><th class="num">Joueurs</th><th>Vainqueur</th></tr></thead><tbody>${list.map(s=>{const o=org(s.orgId)||{};const w=shownWinner(s);return `<tr class="link" data-href="#saison-${esc(s.id)}">${showOrg?`<td><span class="who">${logo(o,"xs")}${esc(o.name||"ORG inconnue")}</span></td>`:""}<td><a class="who" href="#saison-${esc(s.id)}">${slogo(s,"xs")}${esc(seasonName(s))}</a></td><td>${dateRange(s)||'<span class="muted">—</span>'}</td><td>${chip(s.status)}</td><td class="num">${(s.cast||[]).length||"—"}</td><td>${w?winnersOf(s).map(x=>`<span class="who">${ava(player(x),"xs")}${esc(pName(x))}</span>`).join(" "):"—"}</td></tr>`;}).join("")}</tbody></table></div>`;
 }
 document.addEventListener("change",e=>{if(e.target.id==="f-orgfilter"){S.f.org=e.target.value;render();}if(e.target.id==="f-concept"){const c=document.getElementById("f-noVotes");if(c)c.checked=CONCEPT_NOVOTES.has(e.target.value);}});
 function pageOrgs(){
@@ -911,7 +916,7 @@ function pageSeason(id){
   const box=infobox(bigImg(s.logo||o.logo,o.name),fullSeasonName(s),[
     ["ORG",o.id?`<a href="#org-${esc(o.id)}">${esc(o.name)}</a>`:esc(o.name)],["Saison",esc(seasonShort(s))],["Thème",esc(s.title||"")],["La taupe",taupes.length?taupes.map(c=>splink(s,c.playerId)).join(", "):""],["Résultat",isTaupeOrg(o)?(taupeWins(s)?"Victoire de la taupe":"Victoire des enquêteurs"):""],
     ["Statut",chip(s.status)],["Dates",dateRange(s)],["Format",FORMATS[o.format]||""],["Joueurs",(cast.length+secretOf(s).n)?String(cast.length+secretOf(s).n):(s.slots?esc(s.slots)+" places":"")],
-    ...(ext?[]:[["Vainqueur",winnerOf(s)?splink(s,winnerOf(s)):""],...(isTaupeOrg(o)?[["Meilleur enquêteur",by(1)],["2e enquêteur",by(2)],["3e enquêteur",by(3)]]:[["2e",by(2)],["3e",by(3)]])]),["Précédente",prv?`<a href="#saison-${esc(prv.id)}">${esc(seasonShort(prv))}</a>`:""],["Suivante",nxt?`<a href="#saison-${esc(nxt.id)}">${esc(seasonShort(nxt))}</a>`:""]],"pic-season",s.id);
+    ...(ext?[]:[[winnersOf(s).length>1?"Vainqueurs":"Vainqueur",winnersOf(s).map(x=>splink(s,x)).join(" & ")],...(isTaupeOrg(o)?[["Meilleur enquêteur",by(1)],["2e enquêteur",by(2)],["3e enquêteur",by(3)]]:[["2e",by(2)],["3e",by(3)]])]),["Précédente",prv?`<a href="#saison-${esc(prv.id)}">${esc(seasonShort(prv))}</a>`:""],["Suivante",nxt?`<a href="#saison-${esc(nxt.id)}">${esc(seasonShort(nxt))}</a>`:""]],"pic-season",s.id);
   return `<div class="crumbs"><a href="#orgs">ORGs</a><span>/</span><a href="#org-${esc(o.id||"")}">${esc(o.name)}</a><span>/</span><span>${esc(seasonShort(s))}</span>${shareBtn("s",s.id)}</div>
   <div class="page-head"><div><p class="eyebrow">${esc(o.name)} ${esc(seasonShort(s))}</p><h1>${esc(s.title||seasonShort(s))}</h1></div>${edit(`<div class="actions">${appsOf(s).open?"":`<button class="btn" data-act="apptoggle" data-id="${esc(s.id)}">Ouvrir les candidatures</button>`}${secretOf(s).n||!scHost(s.orgId)?"":`<button class="btn" data-act="sc-edit" data-id="${esc(s.id)}">${ico("lock")} Casting secret</button>`}<button class="btn" data-act="edit-season" data-id="${esc(s.id)}">Modifier</button><button class="btn danger" data-act="del-season" data-id="${esc(s.id)}">Supprimer</button></div>`)}</div>
   <div class="wiki"><div class="wiki-main">
