@@ -1273,8 +1273,11 @@ function tweenCoins(to){const el=$("#w-coins");if(!el)return;if(COINV==null||red
   const w=$(".wal");if(w){w.classList.remove("bump");void w.offsetWidth;w.classList.add(to>from?"bump":"spend");}
   const step=t=>{const k=Math.min(1,(t-t0)/d),e=1-Math.pow(1-k,3);el.textContent=nf(Math.round(from+(to-from)*e));if(k<1&&COINV===to)requestAnimationFrame(step);};requestAnimationFrame(step);}
 function wallet(){const ma=$("#md-ach");if(ma&&ST)ma.textContent=`${ACH.filter(a=>ST.ach[a.id]).length}/${ACH.length}`;$("#w-stock").textContent=ST.test?"∞":ST.stock;tweenCoins(ST.coins);ring(ST.stock>=MAXSTOCK?0:CHARGE-((Date.now()-ST.last)%CHARGE));}
-function route(){if(window.TCG_HOSTED&&(!location.hash||location.hash==="#site")){if(location.hash==="#site"){location.href="/";return;}history.replaceState(null,"","#boosters");}
-  const h=(location.hash||"#site").slice(1);const v=["boosters","collection","catalogue","marche","albums","succes","boutique","classement","profil","amis"].includes(h)?h:(h.startsWith("album-")?"albums":"site");
+const VIEWS=["boosters","collection","catalogue","marche","albums","succes","boutique","classement","profil","amis"];
+function route(){const h0=(location.hash||"").slice(1);
+  // Sur orgcentral.fr, la copie de test du site n'existe pas : « site » ramène au vrai site, tout lien inconnu ramène aux boosters.
+  if(window.TCG_HOSTED){if(h0==="site"){location.href="/";return;}if(!VIEWS.includes(h0)&&!h0.startsWith("album-")){history.replaceState(null,"","#boosters");}}
+  const h=(location.hash||"#site").slice(1);const v=VIEWS.includes(h)?h:(h.startsWith("album-")?"albums":"site");
   const inT=v!=="site";$("#site").hidden=inT;$("#tcg").hidden=!inT;document.body.classList.toggle("tcg",inT);
   document.querySelectorAll(".view").forEach(x=>{const show=x.id==="v-"+v;if(show&&x.hidden&&!reduced()){x.classList.remove("vin");void x.offsetWidth;x.classList.add("vin");clearTimeout(x._vt);x._vt=setTimeout(()=>x.classList.remove("vin"),1400);}x.hidden=!show;});
   document.querySelectorAll(".tab").forEach(t=>{if(t.dataset.go===v)t.setAttribute("aria-current","page");else t.removeAttribute("aria-current");});
@@ -1329,7 +1332,7 @@ function renderBoosters(){tick();wallet();
   const fan=heroCards();
   $("#hero").innerHTML=`<div class="hero-txt"><p class="kick"><span>Série 1</span> · ${nf(visTotal())} cartes à collectionner</p>
       <h1 class="hero-h">Le wiki<br>en cartes</h1><p class="hero-sub">Toutes les ORG, les saisons et les joueurs d'ORG-Central</p>
-      <div class="hero-cta"><button class="cta" id="h-open" ${canFree?"":"disabled"}>Ouvrir un booster ${goldNext?"doré":"gratuit"} <b>${ST.test?"∞":ST.stock}</b></button><a class="btn ghost lg" href="#bsel" id="h-see">Voir les boosters</a></div></div>
+      <div class="hero-cta"><button class="cta" id="h-open" ${canFree?"":"disabled"}>Ouvrir un booster ${goldNext?"doré":"gratuit"} <b>${ST.test?"∞":ST.stock}</b></button><a class="btn ghost lg" href="#boosters" id="h-see">Voir les boosters</a></div></div>
     <div class="hero-fan">${fan.map((c,i)=>`<div class="hf hf${i}" data-hk="${c.k}" tabindex="0" role="button" aria-label="Voir la carte ${esc(label(c))}"><div class="hf-in">${cardHTML(c,true)}<span class="hf-gl"></span></div></div>`).join("")}</div>`;
   document.querySelectorAll("#hero .hf").forEach(h=>{const inn=h.querySelector(".hf-in");
     h.onclick=()=>openCard(CARDS[h.dataset.hk]);h.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openCard(CARDS[h.dataset.hk]);}};
