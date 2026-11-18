@@ -674,6 +674,21 @@ body.tcg .dlg{background:rgba(8,7,10,.86)}
 .mk-form .seg{margin-top:12px}
 .mk-form .note{margin:12px 0 0}.note.warn{color:#f2a14c}
 .mk-form .acts{margin-top:18px}
+
+.hf{cursor:pointer;transition:transform .4s cubic-bezier(.2,.75,.25,1);outline:none}
+.hf:hover,.hf:focus-visible{z-index:5}
+.hf0:hover,.hf0:focus-visible{transform:translate(-132%,-52%) rotate(-5deg)}
+.hf1:hover,.hf1:focus-visible{transform:translate(-50%,-62%)}
+.hf2:hover,.hf2:focus-visible{transform:translate(32%,-52%) rotate(5deg)}
+.hf-in{position:relative;transform-style:preserve-3d;will-change:transform}
+.hf-gl{position:absolute;inset:0;z-index:8;border-radius:14px;pointer-events:none;opacity:0;transition:opacity .25s;mix-blend-mode:soft-light;
+  background:radial-gradient(circle at var(--gx,50%) var(--gy,30%),rgba(255,255,255,.75),transparent 55%)}
+.hf:hover .hf-gl{opacity:1}
+.hf:focus-visible .card{box-shadow:0 0 0 3px var(--yel),0 18px 40px rgba(0,0,0,.5)}
+.chips{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));overflow:visible!important}
+.chip{min-width:0;height:auto!important;min-height:56px;padding-top:7px!important;padding-bottom:7px!important;white-space:normal!important;border-radius:28px!important}.chip span{line-height:1.25}.chip b{white-space:nowrap}
+@media (max-width:1480px){#w-mis{display:none}}
+@media (max-width:1320px){body.tcg .tbar .wrap{gap:14px}body.tcg .tab{padding:0 7px;font-size:.93rem}.tl-txt{font-size:.95rem}}
 </style>
 </head>
 <body>
@@ -1042,13 +1057,18 @@ function renderBoosters(){tick();wallet();
   if(OPENING)return;
   const goldNext=ST.sinceGold>=9,inv=ST.inv||{},canFree=ST.stock>0||ST.test;
   // hero
-  const best=Object.keys(ST.owned).map(k=>CARDS[k]).filter(c=>c&&hasArt(c)).sort((a,b)=>RI(b.r)-RI(a.r)).slice(0,3);
-  const fan=best.length===3?best:[CARDS.find(c=>c.r==="R"&&hasArt(c)),CARDS.find(c=>c.r==="M"&&hasArt(c)),CARDS.find(c=>c.r==="L"&&hasArt(c))].filter(Boolean);
-  if(fan.length===3){const m=fan.splice(0,1)[0];fan.splice(1,0,m);}
+  const fan=heroCards();
   $("#hero").innerHTML=`<div class="hero-txt"><p class="kick"><span>Série 1</span> · ${nf(visTotal())} cartes à collectionner</p>
       <h1 class="hero-h">Le wiki<br>en cartes</h1><p class="hero-sub">Toutes les ORG, les saisons et les joueurs d'ORG-Central</p>
       <div class="hero-cta"><button class="cta" id="h-open" ${canFree?"":"disabled"}>Ouvrir un booster ${goldNext?"doré":"gratuit"} <b>${ST.test?"∞":ST.stock}</b></button><a class="btn ghost lg" href="#bsel" id="h-see">Voir les boosters</a></div></div>
-    <div class="hero-fan" aria-hidden="true">${fan.map((c,i)=>`<div class="hf hf${i}">${cardHTML(c,true)}</div>`).join("")}</div>`;
+    <div class="hero-fan">${fan.map((c,i)=>`<div class="hf hf${i}" data-hk="${c.k}" tabindex="0" role="button" aria-label="Voir la carte ${esc(label(c))}"><div class="hf-in">${cardHTML(c,true)}<span class="hf-gl"></span></div></div>`).join("")}</div>`;
+  document.querySelectorAll("#hero .hf").forEach(h=>{const inn=h.querySelector(".hf-in");
+    h.onclick=()=>openCard(CARDS[h.dataset.hk]);h.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openCard(CARDS[h.dataset.hk]);}};
+    if(reduced())return;
+    h.onpointermove=e=>{const r=inn.getBoundingClientRect(),x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;
+      inn.style.transition="transform .08s linear";inn.style.transform=`perspective(900px) rotateY(${(x-.5)*16}deg) rotateX(${(.5-y)*12}deg) scale(1.04)`;
+      inn.style.setProperty("--gx",x*100+"%");inn.style.setProperty("--gy",y*100+"%");};
+    h.onpointerleave=()=>{inn.style.transition="transform .45s cubic-bezier(.2,.75,.25,1)";inn.style.transform="";};});
   // chips
   const misDone=MISSIONS.filter(m=>Math.min(m.n,m.f())>=m.n).length,day=ST.daily.date===today()||ST.daily.date===yesterday()?ST.daily.day:0;
   const left=ST.stock>=MAXSTOCK?0:CHARGE-((Date.now()-ST.last)%CHARGE);
@@ -1087,6 +1107,12 @@ function renderBoosters(){tick();wallet();
   $("#packs").querySelectorAll("[data-pk]").forEach(d=>d.querySelector(".bpack").onclick=()=>{if(BSEL===d.dataset.pk)return goK();BSEL=d.dataset.pk;renderBoosters();});
   const tm=$("#testmode");if(tm)tm.onchange=()=>{ST.test=tm.checked;save();renderBoosters();};
   renderDaily();renderMissions();}
+function heroCards(){const P=D.players,pick=[];
+  ["Naries","Layte","Teru"].forEach(n=>{const i=P.findIndex(p=>p.n.toLowerCase()===n.toLowerCase());if(i<0)return;
+    let c=CARDS.find(c=>c.t==="J"&&c.i===i);
+    if(!c){const ps=CARDS.filter(c=>c.t==="P"&&D.parts[c.i][0]===i).sort((a,b)=>(D.parts[a.i][2]||99)-(D.parts[b.i][2]||99));c=ps[0];}
+    if(c)pick.push(c);});
+  return pick;}
 function hasArt(c){if(c.t==="J"||c.t==="P")return !!(D.players[c.t==="J"?c.i:D.parts[c.i][0]]||{}).a;if(c.t==="O")return !!D.orgs[c.i].l;return !!(D.seasons[c.i]||{}).l;}
 function yesterday(){const y=new Date();y.setDate(y.getDate()-1);return `${y.getFullYear()}-${String(y.getMonth()+1).padStart(2,"0")}-${String(y.getDate()).padStart(2,"0")}`;}
 function clk(ms){const t=Math.ceil(ms/1000);return `${String(Math.floor(t/3600)).padStart(2,"0")}:${String(Math.floor(t/60)%60).padStart(2,"0")}:${String(t%60).padStart(2,"0")}`;}
