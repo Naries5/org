@@ -790,6 +790,66 @@ body.tcg .dlg{background:rgba(8,7,10,.86)}
 .seeall{all:unset;box-sizing:border-box;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:12px;height:54px;margin:0 0 24px;border-radius:999px;border:1px solid rgba(242,201,76,.45);background:rgba(242,201,76,.06);font-weight:600}
 .seeall:hover{background:rgba(242,201,76,.12)}
 .sa-f{display:flex}.sa-f i{width:16px;height:22px;border-radius:4px;margin-left:-5px;box-shadow:0 0 0 2px var(--surface)}
+
+/* ===== animations globales ===== */
+@keyframes vin{from{opacity:0;transform:translateY(12px)}}
+@keyframes rise{from{opacity:0;transform:translateY(14px) scale(.985)}}
+@keyframes grow{from{transform:scaleX(0)}}
+.view.vin{animation:vin .38s cubic-bezier(.2,.75,.25,1)}
+.vin .stg>*:nth-child(-n+24){animation:rise .45s cubic-bezier(.2,.75,.25,1) backwards}
+.vin .stg>*:nth-child(1){animation-delay:0ms}
+.vin .stg>*:nth-child(2){animation-delay:28ms}
+.vin .stg>*:nth-child(3){animation-delay:56ms}
+.vin .stg>*:nth-child(4){animation-delay:84ms}
+.vin .stg>*:nth-child(5){animation-delay:112ms}
+.vin .stg>*:nth-child(6){animation-delay:140ms}
+.vin .stg>*:nth-child(7){animation-delay:168ms}
+.vin .stg>*:nth-child(8){animation-delay:196ms}
+.vin .stg>*:nth-child(9){animation-delay:224ms}
+.vin .stg>*:nth-child(10){animation-delay:252ms}
+.vin .stg>*:nth-child(11){animation-delay:280ms}
+.vin .stg>*:nth-child(12){animation-delay:308ms}
+.vin .stg>*:nth-child(13){animation-delay:336ms}
+.vin .stg>*:nth-child(14){animation-delay:364ms}
+.vin .stg>*:nth-child(15){animation-delay:392ms}
+.vin .stg>*:nth-child(16){animation-delay:420ms}
+.vin .stg>*:nth-child(17){animation-delay:448ms}
+.vin .stg>*:nth-child(18){animation-delay:476ms}
+.vin .stg>*:nth-child(19){animation-delay:504ms}
+.vin .stg>*:nth-child(20){animation-delay:532ms}
+.vin .stg>*:nth-child(21){animation-delay:560ms}
+.vin .stg>*:nth-child(22){animation-delay:588ms}
+.vin .stg>*:nth-child(23){animation-delay:616ms}
+.vin .stg>*:nth-child(24){animation-delay:644ms}
+.vin .ch-b i,.vin .bar b{transform-origin:left;animation:grow .7s cubic-bezier(.2,.75,.25,1) .15s backwards}
+body.tcg .btn,body.tcg .tab,.cta,.ybtn,.me-btn,.rchip,.seeall,.chip{transition:background-color .18s,border-color .18s,color .18s,filter .18s,transform .12s cubic-bezier(.2,.75,.25,1),opacity .18s}
+body.tcg .btn:active:not([disabled]),.me-btn:active,.rchip:active,.seeall:active{transform:scale(.97)}
+body.tcg .tab::after{content:"";position:absolute;left:10px;right:10px;bottom:-1px;height:2px;border-radius:2px;background:var(--acc);transform:scaleX(0);transition:transform .3s cubic-bezier(.2,.75,.25,1)}
+body.tcg .tab[aria-current="page"]::after{transform:scaleX(1)}
+.me-drop:not([hidden]){animation:drop .18s cubic-bezier(.2,.75,.25,1);transform-origin:top right}
+@keyframes drop{from{opacity:0;transform:translateY(-6px) scale(.97)}}
+.dlg:not([hidden]){animation:fade .2s ease}
+.dlg:not([hidden]) .dbox{animation:rise .32s cubic-bezier(.2,.75,.25,1)}
+@keyframes fade{from{opacity:0}}
+body.tcg .toast div{animation:tup .3s cubic-bezier(.2,.75,.25,1)}
+body.tcg .toast div.out{animation:tout .26s ease forwards}
+@keyframes tup{from{opacity:0;transform:translateY(14px) scale(.97)}}
+@keyframes tout{to{opacity:0;transform:translateY(8px) scale(.97)}}
+.cwrap .card{transition:transform .25s cubic-bezier(.2,.75,.25,1),filter .2s,box-shadow .25s}
+.cwrap:hover .card{transform:scale(1.025)}
+.wal.bump{animation:bump .5s cubic-bezier(.2,.75,.25,1)}.wal.spend{animation:spend .4s ease}
+@keyframes bump{30%{border-color:var(--yel);box-shadow:0 0 0 3px rgba(242,201,76,.18)}}
+@keyframes spend{30%{border-color:#ff6b6b}}
+.pk{transition:opacity .25s,filter .25s}
+.pk .bpack{transition:transform .3s cubic-bezier(.2,.75,.25,1),filter .25s}
+.pk.sel .bpack{transform:scale(1.03)}
+.btn.danger{background:#c43c3c!important;border-color:#c43c3c!important;color:#fff!important}
+.btn.danger[disabled]{opacity:.4}
+.rs-box{max-width:520px}.rs-box h2{font-family:var(--f-ui);font-weight:800;margin:0 0 12px}
+.rs-box .fl{display:flex;flex-direction:column;gap:6px;margin:16px 0 0}
+.rs-box input{font:inherit;font-family:var(--f-mono);font-size:1.1rem;letter-spacing:.2em;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.rs-box .acts{display:flex;gap:10px;margin-top:18px}
+@media (prefers-reduced-motion:reduce){.view.vin,.vin .stg>*,.vin .ch-b i,.vin .bar b,.me-drop,.dlg .dbox,body.tcg .toast div{animation:none!important}.cwrap:hover .card{transform:none}}
 </style>
 </head>
 <body>
@@ -829,7 +889,6 @@ body.tcg .dlg{background:rgba(8,7,10,.86)}
     <nav class="tabs" aria-label="TCG">
       <button class="tab" data-go="boosters">Boosters</button>
       <button class="tab" data-go="collection">Collection</button>
-      <button class="tab" data-go="catalogue">Toutes les cartes</button>
       <button class="tab" data-go="albums">Albums</button>
       <button class="tab" data-go="marche">Marché</button>
       <button class="tab" data-go="amis">Amis<i class="tdot" id="t-amis" hidden></i></button>
@@ -840,9 +899,12 @@ body.tcg .dlg{background:rgba(8,7,10,.86)}
       <div class="me-menu"><button class="me-btn" id="me-btn" aria-haspopup="menu" aria-expanded="false"><span class="me-av" id="me-av"></span><span class="me-n" id="me-n">Profil</span><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
         <div class="me-drop" id="me-drop" role="menu" hidden>
           <button role="menuitem" data-go="profil">Mon profil</button>
+          <button role="menuitem" data-go="catalogue">Toutes les cartes</button>
           <button role="menuitem" data-go="succes">Succès<span id="md-ach"></span></button>
           <button role="menuitem" id="w-mis">Missions du jour</button>
           <button role="menuitem" data-go="boutique">Boutique</button>
+          <hr><button role="menuitem" id="m-snd">Sons<span id="m-snd-s"></span></button>
+          <button role="menuitem" id="m-reset" hidden>Réinitialiser ma progression</button>
           <hr><button role="menuitem" data-go="site">Retour au site</button>
         </div></div>
     </div>
@@ -850,9 +912,9 @@ body.tcg .dlg{background:rgba(8,7,10,.86)}
   <main class="wrap">
     <section class="view" id="v-boosters">
       <div class="hero" id="hero"></div>
-      <div class="chips" id="chips"></div>
+      <div class="chips stg" id="chips"></div>
       <div class="bsel" id="bsel">
-        <div class="bsel-main"><div class="bsel-head"><h2 class="h2">Choisis ton booster</h2><div class="seg ysel" id="bseg"></div></div><div class="packs" id="packs"></div></div>
+        <div class="bsel-main"><div class="bsel-head"><h2 class="h2">Choisis ton booster</h2><div class="seg ysel" id="bseg"></div></div><div class="packs stg" id="packs"></div></div>
         <aside class="bdet" id="bdet"></aside>
       </div>
       <div class="row2"><div class="panel" id="daily"></div><div class="panel" id="missions"></div></div>
@@ -867,7 +929,7 @@ body.tcg .dlg{background:rgba(8,7,10,.86)}
         <select id="c-o" aria-label="Affichage"><option value="own">Mes cartes</option><option value="dup">Mes doublons</option><option value="all">Toutes (manquantes en gris)</option></select>
         <button class="btn" id="recycle-all">Recycler les doublons</button>
       </div>
-      <div class="cgrid" id="c-grid"></div>
+      <div class="cgrid stg" id="c-grid"></div>
       <div class="more"><button class="btn" id="c-more" hidden>Afficher plus</button></div>
     </section>
     <section class="view" id="v-marche" hidden>
@@ -880,7 +942,7 @@ body.tcg .dlg{background:rgba(8,7,10,.86)}
         <select id="mk-m" aria-label="Type de vente"><option value="">Ventes et enchères</option><option value="direct">Vente directe</option><option value="auction">Enchères</option></select>
         <select id="mk-s" aria-label="Trier"><option value="new">Plus récentes</option><option value="end">Fin proche</option><option value="lo">Prix croissant</option><option value="hi">Prix décroissant</option></select>
       </div>
-      <div class="mk-grid" id="mk-grid"></div>
+      <div class="mk-grid stg" id="mk-grid"></div>
     </section>
     <section class="view" id="v-albums" hidden></section>
     <section class="view" id="v-profil" hidden></section>
@@ -894,12 +956,12 @@ body.tcg .dlg{background:rgba(8,7,10,.86)}
         <select id="ct-h" aria-label="Possession"><option value="">Possédées et manquantes</option><option value="own">Possédées</option><option value="miss">Manquantes</option></select>
         <select id="ct-s" aria-label="Trier"><option value="r">Rareté</option><option value="n">Nom</option><option value="no">Numéro</option></select>
       </div>
-      <div class="cgrid" id="ct-grid"></div>
+      <div class="cgrid stg" id="ct-grid"></div>
       <div class="more"><button class="btn" id="ct-more" hidden>Afficher plus</button></div>
     </section>
     <section class="view" id="v-amis" hidden></section>
     <section class="view" id="v-succes" hidden>
-      <h1 class="h">Succès</h1><p class="lede" id="ach-lede"></p><div class="ach" id="ach"></div>
+      <h1 class="h">Succès</h1><p class="lede" id="ach-lede"></p><div class="ach stg" id="ach"></div>
     </section>
     <section class="view" id="v-boutique" hidden>
       <h1 class="h">Boutique</h1><p class="lede">Dépense tes coquillages. Les Sceaux mythiques ne s'achètent pas : ils se gagnent avec certains succès et en complétant l'album d'une ORG. On gagne des coquillages avec la connexion du jour, les missions, les succès, les albums complétés et le recyclage des doublons.</p>
@@ -939,7 +1001,7 @@ const ini=t=>String(t||"?").replace(/[^\p{L}\p{N} ]/gu," ").trim().split(/\s+/).
 const placeTxt=p=>p===1?"1er":p+"e";
 function sName(s){const o=D.orgs[s.o]||{};return `${o.n||"?"} S${s.n}`;}
 function sFull(s){return sName(s)+(s.t?" – "+s.t:"");}
-let TQ=[];function toast(m){if(typeof OV!=="undefined"&&OV&&!$("#ov").hidden){TQ.push(m);return;}const d=document.createElement("div");d.textContent=m;$("#toast").appendChild(d);setTimeout(()=>d.remove(),3200);}
+let TQ=[];function toast(m){if(typeof OV!=="undefined"&&OV&&!$("#ov").hidden){TQ.push(m);return;}const d=document.createElement("div");d.textContent=m;$("#toast").appendChild(d);setTimeout(()=>{d.classList.add("out");setTimeout(()=>d.remove(),260);},3000);}
 
 const CH={};
 function need(k){if(!k||IMG[k])return;const i=parseInt(k.slice(0,2),16)%16;if(CH[i])return;
@@ -1150,20 +1212,25 @@ function countDone(kind){if(!DONE_CACHE){DONE_CACHE={se:0,pl:0,og:0};
 function checkAll(){DONE_CACHE=null;
   MISSIONS.forEach(m=>{if(!ST.mis.done.includes(m.id)&&m.f()>=m.n){ST.mis.done.push(m.id);ST.coins+=m.rw;toast(`Mission réussie : ${m.t} (+${m.rw})`);}});
   if(ST.mis.done.length===MISSIONS.length&&!ST.mis.bonus){ST.mis.bonus=true;ST.stock=Math.min(MAXSTOCK+5,ST.stock+1);toast("Toutes les missions du jour : +1 booster");}
-  ACH.forEach(a=>{if(!ST.ach[a.id]&&a.f()){ST.ach[a.id]=Date.now();ST.coins+=a.rw;if(a.pk)ST.inv[a.pk]=(ST.inv[a.pk]||0)+1;toast(`Succès débloqué : ${a.t} (+${a.rw}${a.pk?" et un Sceau mythique":""})`);}});
+  ACH.forEach(a=>{if(!ST.ach[a.id]&&a.f()){ST.ach[a.id]=Date.now();ST.coins+=a.rw;if(a.pk)ST.inv[a.pk]=(ST.inv[a.pk]||0)+1;SFX.ach();toast(`Succès débloqué : ${a.t} (+${a.rw}${a.pk?" et un Sceau mythique":""})`);}});
   save();wallet();}
 function claimDaily(){const td=today();if(ST.daily.date===td)return;
   const y=new Date();y.setDate(y.getDate()-1);const yd=`${y.getFullYear()}-${String(y.getMonth()+1).padStart(2,"0")}-${String(y.getDate()).padStart(2,"0")}`;
   const day=ST.daily.date===yd?(ST.daily.day%7)+1:1;ST.daily={date:td,day};const rw=STREAK[day-1];ST.coins+=rw;
   let extra="";if(day===7){ST.inv.gold++;extra=" et un booster doré";}
-  toast(`Connexion du jour ${day}/7 : +${rw} coquillages${extra}`);checkAll();}
+  SFX.coin();toast(`Connexion du jour ${day}/7 : +${rw} coquillages${extra}`);checkAll();}
 
 /* ---------- Rendu : en-tête ---------- */
-function wallet(){const ma=$("#md-ach");if(ma&&ST)ma.textContent=`${ACH.filter(a=>ST.ach[a.id]).length}/${ACH.length}`;$("#w-stock").textContent=ST.test?"∞":ST.stock;$("#w-coins").textContent=nf(ST.coins);ring(ST.stock>=MAXSTOCK?0:CHARGE-((Date.now()-ST.last)%CHARGE));}
+let COINV=null;
+function tweenCoins(to){const el=$("#w-coins");if(!el)return;if(COINV==null||reduced()){COINV=to;el.textContent=nf(to);return;}
+  const from=COINV;COINV=to;if(from===to){el.textContent=nf(to);return;}const t0=performance.now(),d=Math.min(900,250+Math.abs(to-from)*2);
+  const w=$(".wal");if(w){w.classList.remove("bump");void w.offsetWidth;w.classList.add(to>from?"bump":"spend");}
+  const step=t=>{const k=Math.min(1,(t-t0)/d),e=1-Math.pow(1-k,3);el.textContent=nf(Math.round(from+(to-from)*e));if(k<1&&COINV===to)requestAnimationFrame(step);};requestAnimationFrame(step);}
+function wallet(){const ma=$("#md-ach");if(ma&&ST)ma.textContent=`${ACH.filter(a=>ST.ach[a.id]).length}/${ACH.length}`;$("#w-stock").textContent=ST.test?"∞":ST.stock;tweenCoins(ST.coins);ring(ST.stock>=MAXSTOCK?0:CHARGE-((Date.now()-ST.last)%CHARGE));}
 function route(){if(window.TCG_HOSTED&&(!location.hash||location.hash==="#site")){if(location.hash==="#site"){location.href="/";return;}history.replaceState(null,"","#boosters");}
   const h=(location.hash||"#site").slice(1);const v=["boosters","collection","catalogue","marche","albums","succes","boutique","classement","profil","amis"].includes(h)?h:(h.startsWith("album-")?"albums":"site");
   const inT=v!=="site";$("#site").hidden=inT;$("#tcg").hidden=!inT;document.body.classList.toggle("tcg",inT);
-  document.querySelectorAll(".view").forEach(x=>x.hidden=x.id!=="v-"+v);
+  document.querySelectorAll(".view").forEach(x=>{const show=x.id==="v-"+v;if(show&&x.hidden&&!reduced()){x.classList.remove("vin");void x.offsetWidth;x.classList.add("vin");clearTimeout(x._vt);x._vt=setTimeout(()=>x.classList.remove("vin"),1400);}x.hidden=!show;});
   document.querySelectorAll(".tab").forEach(t=>{if(t.dataset.go===v)t.setAttribute("aria-current","page");else t.removeAttribute("aria-current");});
   if(!inT){renderFan();return;}
   if(!ST)return;
@@ -1246,7 +1313,7 @@ function renderBoosters(){tick();wallet();
   else if(shop)btn=`<button class="ybtn" id="b-open" ${ST.coins>=shop.p?"":"disabled"}><b>Acheter</b><span><span class="shell"></span>${nf(shop.p)} · tu as ${nf(ST.coins)}</span></button>`;
   else btn=`<button class="ybtn" id="b-open" ${inv[k]?"":"disabled"}><b>Ouvrir</b><span>${inv[k]?`Offert · ${inv[k]} en réserve`:k==="sceau"?"Se gagne avec les succès":"Se gagne avec la série de connexion"}</span></button>`;
   $("#bdet").innerHTML=`<div class="bd-h"><i class="bd-ic ${k}">${IC[pi.ic]}</i><div><h3>${esc(pi.n)}</h3><p>${esc(pi.s)}</p></div></div>
-    <div class="bd-st"><div><b>${SLOTS[k].length}</b><span>cartes par booster</span></div><div><b class="c-${guar[0]==="É"?"E":guar[0]==="M"?"M":"R"}">${guar}</b><span>ou mieux, garantie</span></div>
+    <div class="bd-st stg"><div><b>${SLOTS[k].length}</b><span>cartes par booster</span></div><div><b class="c-${guar[0]==="É"?"E":guar[0]==="M"?"M":"R"}">${guar}</b><span>ou mieux, garantie</span></div>
       <div><b class="acc">${k==="sceau"?"—":Math.max(0,PITY-ST.sinceMyth)}</b><span>${k==="sceau"?"ne touche pas la garantie":"avant mythique sûre"}</span></div><div><b class="yel">${EPITY-ST.sinceGold}</b><span>avant épique sûre</span></div></div>
     <button class="seeall" data-go="catalogue"><span class="sa-f">${["E","L","M"].map(r=>`<i style="background:var(${RAR[r][1]})"></i>`).join("")}</span>Voir les ${nf(visTotal())} cartes</button>
     <p class="bd-k">Chance par booster</p>
@@ -1309,15 +1376,15 @@ function showOpen(list,type){wallet();
   const tear=()=>{if(torn)return;torn=true;$(".ov-hint").textContent="";if(reduced()){later(ovReveal,60);return;}
     const lv=OV.best,z=$("#pz"),ov=$("#ov"),hold=[0,0,0,520,950,1500,1500][lv];
     $("#boom").style.setProperty("--bc",`var(${RAR[LADDER[lv]][1]})`);$("#boom").className=lv===6?"rainbow":"";
-    b.classList.add("cutting");
+    b.classList.add("cutting");SFX.tear();
     later(()=>{b.classList.add("torn");z.classList.add("lit");
-      if(lv>=3){z.classList.add("charge");b.classList.add("trem");}
+      if(lv>=3){z.classList.add("charge");b.classList.add("trem");SFX.rumble((hold+180)/1000);}
       if(lv>=4)ov.classList.add("dark");if(lv>=5)ov.classList.add("dark2");
       if(lv>=4)later(()=>b.classList.add("trem2"),hold*.55);
-      if(lv>=5){[hold*.3,hold*.62].forEach(t=>later(()=>{b.classList.remove("thump");void b.offsetWidth;b.classList.add("thump");z.classList.remove("flare");void z.offsetWidth;z.classList.add("flare");},t));}
+      if(lv>=5){[hold*.3,hold*.62].forEach(t=>later(()=>{SFX.thump();b.classList.remove("thump");void b.offsetWidth;b.classList.add("thump");z.classList.remove("flare");void z.offsetWidth;z.classList.add("flare");},t));}
     },300);
     const tb=300+180+hold;
-    later(()=>{z.classList.add("boom");b.classList.remove("trem","trem2");b.classList.add("gone");shards(lv);
+    later(()=>{z.classList.add("boom");b.classList.remove("trem","trem2");b.classList.add("gone");shards(lv);SFX.boom(lv);
       if(lv>=3){const bm=$("#boom");bm.classList.remove("go");void bm.offsetWidth;bm.classList.add("go");}
       if(lv>=4){const i=$("#ovin");i.classList.remove("quake");void i.offsetWidth;i.classList.add("quake");}
       ov.classList.remove("dark","dark2");},tb);
@@ -1352,18 +1419,18 @@ function ovReveal(burst){ovClear();
   $("#ov-all").onclick=e=>{e.stopPropagation();OV.i=OV.items.length;ovEnd();};
   const sk=$("#ov-skip");if(sk)sk.onclick=e=>{e.stopPropagation();const n=firstEpicAfter(OV.i+(OV.rev?1:0));OV.i=n<0?OV.items.length:n;OV.rev=false;OV.walked=false;OV.adv=true;ovReveal();};}
 function revealFx(it,now){const t=$("#rtop");if(!t)return;const r=RI(it.c.r);
-  const go=()=>{t.classList.add("shown");if(r>=2)t.classList.add("shine-on");
+  const go=()=>{t.classList.add("shown");SFX.reveal(it.c.r);if(r>=2)t.classList.add("shine-on");
     if(r>=3){const f=$("#flash");if(f){f.style.setProperty("--fc",`var(${RAR[it.c.r][1]})`);f.classList.remove("go");void f.offsetWidth;f.classList.add("go");}}};
   if(now||reduced())go();else later(go,560);}
 function flip(){const it=OV.items[OV.i];const t=$("#rtop");if(!t||OV.rev)return;
   if(isWalk(it)&&!OV.walked){OV.walked=true;return ovWalkout(it);}
-  OV.rev=true;t.classList.add("open");revealFx(it,false);
+  OV.rev=true;t.classList.add("open");SFX.flip();revealFx(it,false);
   const d=$(".dots i:nth-child("+(OV.i+1)+")");if(d){d.classList.add("on");d.style.setProperty("--c",`var(${RAR[it.c.r][1]})`);}
   const oc=$(".ov-count");if(oc)oc.textContent=`${OV.i+1} / ${OV.items.length}`;
   const h=$("#hint");if(h)h.textContent="Glisse la carte pour passer à la suivante";}
 function fling(dir){const t=$("#rtop");if(!t||!OV.rev)return;if(t.dataset.gone)return;t.dataset.gone="1";
   t.style.transition=reduced()?"none":"transform .38s cubic-bezier(.3,.6,.35,1),opacity .38s";
-  t.style.transform=`translate(${dir*115}vw,-4vh) rotate(${dir*22}deg)`;t.style.opacity="0";
+  t.style.transform=`translate(${dir*115}vw,-4vh) rotate(${dir*22}deg)`;SFX.swipe();t.style.opacity="0";
   OV.i++;OV.rev=false;OV.walked=false;OV.adv=true;later(()=>ovReveal(),reduced()?0:240);}
 function ovStep(){if(!OV)return;const it=OV.items[OV.i];if(!it)return ovEnd();if(!OV.rev)flip();else fling(1);}
 function bindSwipe(t){if(!t)return;let x0=null,y0=0,t0=0,dx=0,moved=false;
@@ -1383,8 +1450,9 @@ function ovWalkout(it){const c=it.c,P=D.players,O=D.orgs;let lines=[];
   else{const o=O[c.i];lines=["Carte ORG",o.f==="speed"?"Speed":"Format long",`${o.ns} saison${o.ns>1?"s":""}`];}
   $("#ovin").innerHTML=`<div class="wo r-${c.r}" id="wo"><div class="rays"></div><div class="wo-lines" id="wo-lines"></div><p class="ov-hint">Touche pour passer</p></div>`;
   const box=$("#wo-lines");const step=reduced()?60:850;
-  lines.forEach((l,n)=>later(()=>{box.insertAdjacentHTML("beforeend",`<div class="wo-l">${esc(l)}</div>`);},350+n*step));
-  later(()=>{box.insertAdjacentHTML("beforeend",`<div class="wo-r">${esc(RAR[c.r][0])}</div>`);},350+lines.length*step);
+  SFX.rumble(.6);
+  lines.forEach((l,n)=>later(()=>{SFX.tick();box.insertAdjacentHTML("beforeend",`<div class="wo-l">${esc(l)}</div>`);},350+n*step));
+  later(()=>{SFX.reveal(c.r);box.insertAdjacentHTML("beforeend",`<div class="wo-r">${esc(RAR[c.r][0])}</div>`);},350+lines.length*step);
   const done=()=>{ovClear();OV.rev=true;OV.adv=false;ovReveal(true);};
   later(done,350+lines.length*step+(reduced()?100:1200));
   $("#wo").onclick=done;}
@@ -1429,9 +1497,9 @@ $("#c-more").onclick=()=>renderCollection(false);
 new IntersectionObserver(es=>{if(es.some(x=>x.isIntersecting)&&!$("#c-more").hidden&&!$("#v-collection").hidden)renderCollection(false);},{rootMargin:"500px"}).observe($("#c-more"));
 document.addEventListener("click",e=>{const w=e.target.closest(".cwrap[data-ck]");if(w)openCard(CARDS[w.dataset.ck]);});
 document.addEventListener("keydown",e=>{if(OV&&!$("#ov").hidden&&(e.key===" "||e.key==="ArrowRight"||e.key==="Enter")){const tgt=e.target;if(tgt&&tgt.tagName==="BUTTON"&&tgt.id!=="rtop"&&e.key!==" ")return;if($("#rtop")){e.preventDefault();ovStep();return;}if($("#wo")){e.preventDefault();$("#wo").click();return;}if($("#bpack")&&e.key===" "){e.preventDefault();$("#bpack").click();return;}}if((e.key==="Enter"||e.key===" ")&&e.target.closest&&e.target.closest(".cwrap[data-ck]")){e.preventDefault();openCard(CARDS[e.target.closest(".cwrap").dataset.ck]);}if(e.key==="Escape"&&!$("#dlg").hidden)$("#dlg").hidden=true;});
-function recycle(k,n){const c=CARDS[k];const v=RECYCLE[c.r]*n;ST.owned[k]-=n;ST.coins+=v;ST.recycled+=n;
+function recycle(k,n){SFX.coin();const c=CARDS[k];const v=RECYCLE[c.r]*n;ST.owned[k]-=n;ST.coins+=v;ST.recycled+=n;
   const td=today();if(ST.mis.date!==td)ST.mis={date:td,open:0,recycle:0,rare:0,done:[],bonus:false};ST.mis.recycle+=n;return v;}
-$("#recycle-all").onclick=()=>{let n=0,v=0;Object.keys(ST.owned).forEach(k=>{const d=ST.owned[k]-1;if(d>0){n+=d;v+=recycle(+k,d);}});
+$("#recycle-all").onclick=()=>{let n=0,v=0;Object.keys(ST.owned).forEach(k=>{const d=ST.owned[k]-1;if(d>0){n+=d;v+=recycle(k,d);}});
   if(!n){toast("Aucun doublon à recycler");return;}toast(`${nf(n)} doublons recyclés : +${nf(v)} coquillages`);checkAll();renderCollection(true);};
 
 /* ---------- Détail d'une carte ---------- */
@@ -1473,14 +1541,14 @@ function renderAlbums(h){const m=/^album-(og|pl|se)-(\d+)$/.exec(h||"");if(m)ret
   $("#v-albums").innerHTML=`<h1 class="h">Albums</h1><p class="lede">Complète toutes les cartes d'une ORG, d'une saison ou d'un joueur. Chaque album terminé rapporte des coquillages : ${REWARD.se} par saison, ${REWARD.pl} par joueur, ${REWARD.og} et un Sceau mythique par ORG.</p>
     <div class="filters"><div class="seg" role="group" aria-label="Type d'album">${[["og","ORGs"],["se","Saisons"],["pl","Joueurs"]].map(([k,l])=>`<button aria-pressed="${AK===k}" data-ak="${k}">${l}</button>`).join("")}</div>
     <input id="a-q" type="search" placeholder="Chercher un album…" value="${esc(AQ)}" aria-label="Chercher un album"><span class="note">${done} album${done>1?"s":""} complété${done>1?"s":""}</span></div>
-    <div class="alist">${list.slice(0,AK==="pl"?240:500).map(a=>`<button class="aitem${a.have===a.keys.length?" complete":""}" data-go="album-${AK}-${a.i}"><span class="aimg">${pic(aImg(AK,a.i),aTitle(AK,a.i))}</span><span class="ainfo"><b>${esc(aTitle(AK,a.i))}</b><span class="prog"><span class="bar"><b style="width:${a.have/a.keys.length*100}%"></b></span><span>${a.have}/${a.keys.length}</span></span></span></button>`).join("")}</div>
+    <div class="alist stg">${list.slice(0,AK==="pl"?240:500).map(a=>`<button class="aitem${a.have===a.keys.length?" complete":""}" data-go="album-${AK}-${a.i}"><span class="aimg">${pic(aImg(AK,a.i),aTitle(AK,a.i))}</span><span class="ainfo"><b>${esc(aTitle(AK,a.i))}</b><span class="prog"><span class="bar"><b style="width:${a.have/a.keys.length*100}%"></b></span><span>${a.have}/${a.keys.length}</span></span></span></button>`).join("")}</div>
     ${AK==="pl"&&list.length>240?`<p class="note">Les 240 premiers joueurs sont affichés : cherche un pseudo pour trouver les autres.</p>`:""}`;
   $("#v-albums").querySelectorAll("[data-ak]").forEach(b=>b.onclick=()=>{AK=b.dataset.ak;renderAlbums();});
   let t;$("#a-q").oninput=e=>{clearTimeout(t);t=setTimeout(()=>{AQ=e.target.value;renderAlbums();const q=$("#a-q");q.focus();q.setSelectionRange(q.value.length,q.value.length);},200);};}
 function renderAlbum(kind,i){const keys=(kind==="og"?BY_ORG:kind==="pl"?BY_PL:BY_SE)[i]||[];const have=keys.filter(k=>ST.owned[k]).length;
   const id=kind+i,complete=have===keys.length,claimed=ST.claimed[id];
   let body="";
-  const grid=ks=>`<div class="cgrid">${ks.map(k=>tileHTML(CARDS[k])).join("")}</div>`;
+  const grid=ks=>`<div class="cgrid stg">${ks.map(k=>tileHTML(CARDS[k])).join("")}</div>`;
   if(kind==="og"){const own=keys.filter(k=>CARDS[k].t!=="P");
     body=grid(own);const ses=[...new Set(keys.filter(k=>CARDS[k].t==="P").map(k=>CARDS[k].se))].sort((a,b)=>(+D.seasons[a].n||0)-(+D.seasons[b].n||0));
     body+=ses.map(s=>{const pl=k=>{const x=D.parts[CARDS[k].i];return x[3]?999:(x[2]||998);};const ks=keys.filter(k=>CARDS[k].t==="P"&&CARDS[k].se===s).sort((a,b)=>pl(a)-pl(b));const h=ks.filter(k=>ST.owned[k]).length;return `<h2 class="sect">${esc(sFull(D.seasons[s]))} <span>${h}/${ks.length}</span></h2>${grid(ks)}`;}).join("");}
@@ -1524,7 +1592,7 @@ async function renderBoard(){const tb=$("#board");tb.innerHTML=`<p class="muted"
       <div class="pblock"><i class="prk">${i+1}</i><strong>${nf(r.uniq||0)}</strong><span>cartes</span></div></div>`;}).join("");
     const row=(r,i)=>`<div class="br${r.id===UID?" me":""}"><span class="brn">${i+1}</span><span class="bav">${av(r)}</span><span class="bname">${esc(nm(r))}${r.id===UID?` <i class="toi">toi</i>`:""}<small>${nf(r.opened||0)} boosters · ${nf(r.ach||0)} succès</small></span><span class="bm">${nf(r.myth||0)}<small>myth.</small></span><span class="bs2"><strong>${nf(r.uniq||0)}</strong><small>cartes</small></span></div>`;
     tb.innerHTML=(me>=0?`<div class="mebar"><span class="bav">${av(rows[me])}</span><div><small>Toi</small><b>${me+1}${me?"e":"er"} sur ${rows.length}</b></div><span class="muted">${me<3?"Tu es sur le podium":`à ${nf((rows[2].uniq||0)-(rows[me].uniq||0))} cartes du podium`}</span><strong>${nf(rows[me].uniq||0)}<small>cartes</small></strong></div>`:"")+
-      `<div class="podium">${pod}</div><div class="blist">${rows.slice(3).map((r,i)=>row(r,i+3)).join("")}</div>`;}
+      `<div class="podium stg">${pod}</div><div class="blist stg">${rows.slice(3).map((r,i)=>row(r,i+3)).join("")}</div>`;}
   catch(e){tb.innerHTML=`<p class="muted">Le classement n'a pas pu être chargé.</p>`;}}
 
 
@@ -1720,9 +1788,9 @@ function renderProfile(){const v=$("#v-profil"),u=uniq(),tot=visTotal(),got=ACH.
     return c?`<div class="vs full" data-vs="${i}">${cardHTML(c,true)}<button class="vs-x" data-vx="${i}" aria-label="Retirer de la vitrine">×</button></div>`:`<button class="vs" data-vs="${i}"><span>+</span><small>Ajouter</small></button>`;}).join("");
   v.innerHTML=`<div class="pf-hero"><div class="pf-id"><span class="pf-av">${avHTML(ME.av,ME.name,"")}</span><div><p class="kick"><span>Profil</span> · collectionneur</p><h1 class="pf-n">${esc(ME.name)}</h1>
       <p class="muted">${ME.pi!=null?`Ta fiche joueur : <b>${esc(D.players[ME.pi].n)}</b>`:ME.ok?"Aucune fiche joueur liée à ton compte sur le site.":"Profil local : la version en ligne affiche ton compte ORG-Central."}</p></div></div>
-    <div class="pf-st"><div><b>${nf(u)}</b><span>cartes différentes</span></div><div><b>${(u/tot*100).toFixed(1).replace(".",",")} %</b><span>de la collection</span></div><div><b>${nf(ST.opened)}</b><span>boosters ouverts</span></div><div><b>${nf(myth)}</b><span>mythiques et secrètes</span></div><div><b>${got}/${ACH.filter(a=>!a.hidden||ST.ach[a.id]).length}</b><span>succès</span></div><div><b>${nf(ST.tr.n||0)}</b><span>échanges</span></div></div></div>
+    <div class="pf-st stg"><div><b>${nf(u)}</b><span>cartes différentes</span></div><div><b>${(u/tot*100).toFixed(1).replace(".",",")} %</b><span>de la collection</span></div><div><b>${nf(ST.opened)}</b><span>boosters ouverts</span></div><div><b>${nf(myth)}</b><span>mythiques et secrètes</span></div><div><b>${got}/${ACH.filter(a=>!a.hidden||ST.ach[a.id]).length}</b><span>succès</span></div><div><b>${nf(ST.tr.n||0)}</b><span>échanges</span></div></div></div>
     <div class="pf-grid"><div class="pf-main">
-      <div class="pf-sec"><h2 class="h3">Ma vitrine</h2><p class="muted">Tes 5 cartes préférées, visibles en haut de ton profil.</p><div class="vit">${slots}</div></div>
+      <div class="pf-sec"><h2 class="h3">Ma vitrine</h2><p class="muted">Tes 5 cartes préférées, visibles en haut de ton profil.</p><div class="vit stg">${slots}</div></div>
       <div class="pf-sec"><h2 class="h3">Par rareté</h2><div class="rbars">${rows}</div></div>
       <div class="pf-sec"><div class="pf-sh"><h2 class="h3">Derniers succès</h2><button class="btn ghost" data-go="succes">Tous les succès</button></div>
         <div class="ach">${recent.length?recent.map(a=>`<div class="achi got"><span class="medal">✓</span><div><b>${esc(a.t)}</b><small>${esc(a.d)}</small></div></div>`).join(""):`<p class="muted">Aucun succès pour l'instant.</p>`}</div></div></div>
@@ -1755,7 +1823,7 @@ async function renderFriends(fetch){const v=$("#v-amis");
       ${FR.length?FR.map(f=>`<div class="fr"><span class="fr-av">${avHTML(f.av,f.name,"")}</span><div class="fr-i"><b>${esc(f.name)}</b><small>${f.pi!=null?"Fiche : "+esc(D.players[f.pi].n):"Pas de fiche joueur liée"}</small></div>
         ${f.card?`<button class="fr-card" data-ck="${f.card.k}" title="Sa carte">${cardHTML(f.card,true)}</button>`:""}<button class="btn primary" data-trade="${f.id}" ${TR_OK?"":"disabled"}>Échanger</button></div>`).join(""):`<p class="muted">Tu n'as pas encore d'amis sur le site. Ajoute-en depuis la page Messages d'ORG-Central.</p>`}</div>
     <div class="am-tr"><div class="seg ysel" id="tr-tabs">${[["in","Reçus",inc.length],["out","Envoyés",out.length],["old","Terminés",0]].map(([k,t,n])=>`<button aria-pressed="${TRTAB===k}" data-tt="${k}">${t}${n?` <i class="dotn">${n}</i>`:""}</button>`).join("")}</div>
-      <div class="trs">${list.length?list.map(t=>{const mineS=t.sender===id,other=mineS?t.recipient:t.sender;
+      <div class="trs stg">${list.length?list.map(t=>{const mineS=t.sender===id,other=mineS?t.recipient:t.sender;
         return `<div class="trd"><div class="trd-h"><span class="fr-av sm">${avHTML((PCACHE[other]||{}).av,frName(other),"")}</span><b>${mineS?`Toi → ${esc(frName(other))}`:`${esc(frName(other))} te propose`}</b>${t.status!=="pending"?`<span class="mk-tag">${st[t.status]}</span>`:""}</div>
           ${t.note?`<p class="trd-note">« ${esc(t.note)} »</p>`:""}
           <div class="trd-x"><div><small>${mineS?"Tu donnes":"Tu reçois"}</small>${miniCards(t.give)}</div><span class="trd-arrow">⇄</span><div><small>${mineS?"Tu demandes":"Tu donnes"}</small>${miniCards(t.want)}</div></div>
@@ -1858,6 +1926,64 @@ async function liveData(){
     players:pids.map(p=>({id:p,n:players[p].pseudo||"?",a:players[p].avatar||"",p:part[p],w:wins[p]||0,t:top5[p]||0,b:best[p]??null,o:(porgs[p]||new Set()).size,g:players[p].ownerUid?1:0})),
     parts};}
 
+
+/* ---------- Sons (synthétisés, aucun fichier) ---------- */
+const SFX=(()=>{let ctx=null,out=null,nb=null,on=true;try{on=localStorage.getItem("oc-tcg-sound")!=="0";}catch(e){}
+  const ac=()=>{if(!ctx){try{ctx=new (window.AudioContext||window.webkitAudioContext)();const comp=ctx.createDynamicsCompressor();out=ctx.createGain();out.gain.value=.55;out.connect(comp).connect(ctx.destination);}catch(e){return null;}}
+    if(ctx.state==="suspended")ctx.resume();return ctx;};
+  const tone=(f,d,o={})=>{if(!on)return;const c=ac();if(!c)return;const t=c.currentTime+(o.at||0),g=o.g||.08;
+    const osc=c.createOscillator(),v=c.createGain();osc.type=o.type||"sine";osc.frequency.setValueAtTime(f,t);if(o.slide)osc.frequency.exponentialRampToValueAtTime(Math.max(25,f*o.slide),t+d);
+    v.gain.setValueAtTime(0,t);v.gain.linearRampToValueAtTime(g,t+(o.a||.006));v.gain.exponentialRampToValueAtTime(.0001,t+d);osc.connect(v).connect(out);osc.start(t);osc.stop(t+d+.03);};
+  const noise=(d,o={})=>{if(!on)return;const c=ac();if(!c)return;const t=c.currentTime+(o.at||0);
+    if(!nb){nb=c.createBuffer(1,c.sampleRate*1.5,c.sampleRate);const a=nb.getChannelData(0);for(let i=0;i<a.length;i++)a[i]=Math.random()*2-1;}
+    const src=c.createBufferSource();src.buffer=nb;const f=c.createBiquadFilter();f.type=o.ft||"bandpass";f.Q.value=o.q||.8;
+    f.frequency.setValueAtTime(o.f0||2000,t);if(o.f1)f.frequency.exponentialRampToValueAtTime(o.f1,t+d);
+    const v=c.createGain();v.gain.setValueAtTime(0,t);v.gain.linearRampToValueAtTime(o.g||.1,t+(o.a||.01));v.gain.exponentialRampToValueAtTime(.0001,t+d);
+    src.connect(f).connect(v).connect(out);src.start(t);src.stop(t+d+.05);};
+  const chord=(fs,o={})=>fs.forEach((f,i)=>tone(f,o.d||.5,{type:o.type||"triangle",g:o.g||.05,at:(o.at||0)+i*(o.step||.07)}));
+  const N={C4:261.6,E4:329.6,G4:392,A4:440,C5:523.3,D5:587.3,E5:659.3,G5:784,A5:880,C6:1046.5,E6:1318.5,G6:1568};
+  return {get on(){return on;},set(v){on=v;try{localStorage.setItem("oc-tcg-sound",v?"1":"0");}catch(e){}if(v)ac();},unlock(){if(on)ac();},
+    click(){tone(1500,.04,{type:"triangle",g:.025});},
+    tear(){noise(.32,{g:.16,f0:1200,f1:6000,q:.6});noise(.12,{g:.06,f0:4000,ft:"highpass",at:.18});},
+    rumble(d){noise(d,{g:.09,f0:120,f1:260,ft:"lowpass",a:d*.8});tone(55,d,{g:.06,a:d*.8});},
+    thump(){tone(90,.28,{g:.28,slide:.5});noise(.12,{g:.05,f0:300,ft:"lowpass"});},
+    boom(lv){if(lv<=2){noise(.25,{g:.08,f0:2500,f1:800});chord([N.E5,N.A5],{g:.035,d:.35});return;}
+      tone(lv>=5?48:70,lv>=4?1.1:.6,{g:lv>=5?.35:.22,slide:.5});noise(lv>=4?.9:.5,{g:lv>=5?.16:.1,f0:700,f1:180,ft:"lowpass"});
+      const sets={3:[N.C5,N.E5,N.G5],4:[N.C5,N.E5,N.G5,N.C6],5:[N.A4,N.C5,N.E5,N.A5,N.C6],6:[N.C5,N.E5,N.G5,N.C6,N.E6,N.G6]};
+      chord(sets[lv]||sets[3],{g:.05,d:1.2,step:lv>=5?.09:.07,at:.05,type:lv===6?"sine":"triangle"});},
+    flip(){noise(.16,{g:.07,f0:900,f1:3500,q:1.2});},
+    reveal(r){const i=RI(r);if(i<=1){tone(i?660:520,.12,{type:"triangle",g:.035});return;}
+      if(i===2){chord([N.A5,N.E6],{g:.04,d:.45,step:.05});return;}
+      if(i===3){chord([N.E5,N.G5,N.C6],{g:.05,d:.8});return;}
+      if(i===4){chord([N.C5,N.G5,N.C6,N.E6],{g:.055,d:1.2});tone(N.C4/2,.9,{g:.08});return;}
+      chord([N.A4,N.E5,N.A5,N.C6,N.E6],{g:.06,d:1.6,step:.08});tone(N.A4/4,1.4,{g:.12});if(i===6)chord([N.G6,N.E6,N.C6],{g:.03,d:1,at:.5,type:"sine"});},
+    swipe(){noise(.2,{g:.07,f0:2500,f1:600,q:.7});},
+    tick(){tone(1900,.05,{type:"square",g:.018});},
+    coin(){tone(N.E6,.09,{type:"square",g:.025});tone(N.G6*1.33,.16,{type:"square",g:.025,at:.07});},
+    ach(){chord([N.C5,N.E5,N.G5,N.C6],{g:.05,d:.6,step:.09});},
+    pop(){tone(880,.06,{type:"sine",g:.025,slide:1.4});}};})();
+document.addEventListener("pointerdown",()=>SFX.unlock(),{once:true,capture:true});
+document.addEventListener("click",e=>{const b=e.target.closest("button,.tab,[data-go],.cwrap,.rchip,.pk .bpack");if(b&&!b.closest("#ov")&&!b.disabled)SFX.click();},true);
+
+
+/* ---------- Réglages : sons, réinitialisation ---------- */
+function sndLabel(){const e=$("#m-snd-s");if(e)e.textContent=SFX.on?"activés":"coupés";}
+function resetForm(){$("#me-drop").hidden=true;
+  const u=uniq(),pend=Object.keys(ST.tr.held||{}).length+Object.keys(ST.mk.held||{}).length+Object.keys(ST.mk.mine||{}).length;
+  dlgOpen(`<div class="mk-pick rs-box"><h2>Réinitialiser ma progression</h2>
+    <p>Tout repart de zéro, comme un nouveau joueur : <b>${nf(u)} cartes</b>, <b>${nf(ST.coins)} coquillages</b>, ${nf(ST.opened)} boosters ouverts, tes succès, tes missions, ta série de connexion, ta vitrine et tes compteurs de garantie.</p>
+    ${pend?`<p class="note warn">Tu as ${pend} échange${pend>1?"s":""}, vente${pend>1?"s":""} ou enchère${pend>1?"s":""} en cours : les cartes et coquillages mis de côté seront perdus.</p>`:""}
+    <p class="muted">Tes réglages (sons, mode test) sont gardés. On ne peut pas revenir en arrière.</p>
+    <label class="fl"><span>Écris <b>RESET</b> pour confirmer</span><input id="rs-in" autocomplete="off" spellcheck="false"></label>
+    <div class="acts"><button class="btn danger" id="rs-go" disabled>Tout effacer</button><button class="btn" id="rs-x">Annuler</button></div></div>`,true);
+  $("#rs-in").oninput=()=>{$("#rs-go").disabled=$("#rs-in").value.trim().toUpperCase()!=="RESET";};$("#rs-in").focus();
+  $("#rs-x").onclick=()=>$("#dlg").hidden=true;
+  $("#rs-go").onclick=async()=>{const test=ST.test;ST=fresh();ST.test=test;ST.kv=3;ST.inv={gold:0,sceau:0};ST.mk={mine:{},held:{}};ST.tr={n:0,held:{},done:{}};ST.show=[];
+    DONE_CACHE=null;COINV=null;save();try{await flush();}catch(e){}$("#dlg").hidden=true;
+    if(location.hash==="#boosters")route();else location.hash="boosters";wallet();toast("Progression réinitialisée : bon retour parmi les débutants !");};}
+$("#m-snd").onclick=e=>{e.stopPropagation();SFX.set(!SFX.on);sndLabel();if(SFX.on)SFX.pop();};
+$("#m-reset").onclick=()=>resetForm();
+
 /* ---------- Démarrage ---------- */
 (async()=>{
   try{if(window.TCG_HOSTED){try{D=await liveData();}catch(e){console.warn("données en direct indisponibles",e);D=null;}}
@@ -1865,7 +1991,7 @@ async function liveData(){
   $(".tl-emb").innerHTML=TORCH;$("#me-btn").onclick=e=>{e.stopPropagation();const d=$("#me-drop");d.hidden=!d.hidden;$("#me-btn").setAttribute("aria-expanded",String(!d.hidden));};
   document.addEventListener("click",e=>{const d=$("#me-drop");if(d&&!d.hidden&&!e.target.closest(".me-menu"))d.hidden=true;});
   $("#w-mis").onclick=()=>{location.hash="boosters";setTimeout(()=>{const m=$("#missions");if(m)m.scrollIntoView({behavior:reduced()?"auto":"smooth",block:"center"});},60);};CARDS=build();indexes();route();
-  await load();await loadMe();tick();wallet();checkAll();route();syncMarket().then(()=>wallet());
+  await load();await loadMe();sndLabel();$("#m-reset").hidden=!OWNER;tick();wallet();checkAll();route();syncMarket().then(()=>wallet());
   if(SX()){loadFriends().then(syncSocial).catch(()=>{});}
   window.addEventListener("pagehide",()=>flush());document.addEventListener("visibilitychange",()=>{if(document.hidden)flush();});
 })();
