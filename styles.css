@@ -1381,3 +1381,7 @@ html[data-vt="back"]::view-transition-new(root){animation:vt-in-l .42s var(--eas
 .m100-t span{font-size:.9rem}
 .m100-t small{font-size:.78rem;color:var(--muted,#aaa)}
 .snap .tl-row{box-shadow:none}
+
+/* Bouton TCG : propriétaire uniquement */
+.tcgbtn{display:inline-flex;align-items:center;height:34px;padding:0 14px;margin-right:4px;border-radius:999px;background:linear-gradient(135deg,#FFC23D,#FF4D6D);color:#160C13;font-weight:800;font-size:.85rem;letter-spacing:.06em;text-decoration:none;white-space:nowrap}
+.tcgbtn:hover{filter:brightness(1.08)}
