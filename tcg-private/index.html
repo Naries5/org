@@ -948,23 +948,6 @@ function im(k,cls){need(k);return k?`<img class="${cls||""}" data-k="${k}" alt="
 function pic(k,label){return `<span class="ini" style="--h:${hue(label)}">${esc(ini(label))}</span>${im(k)}`;}
 function logoArt(k,label){return k?`<span class="ini" style="--h:${hue(label)}"></span>${im(k,"bgx")}${im(k,"fg")}`:`<span class="ini" style="--h:${hue(label)}">${esc(ini(label))}</span>`;}
 
-function build(){
-  const cards=[];const P=D.players,S=D.seasons,O=D.orgs;
-  const byR={M:[],L:[],E:[]};
-  P.forEach((p,i)=>{if(p.r)byR[p.r].push(i);});
-  const pk=(a,b)=>P[b].w-P[a].w||P[b].p-P[a].p||norm(P[a].n).localeCompare(norm(P[b].n));
-  for(const r of ["M","L","E"]){byR[r].sort(pk).forEach(i=>cards.push({t:"J",r,i}));O.forEach((o,i)=>{if((o.r||"E")===r)cards.push({t:"O",r,i});});}
-  S.forEach((s,i)=>cards.push({t:"R",r:"R",i}));
-  const pcs=[],cs=[];D.parts.forEach((x,i)=>{const top=x[2]&&x[2]<=5&&!x[3];(top?pcs:cs).push({t:"P",r:top?"PC":"C",i});});
-  cards.push(...pcs,...cs);
-  const total=cards.length;cards.forEach((c,k)=>{c.no=`${String(k+1).padStart(4,"0")}/${total}`;});
-  const sec=[];[...byR.M,...byR.L,...byR.E].forEach(i=>{if(P[i].g)sec.push({t:"J",r:"S",i,base:P[i].r});});
-  sec.forEach((c,k)=>{c.no=`SEC ${String(k+1).padStart(2,"0")}/${sec.length}`;});
-  cards.push(...sec);
-  cards.forEach(c=>{c.k=(c.r==="S"?"S":c.t)+c.i;c.s=norm(label(c)+" "+search(c));});
-  cards.forEach(c=>Object.defineProperty(cards,c.k,{value:c,enumerable:false}));
-  return cards;
-}
 function label(c){const P=D.players,S=D.seasons,O=D.orgs;
   if(c.t==="J")return P[c.i].n;if(c.t==="O")return O[c.i].n;if(c.t==="R")return S[c.i].t||sName(S[c.i]);return P[D.parts[c.i][0]].n;}
 function search(c){const S=D.seasons,O=D.orgs;
@@ -1000,15 +983,17 @@ function cardHTML(c,big){
 
 /* ---------- Cartes du jeu ---------- */
 function build(){
-  const cards=[];const P=D.players,S=D.seasons,O=D.orgs;const byR={M:[],L:[],E:[]};
-  P.forEach((p,i)=>{if(p.r)byR[p.r].push(i);});
+  const cards=[];const P=D.players,S=D.seasons,O=D.orgs;const byR={M:[],L:[],E:[],R:[],PC:[],C:[]};
+  P.forEach((p,i)=>{if(p.r&&byR[p.r])byR[p.r].push(i);});
   const pk=(a,b)=>P[b].w-P[a].w||P[b].p-P[a].p||norm(P[a].n).localeCompare(norm(P[b].n));
   for(const r of ["M","L","E"]){byR[r].sort(pk).forEach(i=>cards.push({t:"J",r,i}));O.forEach((o,i)=>{if((o.r||"E")===r)cards.push({t:"O",r,i});});}
+  byR.R.sort(pk).forEach(i=>cards.push({t:"J",r:"R",i}));
   S.forEach((s,i)=>cards.push({t:"R",r:"R",i}));
+  byR.PC.sort(pk).forEach(i=>cards.push({t:"J",r:"PC",i}));
   const pcs=[],cs=[];D.parts.forEach((x,i)=>{const top=x[2]&&x[2]<=5&&!x[3];(top?pcs:cs).push({t:"P",r:top?"PC":"C",i});});
-  cards.push(...pcs,...cs);
+  cards.push(...pcs);byR.C.sort(pk).forEach(i=>cards.push({t:"J",r:"C",i}));cards.push(...cs);
   const total=cards.length;cards.forEach((c,k)=>{c.no=`${String(k+1).padStart(4,"0")}/${total}`;});
-  const sec=[];[...byR.M,...byR.L,...byR.E].forEach(i=>{if(P[i].g)sec.push({t:"J",r:"S",i,base:P[i].r});});
+  const sec=[];["M","L","E","R","PC","C"].forEach(r=>byR[r].forEach(i=>{if(P[i].g)sec.push({t:"J",r:"S",i,base:P[i].r});}));
   sec.forEach((c,k)=>{c.no=`SEC ${String(k+1).padStart(2,"0")}/${sec.length}`;});
   cards.push(...sec);
   cards.forEach(c=>{c.k=(c.r==="S"?"S":c.t)+c.i;
