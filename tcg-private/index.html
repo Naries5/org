@@ -891,7 +891,8 @@ body.tcg .dlg{background:rgba(8,7,10,.86)}
 const tget=p=>window.TCG_GET?window.TCG_GET(p):fetch(p);
 const RAR={M:["Mythique","--r-M"],S:["Secrète","--r-S"],L:["Légendaire","--r-L"],E:["Épique","--r-E"],R:["Rare","--r-R"],PC:["Peu commune","--r-PC"],C:["Commune","--r-C"]};
 const LADDER=["C","PC","R","E","L","M","S"];
-const RATES={C:62,PC:25,R:11.4,E:1.4,L:0.15,M:0.025,S:0.008};
+const RATES={C:62,PC:25,R:11.4,E:1.4,L:0.15,M:0.06,S:0.02};
+const PITY=150;
 const RECYCLE={C:2,PC:5,R:15,E:60,L:250,M:1000,S:1500};
 const STREAK=[20,30,40,50,60,80,100];
 const CHARGE=10*60*1000,MAXSTOCK=10;
@@ -922,7 +923,7 @@ function build(){
   const byR={M:[],L:[],E:[]};
   P.forEach((p,i)=>{if(p.r)byR[p.r].push(i);});
   const pk=(a,b)=>P[b].w-P[a].w||P[b].p-P[a].p||norm(P[a].n).localeCompare(norm(P[b].n));
-  for(const r of ["M","L","E"]){byR[r].sort(pk).forEach(i=>cards.push({t:"J",r,i}));if(r==="E")O.forEach((o,i)=>cards.push({t:"O",r:"E",i}));}
+  for(const r of ["M","L","E"]){byR[r].sort(pk).forEach(i=>cards.push({t:"J",r,i}));O.forEach((o,i)=>{if((o.r||"E")===r)cards.push({t:"O",r,i});});}
   S.forEach((s,i)=>cards.push({t:"R",r:"R",i}));
   const pcs=[],cs=[];D.parts.forEach((x,i)=>{const top=x[2]&&x[2]<=5&&!x[3];(top?pcs:cs).push({t:"P",r:top?"PC":"C",i});});
   cards.push(...pcs,...cs);
@@ -930,7 +931,8 @@ function build(){
   const sec=[];[...byR.M,...byR.L,...byR.E].forEach(i=>{if(P[i].g)sec.push({t:"J",r:"S",i,base:P[i].r});});
   sec.forEach((c,k)=>{c.no=`SEC ${String(k+1).padStart(2,"0")}/${sec.length}`;});
   cards.push(...sec);
-  cards.forEach((c,k)=>{c.k=k;c.s=norm(label(c)+" "+search(c));});
+  cards.forEach(c=>{c.k=(c.r==="S"?"S":c.t)+c.i;c.s=norm(label(c)+" "+search(c));});
+  cards.forEach(c=>Object.defineProperty(cards,c.k,{value:c,enumerable:false}));
   return cards;
 }
 function label(c){const P=D.players,S=D.seasons,O=D.orgs;
@@ -971,7 +973,7 @@ function build(){
   const cards=[];const P=D.players,S=D.seasons,O=D.orgs;const byR={M:[],L:[],E:[]};
   P.forEach((p,i)=>{if(p.r)byR[p.r].push(i);});
   const pk=(a,b)=>P[b].w-P[a].w||P[b].p-P[a].p||norm(P[a].n).localeCompare(norm(P[b].n));
-  for(const r of ["M","L","E"]){byR[r].sort(pk).forEach(i=>cards.push({t:"J",r,i}));if(r==="E")O.forEach((o,i)=>cards.push({t:"O",r:"E",i}));}
+  for(const r of ["M","L","E"]){byR[r].sort(pk).forEach(i=>cards.push({t:"J",r,i}));O.forEach((o,i)=>{if((o.r||"E")===r)cards.push({t:"O",r,i});});}
   S.forEach((s,i)=>cards.push({t:"R",r:"R",i}));
   const pcs=[],cs=[];D.parts.forEach((x,i)=>{const top=x[2]&&x[2]<=5&&!x[3];(top?pcs:cs).push({t:"P",r:top?"PC":"C",i});});
   cards.push(...pcs,...cs);
@@ -979,12 +981,13 @@ function build(){
   const sec=[];[...byR.M,...byR.L,...byR.E].forEach(i=>{if(P[i].g)sec.push({t:"J",r:"S",i,base:P[i].r});});
   sec.forEach((c,k)=>{c.no=`SEC ${String(k+1).padStart(2,"0")}/${sec.length}`;});
   cards.push(...sec);
-  cards.forEach((c,k)=>{c.k=k;
+  cards.forEach(c=>{c.k=(c.r==="S"?"S":c.t)+c.i;
     if(c.t==="J"){c.pl=c.i;}
     else if(c.t==="O"){c.og=c.i;}
     else if(c.t==="R"){c.og=S[c.i].o;c.se=c.i;}
     else{const x=D.parts[c.i];c.pl=x[0];c.se=x[1];c.og=S[x[1]].o;}
     c.s=norm(label(c)+" "+search(c));});
+  cards.forEach(c=>Object.defineProperty(cards,c.k,{value:c,enumerable:false}));
   return cards;
 }
 function label(c){const P=D.players,S=D.seasons,O=D.orgs;
@@ -1003,7 +1006,21 @@ function indexes(){
 /* ---------- Sauvegarde ---------- */
 let OWNER=false,ST=null,DB=null,UID=null,USER=null,saveT=null,saving=false,dirty=false;
 const today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;};
-function fresh(){return {v:1,stock:MAXSTOCK,last:Date.now(),coins:100,owned:{},opened:0,sinceGold:0,sinceMyth:0,recycled:0,bought:0,
+// v2 : identifiants stables (J12, O3, R40, P900, S12) au lieu de la position dans la liste.
+function oldOrder(){const P=D.players,S=D.seasons,O=D.orgs,out=[];
+  const t=p=>p.w>=3||p.p>=28?"M":p.w>=2||p.p>=15?"L":p.w>=1||p.p>=8?"E":"";
+  const byR={M:[],L:[],E:[]};P.forEach((p,i)=>{const r=t(p);if(r)byR[r].push(i);});
+  const pk=(a,b)=>P[b].w-P[a].w||P[b].p-P[a].p||norm(P[a].n).localeCompare(norm(P[b].n));
+  for(const r of ["M","L","E"]){byR[r].sort(pk).forEach(i=>out.push("J"+i));if(r==="E")O.forEach((o,i)=>out.push("O"+i));}
+  S.forEach((s,i)=>out.push("R"+i));
+  const pcs=[],cs=[];D.parts.forEach((x,i)=>{(x[2]&&x[2]<=5&&!x[3]?pcs:cs).push("P"+i);});out.push(...pcs,...cs);
+  [...byR.M,...byR.L,...byR.E].forEach(i=>{if(P[i].g)out.push("S"+i);});return out;}
+function migrateKeys(){const o=oldOrder(),m=k=>/^\d+$/.test(String(k))?o[+k]:k;
+  const own={};Object.entries(ST.owned||{}).forEach(([k,n])=>{const nk=m(k);if(nk&&CARDS[nk])own[nk]=(own[nk]||0)+n;});ST.owned=own;
+  if(ST.show)ST.show=ST.show.map(k=>k==null?k:m(k));
+  if(ST.tr&&ST.tr.held)Object.keys(ST.tr.held).forEach(id=>ST.tr.held[id]=ST.tr.held[id].map(m));
+  ST.kv=2;save();}
+function fresh(){return {v:1,kv:2,stock:MAXSTOCK,last:Date.now(),coins:100,owned:{},opened:0,sinceGold:0,sinceMyth:0,recycled:0,bought:0,
   inv:{gold:0,sceau:0},daily:{date:"",day:0},mis:{date:"",open:0,recycle:0,rare:0,done:[],bonus:false},ach:{},claimed:{},firsts:{}};}
 function tick(){const now=Date.now();if(ST.stock>=MAXSTOCK){ST.last=now;return;}
   const n=Math.floor((now-ST.last)/CHARGE);if(n>0){ST.stock=Math.min(MAXSTOCK,ST.stock+n);ST.last=ST.stock>=MAXSTOCK?now:ST.last+n*CHARGE;save();}}
@@ -1024,6 +1041,7 @@ async function load(){
       if(remote&&remote.v)ST=JSON.parse(JSON.stringify(remote));else save();}}catch(e){console.warn(e);}
   if(!ST.owned)ST=Object.assign(fresh(),ST);
   if(!ST.inv)ST.inv={gold:ST.gold||0,sceau:0};delete ST.gold;
+  if(!ST.kv)migrateKeys();
   if(!ST.mk)ST.mk={mine:{},held:{}};if(!ST.tr)ST.tr={n:0,held:{},done:{}};if(!ST.show)ST.show=[];
   if(USER&&UID){try{const ps=await USER.profiles([UID]);ME_NAME=(ps[UID]&&ps[UID].name)||"Joueur";}catch(e){}}
 }
@@ -1052,7 +1070,7 @@ function openBooster(kind,opts){
   if((!opts||!opts.pool)&&kind!=="sceau"){
     ST.sinceMyth++;
     if(keys.some(k=>["M","S"].includes(CARDS[k].r)))ST.sinceMyth=0;
-    else if(ST.sinceMyth>=250){keys[keys.length-1]=fromPool("M");ST.sinceMyth=0;}
+    else if(ST.sinceMyth>=PITY){keys[keys.length-1]=fromPool("M");ST.sinceMyth=0;}
   }
   ST.opened++;const res=keys.map(k=>{const n=(ST.owned[k]||0);ST.owned[k]=n+1;return {k,isNew:n===0};});
   const td=today();if(ST.mis.date!==td)ST.mis={date:td,open:0,recycle:0,rare:0,done:[],bonus:false};
@@ -1173,7 +1191,7 @@ function renderBoosters(){tick();wallet();
     <div class="chip"><i class="ic g">${IC.check}</i><b>${misDone}/3</b><span>missions du jour</span></div>
     <div class="chip"><i class="ic v">${IC.flame}</i><b>J${day}/7</b><span>série de connexion</span></div>
     <div class="chip"><i class="ic y">${IC.star}</i><b>${10-ST.sinceGold}</b><span>avant le doré</span></div>
-    <div class="chip"><i class="ic r">${IC.crown}</i><b>${Math.max(0,250-ST.sinceMyth)}</b><span>avant mythique sûre</span></div>`;
+    <div class="chip"><i class="ic r">${IC.crown}</i><b>${Math.max(0,PITY-ST.sinceMyth)}</b><span>avant mythique sûre</span></div>`;
   // onglets
   const tabs=[["free","Gratuits"],["shop","Boutique"]];
   $("#bseg").innerHTML=tabs.map(([k,t])=>`<button aria-pressed="${BTAB===k}" data-bt="${k}">${t}${k==="free"&&(inv.gold||inv.sceau)?` <i class="dotn">${(inv.gold||0)+(inv.sceau||0)}</i>`:""}</button>`).join("");
@@ -1188,7 +1206,7 @@ function renderBoosters(){tick();wallet();
   else btn=`<button class="ybtn" id="b-open" ${inv[k]?"":"disabled"}><b>Ouvrir</b><span>${inv[k]?`Offert · ${inv[k]} en réserve`:k==="sceau"?"Se gagne avec les succès":"Gagné tous les 10 boosters"}</span></button>`;
   $("#bdet").innerHTML=`<div class="bd-h"><i class="bd-ic ${k}">${IC[pi.ic]}</i><div><h3>${esc(pi.n)}</h3><p>${esc(pi.s)}</p></div></div>
     <div class="bd-st"><div><b>${SLOTS[k].length}</b><span>cartes par booster</span></div><div><b class="c-${guar[0]==="É"?"E":guar[0]==="M"?"M":"R"}">${guar}</b><span>ou mieux, garantie</span></div>
-      <div><b class="acc">${k==="sceau"?"—":Math.max(0,250-ST.sinceMyth)}</b><span>${k==="sceau"?"ne touche pas la garantie":"avant mythique sûre"}</span></div><div><b class="yel">${10-ST.sinceGold}</b><span>avant le doré</span></div></div>
+      <div><b class="acc">${k==="sceau"?"—":Math.max(0,PITY-ST.sinceMyth)}</b><span>${k==="sceau"?"ne touche pas la garantie":"avant mythique sûre"}</span></div><div><b class="yel">${10-ST.sinceGold}</b><span>avant le doré</span></div></div>
     <p class="bd-k">Chance par booster</p>
     <div class="bd-ch">${chances(k).map(([r,v])=>`<div class="ch"><span class="ch-n" style="--c:var(${RAR[r][1]})"><i></i>${RAR[r][0]}</span><span class="ch-b"><i style="width:${Math.max(1.5,v)}%;background:var(${RAR[r][1]})"></i></span><code>${pct(v)}</code></div>`).join("")}</div>
     ${btn}
@@ -1367,8 +1385,8 @@ function renderCollection(reset){
 ["#c-q","#c-r","#c-t","#c-o"].forEach(s=>{let t;$(s).addEventListener("input",()=>{clearTimeout(t);t=setTimeout(()=>renderCollection(true),150);});});
 $("#c-more").onclick=()=>renderCollection(false);
 new IntersectionObserver(es=>{if(es.some(x=>x.isIntersecting)&&!$("#c-more").hidden&&!$("#v-collection").hidden)renderCollection(false);},{rootMargin:"500px"}).observe($("#c-more"));
-document.addEventListener("click",e=>{const w=e.target.closest(".cwrap[data-ck]");if(w)openCard(CARDS[+w.dataset.ck]);});
-document.addEventListener("keydown",e=>{if(OV&&!$("#ov").hidden&&(e.key===" "||e.key==="ArrowRight"||e.key==="Enter")){const tgt=e.target;if(tgt&&tgt.tagName==="BUTTON"&&tgt.id!=="rtop"&&e.key!==" ")return;if($("#rtop")){e.preventDefault();ovStep();return;}if($("#wo")){e.preventDefault();$("#wo").click();return;}if($("#bpack")&&e.key===" "){e.preventDefault();$("#bpack").click();return;}}if((e.key==="Enter"||e.key===" ")&&e.target.closest&&e.target.closest(".cwrap[data-ck]")){e.preventDefault();openCard(CARDS[+e.target.closest(".cwrap").dataset.ck]);}if(e.key==="Escape"&&!$("#dlg").hidden)$("#dlg").hidden=true;});
+document.addEventListener("click",e=>{const w=e.target.closest(".cwrap[data-ck]");if(w)openCard(CARDS[w.dataset.ck]);});
+document.addEventListener("keydown",e=>{if(OV&&!$("#ov").hidden&&(e.key===" "||e.key==="ArrowRight"||e.key==="Enter")){const tgt=e.target;if(tgt&&tgt.tagName==="BUTTON"&&tgt.id!=="rtop"&&e.key!==" ")return;if($("#rtop")){e.preventDefault();ovStep();return;}if($("#wo")){e.preventDefault();$("#wo").click();return;}if($("#bpack")&&e.key===" "){e.preventDefault();$("#bpack").click();return;}}if((e.key==="Enter"||e.key===" ")&&e.target.closest&&e.target.closest(".cwrap[data-ck]")){e.preventDefault();openCard(CARDS[e.target.closest(".cwrap").dataset.ck]);}if(e.key==="Escape"&&!$("#dlg").hidden)$("#dlg").hidden=true;});
 function recycle(k,n){const c=CARDS[k];const v=RECYCLE[c.r]*n;ST.owned[k]-=n;ST.coins+=v;ST.recycled+=n;
   const td=today();if(ST.mis.date!==td)ST.mis={date:td,open:0,recycle:0,rare:0,done:[],bonus:false};ST.mis.recycle+=n;return v;}
 $("#recycle-all").onclick=()=>{let n=0,v=0;Object.keys(ST.owned).forEach(k=>{const d=ST.owned[k]-1;if(d>0){n+=d;v+=recycle(+k,d);}});
