@@ -41,7 +41,7 @@ const LOADER = `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta
     const sb=supabase.createClient(C.supabaseUrl,C.supabaseAnonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,flowType:"pkce",storageKey:"org-central-auth"}});
     const tok=async()=>{const {data}=await sb.auth.getSession();return data&&data.session?data.session.access_token:"";};
     if(!(await tok())){m.innerHTML='Connecte-toi sur <a href="/">orgcentral.fr</a> pour ouvrir cette page.';return;}
-    window.TCG_HOSTED=true;
+    window.TCG_HOSTED=true;window.TCG_SB=sb;try{const {data}=await sb.auth.getSession();window.TCG_UID=data.session.user.id;}catch(e){}
     window.TCG_GET=async p=>fetch("/api/tcg?f="+encodeURIComponent(p),{headers:{Authorization:"Bearer "+(await tok())}});
     const r=await window.TCG_GET("index.html");
     if(!r.ok){m.innerHTML='Cette page est privée. <a href="/">Retour au site</a>';return;}
