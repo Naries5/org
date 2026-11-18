@@ -1,4 +1,4 @@
-// TCG : réservé au propriétaire du site pour l'instant.
+// TCG : réservé au propriétaire et aux admins du site pour l'instant.
 // Sans paramètre : petite page de chargement (publique, ne contient pas le jeu).
 // Avec ?f=… : fichier du jeu, envoyé seulement si le jeton Supabase est celui du propriétaire (rpc is_owner).
 const fs = require("fs");
@@ -14,8 +14,11 @@ async function isOwner(tok) {
   if (c && c.t > Date.now()) return c.v;
   let v = false;
   try {
-    const r = await fetch(SB + "/rest/v1/rpc/is_owner", { method: "POST", headers: { apikey: KEY, Authorization: "Bearer " + tok, "Content-Type": "application/json" }, body: "{}" });
-    v = r.ok && (await r.json()) === true;
+    // Accès : le propriétaire et les admins du site.
+    for (const fn of ["is_owner", "is_admin"]) {
+      const r = await fetch(SB + "/rest/v1/rpc/" + fn, { method: "POST", headers: { apikey: KEY, Authorization: "Bearer " + tok, "Content-Type": "application/json" }, body: "{}" });
+      if (r.ok && (await r.json()) === true) { v = true; break; }
+    }
   } catch (e) { v = false; }
   if (seen.size > 200) seen.clear();
   seen.set(tok, { v, t: Date.now() + 5 * 60 * 1000 });

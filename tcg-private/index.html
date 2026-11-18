@@ -894,6 +894,13 @@ body.tcg .toast div.out{animation:tout .26s ease forwards}
   animation:spark var(--t) cubic-bezier(.12,.7,.25,1) forwards}
 @keyframes spark{0%{opacity:1;transform:rotate(var(--a)) translateX(40px) scale(1)}100%{opacity:0;transform:rotate(var(--a)) translateX(var(--d)) scale(.3)}}
 @media (prefers-reduced-motion:reduce){.hrays,.sparks i,.rword.go{animation:none!important}}
+
+.radm{margin:16px 0 0;padding:14px 16px;border-radius:16px;border:1px dashed rgba(242,201,76,.45);background:rgba(242,201,76,.05)}
+.radm label{display:flex;align-items:center;gap:12px;font-weight:600}
+.radm label small{font-family:var(--f-mono,monospace);font-size:.7rem;padding:2px 7px;border-radius:999px;background:var(--yel,#f2c94c);color:#17110a;margin-left:6px;vertical-align:1px}
+.radm select{flex:1;font:inherit;color:var(--ink);background:var(--surface-2,#1d1a23);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.radm p{margin:10px 0 0;font-size:.85rem;color:var(--muted)}
+.linkbtn{all:unset;cursor:pointer;color:var(--acc,#ec6a3d);text-decoration:underline}
 </style>
 </head>
 <body>
@@ -1032,7 +1039,7 @@ const PITY=250,EPITY=10;
 const RECYCLE={C:2,PC:5,R:15,E:60,L:250,M:1000,S:1500};
 const STREAK=[20,30,40,50,60,80,100];
 const CHARGE=10*60*1000,MAXSTOCK=10;
-let D=null,IMG={},CARDS=[];
+let D=null,IMG={},CARDS=[],OVR={},CANEDIT=false;
 function orgFallback(){D.orgs.forEach((o,i)=>{if(o.l)return;let best=null,sc=-1;
   D.seasons.forEach(se=>{if(se.o!==i||!se.l)return;const v=(se.st==="en_cours"?1e6:0)+(+se.n||0);if(v>sc){sc=v;best=se.l;}});
   if(best)o.l=best;});}
@@ -1112,6 +1119,7 @@ function build(){
   cards.push(...sec);
   const seenK={};
   cards.forEach(c=>{let k=keyOf(c,D);if(seenK[k])k+="#"+(++seenK[k]);else seenK[k]=1;c.k=k;
+    if(c.r!=="S"&&OVR[k]&&OVR[k]!==c.r){c.base=c.r;c.r=OVR[k];}
     if(c.t==="J"){c.pl=c.i;}
     else if(c.t==="O"){c.og=c.i;}
     else if(c.t==="R"){c.og=S[c.i].o;c.se=c.i;}
@@ -1176,7 +1184,7 @@ async function flush(){if(!dirty)return;if(saving){setTimeout(flush,800);return;
   pushBoard();}
 async function load(){
   let local=null;try{local=JSON.parse(localStorage.getItem("oc-tcg-state")||"null");}catch(e){}
-  ST=local||fresh();if(!window.claude)OWNER=true;
+  ST=local||fresh();if(!window.claude&&!window.TCG_SB)OWNER=true;
   try{const c=window.claude&&await Promise.race([claude.use("db"),new Promise(r=>setTimeout(()=>r(null),10000))]);
     USER=window.claude&&await claude.use("user");
     if(USER){try{OWNER=!!(await Promise.resolve(USER.isOwner()));}catch(e){}}
@@ -1570,11 +1578,15 @@ function openCard(c){const P=D.players,S=D.seasons,O=D.orgs;const n=ST.owned[c.k
   $("#dbox").classList.remove("single");
   $("#dbox").innerHTML=cardHTML(c,true)+`<div class="dinfo"><span class="k" style="color:var(${RAR[c.r][1]})">${RAR[c.r][0]} · ${esc(c.no)}</span><h2>${esc(label(c))}</h2>
     <dl>${rows.map(([a,b])=>`<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl>
+    ${CANEDIT&&c.r!=="S"?`<div class="radm"><label><span>Rareté <small>admins</small></span><select id="radm">${["M","L","E","R","PC","C"].map(r=>`<option value="${r}" ${c.r===r?"selected":""}>${RAR[r][0]}${(c.base||c.r)===r?" (automatique)":""}</option>`).join("")}</select></label>
+      ${c.base?`<p>Changée à la main. Automatiquement, elle serait ${RAR[c.base][0].toLowerCase()}. <button class="linkbtn" id="radm-x">Revenir à l'automatique</button></p>`:`<p>Calculée automatiquement. Le changement s'applique pour tous les joueurs.</p>`}</div>`:""}
     <div class="acts">${n&&c.r!=="S"&&DB?`<button class="btn" id="sell1">Vendre au marché</button>`:""}${n>1?`<button class="btn" id="rec1">Recycler 1 doublon (+${RECYCLE[c.r]})</button>`:""}${alb.join("")}<button class="btn primary" id="dclose">Fermer</button></div></div>`;
   $("#dlg").hidden=false;$("#dclose").focus();
   $("#dclose").onclick=()=>$("#dlg").hidden=true;
   $("#dbox").querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>{$("#dlg").hidden=true;}));
   const sb=$("#sell1");if(sb)sb.onclick=()=>mkSellForm(c);
+  const ra=$("#radm");if(ra)ra.onchange=()=>{ra.disabled=true;setRarity(c,ra.value);};
+  const rx=$("#radm-x");if(rx)rx.onclick=()=>setRarity(c,c.base);
   if(n>1)$("#rec1").onclick=()=>{const v=recycle(c.k,1);toast(`+${v} coquillages`);checkAll();openCard(c);if(!$("#v-collection").hidden)renderCollection(true);};
   const card=$("#dbox .card");card.addEventListener("pointermove",e=>{const r=card.getBoundingClientRect();const x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;
     if(!matchMedia("(prefers-reduced-motion:reduce)").matches)card.style.transform=`perspective(900px) rotateY(${(x-.5)*16}deg) rotateX(${(.5-y)*16}deg)`;
@@ -2055,10 +2067,24 @@ document.addEventListener("pointermove",e=>{if(reduced())return;const c=e.target
   c.style.setProperty("--rx",((.5-y)*14).toFixed(2)+"deg");c.style.setProperty("--ry",((x-.5)*16).toFixed(2)+"deg");
   if(!c.classList.contains("live")){c.classList.add("live");c.addEventListener("pointerleave",()=>{c.classList.remove("live");c.style.setProperty("--rx","0deg");c.style.setProperty("--ry","0deg");},{once:true});}},{passive:true});
 
+
+/* ---------- Raretés choisies par les admins (table tcg_rarity, update-20) ---------- */
+async function loadRoles(){const sb=SX();if(!sb)return;
+  try{const [o,a]=await Promise.all([sb.rpc("is_owner"),sb.rpc("is_admin")]);OWNER=o.data===true;CANEDIT=OWNER||a.data===true;}catch(e){}}
+async function loadOverrides(){const sb=SX();if(!sb)return;
+  try{const {data,error}=await sb.from("tcg_rarity").select("card,rarity");if(!error&&data){OVR={};data.forEach(r=>OVR[r.card]=r.rarity);}}catch(e){}}
+async function setRarity(c,r){const sb=SX();if(!sb||!CANEDIT)return;const auto=c.base||c.r;
+  const q=r===auto?sb.from("tcg_rarity").delete().eq("card",c.k):sb.from("tcg_rarity").upsert({card:c.k,rarity:r,updated_at:new Date().toISOString()});
+  const {error}=await q;
+  if(error){toast(/relation|does not exist|schema cache/i.test(error.message||"")?"Il faut d'abord lancer update-20-tcg-raretes.sql dans Supabase":"La rareté n'a pas pu être changée");return;}
+  if(r===auto)delete OVR[c.k];else OVR[c.k]=r;
+  CARDS=build();indexes();DONE_CACHE=null;route();openCard(CARDS[c.k]);
+  toast(r===auto?`${label(c)} : rareté automatique (${RAR[auto][0]})`:`${label(c)} est maintenant ${RAR[r][0].toLowerCase()}`);}
+
 /* ---------- Démarrage ---------- */
 (async()=>{
   try{if(window.TCG_HOSTED){try{D=await liveData();}catch(e){console.warn("données en direct indisponibles",e);D=null;}}
-    if(!D)D=await (await tget("cards.json")).json();prepD(D);orgFallback();}catch(e){document.body.insertAdjacentHTML("afterbegin",`<p style="padding:20px">Les cartes n'ont pas pu être chargées. Recharge la page.</p>`);return;}
+    if(!D)D=await (await tget("cards.json")).json();prepD(D);orgFallback();await Promise.all([loadOverrides(),loadRoles()]);}catch(e){document.body.insertAdjacentHTML("afterbegin",`<p style="padding:20px">Les cartes n'ont pas pu être chargées. Recharge la page.</p>`);return;}
   $(".tl-emb").innerHTML=TORCH;$("#me-btn").onclick=e=>{e.stopPropagation();const d=$("#me-drop");d.hidden=!d.hidden;$("#me-btn").setAttribute("aria-expanded",String(!d.hidden));};
   document.addEventListener("click",e=>{const d=$("#me-drop");if(d&&!d.hidden&&!e.target.closest(".me-menu"))d.hidden=true;});
   $("#w-mis").onclick=()=>{location.hash="boosters";setTimeout(()=>{const m=$("#missions");if(m)m.scrollIntoView({behavior:reduced()?"auto":"smooth",block:"center"});},60);};CARDS=build();indexes();route();
