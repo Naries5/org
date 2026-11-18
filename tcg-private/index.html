@@ -850,6 +850,12 @@ body.tcg .toast div.out{animation:tout .26s ease forwards}
 .rs-box input{font:inherit;font-family:var(--f-mono);font-size:1.1rem;letter-spacing:.2em;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
 .rs-box .acts{display:flex;gap:10px;margin-top:18px}
 @media (prefers-reduced-motion:reduce){.view.vin,.vin .stg>*,.vin .ch-b i,.vin .bar b,.me-drop,.dlg .dbox,body.tcg .toast div{animation:none!important}.cwrap:hover .card{transform:none}}
+
+.testbox{margin-top:18px;padding:14px 16px;border-radius:16px;border:1px dashed var(--line)}
+.testbox .bd-k{margin:0 0 10px}.testbox .bd-k small{text-transform:none;letter-spacing:0;font-family:var(--f-tx)}
+.tline{display:flex;align-items:center;gap:10px;margin:8px 0;font-size:.95rem;color:#cfc8c0}
+.tline select{font:inherit;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:6px 10px;flex:1}
+.tnote{margin:10px 0 0;font-size:.85rem;color:var(--yel)}
 </style>
 </head>
 <body>
@@ -1168,6 +1174,8 @@ function openBooster(kind,opts){
   else if(kind==="sceau")slots=["R","E","L","M"];
   else slots=["C","C","C","C","R"];
   let keys=draw(slots,opts&&opts.pool);
+  // outil de test (propriétaire) : rareté imposée pour la dernière carte
+  if(OWNER&&ST.force&&POOL[ST.force]&&POOL[ST.force].length&&(!opts||!opts.pool)){keys[keys.length-1]=fromPool(ST.force);if(!ST.forceAll)ST.force="";}
   // garantie épique : 10 boosters sans épique ou mieux, le 10e est doré (5e carte épique ou mieux)
   if(kind!=="sceau"){if(keys.some(k=>RI(CARDS[k].r)>=3))ST.sinceGold=0;else ST.sinceGold++;}
   if((!opts||!opts.pool)&&kind!=="sceau"){
@@ -1320,7 +1328,11 @@ function renderBoosters(){tick();wallet();
     <div class="bd-ch">${chances(k).map(([r,v])=>`<div class="ch"><span class="ch-n" style="--c:var(${RAR[r][1]})"><i></i>${RAR[r][0]}</span><span class="ch-b"><i style="width:${Math.max(1.5,v)}%;background:var(${RAR[r][1]})"></i></span><code>${pct(v)}</code></div>`).join("")}</div>
     ${btn}
     ${it.free?`<div class="bd-more"><button class="btn ghost" id="b-all" ${ST.stock>1||ST.test?"":"disabled"}>${ST.test?"Ouvrir 10 d'un coup":`Tout ouvrir (${ST.stock})`}</button><code id="timer">${ST.stock>=MAXSTOCK?"Réserve pleine":`Prochain gratuit dans ${clk(left)}`}</code></div>`:""}
-    ${OWNER?`<label class="testmode"><input type="checkbox" id="testmode" ${ST.test?"checked":""}> Mode test : boosters illimités <small>(visible par toi seul)</small></label>`:""}`;
+    ${OWNER?`<div class="testbox"><p class="bd-k">Outils de test <small>(visible par toi seul)</small></p>
+      <label class="tline"><input type="checkbox" id="testmode" ${ST.test?"checked":""}> Boosters illimités</label>
+      <div class="tline"><span>Garantir</span><select id="tf-r"><option value="">rien (tirage normal)</option>${LADDER.slice().reverse().map(r=>`<option value="${r}" ${ST.force===r?"selected":""}>une ${RAR[r][0].toLowerCase()}</option>`).join("")}</select></div>
+      <label class="tline"><input type="checkbox" id="tf-all" ${ST.forceAll?"checked":""} ${ST.force?"":"disabled"}> à chaque booster (sinon seulement le prochain)</label>
+      ${ST.force?`<p class="tnote">${ST.forceAll?"Chaque":"Le prochain"} booster contiendra une carte ${RAR[ST.force][0].toLowerCase()}. Les garanties et compteurs réagissent comme pour un vrai tirage.</p>`:""}</div>`:""}`;
   // actions
   const goFree=()=>{if(ST.test){const r=openBooster("free");showOpen([r],r.gold?"gold":"free");return;}if(ST.stock<1)return;ST.stock--;if(ST.stock===MAXSTOCK-1)ST.last=Date.now();const r=openBooster("free");showOpen([r],r.gold?"gold":"free");};
   const goK=()=>{if(it.free)return goFree();if(shop){if(ST.coins<shop.p)return;ST.coins-=shop.p;ST.bought++;showOpen([openBooster(k)],k);wallet();return;}if(!ST.inv[k])return;ST.inv[k]--;showOpen([openBooster(k)],k);};
@@ -1330,6 +1342,8 @@ function renderBoosters(){tick();wallet();
   $("#bseg").querySelectorAll("[data-bt]").forEach(b=>b.onclick=()=>{BTAB=b.dataset.bt;BSEL=packList()[0].k;renderBoosters();});
   $("#packs").querySelectorAll("[data-pk]").forEach(d=>d.querySelector(".bpack").onclick=()=>{if(BSEL===d.dataset.pk)return goK();BSEL=d.dataset.pk;renderBoosters();});
   const tm=$("#testmode");if(tm)tm.onchange=()=>{ST.test=tm.checked;save();renderBoosters();};
+  const tf=$("#tf-r");if(tf)tf.onchange=()=>{ST.force=tf.value;if(!ST.force)ST.forceAll=false;save();renderBoosters();};
+  const ta=$("#tf-all");if(ta)ta.onchange=()=>{ST.forceAll=ta.checked;save();renderBoosters();};
   renderDaily();renderMissions();}
 function heroCards(){const P=D.players,pick=[];
   ["Naries","Layte","Teru"].forEach(n=>{const i=P.findIndex(p=>p.n.toLowerCase()===n.toLowerCase());if(i<0)return;
