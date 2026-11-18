@@ -774,6 +774,22 @@ body.tcg .dlg{background:rgba(8,7,10,.86)}
 .cwrap.pick{cursor:pointer;border-radius:16px;transition:box-shadow .15s}
 .cwrap.pick.on{box-shadow:0 0 0 3px var(--yel)}
 .cwrap.pick.on::after{content:"✓";position:absolute;z-index:9;top:6px;right:6px;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--yel);color:#17110a;font-weight:800}
+
+/* toutes les cartes */
+.ct-rar{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}
+.rchip{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-weight:600;font-size:.92rem;color:#d8d0c6}
+.rchip i{width:9px;height:9px;border-radius:50%;background:var(--c)}
+.rchip b{font-family:var(--f-mono);font-weight:500;font-size:.8rem;color:var(--muted)}
+.rchip:hover{border-color:#4a4452}
+.rchip.on{border-color:var(--c,var(--yel));background:color-mix(in srgb,var(--c,var(--yel)) 14%,var(--surface));color:var(--ink)}
+.cwrap.ct{cursor:pointer}
+.cwrap.miss2 .card{filter:saturate(.55) brightness(.72);transition:filter .2s}
+.cwrap.miss2:hover .card{filter:none}
+.ct-m{position:absolute;z-index:5;left:50%;bottom:-10px;transform:translateX(-50%);font-family:var(--f-mono);font-size:.7rem;padding:2px 9px;border-radius:999px;background:var(--bg);border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.cnt.own{border-color:rgba(242,201,76,.6);color:var(--yel)}
+.seeall{all:unset;box-sizing:border-box;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:12px;height:54px;margin:0 0 24px;border-radius:999px;border:1px solid rgba(242,201,76,.45);background:rgba(242,201,76,.06);font-weight:600}
+.seeall:hover{background:rgba(242,201,76,.12)}
+.sa-f{display:flex}.sa-f i{width:16px;height:22px;border-radius:4px;margin-left:-5px;box-shadow:0 0 0 2px var(--surface)}
 </style>
 </head>
 <body>
@@ -813,6 +829,7 @@ body.tcg .dlg{background:rgba(8,7,10,.86)}
     <nav class="tabs" aria-label="TCG">
       <button class="tab" data-go="boosters">Boosters</button>
       <button class="tab" data-go="collection">Collection</button>
+      <button class="tab" data-go="catalogue">Toutes les cartes</button>
       <button class="tab" data-go="albums">Albums</button>
       <button class="tab" data-go="marche">Marché</button>
       <button class="tab" data-go="amis">Amis<i class="tdot" id="t-amis" hidden></i></button>
@@ -867,6 +884,19 @@ body.tcg .dlg{background:rgba(8,7,10,.86)}
     </section>
     <section class="view" id="v-albums" hidden></section>
     <section class="view" id="v-profil" hidden></section>
+    <section class="view" id="v-catalogue" hidden>
+      <h1 class="h">Toutes les cartes</h1><p class="lede" id="ct-lede"></p>
+      <div class="ct-rar" id="ct-rar"></div>
+      <div class="filters">
+        <input id="ct-q" type="search" placeholder="Chercher un joueur, une ORG, une saison…" autocomplete="off" aria-label="Chercher">
+        <select id="ct-t" aria-label="Type"><option value="">Tous les types</option><option value="J">Joueurs</option><option value="O">ORG</option><option value="R">Saisons</option><option value="P">Participations</option></select>
+        <select id="ct-o" aria-label="ORG"><option value="">Toutes les ORG</option></select>
+        <select id="ct-h" aria-label="Possession"><option value="">Possédées et manquantes</option><option value="own">Possédées</option><option value="miss">Manquantes</option></select>
+        <select id="ct-s" aria-label="Trier"><option value="r">Rareté</option><option value="n">Nom</option><option value="no">Numéro</option></select>
+      </div>
+      <div class="cgrid" id="ct-grid"></div>
+      <div class="more"><button class="btn" id="ct-more" hidden>Afficher plus</button></div>
+    </section>
     <section class="view" id="v-amis" hidden></section>
     <section class="view" id="v-succes" hidden>
       <h1 class="h">Succès</h1><p class="lede" id="ach-lede"></p><div class="ach" id="ach"></div>
@@ -1120,14 +1150,14 @@ function claimDaily(){const td=today();if(ST.daily.date===td)return;
 /* ---------- Rendu : en-tête ---------- */
 function wallet(){const ma=$("#md-ach");if(ma&&ST)ma.textContent=`${ACH.filter(a=>ST.ach[a.id]).length}/${ACH.length}`;$("#w-stock").textContent=ST.test?"∞":ST.stock;$("#w-coins").textContent=nf(ST.coins);ring(ST.stock>=MAXSTOCK?0:CHARGE-((Date.now()-ST.last)%CHARGE));}
 function route(){if(window.TCG_HOSTED&&(!location.hash||location.hash==="#site")){if(location.hash==="#site"){location.href="/";return;}history.replaceState(null,"","#boosters");}
-  const h=(location.hash||"#site").slice(1);const v=["boosters","collection","marche","albums","succes","boutique","classement","profil","amis"].includes(h)?h:(h.startsWith("album-")?"albums":"site");
+  const h=(location.hash||"#site").slice(1);const v=["boosters","collection","catalogue","marche","albums","succes","boutique","classement","profil","amis"].includes(h)?h:(h.startsWith("album-")?"albums":"site");
   const inT=v!=="site";$("#site").hidden=inT;$("#tcg").hidden=!inT;document.body.classList.toggle("tcg",inT);
   document.querySelectorAll(".view").forEach(x=>x.hidden=x.id!=="v-"+v);
   document.querySelectorAll(".tab").forEach(t=>{if(t.dataset.go===v)t.setAttribute("aria-current","page");else t.removeAttribute("aria-current");});
   if(!inT){renderFan();return;}
   if(!ST)return;
   if(v==="boosters")renderBoosters();if(v==="collection")renderCollection(true);if(v==="albums")renderAlbums(h);
-  if(v==="succes")renderAch();if(v==="boutique")renderShop();if(v==="classement")renderBoard();if(v==="marche")renderMarket(true);if(v==="profil")renderProfile();if(v==="amis")renderFriends(true);
+  if(v==="succes")renderAch();if(v==="boutique")renderShop();if(v==="classement")renderBoard();if(v==="marche")renderMarket(true);if(v==="profil")renderProfile();if(v==="catalogue")renderCatalog(true);if(v==="amis")renderFriends(true);
   const md=$("#me-drop");if(md){md.hidden=true;$("#me-btn").setAttribute("aria-expanded","false");}
   window.scrollTo(0,0);}
 document.addEventListener("click",e=>{const g=e.target.closest("[data-go]");if(g){e.preventDefault();location.hash=g.dataset.go;}});
@@ -1207,6 +1237,7 @@ function renderBoosters(){tick();wallet();
   $("#bdet").innerHTML=`<div class="bd-h"><i class="bd-ic ${k}">${IC[pi.ic]}</i><div><h3>${esc(pi.n)}</h3><p>${esc(pi.s)}</p></div></div>
     <div class="bd-st"><div><b>${SLOTS[k].length}</b><span>cartes par booster</span></div><div><b class="c-${guar[0]==="É"?"E":guar[0]==="M"?"M":"R"}">${guar}</b><span>ou mieux, garantie</span></div>
       <div><b class="acc">${k==="sceau"?"—":Math.max(0,PITY-ST.sinceMyth)}</b><span>${k==="sceau"?"ne touche pas la garantie":"avant mythique sûre"}</span></div><div><b class="yel">${10-ST.sinceGold}</b><span>avant le doré</span></div></div>
+    <button class="seeall" data-go="catalogue"><span class="sa-f">${["E","L","M"].map(r=>`<i style="background:var(${RAR[r][1]})"></i>`).join("")}</span>Voir les ${nf(visTotal())} cartes</button>
     <p class="bd-k">Chance par booster</p>
     <div class="bd-ch">${chances(k).map(([r,v])=>`<div class="ch"><span class="ch-n" style="--c:var(${RAR[r][1]})"><i></i>${RAR[r][0]}</span><span class="ch-b"><i style="width:${Math.max(1.5,v)}%;background:var(${RAR[r][1]})"></i></span><code>${pct(v)}</code></div>`).join("")}</div>
     ${btn}
@@ -1756,6 +1787,32 @@ async function tradeCancel(id,b){const sb=SX();if(b)b.disabled=true;const t=TR.f
   if(!ST.tr.done[id]){(ST.tr.held[id]||t.give).forEach(k=>giveCard(k));ST.tr.done[id]=1;delete ST.tr.held[id];save();}
   toast("Proposition annulée : tes cartes reviennent");renderFriends(true);}
 setInterval(()=>{if(ST&&SX()&&$("#v-amis").hidden)syncSocial();},60000);
+
+
+/* ---------- Toutes les cartes ---------- */
+let CTR="",CTV=[],CTN=0,CTIO=null;
+function catTile(c){const n=ST.owned[c.k]||0;
+  return `<div class="cwrap ct${n?"":" miss2"}" data-ck="${c.k}">${cardHTML(c,true).replace("<article ",'<article tabindex="0" ')}${n?`<span class="cnt own">×${n}</span>`:`<span class="ct-m">Manquante</span>`}</div>`;}
+function renderCatalog(reset){
+  const vis=CARDS.filter(c=>c.r!=="S"||ST.owned[c.k]),tot=vis.length,own=vis.filter(c=>ST.owned[c.k]).length;
+  $("#ct-lede").textContent=`${nf(tot)} cartes dans la série 1 · tu en as ${nf(own)} (${(own/tot*100).toFixed(1).replace(".",",")} %). Touche une carte pour la voir en grand.`;
+  const os=$("#ct-o");if(!os.dataset.ok){os.insertAdjacentHTML("beforeend",D.orgs.map((o,i)=>[o,i]).filter(([o,i])=>BY_ORG[i]&&BY_ORG[i].length).sort((a,b)=>norm(a[0].n).localeCompare(norm(b[0].n))).map(([o,i])=>`<option value="${i}">${esc(o.n)}</option>`).join(""));os.dataset.ok=1;}
+  const rs=LADDER.slice().reverse().filter(r=>r!=="S"||ST.firsts.S);
+  $("#ct-rar").innerHTML=`<button class="rchip${CTR?"":" on"}" data-cr="">Toutes <b>${nf(tot)}</b></button>`+rs.map(r=>{const all=vis.filter(c=>c.r===r),o=all.filter(c=>ST.owned[c.k]).length;
+    return `<button class="rchip${CTR===r?" on":""}" data-cr="${r}" style="--c:var(${RAR[r][1]})"><i></i>${RAR[r][0]} <b>${nf(o)}/${nf(all.length)}</b></button>`;}).join("");
+  $("#ct-rar").querySelectorAll("[data-cr]").forEach(b=>b.onclick=()=>{CTR=b.dataset.cr;renderCatalog(true);});
+  if(reset){const q=norm($("#ct-q").value.trim()),t=$("#ct-t").value,og=$("#ct-o").value,h=$("#ct-h").value,so=$("#ct-s").value;
+    CTV=vis.filter(c=>(!CTR||c.r===CTR)&&(!t||c.t===t&&c.r!=="S"||t==="J"&&c.r==="S")&&(og===""||c.og===+og)&&(!h||(h==="own")===!!ST.owned[c.k])&&(!q||c.s.includes(q)));
+    const idx=new Map(CARDS.map((c,i)=>[c.k,i]));
+    if(so==="r")CTV.sort((a,b)=>RI(b.r)-RI(a.r)||idx.get(a.k)-idx.get(b.k));
+    else if(so==="n")CTV.sort((a,b)=>norm(label(a)).localeCompare(norm(label(b))));
+    else CTV.sort((a,b)=>idx.get(a.k)-idx.get(b.k));
+    CTN=0;$("#ct-grid").innerHTML=CTV.length?"":`<p class="muted">Aucune carte ne correspond.</p>`;}
+  const next=CTV.slice(CTN,CTN+72);CTN+=next.length;$("#ct-grid").insertAdjacentHTML("beforeend",next.map(catTile).join(""));
+  $("#ct-more").hidden=CTN>=CTV.length;
+  if(!CTIO&&"IntersectionObserver" in window){CTIO=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting)&&!$("#v-catalogue").hidden&&CTN<CTV.length)renderCatalog(false);},{rootMargin:"600px"});CTIO.observe($("#ct-more").parentElement);}}
+["#ct-q","#ct-t","#ct-o","#ct-h","#ct-s"].forEach(s=>{let t;$(s).addEventListener("input",()=>{clearTimeout(t);t=setTimeout(()=>renderCatalog(true),150);});});
+$("#ct-more").onclick=()=>renderCatalog(false);
 
 /* ---------- Démarrage ---------- */
 (async()=>{
