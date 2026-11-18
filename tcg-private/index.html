@@ -944,7 +944,7 @@ let TQ=[];function toast(m){if(typeof OV!=="undefined"&&OV&&!$("#ov").hidden){TQ
 const CH={};
 function need(k){if(!k||IMG[k])return;const i=parseInt(k.slice(0,2),16)%16;if(CH[i])return;
   CH[i]=tget(`img/${i}.json`).then(r=>r.json()).then(m=>{Object.assign(IMG,m);document.querySelectorAll("img[data-k]:not([src])").forEach(el=>{const v=IMG[el.dataset.k];if(v)el.src=v;});}).catch(()=>{delete CH[i];});}
-function im(k,cls){need(k);return k?`<img class="${cls||""}" data-k="${k}" alt=""${IMG[k]?` src="${IMG[k]}"`:""}>`:"";}
+function im(k,cls){if(k&&/^(\/|https?:|data:)/.test(k))return `<img class="${cls||""}" src="${esc(k)}" alt="" loading="lazy" decoding="async" onerror="this.remove()">`;need(k);return k?`<img class="${cls||""}" data-k="${k}" alt=""${IMG[k]?` src="${IMG[k]}"`:""}>`:"";}
 function pic(k,label){return `<span class="ini" style="--h:${hue(label)}">${esc(ini(label))}</span>${im(k)}`;}
 function logoArt(k,label){return k?`<span class="ini" style="--h:${hue(label)}"></span>${im(k,"bgx")}${im(k,"fg")}`:`<span class="ini" style="--h:${hue(label)}">${esc(ini(label))}</span>`;}
 
@@ -982,6 +982,13 @@ function cardHTML(c,big){
 
 
 /* ---------- Cartes du jeu ---------- */
+function tierOf(p){const w=p.w||0,n=p.p||0;return w>=3||n>=18?"M":w>=2||n>=11?"L":w>=1||n>=7?"E":n>=3?"R":n===2?"PC":n===1?"C":"";}
+function prepD(d){d.players.forEach(p=>p.r=tierOf(p));
+  const top=d.orgs.map((o,i)=>[o.ns||0,i]).filter(x=>x[0]>0).sort((a,b)=>b[0]-a[0]).slice(0,3).map(x=>x[1]);
+  d.orgs.forEach((o,i)=>o.r=top.includes(i)?"M":"E");return d;}
+function keyOf(c,d){const P=d.players,S=d.seasons,O=d.orgs;
+  if(c.r==="S")return "S:"+P[c.i].id;if(c.t==="J")return "J:"+P[c.i].id;if(c.t==="O")return "O:"+O[c.i].id;if(c.t==="R")return "R:"+S[c.i].id;
+  const x=d.parts[c.i];return "P:"+S[x[1]].id+":"+P[x[0]].id;}
 function build(){
   const cards=[];const P=D.players,S=D.seasons,O=D.orgs;const byR={M:[],L:[],E:[],R:[],PC:[],C:[]};
   P.forEach((p,i)=>{if(p.r&&byR[p.r])byR[p.r].push(i);});
@@ -997,7 +1004,8 @@ function build(){
   const sec=[];["M","L","E","R","PC","C"].forEach(r=>byR[r].forEach(i=>{if(P[i].g)sec.push({t:"J",r:"S",i,base:P[i].r});}));
   sec.forEach((c,k)=>{c.no=`SEC ${String(k+1).padStart(2,"0")}/${sec.length}`;});
   cards.push(...sec);
-  cards.forEach(c=>{c.k=(c.r==="S"?"S":c.t)+c.i;
+  const seenK={};
+  cards.forEach(c=>{let k=keyOf(c,D);if(seenK[k])k+="#"+(++seenK[k]);else seenK[k]=1;c.k=k;
     if(c.t==="J"){c.pl=c.i;}
     else if(c.t==="O"){c.og=c.i;}
     else if(c.t==="R"){c.og=S[c.i].o;c.se=c.i;}
@@ -1031,12 +1039,27 @@ function oldOrder(){const P=D.players,S=D.seasons,O=D.orgs,out=[];
   S.forEach((s,i)=>out.push("R"+i));
   const pcs=[],cs=[];D.parts.forEach((x,i)=>{(x[2]&&x[2]<=5&&!x[3]?pcs:cs).push("P"+i);});out.push(...pcs,...cs);
   [...byR.M,...byR.L,...byR.E].forEach(i=>{if(P[i].g)out.push("S"+i);});return out;}
-function migrateKeys(){const o=oldOrder(),m=k=>/^\d+$/.test(String(k))?o[+k]:k;
+function oldOrderOf(L){const P=L.players,S=L.seasons,O=L.orgs,out=[];
+  const t=p=>p.w>=3||p.p>=28?"M":p.w>=2||p.p>=15?"L":p.w>=1||p.p>=8?"E":"";
+  const byR={M:[],L:[],E:[]};P.forEach((p,i)=>{const r=t(p);if(r)byR[r].push(i);});
+  const pk=(a,b)=>P[b].w-P[a].w||P[b].p-P[a].p||norm(P[a].n).localeCompare(norm(P[b].n));
+  for(const r of ["M","L","E"]){byR[r].sort(pk).forEach(i=>out.push("J"+i));if(r==="E")O.forEach((o,i)=>out.push("O"+i));}
+  S.forEach((s,i)=>out.push("R"+i));
+  const pcs=[],cs=[];L.parts.forEach((x,i)=>{(x[2]&&x[2]<=5&&!x[3]?pcs:cs).push("P"+i);});out.push(...pcs,...cs);
+  [...byR.M,...byR.L,...byR.E].forEach(i=>{if(P[i].g)out.push("S"+i);});return out;}
+// v1 : position dans la liste · v2 : J12, P900… (index de l'instantané) · v3 : identifiants de la base (J:<id>, P:<saison>:<joueur>)
+async function migrateKeys(){let L=D;
+  if(!D.players[0]||D.live){try{L=await (await tget("cards.json")).json();}catch(e){return;}}
+  const o1=ST.kv?null:oldOrderOf(L);
+  const v2=k=>{const m=String(k).match(/^([JORS])(\d+)$/),p=String(k).match(/^P(\d+)$/);
+    if(m){const i=+m[2],P=L.players,O=L.orgs,S=L.seasons;if(m[1]==="J"&&P[i])return "J:"+P[i].id;if(m[1]==="S"&&P[i])return "S:"+P[i].id;if(m[1]==="O"&&O[i])return "O:"+O[i].id;if(m[1]==="R"&&S[i])return "R:"+S[i].id;}
+    if(p){const x=L.parts[+p[1]];if(x)return "P:"+L.seasons[x[1]].id+":"+L.players[x[0]].id;}return null;};
+  const m=k=>{k=String(k);if(k.includes(":"))return k;if(/^\d+$/.test(k))k=o1?o1[+k]:k;return k?v2(k):null;};
   const own={};Object.entries(ST.owned||{}).forEach(([k,n])=>{const nk=m(k);if(nk&&CARDS[nk])own[nk]=(own[nk]||0)+n;});ST.owned=own;
   if(ST.show)ST.show=ST.show.map(k=>k==null?k:m(k));
-  if(ST.tr&&ST.tr.held)Object.keys(ST.tr.held).forEach(id=>ST.tr.held[id]=ST.tr.held[id].map(m));
-  ST.kv=2;save();}
-function fresh(){return {v:1,kv:2,stock:MAXSTOCK,last:Date.now(),coins:100,owned:{},opened:0,sinceGold:0,sinceMyth:0,recycled:0,bought:0,
+  if(ST.tr&&ST.tr.held)Object.keys(ST.tr.held).forEach(id=>ST.tr.held[id]=ST.tr.held[id].map(m).filter(Boolean));
+  ST.kv=3;save();}
+function fresh(){return {v:1,kv:3,stock:MAXSTOCK,last:Date.now(),coins:100,owned:{},opened:0,sinceGold:0,sinceMyth:0,recycled:0,bought:0,
   inv:{gold:0,sceau:0},daily:{date:"",day:0},mis:{date:"",open:0,recycle:0,rare:0,done:[],bonus:false},ach:{},claimed:{},firsts:{}};}
 function tick(){const now=Date.now();if(ST.stock>=MAXSTOCK){ST.last=now;return;}
   const n=Math.floor((now-ST.last)/CHARGE);if(n>0){ST.stock=Math.min(MAXSTOCK,ST.stock+n);ST.last=ST.stock>=MAXSTOCK?now:ST.last+n*CHARGE;save();}}
@@ -1057,7 +1080,7 @@ async function load(){
       if(remote&&remote.v)ST=JSON.parse(JSON.stringify(remote));else save();}}catch(e){console.warn(e);}
   if(!ST.owned)ST=Object.assign(fresh(),ST);
   if(!ST.inv)ST.inv={gold:ST.gold||0,sceau:0};delete ST.gold;
-  if(!ST.kv)migrateKeys();
+  if(ST.kv!==3)await migrateKeys();
   if(!ST.mk)ST.mk={mine:{},held:{}};if(!ST.tr)ST.tr={n:0,held:{},done:{}};if(!ST.show)ST.show=[];
   if(USER&&UID){try{const ps=await USER.profiles([UID]);ME_NAME=(ps[UID]&&ps[UID].name)||"Joueur";}catch(e){}}
 }
@@ -1662,15 +1685,15 @@ async function loadMe(){const sb=SX(),id=MEID();
   if(sb&&id){try{const [pr,pl]=await Promise.all([sb.from("profiles").select("discord_name,avatar_url").eq("id",id).maybeSingle(),
       sb.from("players").select("id,pseudo:data->>pseudo").eq("data->>ownerUid",id).limit(1)]);
     const p=pr.data||{};ME.name=p.discord_name||"Toi";ME.av=p.avatar_url||"";ME_NAME=ME.name;
-    const row=(pl.data||[])[0];if(row){ME.pi=pIdx(row.pseudo);ME.pid=row.id;}ME.ok=true;}catch(e){console.warn(e);}}
+    const row=(pl.data||[])[0];if(row){const j=D.players.findIndex(p=>p.id===row.id);ME.pi=j>=0?j:pIdx(row.pseudo);ME.pid=row.id;}ME.ok=true;}catch(e){console.warn(e);}}
   else{ME.name=ME_NAME&&ME_NAME!=="Joueur"?ME_NAME:"Toi";ME.pi=pIdx(ME_NAME);}
   $("#me-av").innerHTML=avHTML(ME.av,ME.name,"");$("#me-n").textContent=ME.name;}
 async function loadFriends(){const sb=SX(),id=MEID();FR=[];if(!sb||!id)return;
   const {data}=await sb.from("friendships").select("requester,addressee,status").or(`requester.eq.${id},addressee.eq.${id}`).eq("status","accepted");
   const ids=(data||[]).map(f=>f.requester===id?f.addressee:f.requester);if(!ids.length)return;
-  const [pr,pl]=await Promise.all([sb.from("profiles").select("id,discord_name,avatar_url").in("id",ids),sb.from("players").select("pseudo:data->>pseudo,owner:data->>ownerUid").in("data->>ownerUid",ids)]);
-  const pls={};(pl.data||[]).forEach(r=>pls[r.owner]=r.pseudo);
-  FR=ids.map(u=>{const p=(pr.data||[]).find(x=>x.id===u)||{};const pi=pIdx(pls[u]);PCACHE[u]={name:p.discord_name||"Ami",av:p.avatar_url||""};return {id:u,name:p.discord_name||"Ami",av:p.avatar_url||"",pi,card:playerCard(pi)};})
+  const [pr,pl]=await Promise.all([sb.from("profiles").select("id,discord_name,avatar_url").in("id",ids),sb.from("players").select("id,pseudo:data->>pseudo,owner:data->>ownerUid").in("data->>ownerUid",ids)]);
+  const pls={},pid={};(pl.data||[]).forEach(r=>{pls[r.owner]=r.pseudo;pid[r.owner]=r.id;});
+  FR=ids.map(u=>{const p=(pr.data||[]).find(x=>x.id===u)||{};let pi=D.players.findIndex(p=>p.id===pid[u]);if(pi<0)pi=pIdx(pls[u]);PCACHE[u]={name:p.discord_name||"Ami",av:p.avatar_url||""};return {id:u,name:p.discord_name||"Ami",av:p.avatar_url||"",pi,card:playerCard(pi)};})
     .sort((a,b)=>a.name.localeCompare(b.name));}
 async function loadTrades(){const sb=SX(),id=MEID();TR=[];if(!sb||!id){TR_OK=false;return;}
   const {data,error}=await sb.from("tcg_trades").select("*").or(`sender.eq.${id},recipient.eq.${id}`).order("created_at",{ascending:false}).limit(100);
@@ -1802,9 +1825,43 @@ function renderCatalog(reset){
 ["#ct-q","#ct-t","#ct-o","#ct-h","#ct-s"].forEach(s=>{let t;$(s).addEventListener("input",()=>{clearTimeout(t);t=setTimeout(()=>renderCatalog(true),150);});});
 $("#ct-more").onclick=()=>renderCatalog(false);
 
+
+/* ---------- Données en direct (orgcentral.fr) ---------- */
+// Même calcul que build_data.py, à partir des données publiques du site (/api/data, en cache chez Vercel).
+async function liveData(){
+  const get=async t=>{const rows=[];let from=0;while(from!=null){const r=await fetch(`/api/data?t=${t}&from=${from}`);if(!r.ok)throw new Error(t);const j=await r.json();rows.push(...(j.rows||[]));from=j.next;}return rows;};
+  const [OR,SR,PR]=await Promise.all(["orgs","seasons","players"].map(get));
+  const orgs={},players={};OR.forEach(o=>orgs[o.id]=o.data||{});PR.forEach(p=>players[p.id]=p.data||{});
+  const N=t=>norm(t).replace(/[^a-z0-9]/g,"");
+  const isTO=o=>!!o&&(o.concept==="taupe"||N(o.name)==="quiestlataupe");
+  const tW=(s,o)=>{if(!isTO(o))return false;if(typeof s.taupeWins==="boolean")return s.taupeWins;return String(s.number)==="4"&&N(o.name)==="quiestlataupe";};
+  const isTC=(o,c)=>isTO(o)&&(c.role==="taupe"||c.isMole===true||/^taupe\b/i.test(String(c.note||"").trim()));
+  const winners=s=>{const o=orgs[s.orgId],cast=s.cast||[];const l=tW(s,o)?cast.filter(c=>isTC(o,c)):cast.filter(c=>!isTC(o,c)&&c.place===1);return new Set(l.map(c=>c.playerId).filter(Boolean));};
+  const DQ=/^\s*(disqualif|dq\b|exclu)|\(dq\)/i;
+  const part={},wins={};
+  SR.forEach(se=>{const s=se.data||{},w=winners(s);(s.cast||[]).forEach(c=>{const p=c.playerId;if(!players[p])return;part[p]=(part[p]||0)+1;if(w.has(p))wins[p]=(wins[p]||0)+1;});});
+  const hasS=new Set(SR.map(se=>(se.data||{}).orgId));
+  const oids=[...Object.keys(orgs).filter(o=>hasS.has(o)),...Object.keys(orgs).filter(o=>!hasS.has(o))],oi={};oids.forEach((o,i)=>oi[o]=i);
+  const num=s=>{const v=parseFloat(s.number);return isNaN(v)?0:v;};
+  const Ss=SR.slice().sort((a,b)=>{const x=N((orgs[(a.data||{}).orgId]||{}).name||"zz"),y=N((orgs[(b.data||{}).orgId]||{}).name||"zz");return x<y?-1:x>y?1:num(a.data||{})-num(b.data||{});});
+  const si={};Ss.forEach((se,i)=>si[se.id]=i);
+  const pids=Object.keys(players).filter(p=>part[p]>0).sort((a,b)=>{const x=N(players[a].pseudo),y=N(players[b].pseudo);return x<y?-1:x>y?1:0;}),pi={};pids.forEach((p,i)=>pi[p]=i);
+  const best={},top5={},porgs={},parts=[];
+  Ss.forEach(se=>{const s=se.data||{};(s.cast||[]).forEach(c=>{const p=c.playerId;if(!(p in pi))return;const pl=c.place,dq=DQ.test(String(c.note||"")),ok=Number.isInteger(pl);
+    if(ok){if(best[p]==null||pl<best[p])best[p]=pl;if(pl<=5&&!dq)top5[p]=(top5[p]||0)+1;}
+    (porgs[p]=porgs[p]||new Set()).add(s.orgId);parts.push([pi[p],si[se.id],ok?pl:null,dq?1:0]);});});
+  const ns={};SR.forEach(se=>{const o=(se.data||{}).orgId;ns[o]=(ns[o]||0)+1;});
+  return {live:true,date:new Date().toLocaleDateString("fr-FR"),
+    orgs:oids.map(o=>({id:o,n:orgs[o].name||"?",l:orgs[o].logo||"",f:orgs[o].format||"",pf:orgs[o].platform||"",ns:ns[o]||0})),
+    seasons:Ss.map(se=>{const s=se.data||{};return {id:se.id,o:oi[s.orgId]??-1,n:s.number,t:s.title||"",l:s.logo||"",st:s.status,
+      w:[...winners(s)].filter(x=>x in pi).map(x=>pi[x]).sort((a,b)=>a-b),c:(s.cast||[]).filter(c=>c.playerId in pi).length,y:String(s.start||s.end||"").slice(0,4),x:s.external?1:0};}),
+    players:pids.map(p=>({id:p,n:players[p].pseudo||"?",a:players[p].avatar||"",p:part[p],w:wins[p]||0,t:top5[p]||0,b:best[p]??null,o:(porgs[p]||new Set()).size,g:players[p].ownerUid?1:0})),
+    parts};}
+
 /* ---------- Démarrage ---------- */
 (async()=>{
-  try{D=await (await tget("cards.json")).json();orgFallback();}catch(e){document.body.insertAdjacentHTML("afterbegin",`<p style="padding:20px">Les cartes n'ont pas pu être chargées. Recharge la page.</p>`);return;}
+  try{if(window.TCG_HOSTED){try{D=await liveData();}catch(e){console.warn("données en direct indisponibles",e);D=null;}}
+    if(!D)D=await (await tget("cards.json")).json();prepD(D);orgFallback();}catch(e){document.body.insertAdjacentHTML("afterbegin",`<p style="padding:20px">Les cartes n'ont pas pu être chargées. Recharge la page.</p>`);return;}
   $(".tl-emb").innerHTML=TORCH;$("#me-btn").onclick=e=>{e.stopPropagation();const d=$("#me-drop");d.hidden=!d.hidden;$("#me-btn").setAttribute("aria-expanded",String(!d.hidden));};
   document.addEventListener("click",e=>{const d=$("#me-drop");if(d&&!d.hidden&&!e.target.closest(".me-menu"))d.hidden=true;});
   $("#w-mis").onclick=()=>{location.hash="boosters";setTimeout(()=>{const m=$("#missions");if(m)m.scrollIntoView({behavior:reduced()?"auto":"smooth",block:"center"});},60);};CARDS=build();indexes();route();
