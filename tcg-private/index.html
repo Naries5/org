@@ -989,8 +989,9 @@ function build(){
   for(const r of ["M","L","E"]){byR[r].sort(pk).forEach(i=>cards.push({t:"J",r,i}));O.forEach((o,i)=>{if((o.r||"E")===r)cards.push({t:"O",r,i});});}
   byR.R.sort(pk).forEach(i=>cards.push({t:"J",r:"R",i}));
   S.forEach((s,i)=>cards.push({t:"R",r:"R",i}));
+  const prs=[],pcs=[],cs=[];D.parts.forEach((x,i)=>{const pl=!x[3]&&x[2]?x[2]:0;(pl&&pl<=3?prs:pl&&pl<=10?pcs:cs).push({t:"P",r:pl&&pl<=3?"R":pl&&pl<=10?"PC":"C",i});});
+  cards.push(...prs);
   byR.PC.sort(pk).forEach(i=>cards.push({t:"J",r:"PC",i}));
-  const pcs=[],cs=[];D.parts.forEach((x,i)=>{const top=x[2]&&x[2]<=5&&!x[3];(top?pcs:cs).push({t:"P",r:top?"PC":"C",i});});
   cards.push(...pcs);byR.C.sort(pk).forEach(i=>cards.push({t:"J",r:"C",i}));cards.push(...cs);
   const total=cards.length;cards.forEach((c,k)=>{c.no=`${String(k+1).padStart(4,"0")}/${total}`;});
   const sec=[];["M","L","E","R","PC","C"].forEach(r=>byR[r].forEach(i=>{if(P[i].g)sec.push({t:"J",r:"S",i,base:P[i].r});}));
