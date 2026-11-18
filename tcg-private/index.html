@@ -856,6 +856,44 @@ body.tcg .toast div.out{animation:tout .26s ease forwards}
 .tline{display:flex;align-items:center;gap:10px;margin:8px 0;font-size:.95rem;color:#cfc8c0}
 .tline select{font:inherit;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:6px 10px;flex:1}
 .tnote{margin:10px 0 0;font-size:.85rem;color:var(--yel)}
+
+/* ===== cartes holographiques ===== */
+.card .holo,.card .glare{position:absolute;inset:0;z-index:6;pointer-events:none;border-radius:inherit}
+.card .holo{--ho:.2;opacity:0;mix-blend-mode:color-dodge;transition:opacity .35s;
+  background:repeating-linear-gradient(115deg,#ff6f9b 0%,#ffd36b 7%,#7ff3e1 14%,#7fa8ff 21%,#d98aff 28%,#ff6f9b 35%);
+  background-size:260% 260%;background-position:var(--mx,50%) var(--my,50%);filter:brightness(.75) contrast(1.3)}
+.card.r-E .holo{--ho:.28}.card.r-L .holo{--ho:.34;filter:brightness(.8) contrast(1.3) sepia(.55) saturate(1.6)}
+.card.r-M .holo{--ho:.32}.card.r-S .holo{--ho:.36;filter:brightness(.8) contrast(1.3)}
+.card .glare{opacity:0;mix-blend-mode:overlay;transition:opacity .35s;background:radial-gradient(farthest-corner circle at var(--mx,50%) var(--my,30%),rgba(255,255,255,.75) 0%,rgba(255,255,255,.18) 30%,transparent 60%)}
+.card.live .holo{opacity:var(--ho)}.rs-top.shown .card:not(.live) .holo{opacity:calc(var(--ho)*.55)}
+.card.live .glare{opacity:.9}
+.rs-face .card,.dbox>.card,.cwrap .card,.vs .card,.mkt .card,.pf-card .card,.tr-c .card{transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .45s cubic-bezier(.2,.75,.25,1),filter .2s,box-shadow .25s}
+.card.live{transition:transform .07s linear,filter .2s,box-shadow .25s!important}
+.cwrap:hover .card{transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) scale(1.035)}
+.dbox>.card.live{box-shadow:0 30px 60px rgba(0,0,0,.6)}
+/* ===== grand moment : épique et mieux ===== */
+.rstack{overflow:visible!important}
+.hbg{position:absolute;left:50%;top:50%;width:260vmax;height:260vmax;transform:translate(-50%,-50%);z-index:-2;pointer-events:none;opacity:0;transition:opacity .5s}
+.hglow{position:absolute;inset:0;background:radial-gradient(circle,color-mix(in srgb,var(--hc) 45%,transparent) 0,color-mix(in srgb,var(--hc) 14%,transparent) 9%,transparent 22%)}
+.hrays{position:absolute;inset:0;background:repeating-conic-gradient(from 0deg,color-mix(in srgb,var(--hc) 30%,transparent) 0 5deg,transparent 5deg 15deg);
+  -webkit-mask:radial-gradient(circle,#000 0,rgba(0,0,0,.5) 8%,transparent 20%);mask:radial-gradient(circle,#000 0,rgba(0,0,0,.5) 8%,transparent 20%);animation:hspin 40s linear infinite}
+.rstack.h6 .hrays{background:repeating-conic-gradient(from 0deg,rgba(127,243,225,.35) 0 4deg,transparent 4deg 12deg,rgba(255,138,216,.35) 12deg 16deg,transparent 16deg 24deg,rgba(255,211,107,.35) 24deg 28deg,transparent 28deg 36deg)}
+@keyframes hspin{to{transform:rotate(360deg)}}
+.rstack.hero .hbg{opacity:1}
+.rword{position:absolute;left:50%;top:50%;z-index:-1;transform:translate(-50%,-50%);pointer-events:none;white-space:nowrap;opacity:0;
+  font-family:var(--f-ui,"Unbounded");font-weight:800;font-size:clamp(54px,10.5vw,160px);letter-spacing:.06em;color:transparent;-webkit-text-stroke:2px color-mix(in srgb,var(--hc) 75%,transparent)}
+.rword.go{animation:rword .9s cubic-bezier(.15,.75,.2,1) forwards}
+@keyframes rword{0%{opacity:0;letter-spacing:.6em;transform:translate(-50%,-50%) scale(1.25)}100%{opacity:.55;letter-spacing:.06em;transform:translate(-50%,-50%) scale(1)}}
+.rstack.h6 .rword{background:linear-gradient(90deg,#7ff3e1,#b57cff,#ff8ad8,#ffd36b);-webkit-background-clip:text;background-clip:text;-webkit-text-stroke:0;color:transparent}
+.rstack.h6 .rword.go{animation-name:rword6}
+@keyframes rword6{0%{opacity:0;letter-spacing:.6em;transform:translate(-50%,-50%) scale(1.25)}100%{opacity:.4;letter-spacing:.06em;transform:translate(-50%,-50%) scale(1)}}
+.rstack.hero .rs-flip{scale:1.1;transition:transform .6s cubic-bezier(.55,0,.25,1),scale .55s cubic-bezier(.2,1.35,.35,1)}
+.rstack.hero .rs-face .card{box-shadow:0 0 0 2px color-mix(in srgb,var(--hc) 70%,transparent),0 0 60px color-mix(in srgb,var(--hc) 55%,transparent),0 30px 60px rgba(0,0,0,.6)}
+.sparks{position:absolute;left:50%;top:50%;width:0;height:0;z-index:5;pointer-events:none}
+.sparks i{position:absolute;left:0;top:0;width:var(--z);height:var(--z);margin:calc(var(--z)/-2);border-radius:50%;background:#fff;box-shadow:0 0 6px 1px var(--hc),0 0 14px var(--hc);
+  animation:spark var(--t) cubic-bezier(.12,.7,.25,1) forwards}
+@keyframes spark{0%{opacity:1;transform:rotate(var(--a)) translateX(40px) scale(1)}100%{opacity:0;transform:rotate(var(--a)) translateX(var(--d)) scale(.3)}}
+@media (prefers-reduced-motion:reduce){.hrays,.sparks i,.rword.go{animation:none!important}}
 </style>
 </head>
 <body>
@@ -1007,7 +1045,7 @@ const ini=t=>String(t||"?").replace(/[^\p{L}\p{N} ]/gu," ").trim().split(/\s+/).
 const placeTxt=p=>p===1?"1er":p+"e";
 function sName(s){const o=D.orgs[s.o]||{};return `${o.n||"?"} S${s.n}`;}
 function sFull(s){return sName(s)+(s.t?" – "+s.t:"");}
-let TQ=[];function toast(m){if(typeof OV!=="undefined"&&OV&&!$("#ov").hidden){TQ.push(m);return;}const d=document.createElement("div");d.textContent=m;$("#toast").appendChild(d);setTimeout(()=>{d.classList.add("out");setTimeout(()=>d.remove(),260);},3000);}
+let TQ=[],HOLDT=false;function toast(m,snd){if(HOLDT||(typeof OV!=="undefined"&&OV&&!$("#ov").hidden)){TQ.push([m,snd]);return;}if(snd&&typeof SFX!=="undefined"&&SFX[snd])SFX[snd]();const d=document.createElement("div");d.textContent=m;$("#toast").appendChild(d);setTimeout(()=>{d.classList.add("out");setTimeout(()=>d.remove(),260);},3000);}
 
 const CH={};
 function need(k){if(!k||IMG[k])return;const i=parseInt(k.slice(0,2),16)%16;if(CH[i])return;
@@ -1045,7 +1083,7 @@ function cardHTML(c,big){
   return `<article class="card r-${c.r}" ${big?"":`tabindex="0" data-c="${c.k}"`} aria-label="${esc(name)}, ${esc(rk)}, ${esc(ty)}"><div class="in">
     <div class="art${logo?" logo":""}">${art}</div><div class="shade"></div>
     ${extra}
-    <div class="btm">${ty?`<div class="ty">${esc(ty)}</div>`:""}<div class="cn${nameCls(name)}">${esc(name)}</div>${sub?`<div class="sub">${sub}</div>`:""}${st}</div></div></article>`;
+    <div class="btm">${ty?`<div class="ty">${esc(ty)}</div>`:""}<div class="cn${nameCls(name)}">${esc(name)}</div>${sub?`<div class="sub">${sub}</div>`:""}${st}</div>${RI(c.r)>=2?`<i class="holo"></i>`:""}<i class="glare"></i></div></article>`;
 }
 
 
@@ -1165,7 +1203,7 @@ function draw(slots,pool){
     out.push(k);}
   return out.filter(k=>k!=null);
 }
-function openBooster(kind,opts){
+function openBooster(kind,opts){HOLDT=true;
   let slots,gold=false;
   if(kind==="free"){gold=ST.sinceGold>=EPITY-1;slots=["C","C","C","C",gold?"E":"R"];}
   else if(kind==="gold"){gold=true;slots=["C","C","C","C","E"];}
@@ -1220,7 +1258,7 @@ function countDone(kind){if(!DONE_CACHE){DONE_CACHE={se:0,pl:0,og:0};
 function checkAll(){DONE_CACHE=null;
   MISSIONS.forEach(m=>{if(!ST.mis.done.includes(m.id)&&m.f()>=m.n){ST.mis.done.push(m.id);ST.coins+=m.rw;toast(`Mission réussie : ${m.t} (+${m.rw})`);}});
   if(ST.mis.done.length===MISSIONS.length&&!ST.mis.bonus){ST.mis.bonus=true;ST.stock=Math.min(MAXSTOCK+5,ST.stock+1);toast("Toutes les missions du jour : +1 booster");}
-  ACH.forEach(a=>{if(!ST.ach[a.id]&&a.f()){ST.ach[a.id]=Date.now();ST.coins+=a.rw;if(a.pk)ST.inv[a.pk]=(ST.inv[a.pk]||0)+1;SFX.ach();toast(`Succès débloqué : ${a.t} (+${a.rw}${a.pk?" et un Sceau mythique":""})`);}});
+  ACH.forEach(a=>{if(!ST.ach[a.id]&&a.f()){ST.ach[a.id]=Date.now();ST.coins+=a.rw;if(a.pk)ST.inv[a.pk]=(ST.inv[a.pk]||0)+1;toast(`Succès débloqué : ${a.t} (+${a.rw}${a.pk?" et un Sceau mythique":""})`,"ach");}});
   save();wallet();}
 function claimDaily(){const td=today();if(ST.daily.date===td)return;
   const y=new Date();y.setDate(y.getDate()-1);const yd=`${y.getFullYear()}-${String(y.getMonth()+1).padStart(2,"0")}-${String(y.getDate()).padStart(2,"0")}`;
@@ -1421,7 +1459,7 @@ function ovReveal(burst){ovClear();
   const glow=!OV.rev?` glow g-${it.c.r}`:"";
   const nx=firstEpicAfter(OV.i+(OV.rev?1:0));const adv=OV.adv;OV.adv=false;
   $("#ovin").innerHTML=`<div class="ov-top">${esc(PACKNAME[OV.type]||"Booster")}${OV.many?` × ${OV.n}`:""}</div>
-    <div class="rstack${adv?" adv":""}${OV.enter?" enter":""}" id="rstack"><div class="flash" id="flash"></div>${Array.from({length:backs-1},(_,k)=>`<div class="rs-under" style="--k:${backs-1-k}">${cardBack()}</div>`).join("")}
+    <div class="rstack${adv?" adv":""}${OV.enter?" enter":""}" id="rstack"><div class="hbg" aria-hidden="true"><i class="hglow"></i><i class="hrays"></i></div><div class="rword" id="rword" aria-hidden="true"></div><div class="sparks" id="sparks" aria-hidden="true"></div><div class="flash" id="flash"></div>${Array.from({length:backs-1},(_,k)=>`<div class="rs-under" style="--k:${backs-1-k}">${cardBack()}</div>`).join("")}
       <div class="rs-top${OV.rev?" open shown":""}${burst?" burst":""}" id="rtop" tabindex="0" aria-label="Carte ${OV.i+1} sur ${OV.items.length}"><div class="rs-flip"><div class="rs-back">${cardBack(glow)}</div><div class="rs-face">${cardHTML(it.c,true)}<span class="shine"></span><span class="badge on${it.isNew?"":" dup"}">${it.isNew?"Nouvelle":"Doublon"}</span></div></div></div></div>
     <div class="dots">${OV.items.length<=10?OV.items.map((x,j)=>`<i class="${j<OV.i||(j===OV.i&&OV.rev)?"on":""}" style="${j<OV.i||(j===OV.i&&OV.rev)?`--c:var(${RAR[x.c.r][1]})`:""}"></i>`).join(""):`<span class="ov-count">${OV.i+(OV.rev?1:0)} / ${OV.items.length}</span>`}</div>
     <div class="ov-ctl"><span class="ov-hint" id="hint">${OV.rev?"Glisse la carte pour passer à la suivante":"Touche la carte pour la retourner"}</span>
@@ -1433,7 +1471,7 @@ function ovReveal(burst){ovClear();
   $("#ov-all").onclick=e=>{e.stopPropagation();OV.i=OV.items.length;ovEnd();};
   const sk=$("#ov-skip");if(sk)sk.onclick=e=>{e.stopPropagation();const n=firstEpicAfter(OV.i+(OV.rev?1:0));OV.i=n<0?OV.items.length:n;OV.rev=false;OV.walked=false;OV.adv=true;ovReveal();};}
 function revealFx(it,now){const t=$("#rtop");if(!t)return;const r=RI(it.c.r);
-  const go=()=>{t.classList.add("shown");SFX.reveal(it.c.r);if(r>=2)t.classList.add("shine-on");
+  const go=()=>{t.classList.add("shown");SFX.reveal(it.c.r);if(r>=3)heroFx(it.c.r);if(r>=2)t.classList.add("shine-on");
     if(r>=3){const f=$("#flash");if(f){f.style.setProperty("--fc",`var(${RAR[it.c.r][1]})`);f.classList.remove("go");void f.offsetWidth;f.classList.add("go");}}};
   if(now||reduced())go();else later(go,560);}
 function flip(){const it=OV.items[OV.i];const t=$("#rtop");if(!t||OV.rev)return;
@@ -1491,7 +1529,7 @@ function ovEnd(){ovClear();const its=OV.items;const nNew=its.filter(x=>x.isNew).
     for(let k=0;k<n;k++){if(!ST.test){ST.stock--;}all.push(openBooster("free"));}if(full&&!ST.test)ST.last=Date.now();const cnt=OV.cnt;showOpen(all,all.length===1&&all[0].gold?"gold":"free");OV.cnt=cnt;};
   $("#to-col").onclick=()=>{ovClose();location.hash="collection";};
   $("#ov-close").onclick=ovClose;(ag&&!ag.disabled?ag:$("#ov-close")).focus();}
-function ovClose(){ovClear();OV=null;$("#ov").hidden=true;document.body.style.overflow="";const q=TQ;TQ=[];q.forEach((m,i)=>setTimeout(()=>toast(m),i*250));if(!$("#v-boosters").hidden)renderBoosters();wallet();}
+function ovClose(){ovClear();OV=null;$("#ov").hidden=true;document.body.style.overflow="";HOLDT=false;const q=TQ;TQ=[];q.forEach((m,i)=>setTimeout(()=>Array.isArray(m)?toast(m[0],m[1]):toast(m),300+i*450));if(!$("#v-boosters").hidden)renderBoosters();wallet();}
 /* ---------- Collection ---------- */
 let CV=[],CSHOWN=0;
 function colFilter(){const q=norm($("#c-q").value.trim()),r=$("#c-r").value,t=$("#c-t").value,o=$("#c-o").value;
@@ -1504,7 +1542,7 @@ function renderCollection(reset){
   const okS=!!ST.firsts.S,sel=$("#c-r");if(sel.dataset.ok!==String(okS)){const v=sel.value;sel.innerHTML=`<option value="">Toutes les raretés</option>`+LADDER.slice().reverse().filter(r=>r!=="S"||okS).map(r=>`<option value="${r}">${RAR[r][0]}</option>`).join("");sel.value=v==="S"&&!okS?"":v;sel.dataset.ok=String(okS);}
   const u=uniq();const dups=Object.values(ST.owned).reduce((a,n)=>a+Math.max(0,n-1),0);
   $("#col-lede").textContent=`${nf(u)} cartes différentes sur ${nf(visTotal())} (${(u/visTotal()*100).toFixed(1).replace(".",",")} %) · ${nf(dups)} doublon${dups>1?"s":""}`;
-  if(reset){CV=colFilter();CSHOWN=0;$("#c-grid").innerHTML=CV.length?"":`<p class="muted">${$("#c-o").value==="own"&&!u?"Ta collection est vide : ouvre ton premier booster.":"Aucune carte ne correspond."}</p>`;}
+  if(reset){const idx=new Map(CARDS.map((c,i)=>[c.k,i]));CV=colFilter().sort((a,b)=>RI(b.r)-RI(a.r)||idx.get(a.k)-idx.get(b.k));CSHOWN=0;$("#c-grid").innerHTML=CV.length?"":`<p class="muted">${$("#c-o").value==="own"&&!u?"Ta collection est vide : ouvre ton premier booster.":"Aucune carte ne correspond."}</p>`;}
   const next=CV.slice(CSHOWN,CSHOWN+60);CSHOWN+=next.length;$("#c-grid").insertAdjacentHTML("beforeend",next.map(tileHTML).join(""));$("#c-more").hidden=CSHOWN>=CV.length;}
 ["#c-q","#c-r","#c-t","#c-o"].forEach(s=>{let t;$(s).addEventListener("input",()=>{clearTimeout(t);t=setTimeout(()=>renderCollection(true),150);});});
 $("#c-more").onclick=()=>renderCollection(false);
@@ -1997,6 +2035,22 @@ function resetForm(){$("#me-drop").hidden=true;
     if(location.hash==="#boosters")route();else location.hash="boosters";wallet();toast("Progression réinitialisée : bon retour parmi les débutants !");};}
 $("#m-snd").onclick=e=>{e.stopPropagation();SFX.set(!SFX.on);sndLabel();if(SFX.on)SFX.pop();};
 $("#m-reset").onclick=()=>resetForm();
+
+
+/* ---------- Moment de révélation (épique et mieux) ---------- */
+function heroFx(r){const st=$("#rstack");if(!st||reduced())return;const i=RI(r);
+  st.style.setProperty("--hc",`var(${RAR[r][1]})`);st.classList.add("hero","h"+i);
+  const w=$("#rword");if(w){w.textContent=RAR[r][0].toUpperCase();w.classList.add("go");}
+  const sp=$("#sparks");if(sp){const n=i>=5?44:i>=4?32:22;sp.innerHTML=Array.from({length:n},()=>{const a=Math.random()*360,d=150+Math.random()*(i>=5?320:220),z=2+Math.random()*4,t=.7+Math.random()*.7;
+    return `<i style="--a:${a.toFixed(0)}deg;--d:${d.toFixed(0)}px;--z:${z.toFixed(1)}px;--t:${t.toFixed(2)}s"></i>`;}).join("");}
+  if(i>=4){const o=$("#ovin");o.classList.remove("quake");void o.offsetWidth;o.classList.add("quake");}}
+/* ---------- Inclinaison + reflets qui suivent la souris ---------- */
+const TILT=".rs-face .card,.dbox>.card,.cwrap .card,.vs .card,.mkt .card,.pf-card .card,.hf .card,.tr-c .card";
+document.addEventListener("pointermove",e=>{if(reduced())return;const c=e.target.closest&&e.target.closest(".card");if(!c||!c.matches(TILT))return;
+  const r=c.getBoundingClientRect(),x=Math.min(1,Math.max(0,(e.clientX-r.left)/r.width)),y=Math.min(1,Math.max(0,(e.clientY-r.top)/r.height));
+  c.style.setProperty("--mx",(x*100).toFixed(1)+"%");c.style.setProperty("--my",(y*100).toFixed(1)+"%");
+  c.style.setProperty("--rx",((.5-y)*14).toFixed(2)+"deg");c.style.setProperty("--ry",((x-.5)*16).toFixed(2)+"deg");
+  if(!c.classList.contains("live")){c.classList.add("live");c.addEventListener("pointerleave",()=>{c.classList.remove("live");c.style.setProperty("--rx","0deg");c.style.setProperty("--ry","0deg");},{once:true});}},{passive:true});
 
 /* ---------- Démarrage ---------- */
 (async()=>{
