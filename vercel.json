@@ -1,11 +1,53 @@
 {
   "rewrites": [
-    { "source": "/s/:id", "destination": "/api/share?t=s&id=:id" },
-    { "source": "/o/:id", "destination": "/api/share?t=o&id=:id" },
-    { "source": "/j/:id", "destination": "/api/share?t=j&id=:id" },
-    { "source": "/saison/:id", "destination": "/api/share?t=s&id=:id&page=1" },
-    { "source": "/org/:id", "destination": "/api/share?t=o&id=:id&page=1" },
-    { "source": "/joueur/:id", "destination": "/api/share?t=j&id=:id&page=1" },
-    { "source": "/((?!api/|_blob/).*)", "destination": "/index.html" }
-  ]
+    {
+      "source": "/tcg",
+      "destination": "/api/tcg"
+    },
+    {
+      "source": "/s/:id",
+      "destination": "/api/share?t=s&id=:id"
+    },
+    {
+      "source": "/o/:id",
+      "destination": "/api/share?t=o&id=:id"
+    },
+    {
+      "source": "/j/:id",
+      "destination": "/api/share?t=j&id=:id"
+    },
+    {
+      "source": "/saison/:id",
+      "destination": "/api/share?t=s&id=:id&page=1"
+    },
+    {
+      "source": "/org/:id",
+      "destination": "/api/share?t=o&id=:id&page=1"
+    },
+    {
+      "source": "/joueur/:id",
+      "destination": "/api/share?t=j&id=:id&page=1"
+    },
+    {
+      "source": "/((?!api/|_blob/).*)",
+      "destination": "/index.html"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/tcg-private/:path*",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/tcg-private",
+      "destination": "/",
+      "permanent": false
+    }
+  ],
+  "functions": {
+    "api/tcg.js": {
+      "includeFiles": "tcg-private/**"
+    }
+  }
 }
