@@ -921,8 +921,8 @@ body.tcg .dlg{background:rgba(8,7,10,.86)}
 const tget=p=>window.TCG_GET?window.TCG_GET(p):fetch(p);
 const RAR={M:["Mythique","--r-M"],S:["Secrète","--r-S"],L:["Légendaire","--r-L"],E:["Épique","--r-E"],R:["Rare","--r-R"],PC:["Peu commune","--r-PC"],C:["Commune","--r-C"]};
 const LADDER=["C","PC","R","E","L","M","S"];
-const RATES={C:62,PC:25,R:11.4,E:1.4,L:0.15,M:0.06,S:0.02};
-const PITY=150;
+const RATES={C:62,PC:25,R:11.4,E:1.4,L:0.15,M:0.025,S:0.008};
+const PITY=250,EPITY=10;
 const RECYCLE={C:2,PC:5,R:15,E:60,L:250,M:1000,S:1500};
 const STREAK=[20,30,40,50,60,80,100];
 const CHARGE=10*60*1000,MAXSTOCK=10;
@@ -1076,13 +1076,15 @@ function draw(slots,pool){
 }
 function openBooster(kind,opts){
   let slots,gold=false;
-  if(kind==="free"){ST.sinceGold++;gold=ST.sinceGold>=10;if(gold)ST.sinceGold=0;slots=["C","C","C","C",gold?"E":"R"];}
+  if(kind==="free"){gold=ST.sinceGold>=EPITY-1;slots=["C","C","C","C",gold?"E":"R"];}
   else if(kind==="gold"){gold=true;slots=["C","C","C","C","E"];}
   else if(kind==="mini")slots=["C","PC","R"];
   else if(kind==="prestige")slots=["PC","R","R","E","E"];
   else if(kind==="sceau")slots=["R","E","L","M"];
   else slots=["C","C","C","C","R"];
   let keys=draw(slots,opts&&opts.pool);
+  // garantie épique : 10 boosters sans épique ou mieux, le 10e est doré (5e carte épique ou mieux)
+  if(kind!=="sceau"){if(keys.some(k=>RI(CARDS[k].r)>=3))ST.sinceGold=0;else ST.sinceGold++;}
   if((!opts||!opts.pool)&&kind!=="sceau"){
     ST.sinceMyth++;
     if(keys.some(k=>["M","S"].includes(CARDS[k].r)))ST.sinceMyth=0;
@@ -1178,15 +1180,15 @@ function chances(kind){const sl=SLOTS[kind],pS=RATES.S/100;
   return ["R","E","L","M"].map(r=>{let miss=1;sl.forEach(m=>{const ok=LADDER.slice(LADDER.indexOf(m)).filter(x=>x!=="S");if(!ok.includes(r))return;let tot=0;ok.forEach(x=>tot+=RATES[x]);miss*=1-(1-pS)*RATES[r]/tot;});return [r,(1-miss)*100];});}
 function pct(v){return (v>=10?v.toFixed(1):v>=1?v.toFixed(2):v.toFixed(2)).replace(/\.?0+$/,"").replace(".",",")+" %";}
 let BSEL="free",BTAB="free";
-function packList(){const inv=ST.inv||{},goldNext=ST.sinceGold>=9;
+function packList(){const inv=ST.inv||{},goldNext=ST.sinceGold>=EPITY-1;
   if(BTAB==="shop")return SHOP.map(x=>({k:x.id,label:`${nf(x.p)}`,coin:true,ok:ST.coins>=x.p}));
   return [{k:goldNext?"gold":"free",free:true,label:"Gratuit",ok:ST.stock>0||ST.test},
-    {k:"gold",inv:true,label:inv.gold?`Offert · × ${inv.gold}`:`Dans ${10-ST.sinceGold} booster${10-ST.sinceGold>1?"s":""}`,ok:!!inv.gold},
+    {k:"gold",inv:true,label:inv.gold?`Offert · × ${inv.gold}`:`Dans ${EPITY-ST.sinceGold} booster${EPITY-ST.sinceGold>1?"s":""}`,ok:!!inv.gold},
     {k:"sceau",inv:true,label:inv.sceau?`Offert · × ${inv.sceau}`:"À gagner",ok:!!inv.sceau}].filter((x,i,a)=>a.findIndex(y=>y.k===x.k)===i);}
 function renderBoosters(){tick();wallet();
   const td=today();if(ST.mis.date!==td)ST.mis={date:td,open:0,recycle:0,rare:0,done:[],bonus:false};
   if(OPENING)return;
-  const goldNext=ST.sinceGold>=9,inv=ST.inv||{},canFree=ST.stock>0||ST.test;
+  const goldNext=ST.sinceGold>=EPITY-1,inv=ST.inv||{},canFree=ST.stock>0||ST.test;
   // hero
   const fan=heroCards();
   $("#hero").innerHTML=`<div class="hero-txt"><p class="kick"><span>Série 1</span> · ${nf(visTotal())} cartes à collectionner</p>
@@ -1206,7 +1208,7 @@ function renderBoosters(){tick();wallet();
   $("#chips").innerHTML=`<div class="chip hot"><i class="ic">${IC.box}</i><b>${ST.stock}/${MAXSTOCK}</b><span>boosters${ST.stock<MAXSTOCK?` · +1 dans <code id="chip-t">${clk(left)}</code>`:" · pleine"}</span></div>
     <div class="chip"><i class="ic g">${IC.check}</i><b>${misDone}/3</b><span>missions du jour</span></div>
     <div class="chip"><i class="ic v">${IC.flame}</i><b>J${day}/7</b><span>série de connexion</span></div>
-    <div class="chip"><i class="ic y">${IC.star}</i><b>${10-ST.sinceGold}</b><span>avant le doré</span></div>
+    <div class="chip"><i class="ic y">${IC.star}</i><b>${EPITY-ST.sinceGold}</b><span>avant épique sûre</span></div>
     <div class="chip"><i class="ic r">${IC.crown}</i><b>${Math.max(0,PITY-ST.sinceMyth)}</b><span>avant mythique sûre</span></div>`;
   // onglets
   const tabs=[["free","Gratuits"],["shop","Boutique"]];
@@ -1219,10 +1221,10 @@ function renderBoosters(){tick();wallet();
   const shop=SHOP.find(x=>x.id===k);
   let btn;if(it.free)btn=`<button class="ybtn" id="b-open" ${canFree?"":"disabled"}><b>Ouvrir</b><span>Gratuit · ${ST.test?"illimité":`${ST.stock} restant${ST.stock>1?"s":""}`}</span></button>`;
   else if(shop)btn=`<button class="ybtn" id="b-open" ${ST.coins>=shop.p?"":"disabled"}><b>Acheter</b><span><span class="shell"></span>${nf(shop.p)} · tu as ${nf(ST.coins)}</span></button>`;
-  else btn=`<button class="ybtn" id="b-open" ${inv[k]?"":"disabled"}><b>Ouvrir</b><span>${inv[k]?`Offert · ${inv[k]} en réserve`:k==="sceau"?"Se gagne avec les succès":"Gagné tous les 10 boosters"}</span></button>`;
+  else btn=`<button class="ybtn" id="b-open" ${inv[k]?"":"disabled"}><b>Ouvrir</b><span>${inv[k]?`Offert · ${inv[k]} en réserve`:k==="sceau"?"Se gagne avec les succès":"Se gagne avec la série de connexion"}</span></button>`;
   $("#bdet").innerHTML=`<div class="bd-h"><i class="bd-ic ${k}">${IC[pi.ic]}</i><div><h3>${esc(pi.n)}</h3><p>${esc(pi.s)}</p></div></div>
     <div class="bd-st"><div><b>${SLOTS[k].length}</b><span>cartes par booster</span></div><div><b class="c-${guar[0]==="É"?"E":guar[0]==="M"?"M":"R"}">${guar}</b><span>ou mieux, garantie</span></div>
-      <div><b class="acc">${k==="sceau"?"—":Math.max(0,PITY-ST.sinceMyth)}</b><span>${k==="sceau"?"ne touche pas la garantie":"avant mythique sûre"}</span></div><div><b class="yel">${10-ST.sinceGold}</b><span>avant le doré</span></div></div>
+      <div><b class="acc">${k==="sceau"?"—":Math.max(0,PITY-ST.sinceMyth)}</b><span>${k==="sceau"?"ne touche pas la garantie":"avant mythique sûre"}</span></div><div><b class="yel">${EPITY-ST.sinceGold}</b><span>avant épique sûre</span></div></div>
     <button class="seeall" data-go="catalogue"><span class="sa-f">${["E","L","M"].map(r=>`<i style="background:var(${RAR[r][1]})"></i>`).join("")}</span>Voir les ${nf(visTotal())} cartes</button>
     <p class="bd-k">Chance par booster</p>
     <div class="bd-ch">${chances(k).map(([r,v])=>`<div class="ch"><span class="ch-n" style="--c:var(${RAR[r][1]})"><i></i>${RAR[r][0]}</span><span class="ch-b"><i style="width:${Math.max(1.5,v)}%;background:var(${RAR[r][1]})"></i></span><code>${pct(v)}</code></div>`).join("")}</div>
