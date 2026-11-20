@@ -1,4 +1,4 @@
-// TCG : réservé au propriétaire et aux admins du site pour l'instant.
+// TCG d'ORG-Central. Avant la sortie : décompte et liste des cartes pour tous, jeu complet pour le propriétaire et les admins.
 // Sans paramètre : petite page de chargement (publique, ne contient pas le jeu).
 // Avec ?f=… : fichier du jeu, envoyé seulement si le jeton Supabase est celui du propriétaire (rpc is_owner).
 const fs = require("fs");
@@ -32,8 +32,10 @@ function readFile(f) {
   return null;
 }
 
-const LOADER = `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ORG-Central TCG</title><meta name="robots" content="noindex"><link rel="icon" href="/favicon.svg">
+// Sortie publique : samedi 21 novembre 2026 à 14 h (heure de Paris).
+const LAUNCH = Date.parse("2026-11-21T14:00:00+01:00");
+const loader = (now) => `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ORG-Central TCG</title><meta name="description" content="Le TCG d'ORG-Central : toutes les ORG, les saisons et les joueurs du wiki en cartes à collectionner."><link rel="icon" href="/favicon.svg">
 <style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0e0d12;color:#F1ECE4;font:16px/1.5 system-ui,sans-serif;text-align:center;padding:20px}a{color:#EC6A3D}</style></head>
 <body><p id="m">Chargement…</p>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.js"></script>
@@ -41,28 +43,31 @@ const LOADER = `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta
 <script>
 (async()=>{const m=document.getElementById("m");
   try{const C=window.ORG_CENTRAL_CONFIG;
-    const sb=supabase.createClient(C.supabaseUrl,C.supabaseAnonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,flowType:"pkce",storageKey:"org-central-auth"}});
-    const tok=async()=>{const {data}=await sb.auth.getSession();return data&&data.session?data.session.access_token:"";};
-    if(!(await tok())){m.innerHTML='Connecte-toi sur <a href="/">orgcentral.fr</a> pour ouvrir cette page.';return;}
-    window.TCG_HOSTED=true;window.TCG_SB=sb;try{const {data}=await sb.auth.getSession();window.TCG_UID=data.session.user.id;}catch(e){}
-    window.TCG_GET=async p=>fetch("/api/tcg?f="+encodeURIComponent(p),{headers:{Authorization:"Bearer "+(await tok())}});
+    const sb=supabase.createClient(C.supabaseUrl,C.supabaseAnonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:"pkce",storageKey:"org-central-auth"}});
+    const sess=async()=>{const {data}=await sb.auth.getSession();return data&&data.session||null;};
+    const s=await sess();
+    window.TCG_HOSTED=true;window.TCG_SB=sb;window.TCG_UID=s?s.user.id:null;
+    window.TCG_LAUNCH=${LAUNCH};window.TCG_OFFSET=${now}-Date.now();
+    let staff=false;if(s){try{const [o,a]=await Promise.all([sb.rpc("is_owner"),sb.rpc("is_admin")]);staff=o.data===true||a.data===true;}catch(e){}}
+    const live=Date.now()+window.TCG_OFFSET>=window.TCG_LAUNCH;
+    window.TCG_MODE=staff?"full":!live?"preview":s?"full":"login";
+    window.TCG_GET=async p=>{const t=await sess();return fetch("/api/tcg?f="+encodeURIComponent(p),{headers:t?{Authorization:"Bearer "+t.access_token}:{}});};
     const r=await window.TCG_GET("index.html");
-    if(!r.ok){m.innerHTML='Cette page est privée. <a href="/">Retour au site</a>';return;}
+    if(!r.ok){m.innerHTML='Le TCG n’a pas pu être chargé. <a href="/tcg">Réessayer</a>';return;}
     const html=await r.text();document.open();document.write(html);document.close();
   }catch(e){m.innerHTML='Le chargement a échoué. <a href="/tcg">Réessayer</a>';}})();
 </script></body></html>`;
+
 
 module.exports = async (req, res) => {
   const f = String((req.query && req.query.f) || "");
   if (!f) {
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.setHeader("Cache-Control", "no-store");
-    res.setHeader("X-Robots-Tag", "noindex");
-    return res.status(200).send(LOADER);
+    return res.status(200).send(loader(Date.now()));
   }
   if (!OK_FILES.test(f)) return res.status(404).send("Introuvable");
-  const tok = String(req.headers.authorization || "").replace(/^Bearer\s+/i, "");
-  if (!(await isOwner(tok))) return res.status(403).send("Page privée");
+  // Les fichiers du jeu sont publics depuis l'annonce : la page de décompte affiche la liste des cartes.
   const body = readFile(f);
   if (!body) return res.status(404).send("Introuvable");
   res.setHeader("Content-Type", f.endsWith(".html") ? "text/html; charset=utf-8" : "application/json; charset=utf-8");

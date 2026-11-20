@@ -901,6 +901,27 @@ body.tcg .toast div.out{animation:tout .26s ease forwards}
 .radm select{flex:1;font:inherit;color:var(--ink);background:var(--surface-2,#1d1a23);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
 .radm p{margin:10px 0 0;font-size:.85rem;color:var(--muted)}
 .linkbtn{all:unset;cursor:pointer;color:var(--acc,#ec6a3d);text-decoration:underline}
+
+/* avant la sortie */
+body.pre .tabs,body.pre .wal,body.pre .me-menu{display:none!important}
+.pre-back{display:none}body.pre .pre-back{display:inline-flex;text-decoration:none}
+.pre-hero{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:30px;align-items:center;padding:56px 60px;border-radius:28px;border:1px solid #3a2a22;
+  background:radial-gradient(700px 420px at 85% 55%,rgba(236,106,61,.24),transparent 70%),linear-gradient(100deg,#131118 30%,#2a1a12 100%);margin:0 0 26px}
+@media (max-width:900px){.pre-hero{grid-template-columns:1fr;padding:34px 24px}}
+.cd{text-align:center}
+.cd-k{font-family:var(--f-mono);letter-spacing:.2em;text-transform:uppercase;font-size:.8rem;color:var(--acc);margin:0 0 14px}
+.cd-n{display:flex;justify-content:center;gap:12px}
+.cd-n div{min-width:92px;padding:16px 10px;border-radius:20px;background:rgba(14,13,18,.6);border:1px solid #3a2a22}
+.cd-n b{display:block;font-family:var(--f-ui);font-weight:800;font-size:clamp(2.2rem,5vw,3.6rem);line-height:1;font-variant-numeric:tabular-nums;color:#EFE9DF}
+.cd-n span{font-size:.85rem;color:var(--muted)}
+.cd-go{font-family:var(--f-ui);font-weight:800;font-size:2.4rem;color:var(--yel)}
+.cta.ghosty{background:transparent;color:var(--ink);border:1px solid var(--line);box-shadow:none;padding:0 28px}
+.pre-ok{margin:12px 0 0}
+.pre-opt{margin:0 0 40px}
+.oo{padding:20px 24px;border-radius:22px;background:var(--surface);border:1px solid var(--line)}
+.oo p{margin:8px 0 0;color:#cfc8c0}.oo .acts{margin-top:14px}
+.pf-me #pf-opt .oo{margin:0 0 20px;padding:16px}.pf-me #pf-opt .h3{font-size:1rem}
+.pre-list-h{margin:0 0 6px}
 </style>
 </head>
 <body>
@@ -945,7 +966,7 @@ body.tcg .toast div.out{animation:tout .26s ease forwards}
       <button class="tab" data-go="amis">Amis<i class="tdot" id="t-amis" hidden></i></button>
       <button class="tab" data-go="classement">Classement</button>
     </nav>
-    <div class="wallet">
+    <div class="wallet"><a class="btn ghost pre-back" href="/">Retour au site</a>
       <span class="wal" title="Boosters gratuits en réserve et coquillages"><span class="ring" id="w-ring"><b id="w-stock">0</b></span><i class="sep"></i><span id="w-coins">0</span><span class="shell"></span></span>
       <div class="me-menu"><button class="me-btn" id="me-btn" aria-haspopup="menu" aria-expanded="false"><span class="me-av" id="me-av"></span><span class="me-n" id="me-n">Profil</span><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
         <div class="me-drop" id="me-drop" role="menu" hidden>
@@ -996,6 +1017,15 @@ body.tcg .toast div.out{animation:tout .26s ease forwards}
       <div class="mk-grid stg" id="mk-grid"></div>
     </section>
     <section class="view" id="v-albums" hidden></section>
+    <section class="view" id="v-prelaunch" hidden>
+      <div class="pre-hero"><div><p class="kick"><span>Série 1</span> · <span id="pre-kick"></span></p><h1 class="hero-h" id="pre-h">Le TCG<br>arrive</h1>
+        <p class="hero-sub" id="pre-sub">Toutes les ORG, les saisons et les joueurs du wiki en cartes à collectionner. Ouvre des boosters, complète tes albums, échange avec tes amis.</p>
+        <div id="pre-cta"></div></div>
+        <div class="cd" id="cd" aria-live="polite"></div></div>
+      <div class="pre-opt" id="pre-opt"></div>
+      <div class="pf-sh pre-list-h"><h2 class="h2">Toutes les cartes</h2></div>
+      <div id="pre-cat"></div>
+    </section>
     <section class="view" id="v-profil" hidden></section>
     <section class="view" id="v-catalogue" hidden>
       <h1 class="h">Toutes les cartes</h1><p class="lede" id="ct-lede"></p>
@@ -1104,12 +1134,12 @@ function keyOf(c,d){const P=d.players,S=d.seasons,O=d.orgs;
   const x=d.parts[c.i];return "P:"+S[x[1]].id+":"+P[x[0]].id;}
 function build(){
   const cards=[];const P=D.players,S=D.seasons,O=D.orgs;const byR={M:[],L:[],E:[],R:[],PC:[],C:[]};
-  P.forEach((p,i)=>{if(p.r&&byR[p.r])byR[p.r].push(i);});
+  P.forEach((p,i)=>{if(p.r&&byR[p.r]&&!OPT.has(p.id))byR[p.r].push(i);});
   const pk=(a,b)=>P[b].w-P[a].w||P[b].p-P[a].p||norm(P[a].n).localeCompare(norm(P[b].n));
   for(const r of ["M","L","E"]){byR[r].sort(pk).forEach(i=>cards.push({t:"J",r,i}));O.forEach((o,i)=>{if((o.r||"E")===r)cards.push({t:"O",r,i});});}
   byR.R.sort(pk).forEach(i=>cards.push({t:"J",r:"R",i}));
   S.forEach((s,i)=>cards.push({t:"R",r:"R",i}));
-  const prs=[],pcs=[],cs=[];D.parts.forEach((x,i)=>{const pl=!x[3]&&x[2]?x[2]:0;(pl&&pl<=3?prs:pl&&pl<=10?pcs:cs).push({t:"P",r:pl&&pl<=3?"R":pl&&pl<=10?"PC":"C",i});});
+  const prs=[],pcs=[],cs=[];D.parts.forEach((x,i)=>{if(OPT.has(P[x[0]].id))return;const pl=!x[3]&&x[2]?x[2]:0;(pl&&pl<=3?prs:pl&&pl<=10?pcs:cs).push({t:"P",r:pl&&pl<=3?"R":pl&&pl<=10?"PC":"C",i});});
   cards.push(...prs);
   byR.PC.sort(pk).forEach(i=>cards.push({t:"J",r:"PC",i}));
   cards.push(...pcs);byR.C.sort(pk).forEach(i=>cards.push({t:"J",r:"C",i}));cards.push(...cs);
@@ -1282,7 +1312,9 @@ function tweenCoins(to){const el=$("#w-coins");if(!el)return;if(COINV==null||red
   const step=t=>{const k=Math.min(1,(t-t0)/d),e=1-Math.pow(1-k,3);el.textContent=nf(Math.round(from+(to-from)*e));if(k<1&&COINV===to)requestAnimationFrame(step);};requestAnimationFrame(step);}
 function wallet(){const ma=$("#md-ach");if(ma&&ST)ma.textContent=`${ACH.filter(a=>ST.ach[a.id]).length}/${ACH.length}`;$("#w-stock").textContent=ST.test?"∞":ST.stock;tweenCoins(ST.coins);ring(ST.stock>=MAXSTOCK?0:CHARGE-((Date.now()-ST.last)%CHARGE));}
 const VIEWS=["boosters","collection","catalogue","marche","albums","succes","boutique","classement","profil","amis"];
+const MODE=window.TCG_MODE||"full",PREVIEW=MODE!=="full";
 function route(){const h0=(location.hash||"").slice(1);
+  if(PREVIEW){if(h0==="site"){location.href="/";return;}document.querySelectorAll(".view").forEach(x=>x.hidden=x.id!=="v-prelaunch");$("#site").hidden=true;$("#tcg").hidden=false;document.body.classList.add("tcg","pre");renderPrelaunch();return;}
   // Sur orgcentral.fr, la copie de test du site n'existe pas : « site » ramène au vrai site, tout lien inconnu ramène aux boosters.
   if(window.TCG_HOSTED){if(h0==="site"){location.href="/";return;}if(!VIEWS.includes(h0)&&!h0.startsWith("album-")){history.replaceState(null,"","#boosters");}}
   const h=(location.hash||"#site").slice(1);const v=VIEWS.includes(h)?h:(h.startsWith("album-")?"albums":"site");
@@ -1571,14 +1603,15 @@ function openCard(c){const P=D.players,S=D.seasons,O=D.orgs;const n=ST.owned[c.k
   else if(c.t==="O"){const o=O[c.i];rows=[["Format",o.f==="speed"?"Speed":"Format long"],["Saisons",o.ns]];}
   else if(c.t==="R"){const s=S[c.i];rows=[["ORG",(O[s.o]||{}).n],["Joueurs",s.c],["Année",s.y||"–"]];}
   else{const x=D.parts[c.i],s=S[x[1]];rows=[["Saison",sFull(s)],["Place",s.x?"Sur le site de l'ORG":x[3]?"DQ":x[2]?placeTxt(x[2]):"En cours"]];}
-  rows.push(["Exemplaires",n]);
-  const alb=[];if(c.pl!=null)alb.push(`<button class="btn" data-go="album-pl-${c.pl}">Album de ${esc(P[c.pl].n)}</button>`);
-  if(c.se!=null)alb.push(`<button class="btn" data-go="album-se-${c.se}">Album de la saison</button>`);
-  if(c.og!=null&&c.og>=0)alb.push(`<button class="btn" data-go="album-og-${c.og}">Album de ${esc(O[c.og].n)}</button>`);
+  if(!PREVIEW)rows.push(["Exemplaires",n]);
+  const alb=[];if(!PREVIEW&&c.pl!=null)alb.push(`<button class="btn" data-go="album-pl-${c.pl}">Album de ${esc(P[c.pl].n)}</button>`);
+  if(!PREVIEW&&c.se!=null)alb.push(`<button class="btn" data-go="album-se-${c.se}">Album de la saison</button>`);
+  if(!PREVIEW&&c.og!=null&&c.og>=0)alb.push(`<button class="btn" data-go="album-og-${c.og}">Album de ${esc(O[c.og].n)}</button>`);
   $("#dbox").classList.remove("single");
   $("#dbox").innerHTML=cardHTML(c,true)+`<div class="dinfo"><span class="k" style="color:var(${RAR[c.r][1]})">${RAR[c.r][0]} · ${esc(c.no)}</span><h2>${esc(label(c))}</h2>
     <dl>${rows.map(([a,b])=>`<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl>
     ${CANEDIT&&c.r!=="S"?`<div class="radm"><label><span>Rareté <small>admins</small></span><select id="radm">${["M","L","E","R","PC","C"].map(r=>`<option value="${r}" ${c.r===r?"selected":""}>${RAR[r][0]}${(c.base||c.r)===r?" (automatique)":""}</option>`).join("")}</select></label>
+      ${c.pl!=null&&OPT_OK?`<p><button class="linkbtn" id="radm-out">Retirer ${esc(D.players[c.pl].n)} du TCG</button> (toutes ses cartes, pour tout le monde)</p>`:""}
       ${c.base?`<p>Changée à la main. Automatiquement, elle serait ${RAR[c.base][0].toLowerCase()}. <button class="linkbtn" id="radm-x">Revenir à l'automatique</button></p>`:`<p>Calculée automatiquement. Le changement s'applique pour tous les joueurs.</p>`}</div>`:""}
     <div class="acts">${n&&c.r!=="S"&&DB?`<button class="btn" id="sell1">Vendre au marché</button>`:""}${n>1?`<button class="btn" id="rec1">Recycler 1 doublon (+${RECYCLE[c.r]})</button>`:""}${alb.join("")}<button class="btn primary" id="dclose">Fermer</button></div></div>`;
   $("#dlg").hidden=false;$("#dclose").focus();
@@ -1587,6 +1620,8 @@ function openCard(c){const P=D.players,S=D.seasons,O=D.orgs;const n=ST.owned[c.k
   const sb=$("#sell1");if(sb)sb.onclick=()=>mkSellForm(c);
   const ra=$("#radm");if(ra)ra.onchange=()=>{ra.disabled=true;setRarity(c,ra.value);};
   const rx=$("#radm-x");if(rx)rx.onclick=()=>setRarity(c,c.base);
+  const ro=$("#radm-out");if(ro)ro.onclick=async()=>{const p=D.players[c.pl];ro.disabled=true;const {error}=await SX().from("tcg_optout").insert({player_id:p.id});
+    if(error){toast("Le retrait n'a pas pu se faire");return;}OPT.add(p.id);$("#dlg").hidden=true;toast(`${p.n} est retiré du TCG`);applyOptOut();stashSync();};
   if(n>1)$("#rec1").onclick=()=>{const v=recycle(c.k,1);toast(`+${v} coquillages`);checkAll();openCard(c);if(!$("#v-collection").hidden)renderCollection(true);};
   const card=$("#dbox .card");card.addEventListener("pointermove",e=>{const r=card.getBoundingClientRect();const x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;
     if(!matchMedia("(prefers-reduced-motion:reduce)").matches)card.style.transform=`perspective(900px) rotateY(${(x-.5)*16}deg) rotateX(${(.5-y)*16}deg)`;
@@ -1861,9 +1896,10 @@ function renderProfile(){const v=$("#v-profil"),u=uniq(),tot=visTotal(),got=ACH.
       <div class="pf-sec"><h2 class="h3">Par rareté</h2><div class="rbars">${rows}</div></div>
       <div class="pf-sec"><div class="pf-sh"><h2 class="h3">Derniers succès</h2><button class="btn ghost" data-go="succes">Tous les succès</button></div>
         <div class="ach">${recent.length?recent.map(a=>`<div class="achi got"><span class="medal">✓</span><div><b>${esc(a.t)}</b><small>${esc(a.d)}</small></div></div>`).join(""):`<p class="muted">Aucun succès pour l'instant.</p>`}</div></div></div>
-    <aside class="pf-me"><p class="bd-k">Ta carte</p>${mine?`<div class="pf-card${mineOwned?"":" locked"}" data-ck="${mine.k}">${cardHTML(mine,true)}${mineOwned?"":`<span class="pf-lock">Pas encore tirée</span>`}</div>
+    <aside class="pf-me"><div id="pf-opt"></div><p class="bd-k">Ta carte</p>${mine?`<div class="pf-card${mineOwned?"":" locked"}" data-ck="${mine.k}">${cardHTML(mine,true)}${mineOwned?"":`<span class="pf-lock">Pas encore tirée</span>`}</div>
       <p class="muted pf-cap">${mineOwned?"Tu l'as dans ta collection.":"Tire-la dans un booster pour débloquer le succès « C'est moi ! »."}</p>`:`<div class="pf-none">${ME.pi!=null?"Ta fiche n'a pas encore de carte.":"Lie ta fiche joueur à ton compte sur le site pour avoir ta carte ici."}</div>`}</aside></div>`;
   v.querySelectorAll("[data-ck]").forEach(d=>d.onclick=()=>openCard(CARDS[d.dataset.ck]));
+  renderOptOut($("#pf-opt"));
   v.querySelectorAll("[data-vs]").forEach(d=>d.onclick=e=>{if(e.target.closest("[data-vx]"))return;const i=+d.dataset.vs;const k=ST.show[i];if(k&&ST.owned[k])return openCard(CARDS[k]);pickCards({title:"Choisir une carte pour la vitrine",pool:Object.keys(ST.owned).map(k=>CARDS[k]).filter(Boolean),max:1,done:ks=>{if(ks[0]){ST.show[i]=ks[0];save();}renderProfile();}});});
   v.querySelectorAll("[data-vx]").forEach(b=>b.onclick=()=>{ST.show[+b.dataset.vx]=null;save();renderProfile();});}
 // --- sélecteur de cartes réutilisable
@@ -1938,10 +1974,11 @@ setInterval(()=>{if(ST&&SX()&&$("#v-amis").hidden)syncSocial();},60000);
 /* ---------- Toutes les cartes ---------- */
 let CTR="",CTV=[],CTN=0,CTIO=null;
 function catTile(c){const n=ST.owned[c.k]||0;
+  if(PREVIEW)return `<div class="cwrap ct" data-ck="${c.k}">${cardHTML(c,true).replace("<article ",'<article tabindex="0" ')}</div>`;
   return `<div class="cwrap ct${n?"":" miss2"}" data-ck="${c.k}">${cardHTML(c,true).replace("<article ",'<article tabindex="0" ')}${n?`<span class="cnt own">×${n}</span>`:`<span class="ct-m">Manquante</span>`}</div>`;}
-function renderCatalog(reset){
+function renderCatalog(reset){if(PREVIEW&&!$("#pre-cat").dataset.moved){const v=$("#v-catalogue");$("#pre-cat").append(...[...v.children].filter(e=>!e.matches("h1")));$("#pre-cat").dataset.moved=1;}
   const vis=CARDS.filter(c=>c.r!=="S"||ST.owned[c.k]),tot=vis.length,own=vis.filter(c=>ST.owned[c.k]).length;
-  $("#ct-lede").textContent=`${nf(tot)} cartes dans la série 1 · tu en as ${nf(own)} (${(own/tot*100).toFixed(1).replace(".",",")} %). Touche une carte pour la voir en grand.`;
+  $("#ct-lede").textContent=PREVIEW?`${nf(tot)} cartes dans la série 1. Cherche ton nom, ton ORG ou ta saison préférée, et touche une carte pour la voir en grand.`:`${nf(tot)} cartes dans la série 1 · tu en as ${nf(own)} (${(own/tot*100).toFixed(1).replace(".",",")} %). Touche une carte pour la voir en grand.`;
   const os=$("#ct-o");if(!os.dataset.ok){os.insertAdjacentHTML("beforeend",D.orgs.map((o,i)=>[o,i]).filter(([o,i])=>BY_ORG[i]&&BY_ORG[i].length).sort((a,b)=>norm(a[0].n).localeCompare(norm(b[0].n))).map(([o,i])=>`<option value="${i}">${esc(o.n)}</option>`).join(""));os.dataset.ok=1;}
   const rs=LADDER.slice().reverse().filter(r=>r!=="S"||ST.firsts.S);
   $("#ct-rar").innerHTML=`<button class="rchip${CTR?"":" on"}" data-cr="">Toutes <b>${nf(tot)}</b></button>`+rs.map(r=>{const all=vis.filter(c=>c.r===r),o=all.filter(c=>ST.owned[c.k]).length;
@@ -2081,14 +2118,52 @@ async function setRarity(c,r){const sb=SX();if(!sb||!CANEDIT)return;const auto=c
   CARDS=build();indexes();DONE_CACHE=null;route();openCard(CARDS[c.k]);
   toast(r===auto?`${label(c)} : rareté automatique (${RAR[auto][0]})`:`${label(c)} est maintenant ${RAR[r][0].toLowerCase()}`);}
 
+
+/* ---------- Avant la sortie : décompte, liste des cartes, retrait ---------- */
+let OPT=new Set(),OPT_OK=null,CDT=null;
+async function loadOptOut(){const sb=SX();if(!sb)return;try{const {data,error}=await sb.from("tcg_optout").select("player_id");if(error){OPT_OK=false;return;}OPT_OK=true;OPT=new Set((data||[]).map(r=>r.player_id));}catch(e){OPT_OK=false;}}
+function launchLeft(){return (window.TCG_LAUNCH||0)-(Date.now()+(window.TCG_OFFSET||0));}
+function renderPrelaunch(){const v=$("#v-prelaunch");if(!v.dataset.ok){v.dataset.ok=1;renderCatalog(true);renderOptOut($("#pre-opt"));}
+  $("#pre-kick").textContent=`${nf(visTotal())} cartes à collectionner`;
+  const tick=()=>{const l=launchLeft();
+    if(l<=0){if(MODE==="preview"){clearInterval(CDT);$("#cd").innerHTML=`<p class="cd-go">C'est parti !</p>`;setTimeout(()=>location.reload(),1500);return;}
+      $("#pre-h").innerHTML="Le TCG<br>est ouvert";$("#cd").innerHTML="";
+      $("#pre-cta").innerHTML=`<button class="cta" id="pre-login">Se connecter avec Discord pour jouer</button>`;$("#pre-login").onclick=login;return;}
+    const d=Math.floor(l/864e5),h=Math.floor(l/36e5)%24,m=Math.floor(l/6e4)%60,sec=Math.floor(l/1e3)%60;
+    $("#cd").innerHTML=`<p class="cd-k">Ouverture samedi 21 novembre à 14 h</p><div class="cd-n">${d?`<div><b>${d}</b><span>jour${d>1?"s":""}</span></div>`:""}<div><b>${String(h).padStart(2,"0")}</b><span>heures</span></div><div><b>${String(m).padStart(2,"0")}</b><span>minutes</span></div><div><b>${String(sec).padStart(2,"0")}</b><span>secondes</span></div></div>`;
+    if(!$("#pre-cta").dataset.ok){$("#pre-cta").dataset.ok=1;$("#pre-cta").innerHTML=SX()&&MEID()?`<p class="muted pre-ok">Tu es connecté : à 14 h, cette page s'ouvrira toute seule sur le jeu.</p>`:`<button class="cta ghosty" id="pre-login">Se connecter avec Discord</button><p class="muted pre-ok">Il faudra être connecté pour jouer.</p>`;const b=$("#pre-login");if(b)b.onclick=login;}};
+  tick();clearInterval(CDT);CDT=setInterval(tick,1000);}
+async function login(){const sb=SX();if(!sb){location.href="/";return;}try{await sb.auth.signInWithOAuth({provider:"discord",options:{redirectTo:location.origin+"/tcg"}});}catch(e){location.href="/";}}
+async function renderOptOut(box){if(!box)return;const sb=SX(),id=MEID();let pid=null,pname=null,out=false;
+  if(sb&&id){try{const {data}=await sb.from("players").select("id,pseudo:data->>pseudo").eq("data->>ownerUid",id).limit(1);if(data&&data[0]){pid=data[0].id;pname=data[0].pseudo;out=OPT.has(pid);}}catch(e){}}
+  const contact=`Contacte <b>Naries</b> ou <b>Layte</b> sur Discord et on te retire à la main.`;
+  let body;
+  if(!sb||!id)body=`<p>Connecte-toi avec Discord : si ton compte est relié à ta fiche joueur, tu seras retiré tout de suite. Sinon, ${contact.charAt(0).toLowerCase()+contact.slice(1)}</p><div class="acts"><button class="btn" id="oo-login">Se connecter avec Discord</button></div>`;
+  else if(!pid)body=`<p>Ton compte n'est relié à aucune fiche joueur, on ne sait donc pas quelles cartes retirer. ${contact}</p>`;
+  else if(OPT_OK===false)body=`<p>Le retrait automatique n'est pas encore disponible. ${contact}</p>`;
+  else if(out)body=`<p><b>${esc(pname)}</b> n'apparaît pas dans le TCG : toutes les cartes à ton nom sont retirées.</p><div class="acts"><button class="btn" id="oo-back">Je veux finalement apparaître</button></div>`;
+  else body=`<p>Ta fiche <b>${esc(pname)}</b> donne une carte joueur et une carte par saison jouée. Si tu préfères, on retire toutes les cartes à ton nom, pour tout le monde.</p><div class="acts"><button class="btn" id="oo-go">Ne pas apparaître dans les cartes</button></div>`;
+  box.innerHTML=`<div class="oo"><h3 class="h3">Tu ne veux pas apparaître dans les cartes ?</h3>${body}</div>`;
+  const lg=box.querySelector("#oo-login");if(lg)lg.onclick=login;
+  const go=box.querySelector("#oo-go"),back=box.querySelector("#oo-back");
+  if(go)go.onclick=async()=>{go.disabled=true;const {error}=await sb.from("tcg_optout").insert({player_id:pid});if(error){toast("Le retrait n'a pas pu se faire : contacte Naries ou Layte");go.disabled=false;return;}OPT.add(pid);toast("C'est fait : tes cartes sont retirées du TCG");applyOptOut();renderOptOut(box);};
+  if(back)back.onclick=async()=>{back.disabled=true;const {error}=await sb.from("tcg_optout").delete().eq("player_id",pid);if(error){toast("Ça n'a pas marché, réessaie");back.disabled=false;return;}OPT.delete(pid);toast("Tes cartes reviennent dans le TCG");applyOptOut();renderOptOut(box);};}
+function applyOptOut(){CARDS=build();indexes();DONE_CACHE=null;if(PREVIEW){$("#ct-grid").innerHTML="";renderCatalog(true);}else route();}
+// cartes possédées qui n'existent plus (joueur retiré, données en direct indisponibles) : mises de côté, rendues si elles reviennent
+function stashSync(){if(!ST)return;ST.stash=ST.stash||{};let ch=false;
+  for(const k of Object.keys(ST.owned))if(!CARDS[k]){ST.stash[k]=(ST.stash[k]||0)+ST.owned[k];delete ST.owned[k];ch=true;}
+  for(const k of Object.keys(ST.stash))if(CARDS[k]){ST.owned[k]=(ST.owned[k]||0)+ST.stash[k];delete ST.stash[k];ch=true;}
+  if(ch)save();}
+
 /* ---------- Démarrage ---------- */
 (async()=>{
   try{if(window.TCG_HOSTED){try{D=await liveData();}catch(e){console.warn("données en direct indisponibles",e);D=null;}}
-    if(!D)D=await (await tget("cards.json")).json();prepD(D);orgFallback();await Promise.all([loadOverrides(),loadRoles()]);}catch(e){document.body.insertAdjacentHTML("afterbegin",`<p style="padding:20px">Les cartes n'ont pas pu être chargées. Recharge la page.</p>`);return;}
+    if(!D)D=await (await tget("cards.json")).json();prepD(D);orgFallback();await Promise.all([loadOverrides(),loadRoles(),loadOptOut()]);}catch(e){document.body.insertAdjacentHTML("afterbegin",`<p style="padding:20px">Les cartes n'ont pas pu être chargées. Recharge la page.</p>`);return;}
   $(".tl-emb").innerHTML=TORCH;$("#me-btn").onclick=e=>{e.stopPropagation();const d=$("#me-drop");d.hidden=!d.hidden;$("#me-btn").setAttribute("aria-expanded",String(!d.hidden));};
   document.addEventListener("click",e=>{const d=$("#me-drop");if(d&&!d.hidden&&!e.target.closest(".me-menu"))d.hidden=true;});
-  $("#w-mis").onclick=()=>{location.hash="boosters";setTimeout(()=>{const m=$("#missions");if(m)m.scrollIntoView({behavior:reduced()?"auto":"smooth",block:"center"});},60);};CARDS=build();indexes();route();
-  await load();await loadMe();sndLabel();$("#m-reset").hidden=!OWNER;tick();wallet();checkAll();route();syncMarket().then(()=>wallet());
+  $("#w-mis").onclick=()=>{location.hash="boosters";setTimeout(()=>{const m=$("#missions");if(m)m.scrollIntoView({behavior:reduced()?"auto":"smooth",block:"center"});},60);};if(PREVIEW)ST=fresh();CARDS=build();indexes();route();
+  if(PREVIEW)return;
+  await load();stashSync();await loadMe();sndLabel();$("#m-reset").hidden=!OWNER;tick();wallet();checkAll();route();syncMarket().then(()=>wallet());
   if(SX()){loadFriends().then(syncSocial).catch(()=>{});}
   window.addEventListener("pagehide",()=>flush());document.addEventListener("visibilitychange",()=>{if(document.hidden)flush();});
 })();
