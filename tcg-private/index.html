@@ -1115,7 +1115,7 @@ function cardHTML(c,big){
     const w=s.x?`Résultats sur le site de l'ORG`:s.w.length?`<b>${esc(s.w.map(i=>P[i].n).join(" & "))}</b>`:(s.st==="terminee"?"Vainqueur non renseigné":"Saison en cours");
     sub=`<span>${s.w.length&&!s.x?"👑 ":""}${w}</span>`;
     st=`<div class="st"><div><b>${s.c}</b><span>Joueurs</span></div>${s.y?`<div><b>${s.y}</b><span>Année</span></div>`:""}</div>`;}
-  else{const x=D.parts[c.i],p=P[x[0]],s=S[x[1]],o=O[s.o]||{};name=p.n;art=pic(p.a,p.n);
+  else{const x=D.parts[c.i],p=P[x[0]],s=S[x[1]],o=O[s.o]||{};name=p.n;art=pic(x[4]||p.a,p.n);
     if(!s.x)extra=placeHTML(x[2],x[3]);ty="Participation";
     sub=`<span class="mini">${pic(s.l||o.l,s.t||o.n)}</span><span><b>${esc(sName(s))}</b>${s.t?" · "+esc(s.t):""}</span>`;}
   return `<article class="card r-${c.r}" ${big?"":`tabindex="0" data-c="${c.k}"`} aria-label="${esc(name)}, ${esc(rk)}, ${esc(ty)}"><div class="in">
@@ -1433,7 +1433,7 @@ function heroCards(){const P=D.players,pick=[];
     if(!c){const ps=CARDS.filter(c=>c.t==="P"&&D.parts[c.i][0]===i).sort((a,b)=>(D.parts[a.i][2]||99)-(D.parts[b.i][2]||99));c=ps[0];}
     if(c)pick.push(c);});
   return pick;}
-function hasArt(c){if(c.t==="J"||c.t==="P")return !!(D.players[c.t==="J"?c.i:D.parts[c.i][0]]||{}).a;if(c.t==="O")return !!D.orgs[c.i].l;return !!(D.seasons[c.i]||{}).l;}
+function hasArt(c){if(c.t==="P"&&D.parts[c.i][4])return true;if(c.t==="J"||c.t==="P")return !!(D.players[c.t==="J"?c.i:D.parts[c.i][0]]||{}).a;if(c.t==="O")return !!D.orgs[c.i].l;return !!(D.seasons[c.i]||{}).l;}
 function yesterday(){const y=new Date();y.setDate(y.getDate()-1);return `${y.getFullYear()}-${String(y.getMonth()+1).padStart(2,"0")}-${String(y.getDate()).padStart(2,"0")}`;}
 function clk(ms){const t=Math.ceil(ms/1000);return `${String(Math.floor(t/3600)).padStart(2,"0")}:${String(Math.floor(t/60)%60).padStart(2,"0")}:${String(t%60).padStart(2,"0")}`;}
 function fmtT(ms){const s=Math.ceil(ms/1000);return `${Math.floor(s/60)} min ${String(s%60).padStart(2,"0")} s`;}
@@ -2022,7 +2022,7 @@ async function liveData(){
   const best={},top5={},porgs={},parts=[];
   Ss.forEach(se=>{const s=se.data||{};(s.cast||[]).forEach(c=>{const p=c.playerId;if(!(p in pi))return;const pl=c.place,dq=DQ.test(String(c.note||"")),ok=Number.isInteger(pl);
     if(ok){if(best[p]==null||pl<best[p])best[p]=pl;if(pl<=5&&!dq)top5[p]=(top5[p]||0)+1;}
-    (porgs[p]=porgs[p]||new Set()).add(s.orgId);parts.push([pi[p],si[se.id],ok?pl:null,dq?1:0]);});});
+    (porgs[p]=porgs[p]||new Set()).add(s.orgId);parts.push([pi[p],si[se.id],ok?pl:null,dq?1:0,c.sAvatar||""]);});});
   const ns={};SR.forEach(se=>{const o=(se.data||{}).orgId;ns[o]=(ns[o]||0)+1;});
   return {live:true,date:new Date().toLocaleDateString("fr-FR"),
     orgs:oids.map(o=>({id:o,n:orgs[o].name||"?",l:orgs[o].logo||"",f:orgs[o].format||"",pf:orgs[o].platform||"",ns:ns[o]||0})),
