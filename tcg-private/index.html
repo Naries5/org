@@ -1203,7 +1203,7 @@ async function migrateKeys(){let L=D;
   if(ST.show)ST.show=ST.show.map(k=>k==null?k:m(k));
   if(ST.tr&&ST.tr.held)Object.keys(ST.tr.held).forEach(id=>ST.tr.held[id]=ST.tr.held[id].map(m).filter(Boolean));
   ST.kv=3;save();}
-function fresh(){return {v:1,kv:3,stock:MAXSTOCK,last:Date.now(),coins:100,owned:{},opened:0,sinceGold:0,sinceMyth:0,recycled:0,bought:0,
+function fresh(){return {v:1,kv:3,lr:(window.TCG_LAUNCH&&launchLeft()<=0)?1:0,stock:MAXSTOCK,last:Date.now(),coins:100,owned:{},opened:0,sinceGold:0,sinceMyth:0,recycled:0,bought:0,
   inv:{gold:0,sceau:0},daily:{date:"",day:0},mis:{date:"",open:0,recycle:0,rare:0,done:[],bonus:false},ach:{},claimed:{},firsts:{}};}
 function tick(){const now=Date.now();if(ST.stock>=MAXSTOCK){ST.last=now;return;}
   const n=Math.floor((now-ST.last)/CHARGE);if(n>0){ST.stock=Math.min(MAXSTOCK,ST.stock+n);ST.last=ST.stock>=MAXSTOCK?now:ST.last+n*CHARGE;save();}}
@@ -2155,6 +2155,15 @@ function stashSync(){if(!ST)return;ST.stash=ST.stash||{};let ch=false;
   for(const k of Object.keys(ST.stash))if(CARDS[k]){ST.owned[k]=(ST.owned[k]||0)+ST.stash[k];delete ST.stash[k];ch=true;}
   if(ch)save();}
 
+
+/* ---------- Remise à zéro à la sortie ---------- */
+// Toute progression commencée avant la sortie (tests du propriétaire et des admins) repart de zéro à 14 h.
+function launchReset(){if(!window.TCG_LAUNCH||!ST||ST.lr===1||launchLeft()>0)return false;
+  const test=ST.test,force=ST.force,fa=ST.forceAll;ST=fresh();ST.lr=1;ST.test=test;ST.force=force;ST.forceAll=fa;
+  ST.inv={gold:0,sceau:0};ST.mk={mine:{},held:{}};ST.tr={n:0,held:{},done:{}};ST.show=[];ST.stash={};
+  DONE_CACHE=null;COINV=null;save();try{flush();}catch(e){}return true;}
+setInterval(()=>{if(!PREVIEW&&launchReset()){wallet();if(location.hash==="#boosters")route();else location.hash="boosters";toast("Le TCG est ouvert : ta collection de test repart de zéro. Bonne chance !");}},20000);
+
 /* ---------- Démarrage ---------- */
 (async()=>{
   try{if(window.TCG_HOSTED){try{D=await liveData();}catch(e){console.warn("données en direct indisponibles",e);D=null;}}
@@ -2163,7 +2172,8 @@ function stashSync(){if(!ST)return;ST.stash=ST.stash||{};let ch=false;
   document.addEventListener("click",e=>{const d=$("#me-drop");if(d&&!d.hidden&&!e.target.closest(".me-menu"))d.hidden=true;});
   $("#w-mis").onclick=()=>{location.hash="boosters";setTimeout(()=>{const m=$("#missions");if(m)m.scrollIntoView({behavior:reduced()?"auto":"smooth",block:"center"});},60);};if(PREVIEW)ST=fresh();CARDS=build();indexes();route();
   if(PREVIEW)return;
-  await load();stashSync();await loadMe();sndLabel();$("#m-reset").hidden=!OWNER;tick();wallet();checkAll();route();syncMarket().then(()=>wallet());
+  await load();const wasReset=launchReset();stashSync();await loadMe();sndLabel();$("#m-reset").hidden=!OWNER;tick();wallet();checkAll();route();syncMarket().then(()=>wallet());
+  if(wasReset)setTimeout(()=>toast("Le TCG est ouvert : ta collection de test repart de zéro. Bonne chance !"),800);
   if(SX()){loadFriends().then(syncSocial).catch(()=>{});}
   window.addEventListener("pagehide",()=>flush());document.addEventListener("visibilitychange",()=>{if(document.hidden)flush();});
 })();
