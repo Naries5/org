@@ -975,6 +975,7 @@ body.pre .tabs,body.pre .wal,body.pre .me-menu{display:none!important}
           <button role="menuitem" data-go="succes">Succès<span id="md-ach"></span></button>
           <button role="menuitem" id="w-mis">Missions du jour</button>
           <button role="menuitem" data-go="boutique">Boutique</button>
+          <button role="menuitem" id="m-pre" hidden>Revenir au décompte</button>
           <hr><button role="menuitem" id="m-snd">Sons<span id="m-snd-s"></span></button>
           <button role="menuitem" id="m-reset" hidden>Réinitialiser ma progression</button>
           <hr><button role="menuitem" data-go="site">Retour au site</button>
@@ -2087,6 +2088,7 @@ function resetForm(){$("#me-drop").hidden=true;
     if(location.hash==="#boosters")route();else location.hash="boosters";wallet();toast("Progression réinitialisée : bon retour parmi les débutants !");};}
 $("#m-snd").onclick=e=>{e.stopPropagation();SFX.set(!SFX.on);sndLabel();if(SFX.on)SFX.pop();};
 $("#m-reset").onclick=()=>resetForm();
+$("#m-pre").onclick=()=>{try{sessionStorage.removeItem("tcg-admin");}catch(e){}location.reload();};
 
 
 /* ---------- Moment de révélation (épique et mieux) ---------- */
@@ -2131,7 +2133,8 @@ function renderPrelaunch(){const v=$("#v-prelaunch");if(!v.dataset.ok){v.dataset
       $("#pre-cta").innerHTML=`<button class="cta" id="pre-login">Se connecter avec Discord pour jouer</button>`;$("#pre-login").onclick=login;return;}
     const d=Math.floor(l/864e5),h=Math.floor(l/36e5)%24,m=Math.floor(l/6e4)%60,sec=Math.floor(l/1e3)%60;
     $("#cd").innerHTML=`<p class="cd-k">Ouverture samedi 21 novembre à 14 h</p><div class="cd-n">${d?`<div><b>${d}</b><span>jour${d>1?"s":""}</span></div>`:""}<div><b>${String(h).padStart(2,"0")}</b><span>heures</span></div><div><b>${String(m).padStart(2,"0")}</b><span>minutes</span></div><div><b>${String(sec).padStart(2,"0")}</b><span>secondes</span></div></div>`;
-    if(!$("#pre-cta").dataset.ok){$("#pre-cta").dataset.ok=1;$("#pre-cta").innerHTML=SX()&&MEID()?`<p class="muted pre-ok">Tu es connecté : à 14 h, cette page s'ouvrira toute seule sur le jeu.</p>`:`<button class="cta ghosty" id="pre-login">Se connecter avec Discord</button><p class="muted pre-ok">Il faudra être connecté pour jouer.</p>`;const b=$("#pre-login");if(b)b.onclick=login;}};
+    if(!$("#pre-cta").dataset.ok){$("#pre-cta").dataset.ok=1;$("#pre-cta").innerHTML=(window.TCG_STAFF?`<button class="cta" id="pre-admin">Accéder au site (admin)</button>`:"")+(SX()&&MEID()?`<p class="muted pre-ok">Tu es connecté : à 14 h, cette page s'ouvrira toute seule sur le jeu.</p>`:`<button class="cta ghosty" id="pre-login">Se connecter avec Discord</button><p class="muted pre-ok">Il faudra être connecté pour jouer.</p>`);const b=$("#pre-login");if(b)b.onclick=login;
+      const ad=$("#pre-admin");if(ad)ad.onclick=()=>{try{sessionStorage.setItem("tcg-admin","1");}catch(e){}location.reload();};}};
   tick();clearInterval(CDT);CDT=setInterval(tick,1000);}
 async function login(){const sb=SX();if(!sb){location.href="/";return;}try{await sb.auth.signInWithOAuth({provider:"discord",options:{redirectTo:location.origin+"/tcg"}});}catch(e){location.href="/";}}
 async function renderOptOut(box){if(!box)return;const sb=SX(),id=MEID();let pid=null,pname=null,out=false;
@@ -2172,7 +2175,7 @@ setInterval(()=>{if(!PREVIEW&&launchReset()){wallet();if(location.hash==="#boost
   document.addEventListener("click",e=>{const d=$("#me-drop");if(d&&!d.hidden&&!e.target.closest(".me-menu"))d.hidden=true;});
   $("#w-mis").onclick=()=>{location.hash="boosters";setTimeout(()=>{const m=$("#missions");if(m)m.scrollIntoView({behavior:reduced()?"auto":"smooth",block:"center"});},60);};if(PREVIEW)ST=fresh();CARDS=build();indexes();route();
   if(PREVIEW)return;
-  await load();const wasReset=launchReset();stashSync();await loadMe();sndLabel();$("#m-reset").hidden=!OWNER;tick();wallet();checkAll();route();syncMarket().then(()=>wallet());
+  await load();const wasReset=launchReset();stashSync();await loadMe();sndLabel();$("#m-reset").hidden=!OWNER;$("#m-pre").hidden=!(window.TCG_STAFF&&launchLeft()>0);tick();wallet();checkAll();route();syncMarket().then(()=>wallet());
   if(wasReset)setTimeout(()=>toast("Le TCG est ouvert : ta collection de test repart de zéro. Bonne chance !"),800);
   if(SX()){loadFriends().then(syncSocial).catch(()=>{});}
   window.addEventListener("pagehide",()=>flush());document.addEventListener("visibilitychange",()=>{if(document.hidden)flush();});

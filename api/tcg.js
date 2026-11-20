@@ -1,4 +1,4 @@
-// TCG d'ORG-Central. Avant la sortie : décompte et liste des cartes pour tous, jeu complet pour le propriétaire et les admins.
+// TCG d'ORG-Central. Avant la sortie : décompte et liste des cartes pour tous ; le propriétaire et les admins ont un bouton pour ouvrir le jeu.
 // Sans paramètre : petite page de chargement (publique, ne contient pas le jeu).
 // Avec ?f=… : fichier du jeu, envoyé seulement si le jeton Supabase est celui du propriétaire (rpc is_owner).
 const fs = require("fs");
@@ -50,7 +50,9 @@ const loader = (now) => `<!DOCTYPE html><html lang="fr"><head><meta charset="utf
     window.TCG_LAUNCH=${LAUNCH};window.TCG_OFFSET=${now}-Date.now();
     let staff=false;if(s){try{const [o,a]=await Promise.all([sb.rpc("is_owner"),sb.rpc("is_admin")]);staff=o.data===true||a.data===true;}catch(e){}}
     const live=Date.now()+window.TCG_OFFSET>=window.TCG_LAUNCH;
-    window.TCG_MODE=staff?"full":!live?"preview":s?"full":"login";
+    // Avant la sortie, le propriétaire et les admins voient le décompte comme tout le monde ; un bouton leur ouvre le jeu (mémorisé pour l'onglet).
+    let adm=false;try{adm=sessionStorage.getItem("tcg-admin")==="1";}catch(e){}
+    window.TCG_STAFF=staff;window.TCG_MODE=live?(s?"full":"login"):(staff&&adm?"full":"preview");
     window.TCG_GET=async p=>{const t=await sess();return fetch("/api/tcg?f="+encodeURIComponent(p),{headers:t?{Authorization:"Bearer "+t.access_token}:{}});};
     const r=await window.TCG_GET("index.html");
     if(!r.ok){m.innerHTML='Le TCG n’a pas pu être chargé. <a href="/tcg">Réessayer</a>';return;}
