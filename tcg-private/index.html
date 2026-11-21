@@ -980,6 +980,16 @@ body.hosted #site{display:none!important}
 #dbox.dropping .dropx{display:flex}
 .slinks{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 4px}
 .sitelink{height:38px;padding:0 14px;font-size:.88rem;gap:6px;text-decoration:none}.sitelink span{opacity:.7}
+.drops{margin-top:18px}
+.dr-l{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.dr{width:100%;display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.02);color:inherit;font:inherit;text-align:left;cursor:pointer}
+.dr:hover{background:rgba(255,255,255,.05)}
+.dr-r{font-family:var(--f-mono,monospace);font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:999px;color:var(--c);border:1px solid color-mix(in srgb,var(--c) 55%,transparent);background:color-mix(in srgb,var(--c) 12%,transparent)}
+.dr-n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dr-w{display:inline-flex;align-items:center;gap:8px;color:#cfc8c0;font-size:.9rem;white-space:nowrap}
+.dr-av{width:22px;height:22px;border-radius:50%;object-fit:cover;display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;background:#333}
+.dr time{color:var(--muted);font-size:.8rem;white-space:nowrap}
+@media (max-width:640px){.dr{grid-template-columns:auto minmax(0,1fr);row-gap:4px}.dr-w,.dr time{grid-column:2}}
 </style>
 </head>
 <body>
@@ -1051,6 +1061,7 @@ body.hosted #site{display:none!important}
         <aside class="bdet" id="bdet"></aside>
       </div>
       <div class="row2"><div class="panel" id="daily"></div><div class="panel" id="missions"></div></div>
+      <div class="panel drops" id="drops" hidden></div>
     </section>
     <section class="view" id="v-collection" hidden>
       <h1 class="h">Collection</h1>
@@ -1453,6 +1464,7 @@ function openBooster(kind,opts){HOLDT=true;
   const td=today();if(ST.mis.date!==td)ST.mis={date:td,open:0,recycle:0,rare:0,done:[],bonus:false};
   ST.mis.open++;if(keys.some(k=>LADDER.indexOf(CARDS[k].r)>=2))ST.mis.rare++;
   keys.forEach(k=>{ST.firsts[CARDS[k].r]=true;});
+  if(!ST.test&&!ST.force&&!ST.forceAll)postDrops(keys.filter(k=>CARDS[k].r==="M"||CARDS[k].r==="L"));
   save();checkAll();return {res,gold};
 }
 
@@ -1568,7 +1580,7 @@ function packList(){const inv=ST.inv||{},goldNext=ST.sinceGold>=EPITY-1;
   return [{k:goldNext?"gold":"free",free:true,label:"Gratuit",ok:ST.stock>0||ST.test},
     {k:"gold",inv:true,label:inv.gold?`Offert · × ${inv.gold}`:`Dans ${EPITY-ST.sinceGold} booster${EPITY-ST.sinceGold>1?"s":""}`,ok:!!inv.gold},
     {k:"sceau",inv:true,label:inv.sceau?`Offert · × ${inv.sceau}`:"À gagner",ok:!!inv.sceau}].filter((x,i,a)=>a.findIndex(y=>y.k===x.k)===i);}
-function renderBoosters(){tick();wallet();
+function renderBoosters(){tick();wallet();startDrops();
   const td=today();if(ST.mis.date!==td)ST.mis={date:td,open:0,recycle:0,rare:0,done:[],bonus:false};
   if(OPENING)return;
   const goldNext=ST.sinceGold>=EPITY-1,inv=ST.inv||{},canFree=ST.stock>0||ST.test;
@@ -2537,6 +2549,27 @@ function renderStore(){const b=$("#store");if(!b)return;
       <div class="si-f"><span class="sp-p">${x.old?`<s>${esc(x.old)}</s>`:""}<b>${esc(x.p)}</b><span>${esc(x.per||"")}</span></span><button class="btn primary" data-st="${esc(x.n)}">Acheter</button></div></div>`).join("")}</div>`;
   b.querySelectorAll("[data-st]").forEach(x=>x.onclick=()=>{if(x.textContent==="Formule actuelle"){toast("Tu as déjà la formule Basic. Bon first boot !");return;}storeBuy(x.dataset.st);});
   clearInterval(STORE_T);STORE_T=setInterval(()=>{const t=$("#st-t");if(!t||$("#v-boutique").hidden){clearInterval(STORE_T);return;}t.textContent=storeClock();},1000);}
+
+/* ---------- Derniers gros tirages (table tcg_drops, update-27) ---------- */
+let DROPS=null,DROPS_T=null,DROPS_AT=0;
+function postDrops(ks){const sb=SX();if(!ks.length||!sb||!MEID()||PREVIEW)return;
+  sb.from("tcg_drops").insert(ks.map(k=>({card:k.replace(/#\d+$/,""),rarity:CARDS[k].r}))).then(()=>{DROPS_AT=0;},()=>{});}
+async function loadDrops(){const sb=SX();if(!sb)return;
+  try{const {data,error}=await sb.from("tcg_drops").select("user_id,card,rarity,created_at").order("created_at",{ascending:false}).limit(40);
+    if(error){DROPS=null;return;}DROPS=(data||[]).filter(d=>CARDS[d.card]&&(d.rarity==='M'||d.rarity==='L')).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));DROPS_AT=Date.now();
+    const miss=[...new Set(DROPS.map(d=>d.user_id))].filter(u=>!PCACHE[u]);
+    if(miss.length){const {data:pr}=await sb.from("profiles").select("id,discord_name,avatar_url").in("id",miss);(pr||[]).forEach(p=>PCACHE[p.id]={name:p.discord_name||"Joueur",av:p.avatar_url||""});}}catch(e){DROPS=null;}}
+function ago(t){const d=(Date.now()+(window.TCG_OFFSET||0)-new Date(t))/1000;if(d<60)return "à l'instant";if(d<3600)return `il y a ${Math.floor(d/60)} min`;if(d<86400)return `il y a ${Math.floor(d/3600)} h`;return `il y a ${Math.floor(d/86400)} j`;}
+function drawDrops(){const b=$("#drops");if(!b)return;if(!DROPS){b.hidden=true;return;}b.hidden=false;
+  const list=DROPS.slice(0,15);
+  b.innerHTML=`<h3 class="ph">Derniers gros tirages</h3><p class="note" style="margin:0 0 10px">Les mythiques et légendaires sortis des boosters des joueurs.</p>
+    ${list.length?`<ul class="dr-l">${list.map(d=>{const c=CARDS[d.card],me=d.user_id===MEID(),who=me?"Toi":(PCACHE[d.user_id]||{}).name||"Un joueur";
+      return `<li><button class="dr" data-k="${esc(d.card)}"><span class="dr-r" style="--c:var(${RAR[d.rarity][1]})">${RAR[d.rarity][0]}</span><b class="dr-n">${esc(label(c))}</b>
+        <span class="dr-w">${avHTML(me?ME.av:(PCACHE[d.user_id]||{}).av,who,"dr-av")}${esc(who)}</span><time>${ago(d.created_at)}</time></button></li>`;}).join("")}</ul>`
+      :`<p class="muted">Personne n'a encore tiré de mythique ou de légendaire. Ce sera peut-être toi.</p>`}`;
+  b.querySelectorAll("[data-k]").forEach(x=>x.onclick=()=>openCard(CARDS[x.dataset.k]));}
+async function refreshDrops(){if(PREVIEW||!SX())return;if(Date.now()-DROPS_AT>15000)await loadDrops();if(location.hash.slice(1)==="boosters"||!location.hash)drawDrops();}
+function startDrops(){refreshDrops();clearInterval(DROPS_T);DROPS_T=setInterval(()=>{const v=$("#v-boosters");if(!v||v.hidden){clearInterval(DROPS_T);return;}refreshDrops();},20000);}
 
 /* ---------- Démarrage ---------- */
 (async()=>{
