@@ -1028,7 +1028,7 @@ body.hosted #site{display:none!important}
     </section>
     <section class="view" id="v-marche" hidden>
       <h1 class="h">Marché</h1>
-      <p class="lede" id="mk-lede">Échange tes cartes avec les autres joueurs : propose tes doublons dans « À l'échange » et regarde ce que les autres proposent. Les cartes secrètes ne s'échangent pas.</p>
+      <p class="lede" id="mk-lede">Échange tes cartes avec les autres joueurs : propose tes doublons dans « À l'échange » et regarde ce que les autres proposent.</p>
       <div class="mk-bar"><div class="seg ysel" id="mk-tabs"></div><button class="btn primary" id="mk-sell">Vendre une carte</button></div>
       <div class="filters mk-f">
         <input id="mk-q" type="search" placeholder="Chercher un joueur, une ORG, une saison…" autocomplete="off" aria-label="Chercher">
@@ -1433,7 +1433,7 @@ function tweenCoins(to){const el=$("#w-coins");if(!el)return;if(COINV==null||red
   const from=COINV;COINV=to;if(from===to){el.textContent=nf(to);return;}const t0=performance.now(),d=Math.min(900,250+Math.abs(to-from)*2);
   const w=$(".wal");if(w){w.classList.remove("bump");void w.offsetWidth;w.classList.add(to>from?"bump":"spend");}
   const step=t=>{const k=Math.min(1,(t-t0)/d),e=1-Math.pow(1-k,3);el.textContent=nf(Math.round(from+(to-from)*e));if(k<1&&COINV===to)requestAnimationFrame(step);};requestAnimationFrame(step);}
-function wallet(){const ma=$("#md-ach");if(ma&&ST)ma.textContent=`${ACH.filter(a=>ST.ach[a.id]).length}/${ACH.length}`;$("#w-stock").textContent=ST.test?"∞":ST.stock;tweenCoins(ST.coins);ring(ST.stock>=MAXSTOCK?0:CHARGE-((Date.now()-ST.last)%CHARGE));}
+function wallet(){const ma=$("#md-ach");if(ma&&ST)ma.textContent=`${ACH.filter(a=>ST.ach[a.id]).length}/${ACH.filter(a=>!a.hidden||ST.ach[a.id]).length}`;$("#w-stock").textContent=ST.test?"∞":ST.stock;tweenCoins(ST.coins);ring(ST.stock>=MAXSTOCK?0:CHARGE-((Date.now()-ST.last)%CHARGE));}
 const VIEWS=["boosters","collection","catalogue","marche","albums","succes","boutique","classement","profil","amis"];
 const MODE=window.TCG_MODE||"full",PREVIEW=MODE!=="full";
 function route(){const bt=document.getElementById("boot");if(bt)bt.remove();const h0=(location.hash||"").slice(1);
@@ -1725,7 +1725,7 @@ $("#recycle-all").onclick=()=>{let n=0,v=0;Object.keys(ST.owned).forEach(k=>{con
 function openCard(c){const P=D.players,S=D.seasons,O=D.orgs;const n=ST.owned[c.k]||0;let rows=[];
   if(c.t==="J"){const p=P[c.i],dt=p.det||{},r1=v=>Math.round(v||0);rows=[["Saisons",p.p],["Victoires",p.w],["Top 5",p.t],["Meilleure place",p.b?placeTxt(p.b):"–"],["Saisons sur 12 mois",p.r12||0]];
     if(p.hs)rows.push(["Saisons hostées",p.hs]);
-    if(p.sc!=null)rows.push(["Score",`${nf(Math.round(p.sc))} pts · ${p.rank}${p.rank===1?"er":"e"} sur ${nf(D.nPlayers)}${p.r!=="M"?` · ${nf(Math.ceil(SCT[{R:"E",E:"L",L:"M"}[p.r]]-p.sc))} pts avant ${RAR[{R:"E",E:"L",L:"M"}[p.r]][0].toLowerCase()}`:""}`],["Détail",`participations ${r1(dt.part)} · classements ${r1(dt.place)} · victoires ${r1(dt.win)}${dt.host?` · host ${r1(dt.host)}`:""}`]);}
+    if(p.sc!=null)rows.push(["Score",`${nf(Math.round(p.sc))} pts · ${p.rank}${p.rank===1?"er":"e"} sur ${nf(D.nPlayers)}${p.r!=="M"&&!c.base?` · ${nf(Math.ceil(SCT[{R:"E",E:"L",L:"M"}[p.r]]-p.sc))} pts avant ${RAR[{R:"E",E:"L",L:"M"}[p.r]][0].toLowerCase()}`:""}`],["Détail",`participations ${r1(dt.part)} · classements ${r1(dt.place)} · victoires ${r1(dt.win)}${dt.host?` · host ${r1(dt.host)}`:""}`]);}
   else if(c.t==="O"){const o=O[c.i];rows=[["Format",o.f==="speed"?"Speed":"Format long"],["Saisons",o.ns]];}
   else if(c.t==="R"){const s=S[c.i];rows=[["ORG",(O[s.o]||{}).n],["Joueurs",s.c],["Année",s.y||"–"]];}
   else if(c.t==="X"){const x=SPECIAL[c.i];rows=[["Type",`Carte spéciale · ${x.ty}`],["Effet",x.txt]];}
@@ -1820,7 +1820,7 @@ async function renderBoard(){const tb=$("#board");tb.innerHTML=`<p class="muted"
     const nm=r=>(ps[r.id]&&ps[r.id].name)||"Joueur",av=r=>{const p=ps[r.id]||{},u=p.avatar||p.image||p.picture;return u?`<img src="${esc(u)}" alt="">`:`<span>${esc(nm(r).slice(0,1).toUpperCase())}</span>`;};
     if(!rows.length){tb.innerHTML=`<p class="muted">Personne n'est encore classé.</p>`;return;}
     const me=rows.findIndex(r=>r.id===ME_ID);
-    const pod=[1,0,2].filter(i=>rows[i]).map(i=>{const r=rows[i];return `<div class="pod p${i+1}"><div class="pav">${av(r)}</div><b class="pn">${esc(nm(r))}</b><small>${nf(r.myth||0)} mythique${(r.myth||0)>1?"s":""} et secrète${(r.myth||0)>1?"s":""}</small>
+    const pod=[1,0,2].filter(i=>rows[i]).map(i=>{const r=rows[i];return `<div class="pod p${i+1}"><div class="pav">${av(r)}</div><b class="pn">${esc(nm(r))}</b><small>${nf(r.myth||0)} mythique${(r.myth||0)>1?"s":""}</small>
       <div class="pblock"><i class="prk">${i+1}</i><strong>${nf(r.uniq||0)}</strong><span>cartes</span></div></div>`;}).join("");
     const row=(r,i)=>`<div class="br${r.id===ME_ID?" me":""}"><span class="brn">${i+1}</span><span class="bav">${av(r)}</span><span class="bname">${esc(nm(r))}${r.id===ME_ID?` <i class="toi">toi</i>`:""}<small>${nf(r.opened||0)} boosters · ${nf(r.ach||0)} succès</small></span><span class="bm">${nf(r.myth||0)}<small>myth.</small></span><span class="bs2"><strong>${nf(r.uniq||0)}</strong><small>cartes</small></span></div>`;
     tb.innerHTML=(me>=0?`<div class="mebar"><span class="bav">${av(rows[me])}</span><div><small>Toi</small><b>${me+1}${me?"e":"er"} sur ${rows.length}</b></div><span class="muted">${me<3?"Tu es sur le podium":`à ${nf((rows[2].uniq||0)-(rows[me].uniq||0))} cartes du podium`}</span><strong>${nf(rows[me].uniq||0)}<small>cartes</small></strong></div>`:"")+
@@ -2026,7 +2026,7 @@ function renderProfile(){const v=$("#v-profil"),u=uniq(),tot=visTotal(),got=ACH.
     return c?`<div class="vs full" data-vs="${i}">${cardHTML(c,true)}<button class="vs-x" data-vx="${i}" aria-label="Retirer de la vitrine">×</button></div>`:`<button class="vs" data-vs="${i}"><span>+</span><small>Ajouter</small></button>`;}).join("");
   v.innerHTML=`<div class="pf-hero"><div class="pf-id"><span class="pf-av">${avHTML(ME.av,ME.name,"")}</span><div><p class="kick"><span>Profil</span> · collectionneur</p><h1 class="pf-n">${esc(ME.name)}</h1>
       <p class="muted">${ME.pi!=null?`Ta fiche joueur : <b>${esc(D.players[ME.pi].n)}</b>`:ME.ok?"Aucune fiche joueur liée à ton compte sur le site.":"Profil local : la version en ligne affiche ton compte ORG-Central."}</p></div></div>
-    <div class="pf-st stg"><div><b>${nf(u)}</b><span>cartes différentes</span></div><div><b>${(u/tot*100).toFixed(1).replace(".",",")} %</b><span>de la collection</span></div><div><b>${nf(ST.opened)}</b><span>boosters ouverts</span></div><div><b>${nf(myth)}</b><span>mythiques et secrètes</span></div><div><b>${got}/${ACH.filter(a=>!a.hidden||ST.ach[a.id]).length}</b><span>succès</span></div><div><b>${nf(ST.tr.n||0)}</b><span>échanges</span></div></div></div>
+    <div class="pf-st stg"><div><b>${nf(u)}</b><span>cartes différentes</span></div><div><b>${(u/tot*100).toFixed(1).replace(".",",")} %</b><span>de la collection</span></div><div><b>${nf(ST.opened)}</b><span>boosters ouverts</span></div><div><b>${nf(myth)}</b><span>${ST.firsts.S?"mythiques et secrètes":"mythiques"}</span></div><div><b>${got}/${ACH.filter(a=>!a.hidden||ST.ach[a.id]).length}</b><span>succès</span></div><div><b>${nf(ST.tr.n||0)}</b><span>échanges</span></div></div></div>
     <div class="pf-grid"><div class="pf-main">
       <div class="pf-sec"><h2 class="h3">Ma vitrine</h2><p class="muted">Tes 5 cartes préférées, visibles en haut de ton profil.</p><div class="vit stg">${slots}</div></div>
       <div class="pf-sec"><h2 class="h3">Par rareté</h2><div class="rbars">${rows}</div></div>
@@ -2081,7 +2081,7 @@ async function tradeForm(f,pre){if(!f)return;let give=[],want=(pre||[]).slice(0,
     <div class="tf-cols"><div><div class="pf-sh"><b>Tu donnes</b><button class="btn ghost" id="tf-g">Choisir (${give.length}/5)</button></div>${miniCards(give)}</div>
       <div><div class="pf-sh"><b>Tu demandes</b><button class="btn ghost" id="tf-w">Choisir (${want.length}/5)</button></div>${miniCards(want)}</div></div>
     <label class="fl"><span class="muted">Un petit mot (facultatif)</span><input id="tf-n" maxlength="200" placeholder="Ex. : ta Layte contre ma Naries ?"></label>
-    <p class="note">Les cartes que tu donnes sont mises de côté jusqu'à la réponse. Si ${esc(f.name)} refuse ou si tu annules, elles reviennent. Les cartes secrètes ne s'échangent pas.</p>
+    <p class="note">Les cartes que tu donnes sont mises de côté jusqu'à la réponse. Si ${esc(f.name)} refuse ou si tu annules, elles reviennent.${ST.firsts.S?" Les cartes secrètes ne s'échangent pas.":""}</p>
     <div class="acts"><button class="btn primary" id="tf-go" ${give.length+want.length?"":"disabled"}>Envoyer la proposition</button></div></div>`,true);
     $("#tf-x").onclick=()=>$("#dlg").hidden=true;
     $("#tf-g").onclick=()=>pickCards({title:"Cartes que tu donnes",pool:Object.keys(ST.owned).map(k=>CARDS[k]),max:5,sel:give,count:true,
