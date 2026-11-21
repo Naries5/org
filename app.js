@@ -76,7 +76,10 @@ const _idx=new WeakMap();const byId=(arr,id)=>{if(!arr)return undefined;let m=_i
 const org=id=>byId(S.orgs,id), player=id=>byId(S.players,id), season=id=>byId(S.seasons,id), newsItem=id=>byId(S.news,id);
 const pName=id=>{const p=player(id);return p?(p.pseudo||"Sans pseudo"):"Joueur supprimé";};
 function initials(n){n=String(n||"?").trim();const parts=n.split(/\s+/).filter(Boolean);return ((parts[0]||"?")[0]+(parts[1]?parts[1][0]:(parts[0]||"")[1]||"")).toUpperCase();}
-function imgSrc(v){if(!v)return "";v=String(v);if(v.startsWith("data:image/")||/^https:\/\//.test(v)||v.startsWith("/api/blob?")||v.startsWith("/api/st?"))return v;if(/^[A-Za-z0-9_-]{8,64}$/.test(v))return "/_blob/"+v;return "";}
+function imgSrc(v){if(!v)return "";v=String(v);
+  // images du stockage : chargées directement chez Supabase (CDN) au lieu de passer par une fonction Vercel
+  if(v.startsWith("/api/st?p="))return "https://czfgpgvkpxhmxyepvgzs.supabase.co/storage/v1/object/public/images/"+v.slice(10);
+  if(v.startsWith("data:image/")||/^https:\/\//.test(v)||v.startsWith("/api/blob?"))return v;if(/^[A-Za-z0-9_-]{8,64}$/.test(v))return "/_blob/"+v;return "";}
 function pic(v,name,cls,st){const s=imgSrc(v);return s?`<img class="${cls}" src="${esc(s)}" alt=""${st?` style="${st}"`:""}>`:`<span class="${cls}" aria-hidden="true">${esc(initials(name))}</span>`;}
 function latestSeasonWithLogo(o){if(!o||!o.id)return null;const ss=seasonsOf(o.id).filter(s=>s.logo);return ss[ss.length-1]||null;}
 function orgLogoVal(o){const s=latestSeasonWithLogo(o);return s?s.logo:(o&&o.logo);}

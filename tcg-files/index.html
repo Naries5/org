@@ -1285,7 +1285,7 @@ let TQ=[],HOLDT=false;function toast(m,snd){if(HOLDT||(typeof OV!=="undefined"&&
 const CH={};
 function need(k){if(!k||IMG[k])return;const i=parseInt(k.slice(0,2),16)%16;if(CH[i])return;
   CH[i]=tget(`img/${i}.json`).then(r=>r.json()).then(m=>{Object.assign(IMG,m);document.querySelectorAll("img[data-k]:not([src])").forEach(el=>{const v=IMG[el.dataset.k];if(v)el.src=v;});}).catch(()=>{delete CH[i];});}
-function im(k,cls){if(k&&/^(\/|https?:|data:)/.test(k))return `<img class="${cls||""}" src="${esc(k)}" alt="" loading="lazy" decoding="async" onerror="this.remove()">`;need(k);return k?`<img class="${cls||""}" data-k="${k}" alt=""${IMG[k]?` src="${IMG[k]}"`:""}>`:"";}
+function im(k,cls){if(k&&k.startsWith("/api/st?p="))k="https://czfgpgvkpxhmxyepvgzs.supabase.co/storage/v1/object/public/images/"+k.slice(10);if(k&&/^(\/|https?:|data:)/.test(k))return `<img class="${cls||""}" src="${esc(k)}" alt="" loading="lazy" decoding="async" onerror="this.remove()">`;need(k);return k?`<img class="${cls||""}" data-k="${k}" alt=""${IMG[k]?` src="${IMG[k]}"`:""}>`:"";}
 function pic(k,label){return `<span class="ini" style="--h:${hue(label)}">${esc(ini(label))}</span>${im(k)}`;}
 function logoArt(k,label){return k?`<span class="ini" style="--h:${hue(label)}"></span>${im(k,"bgx")}${im(k,"fg")}`:`<span class="ini" style="--h:${hue(label)}">${esc(ini(label))}</span>`;}
 
