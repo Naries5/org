@@ -2145,7 +2145,16 @@ function mkRow(r){return {id:r.id,k:r.card,seller:r.seller,sn:r.seller_name,mode
 async function mkGet(id){const {data,error}=await SX().from("tcg_market").select("*").eq("id",id).maybeSingle();if(error)throw error;return data?mkRow(data):null;}
 async function mkFetch(){if(!SX())return [];const {data,error}=await SX().from("tcg_market").select("*").order("created_at",{ascending:false}).limit(400);
   if(error){MKON=false;throw error;}MKON=true;MK=(data||[]).map(mkRow).filter(L=>CARDS[L.k]);return MK;}
-async function mkRpc(fn,args){const {data,error}=await SX().rpc(fn,args);if(error){console.warn(fn,error.message);return false;}return data!==false;}
+/* Appel d'une fonction du marché. Si la réponse se perd (délai dépassé), on relit l'annonce pour savoir si l'action a bien eu lieu :
+   sinon on risquerait de rendre une carte ou des coquillages alors que l'action est passée (= duplication). */
+async function mkRpc(fn,args){let r;try{r=await SX().rpc(fn,args);}catch(e){r={error:e};}
+  if(!r.error)return r.data!==false;console.warn(fn,r.error&&r.error.message);
+  if(!args||!args.p_id)return false;await wait(1200);let L=null;try{L=await mkGet(args.p_id);}catch(e){return false;}const me=MU();
+  if(fn==="tcg_mk_buy")return !!(L&&L.buyer&&L.buyer.u===me);
+  if(fn==="tcg_mk_bid")return !!(L&&L.bid&&L.bid.u===me&&L.bid.a===args.p_amount);
+  if(fn==="tcg_mk_cancel")return !L;
+  if(fn==="tcg_mk_done")return !L||(L.seller===me?L.sellerPaid:L.buyerGot);
+  return false;}
 function mkEnded(L){return L.mode==="auction"&&Date.now()>=L.end;}
 function mkOpen(L){return L.st==="open"&&!L.buyer&&!mkEnded(L);}
 function mkPrice(L){return L.mode==="auction"?(L.bid?L.bid.a:L.start):L.price;}
@@ -2154,6 +2163,9 @@ function giveCard(k){if(isCoin(k)){ST.coins+=coinOf(k);return false;}if(!CARDS[k
 /* Dans un échange, "$:500" = 500 coquillages (rangés avec les cartes dans give / want) */
 const isCoin=k=>/^\$:\d+$/.test(String(k)),coinOf=k=>+String(k).slice(2)||0;
 const trCards=a=>(a||[]).filter(k=>!isCoin(k)),trCoins=a=>(a||[]).filter(isCoin).reduce((x,k)=>x+coinOf(k),0);
+/* Après un échange / une vente : on enregistre tout de suite, ici et sur le compte (évite qu'un rechargement fasse revenir un objet déjà donné) */
+async function commitNow(){save();try{await flush();}catch(e){}cloudQueue(true);}
+const ANS_SINCE="2026-11-21T15:12:00Z";
 function takeItem(k){if(isCoin(k)){ST.coins-=coinOf(k);return;}ST.owned[k]--;if(!(ST.owned[k]>0))delete ST.owned[k];}
 async function mkSettle(L){const me=MU(); // règle la part du vendeur (encaisser) ou du gagnant d'une enchère (recevoir)
   if(L.seller===me){
@@ -2176,13 +2188,18 @@ async function ensureDaily(){const d=parisDay();if(MK_DAILY_TRY===d||MK.some(L=>
   const ks=dailyPicks(d);if(ks.length<3)return false;await mkRpc("tcg_mk_daily",{p_cards:ks});return true;}
 async function syncMarket(){if(!mkAvail()||MKSYNC)return;MKSYNC=true;const me=MU();
   try{await mkFetch();if(await ensureDaily())await mkFetch();let ch=false;const byId=Object.fromEntries(MK.map(L=>[L.id,L]));
+    for(const L of MK){ // mise de côté perdue (partie rechargée) : on la refait avant de régler
+      if(L.seller===me&&!L.sellerPaid&&!ST.mk.mine[L.id]){if(ST.owned[L.k]>0){takeItem(L.k);ST.mk.mine[L.id]={k:L.k,t:Date.now()};ch=true;}
+        else if(mkOpen(L)&&!L.bid&&await mkRpc("tcg_mk_cancel",{p_id:L.id}))ch=true;}
+      if(L.bid&&L.bid.u===me&&!L.buyerGot&&ST.mk.held[L.id]==null){ST.coins=Math.max(0,ST.coins-L.bid.a);ST.mk.held[L.id]=L.bid.a;ch=true;}}
+    if(ch)save();
     for(const L of MK)if(L.seller===me||(L.bid&&L.bid.u===me)){try{if(await mkSettle(L))ch=true;}catch(e){}}
     for(const id of Object.keys(ST.mk.held)){const L=byId[id];
       if(!L||!L.bid||L.bid.u!==me){ST.coins+=ST.mk.held[id];toast(`Enchère dépassée : ${nf(ST.mk.held[id])} coquillages rendus`);delete ST.mk.held[id];save();ch=true;}}
     for(const id of Object.keys(ST.mk.mine)){const m=ST.mk.mine[id];if(byId[id]||!m||Date.now()-(m.t||0)<120000)continue;
       // annonce disparue sans avoir été encaissée (retirée par un admin ou sur un autre appareil) : la carte revient
       if(m.k&&CARDS[m.k])giveCard(m.k);delete ST.mk.mine[id];save();ch=true;}
-    if(ch){wallet();await mkFetch();}}
+    if(ch){await commitNow();wallet();await mkFetch();}}
   catch(e){console.warn(e);}finally{MKSYNC=false;}}
 function mkTile(L){const me=MU(),c=CARDS[L.k],mine=L.seller===me,open=mkOpen(L),auc=L.mode==="auction",top=L.bid&&L.bid.u===me;
   let st="";if(!open){st=L.buyer||(auc&&L.bid)?(mine?"Vendue":(L.buyer&&L.buyer.u===me)||top?"Gagnée":"Vendue"):"Terminée";}
@@ -2247,7 +2264,7 @@ async function mkBuy(id,btn){if(btn)btn.disabled=true;
     if(L.seller===MU())return;if(ST.coins<L.price){toast("Pas assez de coquillages");return;}
     ST.coins-=L.price;save();wallet();
     if(!await mkRpc("tcg_mk_buy",{p_id:id,p_name:ME_NAME})){ST.coins+=L.price;save();wallet();toast("Quelqu'un a été plus rapide : coquillages rendus");return renderMarket(true);}
-    const nw=giveCard(L.k);ST.mk.n=(ST.mk.n||0)+1;save();checkAll();toast(`Achetée : ${label(CARDS[L.k])}${nw?" · nouvelle carte !":""}`);
+    const nw=giveCard(L.k);ST.mk.n=(ST.mk.n||0)+1;await commitNow();checkAll();toast(`Achetée : ${label(CARDS[L.k])}${nw?" · nouvelle carte !":""}`);
     await mkRpc("tcg_mk_done",{p_id:id});}
   catch(e){toast("L'achat n'a pas pu se faire");}
   renderMarket(true);}
@@ -2255,7 +2272,7 @@ async function mkCancel(id,btn){if(btn)btn.disabled=true;
   try{const L=await mkGet(id);if(!L||L.seller!==MU())return renderMarket(true);
     if(L.buyer||L.bid){toast("Trop tard : quelqu'un a déjà acheté ou enchéri");return renderMarket(true);}
     if(!await mkRpc("tcg_mk_cancel",{p_id:id})){toast("Trop tard : quelqu'un a déjà acheté ou enchéri");return renderMarket(true);}
-    giveCard(L.k);delete ST.mk.mine[id];save();toast(`${label(CARDS[L.k])} revient dans ta collection`);}
+    giveCard(L.k);delete ST.mk.mine[id];await commitNow();toast(`${label(CARDS[L.k])} revient dans ta collection`);}
   catch(e){toast("Le retrait n'a pas pu se faire");}
   renderMarket(true);}
 function dlgOpen(html,single){$("#dbox").classList.toggle("single",!!single);$("#dbox").classList.remove("wide");$("#dbox").innerHTML=html;$("#dlg").hidden=false;}
@@ -2288,9 +2305,10 @@ async function mkSell(c,mode,price,dur){const b=$("#sf-go")||{};
   if(mode==="auction"){row.start_price=price;row.end_at=new Date(SNOW()+(dur||864e5)).toISOString();}else row.price=price;
   ST.owned[c.k]--;if(!ST.owned[c.k])delete ST.owned[c.k];ST.mk.mine[id]={k:c.k,t:Date.now()};
   if((ST.ft||[]).includes(c.k)&&!ST.owned[c.k])ST.ft=ST.ft.filter(k=>k!==c.k);save();
-  const {error}=await SX().from("tcg_market").insert(row);
+  let error=null;try{({error}=await SX().from("tcg_market").insert(row));}catch(e){error=e;}
+  if(error){await wait(1200);try{if(await mkGet(id))error=null;}catch(e){}}
   if(error){giveCard(c.k);delete ST.mk.mine[id];save();b.disabled=false;toast("La mise en vente n'a pas pu se faire");return;}
-  await flush();toast(`${label(c)} est en vente`);$("#dlg").hidden=true;MKTAB="mine";
+  await commitNow();toast(`${label(c)} est en vente`);$("#dlg").hidden=true;MKTAB="mine";
   if($("#v-marche").hidden)location.hash="marche";else renderMarket(true);if(!$("#v-collection").hidden)renderCollection(true);}
 async function mkBidForm(id){const L=await mkGet(id).catch(()=>null);if(!L||!mkOpen(L)){toast("Cette enchère est terminée");return renderMarket(true);}
   const c=CARDS[L.k],min=mkMin(L);
@@ -2306,7 +2324,7 @@ async function mkBidForm(id){const L=await mkGet(id).catch(()=>null);if(!L||!mkO
       const prev=ST.mk.held[id]||0;if(ST.coins+prev<a){toast("Pas assez de coquillages");$("#bf-go").disabled=false;return;}
       ST.coins+=prev;ST.coins-=a;ST.mk.held[id]=a;save();wallet();
       if(!await mkRpc("tcg_mk_bid",{p_id:id,p_amount:a,p_name:ME_NAME})){ST.coins+=a-prev;if(prev)ST.mk.held[id]=prev;else delete ST.mk.held[id];save();wallet();toast("Quelqu'un a enchéri en même temps : coquillages rendus");}
-      else toast(`Offre posée : ${nf(a)} coquillages`);
+      else{await commitNow();toast(`Offre posée : ${nf(a)} coquillages`);}
       $("#dlg").hidden=true;}
     catch(e){toast("L'offre n'a pas pu être posée");$("#bf-go").disabled=false;return;}
     renderMarket(true);};}
@@ -2389,14 +2407,24 @@ async function loadTrades(){const sb=SX(),id=MEID();TR=[];if(!sb||!id){TR_OK=fal
 async function settleTrades(){if(!TR_OK)return;const sb=SX(),id=MEID();let ch=false;
   for(const t of TR){if(t.sender!==id||t.sender_done||t.status==="pending")continue;
     if(!ST.tr.done[t.id]){
+      const held=ST.tr.held[t.id];
+      if(t.status==="accepted"&&!held){ // la mise de côté a été perdue (partie rechargée) : on retire maintenant ce qui a été donné
+        trCards(t.give).forEach(k=>{if(ST.owned[k]>0)takeItem(k);});const gc=trCoins(t.give);if(gc)ST.coins=Math.max(0,ST.coins-gc);}
       if(t.status==="accepted"){t.want.forEach(k=>giveCard(k));ST.tr.n=(ST.tr.n||0)+1;const nc=trCards(t.want).length,co=trCoins(t.want);toast(`Échange accepté par ${frName(t.recipient)} : tu reçois ${[nc?`${nc} carte${nc>1?"s":""}`:"",co?`${nf(co)} coquillages`:""].filter(Boolean).join(" et ")||"rien"}`);}
-      else (ST.tr.held[t.id]||t.give).forEach(k=>giveCard(k));
+      else if(held)held.forEach(k=>giveCard(k));
       if(t.status==="declined")toast(`${frName(t.recipient)} a refusé ton échange : tes cartes reviennent`);
       ST.tr.done[t.id]=1;delete ST.tr.held[t.id];save();ch=true;}
+    if(ch)await commitNow();
     try{await sb.from("tcg_trades").update({sender_done:true}).eq("id",t.id);t.sender_done=true;}catch(e){}}
   if(ch){checkAll();wallet();}}
 function frName(u){return (PCACHE[u]&&PCACHE[u].name)||"Un ami";}
-async function syncSocial(){try{await loadTrades();const miss=[...new Set(TR.map(t=>t.sender===MEID()?t.recipient:t.sender))].filter(u=>!PCACHE[u]);
+function replayAnswers(){const me=MEID();let ch=false;ST.tr.ans=ST.tr.ans||{};
+  for(const t of TR){if(t.recipient!==me||t.status!=="accepted"||ST.tr.ans[t.id]||!(String(t.updated_at||"")>ANS_SINCE))continue;
+    // échange accepté ici, mais la partie a été rechargée avant l'enregistrement : on le réapplique une seule fois
+    trCards(t.want).forEach(k=>{if(ST.owned[k]>0)takeItem(k);});const wc=trCoins(t.want);if(wc)ST.coins=Math.max(0,ST.coins-wc);
+    t.give.forEach(k=>giveCard(k));ST.tr.ans[t.id]=1;ch=true;}
+  if(ch){commitNow();wallet();}}
+async function syncSocial(){try{await loadTrades();replayAnswers();const miss=[...new Set(TR.map(t=>t.sender===MEID()?t.recipient:t.sender))].filter(u=>!PCACHE[u]);
     if(miss.length){const {data}=await SX().from("profiles").select("id,discord_name,avatar_url").in("id",miss);(data||[]).forEach(p=>PCACHE[p.id]={name:p.discord_name||"Joueur",av:p.avatar_url||""});}
     await settleTrades();badgeTrades();}catch(e){console.warn(e);}}
 function badgeTrades(){const n=TR.filter(t=>t.recipient===MEID()&&t.status==="pending").length;const d=$("#t-amis");if(d){d.hidden=!n;d.textContent=n||"";}}
@@ -2526,21 +2554,25 @@ async function tradeSend(f,give,want,note){const sb=SX();const b=$("#tf-go")||{}
   if(trCoins(give)>ST.coins){toast("Tu n'as pas assez de coquillages");if(b2)b2.disabled=false;return;}
   give.forEach(k=>takeItem(k));save();wallet();
   let data=null,error=null;try{({data,error}=await sb.from("tcg_trades").insert({sender:MEID(),recipient:f.id,give,want,note:note||null}).select().single());}catch(e){error=e;}
+  if(error&&!/row-level|policy/i.test(error.message||"")){await wait(1200); // la réponse s'est peut-être perdue alors que la proposition est partie
+    try{const r=await sb.from("tcg_trades").select("*").eq("sender",MEID()).eq("recipient",f.id).eq("status","pending").order("created_at",{ascending:false}).limit(5);
+      const same=(r.data||[]).find(t=>JSON.stringify(t.give)===JSON.stringify(give)&&JSON.stringify(t.want)===JSON.stringify(want)&&!ST.tr.held[t.id]);if(same){data=same;error=null;}}catch(e){}}
   if(error){give.forEach(k=>giveCard(k));save();wallet();if(b2)b2.disabled=false;toast(/row-level|policy/i.test(error.message||"")?"Vous devez être amis pour échanger (ou lancer update-22 dans Supabase)":"La proposition n'a pas pu être envoyée");return;}
-  ST.tr.held[data.id]=give;save();await flush();toast(`Proposition envoyée à ${f.name}`);$("#dlg").hidden=true;TRTAB="out";PCACHE[f.id]=PCACHE[f.id]||{name:f.name,av:f.av||""};
+  ST.tr.held[data.id]=give;await commitNow();toast(`Proposition envoyée à ${f.name}`);$("#dlg").hidden=true;TRTAB="out";PCACHE[f.id]=PCACHE[f.id]||{name:f.name,av:f.av||""};
   if(!$("#v-amis").hidden)renderFriends(true);else location.hash="amis";}
 async function tradeAnswer(id,ok,b){const sb=SX();if(b)b.disabled=true;const t=TR.find(x=>x.id===id);if(!t)return;
   if(ok&&!trCards(t.want).every(k=>ST.owned[k]>0)){toast("Il te manque une carte demandée");return renderFriends(false);}
   if(ok&&ST.coins<trCoins(t.want)){toast("Tu n'as pas assez de coquillages pour cet échange");return renderFriends(false);}
   const {data,error}=await sb.from("tcg_trades").update({status:ok?"accepted":"declined"}).eq("id",id).eq("status","pending").select();
   if(error||!data||!data.length){toast("Cet échange n'est plus disponible");return renderFriends(true);}
-  if(ok){t.want.forEach(k=>takeItem(k));t.give.forEach(k=>giveCard(k));ST.tr.n=(ST.tr.n||0)+1;save();checkAll();toast("Échange réussi !");}
+  if(ok){t.want.forEach(k=>takeItem(k));t.give.forEach(k=>giveCard(k));ST.tr.n=(ST.tr.n||0)+1;(ST.tr.ans=ST.tr.ans||{})[id]=1;await commitNow();checkAll();toast("Échange réussi !");}
   else toast("Proposition refusée");
   renderFriends(true);}
 async function tradeCancel(id,b){const sb=SX();if(b)b.disabled=true;const t=TR.find(x=>x.id===id);if(!t)return;
-  const {data,error}=await sb.from("tcg_trades").update({status:"cancelled",sender_done:true}).eq("id",id).eq("status","pending").select();
-  if(error||!data||!data.length){toast("Trop tard : ton ami a déjà répondu");return renderFriends(true);}
-  if(!ST.tr.done[id]){(ST.tr.held[id]||t.give).forEach(k=>giveCard(k));ST.tr.done[id]=1;delete ST.tr.held[id];save();}
+  let data=null,error=null;try{({data,error}=await sb.from("tcg_trades").update({status:"cancelled",sender_done:true}).eq("id",id).eq("status","pending").select());}catch(e){error=e;}
+  if(error||!data||!data.length){let st=null;try{await wait(1000);const r=await sb.from("tcg_trades").select("status").eq("id",id).maybeSingle();st=r.data&&r.data.status;}catch(e){}
+    if(st!=="cancelled"){toast("Trop tard : ton ami a déjà répondu");return renderFriends(true);}}
+  if(!ST.tr.done[id]){(ST.tr.held[id]||[]).forEach(k=>giveCard(k));ST.tr.done[id]=1;delete ST.tr.held[id];await commitNow();}
   toast("Proposition annulée : tes cartes reviennent");renderFriends(true);}
 setInterval(()=>{if(ST&&!document.hidden&&SX()&&$("#v-amis").hidden)syncSocial();},180000);
 
