@@ -978,6 +978,8 @@ body.hosted #site{display:none!important}
 .dropx{position:absolute;inset:4px;z-index:9;border-radius:11px;border:3px dashed var(--yel,#f2c94c);background:rgba(10,8,14,.78);display:none;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:16px;pointer-events:none}
 .dropx b{font-family:var(--f-ui);font-weight:800;font-size:1.3rem;color:#fff}.dropx span{color:#ddd;font-size:.9rem}
 #dbox.dropping .dropx{display:flex}
+.slinks{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 4px}
+.sitelink{height:38px;padding:0 14px;font-size:.88rem;gap:6px;text-decoration:none}.sitelink span{opacity:.7}
 </style>
 </head>
 <body>
@@ -1778,9 +1780,14 @@ function openCard(c){const P=D.players,S=D.seasons,O=D.orgs;const n=ST.owned[c.k
   const alb=[];if(!PREVIEW&&c.pl!=null)alb.push(`<button class="btn" data-go="album-pl-${c.pl}">Album de ${esc(P[c.pl].n)}</button>`);
   if(!PREVIEW&&c.se!=null)alb.push(`<button class="btn" data-go="album-se-${c.se}">Album de la saison</button>`);
   if(!PREVIEW&&c.og!=null&&c.og>=0)alb.push(`<button class="btn" data-go="album-og-${c.og}">Album de ${esc(O[c.og].n)}</button>`);
+  const site=(h,t)=>`<a class="btn sitelink" href="/#${h}" target="_blank" rel="noopener">${t}<span aria-hidden="true">↗</span></a>`,links=[];
+  if(c.pl!=null&&P[c.pl])links.push(site("joueur-"+encodeURIComponent(P[c.pl].id),"Voir le profil du joueur"));
+  if(c.se!=null&&S[c.se])links.push(site("saison-"+encodeURIComponent(S[c.se].id),"Voir la saison"));
+  if(c.og!=null&&c.og>=0&&O[c.og])links.push(site("org-"+encodeURIComponent(O[c.og].id),"Voir l'ORG"));
   $("#dbox").classList.remove("single");
   $("#dbox").innerHTML=cardHTML(c,true)+`<div class="dinfo"><span class="k" style="color:var(${RAR[c.r][1]})">${RAR[c.r][0]} · ${esc(c.no)}</span><h2>${esc(label(c))}</h2>
     <dl>${rows.map(([a,b])=>`<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl>
+    ${links.length?`<div class="slinks">${links.join("")}</div>`:""}
     ${CANEDIT?`<div class="radm">${c.r!=="S"?`<label><span>Rareté <small>admins</small></span><select id="radm">${["M","L","E","R","PC","C"].map(r=>`<option value="${r}" ${c.r===r?"selected":""}>${RAR[r][0]}${(c.base||c.r)===r?" (automatique)":""}</option>`).join("")}</select></label>`:""}
       ${c.pl!=null&&OPT_OK?`<p><button class="linkbtn" id="radm-out">Retirer ${esc(D.players[c.pl].n)} du TCG</button> (toutes ses cartes, pour tout le monde)</p>`:""}
 ${artBox(c,true)}
