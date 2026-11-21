@@ -1134,10 +1134,12 @@ function cardHTML(c,big){
 
 
 /* ---------- Cartes du jeu ---------- */
-function tierOf(p){const w=p.w||0,n=p.p||0;return w>=3||n>=18?"M":w>=2||n>=11?"L":w>=1||n>=7?"E":n>=3?"R":n===2?"PC":n===1?"C":"";}
+// Raretés (v3, 21/11) : pyramide régulière C > PC > R > É > L > M
+function tierOf(p){const w=p.w||0,n=p.p||0;return w>=3||n>=10?"M":w>=2||n>=7?"L":w>=1||n>=4?"E":n>=3?"R":n===2?"PC":n===1?"C":"";}
+function partTier(pl){return pl===1?"L":pl&&pl<=3?"E":pl&&pl<=6?"R":pl&&pl<=12?"PC":"C";}
 function prepD(d){d.players.forEach(p=>p.r=tierOf(p));
-  const top=d.orgs.map((o,i)=>[o.ns||0,i]).filter(x=>x[0]>0).sort((a,b)=>b[0]-a[0]).slice(0,3).map(x=>x[1]);
-  d.orgs.forEach((o,i)=>o.r=top.includes(i)?"M":"E");return d;}
+  const rk=d.orgs.map((o,i)=>[o.ns||0,i]).filter(x=>x[0]>0).sort((a,b)=>b[0]-a[0]).map(x=>x[1]);
+  d.orgs.forEach((o,i)=>{const j=rk.indexOf(i);o.r=j>=0&&j<10?"M":j>=10&&j<25?"L":"E";});return d;}
 function keyOf(c,d){const P=d.players,S=d.seasons,O=d.orgs;
   if(c.r==="S")return "S:"+P[c.i].id;if(c.t==="J")return "J:"+P[c.i].id;if(c.t==="O")return "O:"+O[c.i].id;if(c.t==="R")return "R:"+S[c.i].id;
   const x=d.parts[c.i];return "P:"+S[x[1]].id+":"+P[x[0]].id;}
@@ -1148,10 +1150,9 @@ function build(){
   for(const r of ["M","L","E"]){byR[r].sort(pk).forEach(i=>cards.push({t:"J",r,i}));O.forEach((o,i)=>{if((o.r||"E")===r)cards.push({t:"O",r,i});});}
   byR.R.sort(pk).forEach(i=>cards.push({t:"J",r:"R",i}));
   S.forEach((s,i)=>cards.push({t:"R",r:"R",i}));
-  const prs=[],pcs=[],cs=[];D.parts.forEach((x,i)=>{if(OPT.has(P[x[0]].id))return;const pl=!x[3]&&x[2]?x[2]:0;(pl&&pl<=3?prs:pl&&pl<=10?pcs:cs).push({t:"P",r:pl&&pl<=3?"R":pl&&pl<=10?"PC":"C",i});});
-  cards.push(...prs);
-  byR.PC.sort(pk).forEach(i=>cards.push({t:"J",r:"PC",i}));
-  cards.push(...pcs);byR.C.sort(pk).forEach(i=>cards.push({t:"J",r:"C",i}));cards.push(...cs);
+  D.parts.forEach((x,i)=>{if(OPT.has(P[x[0]].id))return;const pl=!x[3]&&x[2]?x[2]:0;cards.push({t:"P",r:partTier(pl),i});});
+  byR.PC.sort(pk).forEach(i=>cards.push({t:"J",r:"PC",i}));byR.C.sort(pk).forEach(i=>cards.push({t:"J",r:"C",i}));
+  const ord={M:0,L:1,E:2,R:3,PC:4,C:5};cards.sort((a,b)=>ord[a.r]-ord[b.r]);
   const total=cards.length;cards.forEach((c,k)=>{c.no=`${String(k+1).padStart(4,"0")}/${total}`;});
   const sec=[];["M","L","E","R","PC","C"].forEach(r=>byR[r].forEach(i=>{if(P[i].g)sec.push({t:"J",r:"S",i,base:P[i].r});}));
   sec.forEach((c,k)=>{c.no=`SEC ${String(k+1).padStart(2,"0")}/${sec.length}`;});
