@@ -1006,6 +1006,12 @@ body.hosted #site{display:none!important}
 .ch-f{display:flex;gap:10px}.ch-f input{flex:1;height:46px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:inherit;font:inherit}
 .ch-empty{margin:auto;text-align:center}.ch-rule{margin:0}
 .bd-tabs{margin:0 0 22px}
+.dr-strip{display:grid;grid-auto-flow:column;grid-auto-columns:150px;gap:16px;overflow-x:auto;padding:6px 2px 12px;scroll-snap-type:x proximity}
+.drc{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:8px;scroll-snap-align:start}
+.drc-card{display:block;border-radius:14px;box-shadow:0 0 0 1px color-mix(in srgb,var(--c) 40%,transparent),0 10px 30px -12px var(--c);transition:transform .2s}
+.drc:hover .drc-card,.drc:focus-visible .drc-card{transform:translateY(-4px)}
+.drc-w{display:flex;align-items:center;gap:7px;font-size:.88rem;min-width:0}.drc-w b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.drc time{color:var(--muted);font-size:.78rem;margin-top:-4px}
 </style>
 </head>
 <body>
@@ -2042,7 +2048,12 @@ function mkTabs(){const me=MU(),mineN=MK.filter(L=>L.seller===me).length+(ST.ft|
   const t=[["all","En vente"],["trade","À l'échange"],["mine",`Mes annonces${mineN+bidN?` <i class="dotn">${mineN+bidN}</i>`:""}`],["chat","Tchat"]];
   $("#mk-tabs").innerHTML=t.map(([k,x])=>`<button aria-pressed="${MKTAB===k}" data-mt="${k}">${x}</button>`).join("");
   $("#mk-tabs").querySelectorAll("[data-mt]").forEach(b=>b.onclick=()=>{MKTAB=b.dataset.mt;renderMarket(MKTAB!=="chat");});}
-function mkBind(g){g.querySelectorAll("[data-mk-buy]").forEach(b=>b.onclick=()=>mkBuy(b.dataset.mkBuy,b));
+function mkConfirmBuy(id){const L=MK.find(x=>x.id===id);if(!L)return mkBuy(id);const c=CARDS[L.k],have=ST.owned[L.k]||0;
+  dlgOpen(cardHTML(c,true)+`<div class="dinfo mk-form"><span class="k" style="color:var(${RAR[c.r][1]})">${RAR[c.r][0]} · vente de ${esc(L.sn||"Joueur")}</span><h2>Acheter ${esc(label(c))} ?</h2>
+    <dl><dt>Prix</dt><dd>${nf(L.price)} coquillages</dd><dt>Ton solde</dt><dd>${nf(ST.coins)}</dd><dt>Après l'achat</dt><dd>${nf(ST.coins-L.price)}</dd><dt>Tu l'as déjà</dt><dd>${have?`oui, ×${have}`:"non, nouvelle carte"}</dd></dl>
+    <div class="acts"><button class="btn primary" id="cb-go" ${ST.coins<L.price?"disabled":""}>Confirmer l'achat</button><button class="btn" id="cb-x">Annuler</button></div></div>`);
+  $("#cb-x").onclick=()=>$("#dlg").hidden=true;$("#cb-go").onclick=()=>{$("#cb-go").disabled=true;$("#dlg").hidden=true;mkBuy(id);};}
+function mkBind(g){g.querySelectorAll("[data-mk-buy]").forEach(b=>b.onclick=()=>mkConfirmBuy(b.dataset.mkBuy));
   g.querySelectorAll("[data-mk-bid]").forEach(b=>b.onclick=()=>mkBidForm(b.dataset.mkBid));
   g.querySelectorAll("[data-mk-cancel]").forEach(b=>b.onclick=()=>mkCancel(b.dataset.mkCancel,b));
   g.querySelectorAll("[data-mk-card]").forEach(d=>d.onclick=()=>{const c=CARDS[d.dataset.mkCard];if(c)openCard(c);});}
@@ -2655,9 +2666,9 @@ function drawDrops(){const b=$("#drops");if(!b)return;
   if(!DROPS){const st=OWNER||window.TCG_STAFF||CANEDIT;b.hidden=!st;if(st)b.innerHTML=`<h3 class="ph">Derniers gros tirages</h3><p class="muted" style="margin:0">Pas encore activé : il faut lancer <b>update-27-tcg-drops.sql</b> dans Supabase. (Message visible par les admins seulement.)</p>`;return;}b.hidden=false;
   const list=DROPS.slice(0,15);
   b.innerHTML=`<h3 class="ph">Derniers gros tirages</h3><p class="note" style="margin:0 0 10px">Les mythiques et légendaires sortis des boosters des joueurs.</p>
-    ${list.length?`<ul class="dr-l">${list.map(d=>{const c=CARDS[d.card],me=d.user_id===MEID(),who=me?"Toi":(PCACHE[d.user_id]||{}).name||"Un joueur";
-      return `<li><button class="dr" data-k="${esc(d.card)}"><span class="dr-r" style="--c:var(${RAR[d.rarity][1]})">${RAR[d.rarity][0]}</span><b class="dr-n">${esc(label(c))}</b>
-        <span class="dr-w">${avHTML(me?ME.av:(PCACHE[d.user_id]||{}).av,who,"dr-av")}${esc(who)}</span><time>${ago(d.created_at)}</time></button></li>`;}).join("")}</ul>`
+    ${list.length?`<div class="dr-strip">${list.map(d=>{const c=CARDS[d.card],me=d.user_id===MEID(),who=me?"Toi":(PCACHE[d.user_id]||{}).name||"Un joueur";
+      return `<button class="drc" data-k="${esc(d.card)}" style="--c:var(${RAR[d.rarity][1]})"><span class="drc-card">${cardHTML(c,true)}</span>
+        <span class="drc-w">${avHTML(me?ME.av:(PCACHE[d.user_id]||{}).av,who,"dr-av")}<b>${esc(who)}</b></span><time>${ago(d.created_at)}</time></button>`;}).join("")}</div>`
       :`<p class="muted">Personne n'a encore tiré de mythique ou de légendaire. Ce sera peut-être toi.</p>`}`;
   b.querySelectorAll("[data-k]").forEach(x=>x.onclick=()=>openCard(CARDS[x.dataset.k]));}
 async function refreshDrops(){if(PREVIEW||!SX())return;if(Date.now()-DROPS_AT>15000)await loadDrops();if(location.hash.slice(1)==="boosters"||!location.hash)drawDrops();}
