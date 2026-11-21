@@ -1068,6 +1068,38 @@ body.chat-on .chat-fab{display:none}
 .tr-coin{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:74px;aspect-ratio:5/7;border-radius:10px;border:1px dashed var(--line);background:var(--surface)}
 .tr-coin b{font-family:var(--f-mono)}.tr-coin small{font-size:.65rem;color:var(--muted)}
 @media (max-width:1100px){.tw{height:auto;max-height:none}.dbox.wide{overflow:auto}.tw-g{grid-template-columns:1fr}.tw-grid{max-height:420px}.tw-mid{order:-1}}
+.ms-title em{font-style:normal;color:var(--acc)}
+.ms-r1{display:grid;grid-template-columns:minmax(0,2fr) minmax(260px,1fr);gap:16px;margin-top:20px}
+.ms-r2{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:16px}
+@media (max-width:980px){.ms-r1,.ms-r2{grid-template-columns:1fr}}
+.ms-card{padding:18px;border-radius:20px;background:var(--surface);border:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.ms-ch{display:flex;justify-content:space-between;align-items:center;gap:10px}.ms-ch h3{margin:0;font-family:var(--f-ui);font-weight:800;font-size:1.1rem}
+.ms-ch small{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.ms-pill{font-family:var(--f-mono);font-size:.78rem;padding:3px 10px;border-radius:999px;border:1px solid var(--line)}
+.ms-streak{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.ms-streak>div{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;border-radius:12px;border:1px solid var(--line);background:var(--surface-2)}
+.ms-streak small{font-family:var(--f-mono);font-size:.68rem;color:var(--muted)}.ms-streak b{font-family:var(--f-mono);font-size:.82rem}
+.ms-ic{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line);font-size:.9rem}
+.ms-streak .got{border-color:rgba(95,224,160,.5);background:rgba(95,224,160,.08)}.ms-streak .got .ms-ic{background:#5fe0a0;color:#0d1a12;border-color:#5fe0a0}
+.ms-streak .now{border-color:var(--yel);box-shadow:0 0 0 1px var(--yel) inset}
+.ms-streak>div:last-child .ms-ic{color:var(--yel)}
+.ms-p{display:grid;grid-template-columns:1fr auto;gap:4px 10px;font-size:.88rem}.ms-p code{color:var(--muted);font-size:.8rem}.ms-p .ms-bar{grid-column:1/-1}
+.ms-bar{display:block;height:6px;border-radius:99px;background:var(--surface-2);overflow:hidden}.ms-bar i{display:block;height:100%;background:var(--acc);border-radius:99px}
+.ms-m{padding:12px;border-radius:14px;border:1px solid var(--line);background:var(--surface-2);display:flex;flex-direction:column;gap:8px}
+.ms-m.done{border-color:rgba(95,224,160,.4)}
+.ms-mh,.ms-sh2{display:flex;justify-content:space-between;gap:8px;align-items:baseline}.ms-mh b{font-size:.92rem}.ms-mh span,.ms-sh2 span{display:inline-flex;align-items:center;gap:3px;font-family:var(--f-mono);font-size:.8rem;color:#7cc4ff;white-space:nowrap}
+.ms-mh .shell,.ms-sh2 .shell{transform:scale(.7)}
+.ms-mf{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted)}.ms-m.done .ms-mf span{color:#5fe0a0}
+.ms-albs{display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto}
+.ms-a{all:unset;cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:4px 10px;padding:9px 11px;border-radius:12px;border:1px solid var(--line);background:var(--surface-2)}
+.ms-a:hover{border-color:var(--acc)}.ms-a b{font-size:.88rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ms-a small{color:var(--muted);font-size:.72rem;text-align:right}.ms-a .ms-bar{grid-column:1}.ms-a code{font-size:.72rem;color:var(--muted)}
+.ms-sh{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:34px 0 14px}.ms-sh h2{margin:0}.ms-sh h2 span{font-family:var(--f-mono);font-size:.9rem;color:var(--muted)}
+.ms-ach{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.ms-s{display:grid;grid-template-columns:40px minmax(0,1fr);gap:12px;padding:14px;border-radius:16px;border:1px solid var(--line);background:var(--surface)}
+.ms-s.got{border-color:rgba(95,224,160,.35)}
+.ms-si{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--surface-2);border:1px solid var(--line);font-size:1rem}
+.ms-s.got .ms-si{background:rgba(95,224,160,.15);color:#5fe0a0;border-color:rgba(95,224,160,.4);font-weight:800}
+.ms-sb{display:flex;flex-direction:column;gap:6px;min-width:0}.ms-sb b{font-size:.92rem}.ms-sb small{color:var(--muted);font-size:.8rem;line-height:1.35}.ms-sb code{font-size:.72rem;color:var(--muted);text-align:right}
 </style>
 </head>
 <body>
@@ -1122,7 +1154,7 @@ body.chat-on .chat-fab{display:none}
         <div class="me-drop" id="me-drop" role="menu" hidden>
           <button role="menuitem" data-go="profil">Mon profil</button>
           <button role="menuitem" data-go="catalogue">Toutes les cartes</button>
-          <button role="menuitem" data-go="succes">Succès<span id="md-ach"></span></button>
+          <button role="menuitem" data-go="succes">Missions et succès<span id="md-ach"></span></button>
           <button role="menuitem" id="w-mis">Missions du jour</button>
           <button role="menuitem" id="m-pre" hidden>Revenir au décompte</button>
           <hr><button role="menuitem" id="m-snd">Sons<span id="m-snd-s"></span></button>
@@ -1193,9 +1225,7 @@ body.chat-on .chat-fab{display:none}
       <div class="more"><button class="btn" id="ct-more" hidden>Afficher plus</button></div>
     </section>
     <section class="view" id="v-amis" hidden></section>
-    <section class="view" id="v-succes" hidden>
-      <h1 class="h">Succès</h1><p class="lede" id="ach-lede"></p><div class="ach stg" id="ach"></div>
-    </section>
+    <section class="view" id="v-succes" hidden></section>
     <section class="view" id="v-boutique" hidden>
       <div id="store"></div>
       <h2 class="h2 real-h" id="real-shop">Les vrais trucs</h2><p class="lede">Dépense tes coquillages. Les Sceaux mythiques ne s'achètent pas : ils se gagnent avec certains succès et en complétant l'album d'une ORG. On gagne des coquillages avec la connexion du jour, les missions, les succès, les albums complétés et le recyclage des doublons.</p>
@@ -1431,6 +1461,9 @@ function indexes(){
 
 /* ---------- Sauvegarde ---------- */
 let OWNER=false,ST=null,DB=null,UID=null,USER=null,saveT=null,saving=false,dirty=false;
+/* Missions de la semaine (lundi → dimanche) */
+const weekKey=()=>{const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-((d.getDay()+6)%7));return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;};
+function ensureWeek(){const w=weekKey();if(!ST.wk||ST.wk.week!==w)ST.wk={week:w,open:0,recycle:0,epic:0,done:[],bonus:false};return ST.wk;}
 const today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;};
 // v2 : identifiants stables (J12, O3, R40, P900, S12) au lieu de la position dans la liste.
 function oldOrder(){const P=D.players,S=D.seasons,O=D.orgs,out=[];
@@ -1546,12 +1579,14 @@ function openBooster(kind,opts){HOLDT=true;
   ST.opened++;const res=keys.map(k=>{const n=(ST.owned[k]||0);ST.owned[k]=n+1;return {k,isNew:n===0};});
   const td=today();if(ST.mis.date!==td)ST.mis={date:td,open:0,recycle:0,rare:0,done:[],bonus:false};
   ST.mis.open++;if(keys.some(k=>LADDER.indexOf(CARDS[k].r)>=2))ST.mis.rare++;
+  {const w=ensureWeek();w.open++;w.epic+=keys.filter(k=>LADDER.indexOf(CARDS[k].r)>=3).length;}
   keys.forEach(k=>{ST.firsts[CARDS[k].r]=true;});
   if(!ST.test&&!ST.force&&!ST.forceAll)postDrops(keys.filter(k=>CARDS[k].r==="M"||CARDS[k].r==="L"));
   save();checkAll();return {res,gold};
 }
 
 /* ---------- Missions, connexion, succès ---------- */
+const WEEKLY=[{id:"wopen",t:"Ouvrir 30 boosters",n:30,f:()=>ensureWeek().open,rw:150},{id:"wrec",t:"Recycler 50 doublons",n:50,f:()=>ensureWeek().recycle,rw:150},{id:"wepic",t:"Tirer 3 épiques ou mieux",n:3,f:()=>ensureWeek().epic,rw:200}];
 const MISSIONS=[{id:"open",t:"Ouvrir 5 boosters",n:5,f:()=>ST.mis.open,rw:30},{id:"recycle",t:"Recycler 10 doublons",n:10,f:()=>ST.mis.recycle,rw:30},{id:"rare",t:"Tirer une carte rare ou mieux",n:1,f:()=>ST.mis.rare,rw:30}];
 function uniq(){return Object.keys(ST.owned).length;}
 function setDone(keys){return keys.every(k=>ST.owned[k]);}
@@ -1576,13 +1611,30 @@ const ACH=[
   {id:"mk1",t:"Première affaire",d:"Acheter ou vendre une carte au marché",rw:60,f:()=>(ST.mk&&ST.mk.n||0)>=1},
   {id:"d7",t:"Une semaine d'affilée",d:"Se connecter 7 jours de suite",rw:150,pk:"sceau",f:()=>ST.daily.day>=7},
   {id:"buy1",t:"Premier achat",d:"Acheter un booster en boutique",rw:20,f:()=>ST.bought>=1},
+  {id:"r1000",t:"Grand ménage",d:"Recycler 1 000 doublons",rw:500,f:()=>ST.recycled>=1000},
+  {id:"mk10",t:"Marchand",d:"Faire 10 affaires au marché",rw:300,f:()=>(ST.mk&&ST.mk.n||0)>=10},
+  {id:"leg25",t:"Chasseur de légendes",d:"Avoir 25 légendaires différentes",rw:400,f:()=>ownedOf("L")>=25},
+  {id:"myth10",t:"Panthéon",d:"Avoir 10 mythiques différentes",rw:800,pk:"sceau",f:()=>ownedOf("M")>=10},
+  {id:"s25",t:"Saisonnier",d:"Compléter 25 albums de saison",rw:1200,pk:"sceau",f:()=>countDone("se")>=25},
+  {id:"wk1",t:"Semaine parfaite",d:"Réussir les 3 missions d'une semaine",rw:250,f:()=>!!(ST.wk&&ST.wk.bonus)},
 ];
+function ownedOf(r){return Object.keys(ST.owned).filter(k=>ST.owned[k]>0&&CARDS[k]&&CARDS[k].r===r).length;}
+/* Avancement de chaque succès [actuel, objectif] pour les barres de progression */
+function achProg(a){const id=a.id,num=+id.replace(/\D/g,"")||1;
+  if(/^o\d/.test(id))return [ST.opened||0,num];if(/^u\d/.test(id))return [uniq(),num];
+  if(id==="s1"||id==="s10"||id==="s25")return [countDone("se"),num];if(id==="p1")return [countDone("pl"),1];if(id==="org1")return [countDone("og"),1];
+  if(id==="r100"||id==="r1000")return [ST.recycled||0,num];if(id==="tr1"||id==="tr10")return [(ST.tr&&ST.tr.n)||0,num];if(id==="mk1"||id==="mk10")return [(ST.mk&&ST.mk.n)||0,num];
+  if(id==="d7")return [ST.daily.day||0,7];if(id==="buy1")return [ST.bought||0,1];if(id==="pigeon")return [ST.troll||0,5];
+  if(id==="xall")return [SPECIAL.filter(x=>ST.owned["X:"+x.id]).length,SPECIAL.length];if(id==="leg25")return [ownedOf("L"),25];if(id==="myth10")return [ownedOf("M"),10];
+  return [a.f()?1:0,1];}
 let DONE_CACHE=null;
 function countDone(kind){if(!DONE_CACHE){DONE_CACHE={se:0,pl:0,og:0};
   BY_SE.forEach(l=>{if(l.length>=ALB_MIN&&setDone(l))DONE_CACHE.se++;});BY_PL.forEach(l=>{if(l.length>=ALB_MIN&&setDone(l))DONE_CACHE.pl++;});BY_ORG.forEach(l=>{if(l.length>=ALB_MIN&&setDone(l))DONE_CACHE.og++;});}
   return DONE_CACHE[kind];}
 function checkAll(){DONE_CACHE=null;
   MISSIONS.forEach(m=>{if(!ST.mis.done.includes(m.id)&&m.f()>=m.n){ST.mis.done.push(m.id);ST.coins+=m.rw;toast(`Mission réussie : ${m.t} (+${m.rw})`);}});
+  {const w=ensureWeek();WEEKLY.forEach(m=>{if(!w.done.includes(m.id)&&m.f()>=m.n){w.done.push(m.id);ST.coins+=m.rw;toast(`Mission de la semaine réussie : ${m.t} (+${m.rw})`);}});
+    if(w.done.length===WEEKLY.length&&!w.bonus){w.bonus=true;ST.inv.gold=(ST.inv.gold||0)+1;toast("Toutes les missions de la semaine : un booster doré !");}}
   if(ST.mis.done.length===MISSIONS.length&&!ST.mis.bonus){ST.mis.bonus=true;ST.stock=Math.min(MAXSTOCK+5,ST.stock+1);toast("Toutes les missions du jour : +1 booster");}
   ACH.forEach(a=>{if(!ST.ach[a.id]&&a.f()){ST.ach[a.id]=Date.now();ST.coins+=a.rw;if(a.pk)ST.inv[a.pk]=(ST.inv[a.pk]||0)+1;toast(`Succès débloqué : ${a.t} (+${a.rw}${a.pk?" et un Sceau mythique":""})`,"ach");}});
   save();wallet();}
@@ -1894,7 +1946,7 @@ document.addEventListener("click",e=>{const w=e.target.closest(".cwrap[data-ck]"
 document.addEventListener("keydown",e=>{if(OV&&!$("#ov").hidden&&(e.key===" "||e.key==="ArrowRight"||e.key==="Enter")){const tgt=e.target;if(tgt&&tgt.tagName==="BUTTON"&&tgt.id!=="rtop"&&e.key!==" ")return;if($("#rtop")){e.preventDefault();ovStep();return;}if($("#wo")){e.preventDefault();$("#wo").click();return;}if($("#bpack")&&e.key===" "){e.preventDefault();$("#bpack").click();return;}}if((e.key==="Enter"||e.key===" ")&&e.target.closest&&e.target.closest(".cwrap[data-ck]")){e.preventDefault();openCard(CARDS[e.target.closest(".cwrap").dataset.ck]);}if(e.key==="Escape"&&!$("#dlg").hidden)$("#dlg").hidden=true;});
 function recycle(k,n){SFX.coin();const c=CARDS[k];n=Math.min(n,ST.owned[k]||0);const v=RECYCLE[c.r]*n;ST.owned[k]-=n;ST.coins+=v;ST.recycled+=n;
   if(!(ST.owned[k]>0)){delete ST.owned[k];if(ST.show)ST.show=ST.show.map(x=>x===k?null:x);if(ST.ft)ST.ft=ST.ft.filter(x=>x!==k);}
-  const td=today();if(ST.mis.date!==td)ST.mis={date:td,open:0,recycle:0,rare:0,done:[],bonus:false};ST.mis.recycle+=n;return v;}
+  const td=today();if(ST.mis.date!==td)ST.mis={date:td,open:0,recycle:0,rare:0,done:[],bonus:false};ST.mis.recycle+=n;ensureWeek().recycle+=n;return v;}
 $("#recycle-all").onclick=()=>{let n=0,v=0;Object.keys(ST.owned).forEach(k=>{const d=ST.owned[k]-1;if(d>0){n+=d;v+=recycle(k,d);}});
   if(!n){toast("Aucun doublon à recycler");return;}toast(`${nf(n)} doublons recyclés : +${nf(v)} coquillages`);checkAll();renderCollection(true);};
 
@@ -1920,7 +1972,7 @@ function openCard(c){const P=D.players,S=D.seasons,O=D.orgs;const n=ST.owned[c.k
   if(c.pl!=null&&P[c.pl])links.push(site("joueur-"+encodeURIComponent(P[c.pl].id),"Voir le profil du joueur"));
   if(c.se!=null&&S[c.se])links.push(site("saison-"+encodeURIComponent(S[c.se].id),"Voir la saison"));
   if(c.og!=null&&c.og>=0&&O[c.og])links.push(site("org-"+encodeURIComponent(O[c.og].id),"Voir l'ORG"));
-  $("#dbox").classList.remove("single");
+  $("#dbox").classList.remove("single","wide");
   $("#dbox").innerHTML=cardHTML(c,true)+`<div class="dinfo"><span class="k" style="color:var(${RAR[c.r][1]})">${RAR[c.r][0]} · ${esc(c.no)}</span><h2>${esc(label(c))}</h2>
     <dl>${rows.map(([a,b])=>`<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl>
     ${links.length?`<div class="slinks">${links.join("")}</div>`:""}
@@ -1998,10 +2050,36 @@ function renderAlbum(kind,i){const keys=(kind==="og"?BY_ORG:kind==="pl"?BY_PL:BY
   if(RW&&complete&&!claimed)$("#aclaim").onclick=()=>{if(ST.claimed[id])return;ST.claimed[id]=Date.now();ST.coins+=RW;if(kind==="og")ST.inv.sceau++;save();toast(`Album complété : +${nf(RW)} coquillages${kind==="og"?" et un Sceau mythique":""}`);checkAll();renderAlbum(kind,i);};}
 
 /* ---------- Succès ---------- */
-function renderAch(){const got=ACH.filter(a=>ST.ach[a.id]).length;
-  $("#ach-lede").textContent=`${got} succès débloqués sur ${ACH.length}. Chaque succès rapporte des coquillages.`;
-  $("#ach").innerHTML=ACH.map(a=>{const g=ST.ach[a.id];if(a.hidden&&!g)return `<div class="achi"><span class="medal">?</span><div><b>Succès caché</b><small>Continue à ouvrir des boosters…</small></div></div>`;
-    return `<div class="achi${g?" got":""}"><span class="medal">${g?"✓":"?"}</span><div><b>${esc(a.t)}</b><small>${esc(a.d)} · +${a.rw}${a.pk?" et un Sceau mythique":""}</small></div></div>`;}).join("");}
+let ACHF="all";
+function untilTxt(ms){const h=Math.floor(ms/3600e3),m=Math.floor(ms/6e4)%60;return h>=24?`${Math.floor(h/24)} j ${h%24} h`:`${h} h ${String(m).padStart(2,"0")}`;}
+function renderAch(){const v=$("#v-succes"),got=ACH.filter(a=>ST.ach[a.id]).length,vis=ACH.filter(a=>!a.hidden||ST.ach[a.id]).length,w=ensureWeek(),gotD=ST.daily.date===today();
+  const now=new Date(),mid=new Date(now);mid.setHours(24,0,0,0);const mon=new Date(now);mon.setHours(0,0,0,0);mon.setDate(mon.getDate()+((8-mon.getDay())%7||7));
+  const albs=[["se",BY_SE],["pl",BY_PL],["og",BY_ORG]].flatMap(([k,arr])=>arr.map((l,i)=>({k,i,n:l.length,h:l.filter(x=>ST.owned[x]).length}))).filter(a=>a.n>=ALB_MIN&&a.h>0);
+  const albDone=albs.filter(a=>a.h===a.n).length,albGo=albs.filter(a=>a.h<a.n).sort((a,b)=>b.h/b.n-a.h/a.n).slice(0,8);
+  const bar=(x,n,c)=>`<span class="ms-bar"><i style="width:${Math.min(100,x/n*100)}%;${c?`background:${c}`:""}"></i></span>`;
+  const mis=(list,done,lbl)=>list.map(m=>{const x=Math.min(m.n,m.f()),d=done.includes(m.id);return `<div class="ms-m${d?" done":""}"><div class="ms-mh"><b>${esc(m.t)}</b><span>+${m.rw}<i class="shell"></i></span></div>${bar(x,m.n,d?"#5fe0a0":"")}<div class="ms-mf"><code>${x}/${m.n}</code><span>${d?"Réussie ✓":"En cours"}</span></div></div>`;}).join("");
+  const prog=[["Connexion",ST.daily.day||0,7],["Du jour",ST.mis.date===today()?ST.mis.done.length:0,MISSIONS.length],["Semaine",w.done.length,WEEKLY.length],["Albums",albDone,albs.length||1],["Succès",got,vis]];
+  const list=ACH.filter(a=>ACHF==="all"?true:ACHF==="done"?ST.ach[a.id]:!ST.ach[a.id]);
+  v.innerHTML=`<p class="kick"><span>Missions</span> · succès</p><h1 class="h ms-title">Missions <em>&amp;</em> succès</h1>
+    <p class="lede">Reviens chaque jour : la connexion, les missions du jour et de la semaine donnent des coquillages et des boosters en plus des gratuits.</p>
+    <div class="ms-r1">
+      <section class="ms-card"><div class="ms-ch"><div><small>Connexion · ${ST.daily.day||0}/7</small><h3>Série de 7 jours</h3></div><button class="btn ${gotD?"":"primary"}" id="ms-claim" ${gotD?"disabled":""}>${gotD?"Récupéré aujourd'hui ✓":"Récupérer"}</button></div>
+        <div class="ms-streak">${STREAK.map((x,i)=>{const on=i<(ST.daily.day||0),today_=gotD?i===ST.daily.day-1:i===((ST.daily.day||0)%7);return `<div class="${on?"got":""}${today_&&!gotD?" now":""}"><small>J${i+1}</small><span class="ms-ic">${on?"✓":i===6?"★":"○"}</span><b>+${x}</b></div>`;}).join("")}</div>
+        <p class="note">J7 : booster doré en plus. Un jour manqué, la série repart de J1.</p></section>
+      <section class="ms-card"><div class="ms-ch"><h3>Ta progression</h3></div>${prog.map(([t,x,n])=>`<div class="ms-p"><span>${t}</span><code>${x}/${n}</code>${bar(x,n)}</div>`).join("")}</section>
+    </div>
+    <div class="ms-r2">
+      <section class="ms-card"><div class="ms-ch"><div><small>Du jour · fin dans ${untilTxt(mid-now)}</small><h3>Missions du jour</h3></div><span class="ms-pill">${ST.mis.date===today()?ST.mis.done.length:0}/${MISSIONS.length}</span></div>${mis(MISSIONS,ST.mis.date===today()?ST.mis.done:[])}<p class="note">Les 3 réussies : +1 booster.</p></section>
+      <section class="ms-card"><div class="ms-ch"><div><small>De la semaine · fin dans ${untilTxt(mon-now)}</small><h3>Missions de la semaine</h3></div><span class="ms-pill">${w.done.length}/${WEEKLY.length}</span></div>${mis(WEEKLY,w.done)}<p class="note">Les 3 réussies : un booster doré.</p></section>
+      <section class="ms-card"><div class="ms-ch"><div><small>Albums · ${albDone} complétés</small><h3>Albums en cours</h3></div></div>
+        <div class="ms-albs">${albGo.length?albGo.map(a=>`<button class="ms-a" data-alb="${a.k}:${a.i}"><b>${esc(aTitle(a.k,a.i))}</b><small>${a.k==="og"?"ORG":a.k==="pl"?"Joueur":"Saison"} · +${nf(albumReward(a.k,a.n))}</small>${bar(a.h,a.n)}<code>${a.h}/${a.n}</code></button>`).join(""):`<p class="muted">Ouvre des boosters pour commencer des albums.</p>`}</div></section>
+    </div>
+    <div class="ms-sh"><h2 class="h2">Succès <span>${got}/${vis}</span></h2><div class="seg ysel">${[["all","Tous"],["todo","À faire"],["done","Obtenus"]].map(([k,t])=>`<button aria-pressed="${ACHF===k}" data-af="${k}">${t}</button>`).join("")}</div></div>
+    <div class="ms-ach stg">${list.map(a=>{const g=ST.ach[a.id];if(a.hidden&&!g)return `<div class="ms-s"><span class="ms-si">?</span><div class="ms-sb"><div class="ms-sh2"><b>Succès caché</b></div><small>Continue à ouvrir des boosters…</small></div></div>`;
+      const [x,n]=achProg(a);return `<div class="ms-s${g?" got":""}"><span class="ms-si">${g?"✓":"🔒"}</span><div class="ms-sb"><div class="ms-sh2"><b>${esc(a.t)}</b><span>+${nf(a.rw)}<i class="shell"></i></span></div><small>${esc(a.d)}${a.pk?" · + Sceau mythique":""}</small>${bar(g?n:x,n,g?"#5fe0a0":"")}<code>${nf(g?n:Math.min(x,n))}/${nf(n)}</code></div></div>`;}).join("")}</div>`;
+  const c=$("#ms-claim");if(c&&!gotD)c.onclick=()=>{claimDaily();renderAch();};
+  v.querySelectorAll("[data-af]").forEach(b=>b.onclick=()=>{ACHF=b.dataset.af;renderAch();});
+  v.querySelectorAll("[data-alb]").forEach(b=>b.onclick=()=>{const [k,i]=b.dataset.alb.split(":");location.hash="albums";setTimeout(()=>renderAlbum(k,+i),30);});}
 
 /* ---------- Boutique ---------- */
 const SHOP=[{id:"mini",t:"Mini-booster",p:100,d:"3 cartes : une commune, une peu commune, une rare ou mieux."},
