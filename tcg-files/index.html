@@ -2410,7 +2410,7 @@ $("#ct-more").onclick=()=>renderCatalog(false);
 /* ---------- Données en direct (orgcentral.fr) ---------- */
 // Même calcul que build_data.py, à partir des données publiques du site (/api/data, en cache chez Vercel).
 async function liveData(){
-  const get=async t=>{const rows=[];let from=0;while(from!=null){const r=await fetch(`/api/data?t=${t}&from=${from}`);if(!r.ok)throw new Error(t);const j=await r.json();rows.push(...(j.rows||[]));from=j.next;}return rows;};
+  const get=async t=>{const rows=[];let from=0;while(from!=null){const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),9000);const r=await fetch(`/api/data?t=${t}&from=${from}`,{signal:ac.signal}).finally(()=>clearTimeout(tm));if(!r.ok)throw new Error(t);const j=await r.json();rows.push(...(j.rows||[]));from=j.next;}return rows;};
   const [OR,SR,PR]=await Promise.all(["orgs","seasons","players"].map(get));
   const orgs={},players={};OR.forEach(o=>orgs[o.id]=o.data||{});PR.forEach(p=>players[p.id]=p.data||{});
   const N=t=>norm(t).replace(/[^a-z0-9]/g,"");

@@ -6,7 +6,7 @@ const LIMIT = { orgs: 1000, seasons: 100, players: 1000, news: 500 };
 const ST = SB + "/storage/v1/object/public/images/";
 
 async function get(path) {
-  const r = await fetch(SB + "/rest/v1/" + path, { headers: { apikey: KEY, Authorization: "Bearer " + KEY } });
+  const r = await fetch(SB + "/rest/v1/" + path, { headers: { apikey: KEY, Authorization: "Bearer " + KEY }, signal: AbortSignal.timeout(8000) });
   return r;
 }
 // Même traitement que la fonction SQL oc_strip, si la vue n'existe pas encore.

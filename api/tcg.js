@@ -43,12 +43,15 @@ const loader = (now) => `<!DOCTYPE html><html lang="fr"><head><meta charset="utf
 <script>
 (async()=>{const m=document.getElementById("m");
   try{const C=window.ORG_CENTRAL_CONFIG;
-    const sb=supabase.createClient(C.supabaseUrl,C.supabaseAnonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:"pkce",storageKey:"org-central-auth"}});
-    const sess=async()=>{const {data}=await sb.auth.getSession();return data&&data.session||null;};
+    // Toute requête vers Supabase abandonne au bout de 8 s : si la base rame, le jeu se charge quand même.
+    const tfetch=(u,o={})=>{if(o.signal)return fetch(u,o);const c=new AbortController(),t=setTimeout(()=>c.abort(),8000);return fetch(u,{...o,signal:c.signal}).finally(()=>clearTimeout(t));};
+    const sb=supabase.createClient(C.supabaseUrl,C.supabaseAnonKey,{global:{fetch:tfetch},auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:"pkce",storageKey:"org-central-auth"}});
+    const within=(p,ms,v)=>Promise.race([p,new Promise(r=>setTimeout(()=>r(v),ms))]);
+    const sess=async()=>{try{const {data}=await within(sb.auth.getSession(),6000,{data:null});return data&&data.session||null;}catch(e){return null;}};
     const s=await sess();
     window.TCG_HOSTED=true;window.TCG_SB=sb;window.TCG_UID=s?s.user.id:null;
     window.TCG_LAUNCH=${LAUNCH};window.TCG_OFFSET=${now}-Date.now();
-    let staff=false;if(s){try{const [o,a]=await Promise.all([sb.rpc("is_owner"),sb.rpc("is_admin")]);staff=o.data===true||a.data===true;}catch(e){}}
+    let staff=false;if(s){try{const [o,a]=await within(Promise.all([sb.rpc("is_owner"),sb.rpc("is_admin")]),4000,[{},{}]);staff=o.data===true||a.data===true;}catch(e){}}
     const live=Date.now()+window.TCG_OFFSET>=window.TCG_LAUNCH;
     // Avant la sortie, le propriétaire et les admins voient le décompte comme tout le monde ; un bouton leur ouvre le jeu (mémorisé pour l'onglet).
     let adm=false;try{adm=sessionStorage.getItem("tcg-admin")==="1";}catch(e){}
