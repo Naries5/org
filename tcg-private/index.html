@@ -972,6 +972,9 @@ body.hosted #site{display:none!important}
 .st-no{max-width:480px;text-align:center}.st-no h2{font-family:var(--f-ui);font-weight:800;margin:4px 0 14px}.st-k{font-family:var(--f-mono);letter-spacing:.2em;text-transform:uppercase;font-size:.75rem;color:#ff8a7a;margin:0}
 .st-msg{font-size:1.15rem;font-weight:600;margin:0 0 14px}.st-no .acts{justify-content:center;display:flex;margin-top:16px}
 .real-h{margin:56px 0 6px}
+.aadm{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:12px;font-weight:600}
+.aadm>span small{font-family:var(--f-mono,monospace);font-size:.7rem;padding:2px 7px;border-radius:999px;background:var(--yel,#f2c94c);color:#17110a;margin-left:6px;vertical-align:1px}
+.aadm-b{height:36px;padding:0 14px;font-size:.88rem;cursor:pointer}
 </style>
 </head>
 <body>
@@ -1123,7 +1126,7 @@ const PITY=250,EPITY=10;
 const RECYCLE={C:2,PC:5,R:15,E:60,L:250,M:1000,S:1500};
 const STREAK=[20,30,40,50,60,80,100];
 const CHARGE=10*60*1000,MAXSTOCK=10;
-let D=null,IMG={},CARDS=[],OVR={},CANEDIT=false;
+let D=null,IMG={},CARDS=[],OVR={},ART={},CANEDIT=false;
 function orgFallback(){D.orgs.forEach((o,i)=>{if(o.l)return;let best=null,sc=-1;
   D.seasons.forEach(se=>{if(se.o!==i||!se.l)return;const v=(se.st==="en_cours"?1e6:0)+(+se.n||0);if(v>sc){sc=v;best=se.l;}});
   if(best)o.l=best;});}
@@ -1157,20 +1160,20 @@ function nameCls(n){const w=Math.max(...String(n).split(/\s+/).map(x=>x.length))
 function placeHTML(p,dq){if(dq)return `<span class="place dq">DQ</span>`;if(!p)return "";return `<span class="place${p<=3?" p"+p:""}">${p}<sup>${p===1?"er":"e"}</sup></span>`;}
 function cardHTML(c,big){
   const P=D.players,S=D.seasons,O=D.orgs;let name,art,ty,sub="",st="",extra="",logo=false;
-  const rk=RAR[c.r][0];
-  if(c.t==="J"){const p=P[c.i];name=p.n;art=pic(p.a,p.n);
+  const rk=RAR[c.r][0],ov=ART[c.k];
+  if(c.t==="J"){const p=P[c.i];name=p.n;art=pic(ov||p.a,p.n);
     ty="";
     st=`<div class="st"><div><b>${p.p}</b><span>Saisons</span></div><div><b>${p.w}</b><span>Victoires</span></div><div><b>${p.t}</b><span>Top 5</span></div></div>`;}
-  else if(c.t==="O"){const o=O[c.i];name=o.n;art=logoArt(o.l,o.n);logo=!!o.l;
+  else if(c.t==="O"){const o=O[c.i];name=o.n;art=ov?pic(ov,o.n):logoArt(o.l,o.n);logo=!ov&&!!o.l;
     ty=`ORG · ${o.f==="speed"?"Speed":"Format long"}`;
     sub=`<span><b>${o.ns}</b> saison${o.ns>1?"s":""}${o.pf?` · ${esc({discord:"Discord",minecraft:"Minecraft",roblox:"Roblox"}[o.pf]||"Autre")}`:""}</span>`;}
-  else if(c.t==="R"){const s=S[c.i],o=O[s.o]||{};name=s.t||sName(s);art=logoArt(s.l||o.l,name);logo=!!(s.l||o.l);
+  else if(c.t==="R"){const s=S[c.i],o=O[s.o]||{};name=s.t||sName(s);art=ov?pic(ov,name):logoArt(s.l||o.l,name);logo=!ov&&!!(s.l||o.l);
     ty=`Saison · ${sName(s)}`;
     const w=s.x?`Résultats sur le site de l'ORG`:s.w.length?`<b>${esc(s.w.map(i=>P[i].n).join(" & "))}</b>`:(s.st==="terminee"?"Vainqueur non renseigné":"Saison en cours");
     sub=`<span>${s.w.length&&!s.x?"👑 ":""}${w}</span>`;
     st=`<div class="st"><div><b>${s.c}</b><span>Joueurs</span></div>${s.y?`<div><b>${s.y}</b><span>Année</span></div>`:""}</div>`;}
-  else if(c.t==="X"){const x=SPECIAL[c.i];name=x.n;art=specialArt(x);ty=`Spéciale · ${x.ty}`;sub=`<span class="xtxt">${esc(x.txt)}</span>`;}
-  else{const x=D.parts[c.i],p=P[x[0]],s=S[x[1]],o=O[s.o]||{};name=p.n;art=pic(x[4]||p.a,p.n);
+  else if(c.t==="X"){const x=SPECIAL[c.i];name=x.n;art=ov?pic(ov,x.n):specialArt(x);ty=`Spéciale · ${x.ty}`;sub=`<span class="xtxt">${esc(x.txt)}</span>`;}
+  else{const x=D.parts[c.i],p=P[x[0]],s=S[x[1]],o=O[s.o]||{};name=p.n;art=pic(ov||x[4]||ART["J:"+p.id]||p.a,p.n);
     if(!s.x)extra=placeHTML(x[2],x[3]);ty="Participation";
     sub=`<span class="mini">${pic(s.l||o.l,s.t||o.n)}</span><span><b>${esc(sName(s))}</b>${s.t?" · "+esc(s.t):""}</span>`;}
   return `<article class="card r-${c.r}" ${big?"":`tabindex="0" data-c="${c.k}"`} aria-label="${esc(name)}, ${esc(rk)}, ${esc(ty)}"><div class="in">
@@ -1770,9 +1773,13 @@ function openCard(c){const P=D.players,S=D.seasons,O=D.orgs;const n=ST.owned[c.k
   $("#dbox").classList.remove("single");
   $("#dbox").innerHTML=cardHTML(c,true)+`<div class="dinfo"><span class="k" style="color:var(${RAR[c.r][1]})">${RAR[c.r][0]} · ${esc(c.no)}</span><h2>${esc(label(c))}</h2>
     <dl>${rows.map(([a,b])=>`<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl>
-    ${CANEDIT&&c.r!=="S"?`<div class="radm"><label><span>Rareté <small>admins</small></span><select id="radm">${["M","L","E","R","PC","C"].map(r=>`<option value="${r}" ${c.r===r?"selected":""}>${RAR[r][0]}${(c.base||c.r)===r?" (automatique)":""}</option>`).join("")}</select></label>
+    ${CANEDIT?`<div class="radm">${c.r!=="S"?`<label><span>Rareté <small>admins</small></span><select id="radm">${["M","L","E","R","PC","C"].map(r=>`<option value="${r}" ${c.r===r?"selected":""}>${RAR[r][0]}${(c.base||c.r)===r?" (automatique)":""}</option>`).join("")}</select></label>`:""}
       ${c.pl!=null&&OPT_OK?`<p><button class="linkbtn" id="radm-out">Retirer ${esc(D.players[c.pl].n)} du TCG</button> (toutes ses cartes, pour tout le monde)</p>`:""}
-      ${c.base?`<p>Changée à la main. Automatiquement, elle serait ${RAR[c.base][0].toLowerCase()}. <button class="linkbtn" id="radm-x">Revenir à l'automatique</button></p>`:`<p>Calculée automatiquement. Le changement s'applique pour tous les joueurs.</p>`}</div>`:""}
+      <div class="aadm"><span>Image <small>admins</small></span>
+        <label class="btn aadm-b">Choisir une image<input type="file" id="aadm-f" accept="image/*" hidden></label>
+        <button class="btn aadm-b" id="aadm-u">Coller un lien</button>${ART[c.k]?`<button class="linkbtn" id="aadm-x">Remettre l'image d'origine</button>`:""}</div>
+      <p>${ART[c.k]?"Image changée par un admin.":"Image d'origine."} ${c.t==="J"?"La nouvelle image sert aussi pour ses cartes de participation qui n'ont pas de photo de saison.":""}</p>
+      ${c.r==="S"?"":c.base?`<p>Changée à la main. Automatiquement, elle serait ${RAR[c.base][0].toLowerCase()}. <button class="linkbtn" id="radm-x">Revenir à l'automatique</button></p>`:`<p>Rareté calculée automatiquement. Les changements s'appliquent pour tous les joueurs.</p>`}</div>`:""}
     <div class="acts">${n&&c.r!=="S"&&DB?`<button class="btn" id="sell1">Vendre au marché</button>`:""}${n>1?`<button class="btn" id="rec1">Recycler 1 doublon (+${RECYCLE[c.r]})</button>`:""}${alb.join("")}<button class="btn primary" id="dclose">Fermer</button></div></div>`;
   $("#dlg").hidden=false;$("#dclose").focus();
   $("#dclose").onclick=()=>$("#dlg").hidden=true;
@@ -1780,6 +1787,9 @@ function openCard(c){const P=D.players,S=D.seasons,O=D.orgs;const n=ST.owned[c.k
   const sb=$("#sell1");if(sb)sb.onclick=()=>mkSellForm(c);
   const ra=$("#radm");if(ra)ra.onchange=()=>{ra.disabled=true;setRarity(c,ra.value);};
   const rx=$("#radm-x");if(rx)rx.onclick=()=>setRarity(c,c.base);
+  const af=$("#aadm-f");if(af)af.onchange=()=>{const f=af.files[0];if(f)setArtFile(c,f);};
+  const au=$("#aadm-u");if(au)au.onclick=()=>{const u=prompt("Lien de l'image (https://…)",ART[c.k]||"");if(u==null)return;if(!/^https:\/\/\S+$/.test(u.trim())){toast("Le lien doit commencer par https://");return;}setArt(c,u.trim());};
+  const ax=$("#aadm-x");if(ax)ax.onclick=()=>setArt(c,null);
   const ro=$("#radm-out");if(ro)ro.onclick=async()=>{const p=D.players[c.pl];ro.disabled=true;const {error}=await SX().from("tcg_optout").insert({player_id:p.id});
     if(error){toast("Le retrait n'a pas pu se faire");return;}OPT.add(p.id);$("#dlg").hidden=true;toast(`${p.n} est retiré du TCG`);applyOptOut();stashSync();};
   if(n>1)$("#rec1").onclick=()=>{const v=recycle(c.k,1);toast(`+${v} coquillages`);checkAll();openCard(c);if(!$("#v-collection").hidden)renderCollection(true);};
@@ -2292,6 +2302,25 @@ async function loadRoles(){const sb=SX();if(!sb)return;
 async function loadOverrides(){const sb=SX();if(!sb)return;
   try{const {data,error}=await sb.from("tcg_rarity").select("card,rarity,updated_at");if(!error&&data){OVR={};data.forEach(r=>{if(Date.parse(r.updated_at)>=OVR_SINCE)OVR[r.card]=r.rarity;});}}catch(e){}}
 const OVR_SINCE=Date.parse("2026-11-21T09:15:00Z");
+/* Images choisies par les admins (table tcg_art, update-24) */
+async function loadArt(){const sb=SX();if(!sb)return;
+  try{const {data,error}=await sb.from("tcg_art").select("card,url");if(!error&&data){ART={};data.forEach(r=>{if(/^https:\/\//.test(r.url))ART[r.card]=r.url;});}}catch(e){}}
+function shrinkImage(file,max){return new Promise((ok,ko)=>{const u=URL.createObjectURL(file),i=new Image();
+  i.onload=()=>{const k=Math.min(1,max/Math.max(i.width,i.height)),w=Math.round(i.width*k),h=Math.round(i.height*k),cv=document.createElement("canvas");cv.width=w;cv.height=h;
+    cv.getContext("2d").drawImage(i,0,0,w,h);URL.revokeObjectURL(u);cv.toBlob(b=>b?ok(b):ko(new Error("image")),"image/webp",.88);};
+  i.onerror=()=>{URL.revokeObjectURL(u);ko(new Error("image"));};i.src=u;});}
+async function setArtFile(c,f){const sb=SX();if(!sb||!CANEDIT)return;
+  if(!/^image\//.test(f.type)){toast("Ce fichier n'est pas une image");return;}
+  toast("Envoi de l'image…");
+  try{const b=await shrinkImage(f,900);const path=`tcg/${MEID()||"admin"}/${c.k.replace(/[^a-z0-9]+/gi,"-")}-${Date.now().toString(36)}.webp`;
+    const {error}=await sb.storage.from("images").upload(path,b,{contentType:"image/webp",upsert:false});if(error)throw error;
+    await setArt(c,sb.storage.from("images").getPublicUrl(path).data.publicUrl);}
+  catch(e){console.warn(e);toast("L'image n'a pas pu être envoyée");}}
+async function setArt(c,url){const sb=SX();if(!sb||!CANEDIT)return;
+  const {error}=await(url?sb.from("tcg_art").upsert({card:c.k,url,updated_at:new Date().toISOString()}):sb.from("tcg_art").delete().eq("card",c.k));
+  if(error){toast(/relation|does not exist|schema cache/i.test(error.message||"")?"Il faut d'abord lancer update-24-tcg-images.sql dans Supabase":"L'image n'a pas pu être changée");return;}
+  if(url)ART[c.k]=url;else delete ART[c.k];
+  route();openCard(CARDS[c.k]||c);toast(url?`Nouvelle image pour ${label(c)}`:`${label(c)} : image d'origine remise`);}
 async function setRarity(c,r){const sb=SX();if(!sb||!CANEDIT)return;const auto=c.base||c.r;
   const q=r===auto?sb.from("tcg_rarity").delete().eq("card",c.k):sb.from("tcg_rarity").upsert({card:c.k,rarity:r,updated_at:new Date().toISOString()});
   const {error}=await q;
@@ -2442,7 +2471,7 @@ function renderStore(){const b=$("#store");if(!b)return;
 /* ---------- Démarrage ---------- */
 (async()=>{
   try{if(window.TCG_HOSTED){try{D=await liveData();}catch(e){console.warn("données en direct indisponibles",e);D=null;}}
-    if(!D)D=await (await tget("cards.json")).json();prepD(D);orgFallback();await Promise.all([loadOverrides(),loadRoles(),loadOptOut()]);}catch(e){document.body.insertAdjacentHTML("afterbegin",`<p style="padding:20px">Les cartes n'ont pas pu être chargées. Recharge la page.</p>`);return;}
+    if(!D)D=await (await tget("cards.json")).json();prepD(D);orgFallback();await Promise.all([loadOverrides(),loadRoles(),loadOptOut(),loadArt()]);}catch(e){document.body.insertAdjacentHTML("afterbegin",`<p style="padding:20px">Les cartes n'ont pas pu être chargées. Recharge la page.</p>`);return;}
   $(".tl-emb").innerHTML=TORCH;$("#me-btn").onclick=e=>{e.stopPropagation();const d=$("#me-drop");d.hidden=!d.hidden;$("#me-btn").setAttribute("aria-expanded",String(!d.hidden));};
   document.addEventListener("click",e=>{const d=$("#me-drop");if(d&&!d.hidden&&!e.target.closest(".me-menu"))d.hidden=true;});
   $("#w-mis").onclick=()=>{location.hash="boosters";setTimeout(()=>{const m=$("#missions");if(m)m.scrollIntoView({behavior:reduced()?"auto":"smooth",block:"center"});},60);};if(PREVIEW)ST=fresh();CARDS=build();indexes();route();
