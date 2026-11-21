@@ -1518,7 +1518,7 @@ const ACH=[
 ];
 let DONE_CACHE=null;
 function countDone(kind){if(!DONE_CACHE){DONE_CACHE={se:0,pl:0,og:0};
-  BY_SE.forEach(l=>{if(l.length>1&&setDone(l))DONE_CACHE.se++;});BY_PL.forEach(l=>{if(l.length>1&&setDone(l))DONE_CACHE.pl++;});BY_ORG.forEach(l=>{if(l.length>1&&setDone(l))DONE_CACHE.og++;});}
+  BY_SE.forEach(l=>{if(l.length>=ALB_MIN&&setDone(l))DONE_CACHE.se++;});BY_PL.forEach(l=>{if(l.length>=ALB_MIN&&setDone(l))DONE_CACHE.pl++;});BY_ORG.forEach(l=>{if(l.length>=ALB_MIN&&setDone(l))DONE_CACHE.og++;});}
   return DONE_CACHE[kind];}
 function checkAll(){DONE_CACHE=null;
   MISSIONS.forEach(m=>{if(!ST.mis.done.includes(m.id)&&m.f()>=m.n){ST.mis.done.push(m.id);ST.coins+=m.rw;toast(`Mission réussie : ${m.t} (+${m.rw})`);}});
@@ -1900,7 +1900,9 @@ document.addEventListener("paste",e=>{const c=dropCard();if(!c)return;const f=[.
 
 /* ---------- Albums ---------- */
 let AK="og",AQ="";
-const REWARD={se:50,pl:100,og:300};
+/* Récompense d'album : rien sous 5 cartes, puis un montant par carte (plus l'album est grand, plus ça rapporte) */
+const ALB_MIN=5,ALB_PER={se:5,pl:10,og:4},ALB_CAP={se:400,pl:600,og:2000};
+const albumReward=(kind,n)=>n<ALB_MIN?0:Math.min(ALB_CAP[kind],Math.round(ALB_PER[kind]*n/5)*5);
 function albumList(kind){const list=kind==="og"?BY_ORG:kind==="pl"?BY_PL:BY_SE;
   return list.map((keys,i)=>({i,keys,have:keys.filter(k=>ST.owned[k]).length})).filter(a=>a.keys.length>1);}
 function aTitle(kind,i){return kind==="og"?D.orgs[i].n:kind==="pl"?D.players[i].n:sFull(D.seasons[i]);}
@@ -1909,7 +1911,7 @@ function renderAlbums(h){const m=/^album-(og|pl|se)-(\d+)$/.exec(h||"");if(m)ret
   const list=albumList(AK).filter(a=>!AQ||norm(aTitle(AK,a.i)).includes(norm(AQ)));
   list.sort((a,b)=>(b.have/b.keys.length)-(a.have/a.keys.length)||b.have-a.have||norm(aTitle(AK,a.i)).localeCompare(norm(aTitle(AK,b.i))));
   const done=albumList(AK).filter(a=>a.have===a.keys.length).length;
-  $("#v-albums").innerHTML=`<h1 class="h">Albums</h1><p class="lede">Complète toutes les cartes d'une ORG, d'une saison ou d'un joueur. Chaque album terminé rapporte des coquillages : ${REWARD.se} par saison, ${REWARD.pl} par joueur, ${REWARD.og} et un Sceau mythique par ORG.</p>
+  $("#v-albums").innerHTML=`<h1 class="h">Albums</h1><p class="lede">Complète toutes les cartes d'une ORG, d'une saison ou d'un joueur. Un album terminé d'au moins ${ALB_MIN} cartes rapporte des coquillages, d'autant plus qu'il est grand : ${ALB_PER.se} par carte pour une saison, ${ALB_PER.pl} pour un joueur, ${ALB_PER.og} pour une ORG (avec un Sceau mythique en plus).</p>
     <div class="filters"><div class="seg" role="group" aria-label="Type d'album">${[["og","ORGs"],["se","Saisons"],["pl","Joueurs"]].map(([k,l])=>`<button aria-pressed="${AK===k}" data-ak="${k}">${l}</button>`).join("")}</div>
     <input id="a-q" type="search" placeholder="Chercher un album…" value="${esc(AQ)}" aria-label="Chercher un album"><span class="note">${done} album${done>1?"s":""} complété${done>1?"s":""}</span></div>
     <div class="alist stg">${list.slice(0,AK==="pl"?240:500).map(a=>`<button class="aitem${a.have===a.keys.length?" complete":""}" data-go="album-${AK}-${a.i}"><span class="aimg">${pic(aImg(AK,a.i),aTitle(AK,a.i))}</span><span class="ainfo"><b>${esc(aTitle(AK,a.i))}</b><span class="prog"><span class="bar"><b style="width:${a.have/a.keys.length*100}%"></b></span><span>${a.have}/${a.keys.length}</span></span></span></button>`).join("")}</div>
@@ -1917,7 +1919,7 @@ function renderAlbums(h){const m=/^album-(og|pl|se)-(\d+)$/.exec(h||"");if(m)ret
   $("#v-albums").querySelectorAll("[data-ak]").forEach(b=>b.onclick=()=>{AK=b.dataset.ak;renderAlbums();});
   let t;$("#a-q").oninput=e=>{clearTimeout(t);t=setTimeout(()=>{AQ=e.target.value;renderAlbums();const q=$("#a-q");q.focus();q.setSelectionRange(q.value.length,q.value.length);},200);};}
 function renderAlbum(kind,i){const keys=(kind==="og"?BY_ORG:kind==="pl"?BY_PL:BY_SE)[i]||[];const have=keys.filter(k=>ST.owned[k]).length;
-  const id=kind+i,complete=have===keys.length,claimed=ST.claimed[id];
+  const id=kind+i,complete=have===keys.length,claimed=ST.claimed[id],RW=albumReward(kind,keys.length);
   let body="";
   const grid=ks=>`<div class="cgrid stg">${ks.map(k=>tileHTML(CARDS[k])).join("")}</div>`;
   if(kind==="og"){const own=keys.filter(k=>CARDS[k].t!=="P");
@@ -1927,8 +1929,8 @@ function renderAlbum(kind,i){const keys=(kind==="og"?BY_ORG:kind==="pl"?BY_PL:BY
   else body=grid(keys);
   $("#v-albums").innerHTML=`<p><a href="#albums">← Tous les albums</a></p><div class="ahead"><span class="aimg">${pic(aImg(kind,i),aTitle(kind,i))}</span><div style="flex:1;min-width:220px"><span class="note">${kind==="og"?"Album d'ORG":kind==="pl"?"Album de joueur":"Album de saison"}</span><h1 class="h" style="margin:0">${esc(aTitle(kind,i))}</h1>
     <div class="prog" style="max-width:360px"><span class="bar"><b style="width:${have/keys.length*100}%"></b></span><span>${have}/${keys.length}</span></div></div>
-    ${complete?(claimed?`<span class="pill">Récompense récupérée</span>`:`<button class="btn primary" id="aclaim">Récupérer +${REWARD[kind]}</button>`):`<span class="note">Récompense : +${REWARD[kind]} coquillages${kind==="og"?" et un Sceau mythique":""}</span>`}</div>${body}`;
-  if(complete&&!claimed)$("#aclaim").onclick=()=>{ST.claimed[id]=Date.now();ST.coins+=REWARD[kind];if(kind==="og")ST.inv.sceau++;toast(`Album complété : +${REWARD[kind]} coquillages${kind==="og"?" et un Sceau mythique":""}`);checkAll();renderAlbum(kind,i);};}
+    ${!RW?`<span class="note">Pas de récompense : il faut au moins ${ALB_MIN} cartes dans l'album.</span>`:complete?(claimed?`<span class="pill">Récompense récupérée</span>`:`<button class="btn primary" id="aclaim">Récupérer +${nf(RW)}</button>`):`<span class="note">Récompense : +${nf(RW)} coquillages${kind==="og"?" et un Sceau mythique":""}</span>`}</div>${body}`;
+  if(RW&&complete&&!claimed)$("#aclaim").onclick=()=>{if(ST.claimed[id])return;ST.claimed[id]=Date.now();ST.coins+=RW;if(kind==="og")ST.inv.sceau++;save();toast(`Album complété : +${nf(RW)} coquillages${kind==="og"?" et un Sceau mythique":""}`);checkAll();renderAlbum(kind,i);};}
 
 /* ---------- Succès ---------- */
 function renderAch(){const got=ACH.filter(a=>ST.ach[a.id]).length;
