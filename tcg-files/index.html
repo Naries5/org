@@ -1505,24 +1505,59 @@ const cloudOn=()=>!!(SX()&&MEID()&&window.TCG_LAUNCH&&launchLeft()<=0);
 async function cloudGet(){const {data,error}=await SX().from("tcg_saves").select("state").eq("user_id",MEID()).maybeSingle();
   if(error){CLOUD_OK=false;if(OWNER||window.TCG_STAFF)console.warn("tcg_saves :",error.message);return undefined;}CLOUD_OK=true;
   const r=data&&data.state&&data.state.v?data.state:null;if(r)CLOUD_SV=Math.max(CLOUD_SV,r.sv||0);return r;}
-/* Au démarrage : on prend la partie du compte, sauf si celle de ce navigateur est plus récente */
+/* ---- Fusion à trois (base commune / cet onglet / compte) ----
+   Deux onglets ou deux appareils ouverts en même temps ne s'écrasent plus : on additionne ce que chacun a gagné ou dépensé
+   depuis la dernière version commune. Avant, la partie la plus « récente » écrasait l'autre et des cartes disparaissaient. */
+let BASE=null;try{BASE=JSON.parse(localStorage.getItem("oc-tcg-base")||"null");}catch(e){}
+function setBase(x){BASE=x?JSON.parse(JSON.stringify(x)):null;try{localStorage.setItem("oc-tcg-base",JSON.stringify(BASE));}catch(e){}}
+function baseOk(){return !!(BASE&&BASE.sv!=null&&BASE.uid===MEID());}
+function mergeObj(b,l,s){b=b||{};l=l||{};s=s||{};const o={};for(const k of new Set([...Object.keys(l),...Object.keys(s)])){if((k in b)&&(!(k in l)||!(k in s)))continue;o[k]=(k in l)?l[k]:s[k];}return o;}
+function merge3(B,L,S){
+  if((S.rs||0)>(B.rs||0))return JSON.parse(JSON.stringify(S));            // remise à zéro faite ailleurs
+  if((L.rs||0)>(B.rs||0)){const M=JSON.parse(JSON.stringify(L));M.sv=Math.max(S.sv||0,L.sv||0)+1;return M;} // remise à zéro faite ici
+  const M=JSON.parse(JSON.stringify(L)),g=(x,f)=>(x&&f(x))||0,d=f=>g(S,f)+g(L,f)-g(B,f);
+  const own={};for(const k of new Set([...Object.keys(S.owned||{}),...Object.keys(L.owned||{})])){const v=((S.owned||{})[k]||0)+((L.owned||{})[k]||0)-((B.owned||{})[k]||0);if(v>0)own[k]=v;}M.owned=own;
+  for(const f of ["coins","opened","recycled","bought","troll","stock"])M[f]=Math.max(0,d(x=>x[f]));
+  M.inv={};for(const f of new Set([...Object.keys(S.inv||{}),...Object.keys(L.inv||{})]))M.inv[f]=Math.max(0,d(x=>(x.inv||{})[f]));
+  M.ach=Object.assign({},S.ach,L.ach);M.claimed=Object.assign({},S.claimed,L.claimed);M.firsts=Object.assign({},S.firsts,L.firsts);
+  M.mk=Object.assign({},L.mk,{mine:mergeObj(B.mk&&B.mk.mine,L.mk&&L.mk.mine,S.mk&&S.mk.mine),held:mergeObj(B.mk&&B.mk.held,L.mk&&L.mk.held,S.mk&&S.mk.held),n:Math.max(0,d(x=>x.mk&&x.mk.n))});
+  M.tr=Object.assign({},L.tr,{held:mergeObj(B.tr&&B.tr.held,L.tr&&L.tr.held,S.tr&&S.tr.held),done:Object.assign({},S.tr&&S.tr.done,L.tr&&L.tr.done),ans:Object.assign({},S.tr&&S.tr.ans,L.tr&&L.tr.ans),n:Math.max(0,d(x=>x.tr&&x.tr.n))});
+  if(S.daily&&L.daily&&String(S.daily.date)>String(L.daily.date))M.daily=S.daily;
+  if(S.mis&&L.mis&&String(S.mis.date)>String(L.mis.date))M.mis=S.mis;
+  M.lr=Math.max(S.lr||0,L.lr||0);M.rs=Math.max(S.rs||0,L.rs||0);M.sv=Math.max(S.sv||0,L.sv||0)+1;M.uid=L.uid||S.uid;M.cs=1;return M;}
+function adoptLocal(){try{localStorage.setItem("oc-tcg-state",JSON.stringify(ST));}catch(e){}DONE_CACHE=null;COINV=null;}
+function refreshAll(){try{stashSync();}catch(e){}try{tick();wallet();checkAll();route();}catch(e){}}
+/* Au démarrage : on part de la partie du compte, fusionnée avec ce que ce navigateur a de plus */
 async function cloudPull(){if(!cloudOn())return false;let r;try{r=await cloudGet();}catch(e){return false;}if(r===undefined)return false;
-  const id=MEID(),mine=ST&&ST.uid===id;
+  const id=MEID(),mine=ST&&ST.uid===id;if(BASE&&BASE.uid!==id)setBase(null);
+  if(!r){if(ST&&ST.uid&&ST.uid!==id)ST=fresh();ST.uid=id;setBase(null);cloudQueue(true);return false;}
   // une partie locale jamais synchronisée (navigateur vidé, navigation privée…) ne remplace jamais celle du compte
-  if(r&&(!mine||!ST.cs||(r.sv||0)>(ST.sv||0))){ST=JSON.parse(JSON.stringify(r));ST.uid=id;ST.cs=1;try{localStorage.setItem("oc-tcg-state",JSON.stringify(ST));}catch(e){}return true;}
-  if(!r&&ST&&ST.uid&&ST.uid!==id)ST=fresh();
-  ST.uid=id;cloudQueue(true);return false;}
+  if(!mine||!ST.cs){ST=JSON.parse(JSON.stringify(r));ST.uid=id;ST.cs=1;setBase(r);adoptLocal();return true;}
+  if(baseOk()&&(r.sv||0)!==(BASE.sv||0)){ST=merge3(BASE,ST,r);setBase(r);adoptLocal();cloudQueue(true);return true;}
+  if(!baseOk()&&(r.sv||0)>(ST.sv||0)){ST=JSON.parse(JSON.stringify(r));ST.uid=id;ST.cs=1;setBase(r);adoptLocal();return true;}
+  setBase(r);if((ST.sv||0)>(r.sv||0))cloudQueue(true);return false;}
 function cloudQueue(now){if(!cloudOn()||!CLOUD_OK)return;clearTimeout(CLOUD_T);const wait=now?0:Math.max(3000,30000-(Date.now()-CLOUD_LAST));CLOUD_T=setTimeout(cloudPush,wait);}
-async function cloudPush(){if(!cloudOn()||!CLOUD_OK)return;if(CLOUD_BUSY){CLOUD_PEND=true;return;}CLOUD_BUSY=true;CLOUD_LAST=Date.now();
-  const st=JSON.parse(JSON.stringify(ST));st.uid=MEID();
-  st.cs=1;try{const {error}=await SX().from("tcg_saves").upsert({user_id:MEID(),state:st,updated_at:new Date().toISOString()});if(!error){CLOUD_SV=Math.max(CLOUD_SV,st.sv||0);if(ST&&!ST.cs){ST.cs=1;try{localStorage.setItem("oc-tcg-state",JSON.stringify(ST));}catch(e){}}}else console.warn(error.message);}catch(e){}
+async function cloudPush(tries){if(!cloudOn()||!CLOUD_OK)return;if(CLOUD_BUSY){CLOUD_PEND=true;return;}CLOUD_BUSY=true;CLOUD_LAST=Date.now();
+  const me=MEID(),st=JSON.parse(JSON.stringify(ST));st.uid=me;st.cs=1;let ok=false;
+  try{
+    if(baseOk()){ // n'écrit que si le compte n'a pas bougé depuis notre base ; sinon on fusionne et on recommence
+      const {data,error}=await SX().from("tcg_saves").update({state:st,updated_at:new Date().toISOString()}).eq("user_id",me).eq("state->>sv",String(BASE.sv)).select("user_id");
+      if(error)throw error;
+      if(data&&data.length)ok=true;
+      else{const r=await cloudGet();
+        if(r&&(r.sv||0)===(BASE.sv||0)){setBase(null);} // le filtre n'a rien trouvé alors que le compte n'a pas bougé : on écrit directement
+        else if(r){ST=merge3(BASE,ST,r);setBase(r);adoptLocal();try{flush();}catch(e){}refreshAll();if((tries||0)<3){CLOUD_BUSY=false;return cloudPush((tries||0)+1);}}
+        else{setBase(null);try{await checkReset();}catch(e){}}}}
+    if(!ok&&!baseOk()){const {error}=await SX().from("tcg_saves").upsert({user_id:me,state:st,updated_at:new Date().toISOString()});if(error)throw error;ok=true;}
+  }catch(e){console.warn("sauvegarde :",e&&e.message);}
+  if(ok){CLOUD_SV=Math.max(CLOUD_SV,st.sv||0);setBase(st);if(ST&&!ST.cs){ST.cs=1;adoptLocal();}}
   CLOUD_BUSY=false;if(CLOUD_PEND){CLOUD_PEND=false;cloudQueue();}}
-/* En revenant sur l'onglet : si la partie a avancé sur un autre appareil, on la reprend */
+/* En revenant sur l'onglet : si la partie a avancé sur un autre appareil, on fusionne */
 document.addEventListener("visibilitychange",async()=>{if(!ST||!cloudOn()||!CLOUD_OK)return;
   if(document.visibilityState==="hidden"){if(dirty)await flush();cloudPush();return;}
-  let r;try{r=await cloudGet();}catch(e){return;}
-  if(r&&(r.sv||0)>(ST.sv||0)){ST=JSON.parse(JSON.stringify(r));ST.uid=MEID();ST.cs=1;try{localStorage.setItem("oc-tcg-state",JSON.stringify(ST));}catch(e){}
-    DONE_CACHE=null;COINV=null;try{stashSync();}catch(e){}tick();wallet();checkAll();route();toast("Partie mise à jour depuis ton autre appareil");}});
+  let r;try{r=await cloudGet();}catch(e){return;}if(!r)return;
+  if(baseOk()&&(r.sv||0)!==(BASE.sv||0)){ST=merge3(BASE,ST,r);setBase(r);adoptLocal();save();refreshAll();cloudQueue(true);toast("Partie mise à jour avec ton autre appareil");}
+  else if(!baseOk()&&(r.sv||0)>(ST.sv||0)){ST=JSON.parse(JSON.stringify(r));ST.uid=MEID();ST.cs=1;setBase(r);adoptLocal();refreshAll();toast("Partie mise à jour depuis ton autre appareil");}});
 async function flush(){if(!dirty)return;if(saving){setTimeout(flush,800);return;}dirty=false;
   if(MEID()){ST.uid=MEID();ST.sv=Math.max(ST.sv||0,CLOUD_SV)+1;}const data=JSON.parse(JSON.stringify(ST));
   try{localStorage.setItem("oc-tcg-state",JSON.stringify(data));}catch(e){}
