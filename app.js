@@ -337,6 +337,7 @@ function presTrack(route,force){const changed=route&&route!==PRES.route;if(route
 setInterval(()=>presTrack(PRES.route,true),30000);
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")presTrack(PRES.route,true);});
 function presPageLabel(r){r=String(r||"accueil");const i=r.indexOf("-");const pg=i<0?r:r.slice(0,i),id=i<0?"":r.slice(i+1);
+  if(pg==="tcg")return "TCG"+(id?" · "+(({boosters:"Boosters",collection:"Collection",albums:"Albums",marche:"Marché",boutique:"Boutique",amis:"Amis",classement:"Classement",profil:"Profil",succes:"Succès",missions:"Missions",catalogue:"Toutes les cartes",decompte:"Décompte"})[id]||id):"");
   if(pg==="saison"){const x=season(id);return x?fullSeasonName(x):"une saison";}if(pg==="joueur"){const x=player(id);return x?"Profil de "+x.pseudo:"un profil";}if(pg==="org"){const x=org(id);return x?x.name:"une ORG";}
   return ({accueil:"Accueil",orgs:"ORGs",saisons:"Saisons",joueurs:"Joueurs",calendrier:"Calendrier",annonces:"Annonces",contribuer:"Contribuer",social:"Messages",tickets:"Contribuer",admin:"Administration",merci:"Remerciements",guide:"Comment ça marche",qualite:"Qualité des données",comptes:"Comptes inscrits",journal:"Journal",presence:"Qui est en ligne"})[pg]||pg;}
 function relTime(t){const d=(Date.now()-new Date(t))/1000;if(d<60)return "à l'instant";if(d<3600)return "il y a "+Math.floor(d/60)+" min";if(d<86400)return "il y a "+Math.floor(d/3600)+" h";if(d<86400*7)return "il y a "+Math.floor(d/86400)+" j";return new Date(t).toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"});}
@@ -386,10 +387,11 @@ function drawPresence(){const a=document.getElementById("pres-now"),b=document.g
   if(PRES_SEEN.error){a.innerHTML=`<p class="muted">Lance <b>update-11-presence.sql</b> puis <b>update-12-en-ligne.sql</b> dans Supabase.</p>`;b.innerHTML="";return;}
   const now=Date.now();const on=r=>now-new Date(r.at).getTime()<ONLINE_MS;
   const users=PRES_SEEN.filter(on),anon=(PRES_VIS||[]).filter(on);
-  const n=users.length+anon.length;
+  const n=users.length+anon.length;const inTcg=r=>/^tcg(-|$)/.test(String(r.page||""));const tU=users.filter(inTcg),tA=anon.filter(inTcg);
   a.innerHTML=`<p class="pres-sum"><b>${n}</b> personne${n>1?"s":""} sur le site en ce moment : ${users.length} connectée${users.length>1?"s":""}, ${anon.length} visiteur${anon.length>1?"s":""} non connecté${anon.length>1?"s":""}.</p>
   ${PRES_VIS==null?`<p class="hint">Pour compter aussi les visiteurs non connectés, lance <b>update-12-en-ligne.sql</b> dans Supabase.</p>`:""}
-  ${users.length?`<div class="table-wrap"><table><thead><tr><th>Joueur</th><th>Page ouverte</th></tr></thead><tbody>${users.map(r=>`<tr><td>${pageWho(r.user_id)}</td><td>${esc(presPageLabel(r.page))}</td></tr>`).join("")}</tbody></table></div>`:""}
+  <div class="pres-tcg"><h3>Dans le TCG <span class="muted">(${tU.length+tA.length})</span></h3>${tU.length+tA.length?`<p class="muted">${tU.length} connecté${tU.length>1?"s":""}${tA.length?`, ${tA.length} non connecté${tA.length>1?"s":""}`:""}</p>${tU.length?`<div class="table-wrap"><table><thead><tr><th>Joueur</th><th>Dans le TCG</th></tr></thead><tbody>${tU.map(r=>`<tr><td>${pageWho(r.user_id)}</td><td>${esc(presPageLabel(r.page).replace(/^TCG · /,""))}</td></tr>`).join("")}</tbody></table></div>`:""}`:`<p class="muted">Personne dans le TCG en ce moment.</p>`}</div>
+  ${users.length?`<h3 class="pres-all">Tout le site</h3><div class="table-wrap"><table><thead><tr><th>Joueur</th><th>Page ouverte</th></tr></thead><tbody>${users.map(r=>`<tr><td>${pageWho(r.user_id)}</td><td>${esc(presPageLabel(r.page))}</td></tr>`).join("")}</tbody></table></div>`:""}
   ${anon.length?`<details class="pres-anon"><summary>Visiteurs non connectés (${anon.length})</summary><ul>${anon.map(r=>`<li>${esc(presPageLabel(r.page))}</li>`).join("")}</ul></details>`:""}
   <p class="hint">Mis à jour toutes les 15 secondes. Une personne compte comme en ligne tant qu'une page du site est ouverte chez elle.</p>`;
   const seen=new Set(PRES_SEEN.map(r=>r.user_id));const never=ADM_PROFS.filter(p=>!seen.has(p.id));

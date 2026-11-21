@@ -1497,6 +1497,17 @@ function route(){const bt=document.getElementById("boot");if(bt)bt.remove();cons
   window.scrollTo(0,0);}
 document.addEventListener("click",e=>{const g=e.target.closest("[data-go]");if(g){e.preventDefault();location.hash=g.dataset.go;}});
 window.addEventListener("hashchange",route);
+/* Présence : le TCG apparaît dans « Qui est en ligne » du site (mêmes fonctions que le site) */
+const TPRES={last:0,pg:""};
+function tcgPage(){if(PREVIEW)return "tcg-decompte";const h=(location.hash||"").slice(1).split(/[?&]/)[0];return "tcg-"+(VIEWS.includes(h)?h:"boosters");}
+function tcgPres(force){const sb=SX();if(!sb||!window.TCG_HOSTED)return;const pg=tcgPage(),ch=pg!==TPRES.pg;
+  if(!force&&!ch)return;if(!force&&Date.now()-TPRES.last<4000)return;TPRES.last=Date.now();TPRES.pg=pg;
+  let vid="";try{vid=localStorage.getItem("oc-vid")||"";if(!vid){vid="v"+Math.random().toString(36).slice(2,12)+Date.now().toString(36);localStorage.setItem("oc-vid",vid);}}catch(e){vid="v"+Math.random().toString(36).slice(2,12);}
+  try{(MEID()?sb.rpc("touch_seen",{p:pg}):sb.rpc("touch_visitor",{vid,p:pg})).then(()=>{},()=>{});}catch(e){}}
+window.addEventListener("hashchange",()=>tcgPres(false));
+setInterval(()=>tcgPres(true),30000);
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")tcgPres(true);});
+setTimeout(()=>tcgPres(true),2500);
 function renderFan(){if(!D||$("#fan").childElementCount)return;
   const picks=[CARDS.find(c=>c.t==="R"&&D.seasons[c.i].l),CARDS.find(c=>c.t==="J"&&c.r==="L"&&D.players[c.i].a),CARDS.find(c=>c.t==="J"&&c.r==="M"&&D.players[c.i].a)].filter(Boolean);
   $("#fan").innerHTML=picks.map((c,i)=>`<div style="position:absolute;left:50%;top:${10+Math.abs(i-1)*14}px;width:170px;transform:translateX(${(i-1)*110-85}px) rotate(${(i-1)*9}deg);z-index:${i===1?3:1}">${cardHTML(c,true)}</div>`).join("");}
