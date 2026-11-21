@@ -636,7 +636,7 @@ body.tcg .dlg{background:rgba(8,7,10,.86)}
 .p1 .pblock strong{color:var(--yel)}.p3 .pblock strong{color:#e8a678}
 .pblock span{color:var(--muted)}
 .blist{border:1px solid var(--line);border-radius:22px;overflow:hidden;background:var(--surface)}
-.br{display:grid;grid-template-columns:44px auto 1fr auto 110px;align-items:center;gap:18px;padding:14px 24px;border-top:1px solid var(--line)}
+.br{display:grid;grid-template-columns:44px auto 1fr auto auto;align-items:center;gap:18px;padding:14px 24px;border-top:1px solid var(--line)}
 .br:first-child{border-top:0}
 .br.me{background:linear-gradient(90deg,rgba(236,106,61,.12),transparent);box-shadow:inset 3px 0 0 var(--acc)}
 .brn{font-family:var(--f-mono);color:var(--muted);font-size:1.05rem}
@@ -1016,7 +1016,7 @@ body.hosted #site{display:none!important}
 .chat-fab:hover{transform:translateY(-2px)}.chat-fab svg{width:22px;height:22px}
 .chat-fab .dotn{position:absolute;top:-6px;right:-4px;background:#d63a2a;box-shadow:0 0 0 2px var(--bg,#0d0c10)}
 body.chat-on .chat-fab{display:none}
-.chat-pane[hidden],.chat-fab[hidden],.chat-tab[hidden]{display:none!important}
+.chat-pane[hidden],.chat-fab[hidden],.chat-tab[hidden],.dotn[hidden]{display:none!important}
 .chat-pane{position:fixed;top:0;right:0;bottom:0;z-index:70;width:min(400px,100vw);display:flex;flex-direction:column;background:var(--bg,#0d0c10);border-left:1px solid var(--line);box-shadow:-20px 0 50px -20px rgba(0,0,0,.7);animation:cpIn .22s cubic-bezier(.2,.75,.25,1)}
 @keyframes cpIn{from{transform:translateX(30px);opacity:0}}
 .cp-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 18px;border-bottom:1px solid var(--line)}
@@ -1028,6 +1028,10 @@ body.chat-on .chat-fab{display:none}
 .cp-b .ch-f input{height:44px;min-width:0}.cp-b .ch-f .btn{flex:none}
 .chat-tab{position:relative}.chat-tab[aria-pressed="true"]{color:var(--ink)}.chat-tab .dotn{margin-left:6px}
 @media (max-width:760px){.chat-fab span{display:none}.chat-fab{padding:0 15px;right:14px;bottom:14px}}
+.rp-l{display:grid;gap:6px;max-height:60vh;overflow-y:auto}
+.rp{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;gap:12px;padding:8px 10px;border:1px solid var(--line);border-radius:12px}
+.rp b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rp .btn{height:34px;padding:0 12px;font-size:.85rem}
+.br-rs{margin-left:10px;font-size:.8rem;color:#ff8a7a}
 </style>
 </head>
 <body>
@@ -1087,6 +1091,7 @@ body.chat-on .chat-fab{display:none}
           <button role="menuitem" id="m-pre" hidden>Revenir au décompte</button>
           <hr><button role="menuitem" id="m-snd">Sons<span id="m-snd-s"></span></button>
           <button role="menuitem" id="m-reset" hidden>Réinitialiser ma progression</button>
+          <button role="menuitem" id="m-preset" hidden>Remettre un joueur à zéro</button>
           <hr><button role="menuitem" data-go="site">Retour au site</button>
         </div></div>
     </div>
@@ -1998,9 +2003,10 @@ async function renderBoard(){const tb=$("#board"),B=BOARDS.find(b=>b[0]===BK)||B
     const me=rows.findIndex(r=>r.id===ME_ID);
     const pod=[1,0,2].filter(i=>rows[i]).map(i=>{const r=rows[i];return `<div class="pod p${i+1}"><div class="pav">${av(r)}</div><b class="pn">${esc(nm(r))}</b><small>${other(r)}</small>
       <div class="pblock"><i class="prk">${i+1}</i><strong>${nf(v(r))}</strong><span>${unit(v(r))}</span></div></div>`;}).join("");
-    const row=(r,i)=>`<div class="br${r.id===ME_ID?" me":""}"><span class="brn">${i+1}</span><span class="bav">${av(r)}</span><span class="bname">${esc(nm(r))}${r.id===ME_ID?` <i class="toi">toi</i>`:""}<small>${BOARDS.filter(b=>b[0]!==K).map(b=>`${nf(r[b[0]]||0)} ${b[4]}`).join(" · ")}</small></span><span class="bs2"><strong>${nf(v(r))}</strong><small>${B[4]}</small></span></div>`;
+    const row=(r,i)=>`<div class="br${r.id===ME_ID?" me":""}"><span class="brn">${i+1}</span><span class="bav">${av(r)}</span><span class="bname">${esc(nm(r))}${r.id===ME_ID?` <i class="toi">toi</i>`:""}<small>${BOARDS.filter(b=>b[0]!==K).map(b=>`${nf(r[b[0]]||0)} ${b[4]}`).join(" · ")}</small></span><span class="bs2"><strong>${nf(v(r))}</strong><small>${B[4]}</small></span>${OWNER&&!DB?`<button class="linkbtn br-rs" data-rs="${r.id}" data-rsn="${esc(nm(r))}" title="Remettre ce joueur à zéro">Reset</button>`:""}</div>`;
     tb.innerHTML=tabs+(me>=0?`<div class="mebar"><span class="bav">${av(rows[me])}</span><div><small>Toi</small><b>${me+1}${me?"e":"er"} sur ${rows.length}</b></div><span class="muted">${me<3?"Tu es sur le podium":`à ${nf(v(rows[2])-v(rows[me]))} ${B[4]} du podium`}</span><strong>${nf(v(rows[me]))}<small>${B[4]}</small></strong></div>`:"")+
-      `<div class="podium stg">${pod}</div><div class="blist stg">${rows.slice(3).map((r,i)=>row(r,i+3)).join("")}</div>`;bind();}
+      `<div class="podium stg">${pod}</div><div class="blist stg">${(OWNER&&!DB?rows:rows.slice(3)).map((r,i)=>row(r,OWNER&&!DB?i:i+3)).join("")}</div>`;bind();
+    tb.querySelectorAll("[data-rs]").forEach(b=>b.onclick=()=>resetPlayer(b.dataset.rs,b.dataset.rsn));}
   catch(e){console.warn(e);tb.innerHTML=tabs+`<p class="muted">Le classement n'a pas pu être chargé.</p>`;bind();}}
 
 
@@ -2586,6 +2592,43 @@ function stashSync(){if(!ST)return;ST.stash=ST.stash||{};let ch=false;
 
 /* ---------- Remise à zéro à la sortie ---------- */
 // Toute progression commencée avant la sortie (tests du propriétaire et des admins) repart de zéro à 14 h.
+/* ---------- Remise à zéro d'un joueur par le propriétaire (table tcg_resets, update-29) ---------- */
+function wipeState(){const rs=ST.rs,lr=ST.lr;ST=fresh();ST.lr=lr;ST.rs=rs;
+  ST.inv={gold:0,sceau:0};ST.mk={mine:{},held:{}};ST.tr={n:0,held:{},done:{}};ST.show=[];ST.stash={};ST.ft=[];DONE_CACHE=null;COINV=null;}
+async function checkReset(){const sb=SX(),id=MEID();if(!sb||!id||PREVIEW||!ST)return false;
+  try{const {data,error}=await sb.from("tcg_resets").select("reset_at").eq("user_id",id).maybeSingle();if(error||!data)return false;
+    const t=Date.parse(data.reset_at);if(!(t>(ST.rs||0)))return false;
+    wipeState();ST.rs=t;save();try{await flush();}catch(e){}cloudQueue(true);
+    wallet();checkAll();if(location.hash==="#boosters")route();else location.hash="boosters";
+    toast("Ta progression du TCG a été remise à zéro par un admin.");return true;}catch(e){return false;}}
+setInterval(()=>{if(ST&&!document.hidden)checkReset();},90000);
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&ST)checkReset();});
+async function resetPlayer(uid,name){const sb=SX();if(!sb||!OWNER)return;
+  dlgOpen(`<div class="mk-pick rs-box"><h2>Remettre ${esc(name)} à zéro</h2>
+    <p>Toute sa progression du TCG sera effacée : cartes, coquillages, succès, boosters ouverts, vitrine. Ça s'applique dès qu'il ouvre ou recharge le TCG, sur tous ses appareils. Il disparaît tout de suite du classement.</p>
+    <p class="muted">Ses annonces en cours au marché ne sont pas touchées. On ne peut pas revenir en arrière.</p>
+    <label class="fl"><span>Écris <b>RESET</b> pour confirmer</span><input id="pr-in" autocomplete="off" spellcheck="false"></label>
+    <div class="acts"><button class="btn danger" id="pr-go" disabled>Remettre à zéro</button><button class="btn" id="pr-x">Annuler</button></div></div>`,true);
+  $("#pr-in").oninput=()=>{$("#pr-go").disabled=$("#pr-in").value.trim().toUpperCase()!=="RESET";};$("#pr-in").focus();$("#pr-x").onclick=()=>$("#dlg").hidden=true;
+  $("#pr-go").onclick=async()=>{$("#pr-go").disabled=true;
+    const {error}=await sb.from("tcg_resets").upsert({user_id:uid,reset_at:new Date(SNOW()).toISOString(),by_user:MEID()});
+    if(error){toast(/relation|does not exist|schema cache/i.test(error.message||"")?"Il faut d'abord lancer update-29-tcg-reset-joueur.sql dans Supabase":"La remise à zéro n'a pas pu se faire");$("#pr-go").disabled=false;return;}
+    await Promise.all([sb.from("tcg_collections").delete().eq("user_id",uid),sb.from("tcg_saves").delete().eq("user_id",uid)]).catch(()=>{});
+    $("#dlg").hidden=true;toast(`${name} sera remis à zéro à son prochain chargement du TCG`);
+    if(uid===MEID())checkReset();if(!$("#v-classement").hidden)renderBoard();};}
+async function resetPicker(){const sb=SX();if(!sb||!OWNER)return;$("#me-drop").hidden=true;
+  const {data,error}=await sb.from("tcg_collections").select("user_id,uniq,updated_at").order("updated_at",{ascending:false}).limit(500);
+  if(error){toast("La liste des joueurs n'a pas pu être chargée");return;}
+  const ids=(data||[]).map(r=>r.user_id),names={};
+  for(let i=0;i<ids.length;i+=100){const {data:pr}=await sb.from("profiles").select("id,discord_name,avatar_url").in("id",ids.slice(i,i+100));(pr||[]).forEach(p=>{names[p.id]=p;PCACHE[p.id]={name:p.discord_name||"Joueur",av:p.avatar_url||""};});}
+  const rows=(data||[]).map(r=>({id:r.user_id,n:(names[r.user_id]||{}).discord_name||"Joueur",av:(names[r.user_id]||{}).avatar_url||"",u:r.uniq||0}));
+  dlgOpen(`<div class="mk-pick"><div class="mk-ph"><h2>Remettre un joueur à zéro</h2><input id="rp-q" type="search" placeholder="Chercher un pseudo…" aria-label="Chercher"><button class="btn" id="rp-x">Fermer</button></div>
+    <p class="muted pk-intro">Les joueurs qui ont joué au TCG, du plus récent au plus ancien.</p><div class="rp-l" id="rp-l"></div></div>`,true);
+  const draw=()=>{const q=norm($("#rp-q").value.trim());$("#rp-l").innerHTML=rows.filter(r=>!q||norm(r.n).includes(q)).slice(0,80).map(r=>`<div class="rp"><span class="fr-av sm">${avHTML(r.av,r.n,"")}</span><b>${esc(r.n)}</b><small class="muted">${nf(r.u)} cartes</small><button class="btn danger" data-rp="${r.id}">Remettre à zéro</button></div>`).join("")||`<p class="muted">Personne ne correspond.</p>`;
+    $("#rp-l").querySelectorAll("[data-rp]").forEach(b=>b.onclick=()=>{const r=rows.find(x=>x.id===b.dataset.rp);resetPlayer(r.id,r.n);});};
+  draw();$("#rp-q").oninput=draw;$("#rp-x").onclick=()=>$("#dlg").hidden=true;$("#rp-q").focus();}
+$("#m-preset").onclick=()=>resetPicker();
+
 function launchReset(){if(!window.TCG_LAUNCH||!ST||ST.lr===1||launchLeft()>0)return false;
   ST=fresh();ST.lr=1;
   ST.inv={gold:0,sceau:0};ST.mk={mine:{},held:{}};ST.tr={n:0,held:{},done:{}};ST.show=[];ST.stash={};
@@ -2715,7 +2758,7 @@ function startDrops(){refreshDrops();clearInterval(DROPS_T);DROPS_T=setInterval(
   document.addEventListener("click",e=>{const d=$("#me-drop");if(d&&!d.hidden&&!e.target.closest(".me-menu"))d.hidden=true;});
   $("#w-mis").onclick=()=>{location.hash="boosters";setTimeout(()=>{const m=$("#missions");if(m)m.scrollIntoView({behavior:reduced()?"auto":"smooth",block:"center"});},60);};if(PREVIEW)ST=fresh();CARDS=build();indexes();route();
   if(PREVIEW)return;
-  await load();const wasReset=launchReset();stashSync();await loadMe();sndLabel();$("#m-reset").hidden=!OWNER;$("#m-pre").hidden=!(window.TCG_STAFF&&launchLeft()>0);tick();wallet();checkAll();route();syncMarket().then(()=>wallet());try{initChat();}catch(e){}
+  await load();const wasReset=launchReset();stashSync();await loadMe();sndLabel();$("#m-reset").hidden=!OWNER;$("#m-preset").hidden=!OWNER;$("#m-pre").hidden=!(window.TCG_STAFF&&launchLeft()>0);tick();wallet();checkAll();route();syncMarket().then(()=>wallet());try{initChat();}catch(e){}checkReset();
   if(wasReset)setTimeout(()=>toast("Le TCG est ouvert : ta collection de test repart de zéro. Bonne chance !"),800);
   if(SX()){loadFriends().then(syncSocial).catch(()=>{});}
   window.addEventListener("pagehide",()=>flush());document.addEventListener("visibilitychange",()=>{if(document.hidden)flush();});
