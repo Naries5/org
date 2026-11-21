@@ -2281,7 +2281,7 @@ function badgeTrades(){const n=TR.filter(t=>t.recipient===MEID()&&t.status==="pe
 // --- profil
 function renderProfile(){const v=$("#v-profil"),u=uniq(),tot=visTotal(),got=ACH.filter(a=>ST.ach[a.id]).length;
   const myth=Object.keys(ST.owned).filter(k=>["M","S"].includes(CARDS[k].r)).length;
-  const mine=playerCard(ME.pi),mineOwned=mine&&ownCardOwned();
+  const mine=playerCard(ME.pi),mineOwned=!!(mine&&ST.owned[mine.k]>0),myParts=ME.pi!=null?(BY_PL[ME.pi]||[]).filter(k=>CARDS[k]&&CARDS[k].t==="P"&&ST.owned[k]&&(!mine||k!==mine.k)).length:0;
   const rows=LADDER.slice().reverse().filter(r=>r!=="S"||ST.firsts.S).map(r=>{const all=POOL[r].length,own=POOL[r].filter(k=>ST.owned[k]).length;return `<div class="rb"><span style="color:var(${RAR[r][1]})">${RAR[r][0]}</span><span class="chb"><i style="width:${Math.max(own?1.5:0,own/all*100)}%;background:var(${RAR[r][1]})"></i></span><code>${nf(own)} / ${nf(all)}</code></div>`;}).join("");
   const recent=ACH.filter(a=>ST.ach[a.id]).sort((a,b)=>ST.ach[b.id]-ST.ach[a.id]).slice(0,4);
   const slots=Array.from({length:5},(_,i)=>{const k=ST.show[i],c=k&&CARDS[k]&&ST.owned[k]?CARDS[k]:null;
@@ -2295,7 +2295,7 @@ function renderProfile(){const v=$("#v-profil"),u=uniq(),tot=visTotal(),got=ACH.
       <div class="pf-sec"><div class="pf-sh"><h2 class="h3">Derniers succès</h2><button class="btn ghost" data-go="succes">Tous les succès</button></div>
         <div class="ach">${recent.length?recent.map(a=>`<div class="achi got"><span class="medal">✓</span><div><b>${esc(a.t)}</b><small>${esc(a.d)}</small></div></div>`).join(""):`<p class="muted">Aucun succès pour l'instant.</p>`}</div></div></div>
     <aside class="pf-me"><div id="pf-opt"></div><p class="bd-k">Ta carte</p>${mine?`<div class="pf-card${mineOwned?"":" locked"}" data-ck="${mine.k}">${cardHTML(mine,true)}${mineOwned?"":`<span class="pf-lock">Pas encore tirée</span>`}</div>
-      <p class="muted pf-cap">${mineOwned?"Tu l'as dans ta collection.":"Tire-la dans un booster pour débloquer le succès « C'est moi ! »."}</p>`:`<div class="pf-none">${ME.pi!=null?"Ta fiche n'a pas encore de carte.":"Lie ta fiche joueur à ton compte sur le site pour avoir ta carte ici."}</div>`}</aside></div>`;
+      <p class="muted pf-cap">${mineOwned?"Tu l'as dans ta collection.":myParts?`Tu as ${myParts} de tes cartes de participation, mais pas encore celle-ci.`:"Tire-la dans un booster pour débloquer le succès « C'est moi ! »."}</p>`:`<div class="pf-none">${ME.pi!=null?"Ta fiche n'a pas encore de carte.":"Lie ta fiche joueur à ton compte sur le site pour avoir ta carte ici."}</div>`}</aside></div>`;
   v.querySelectorAll("[data-ck]").forEach(d=>d.onclick=()=>openCard(CARDS[d.dataset.ck]));
   renderOptOut($("#pf-opt"));
   v.querySelectorAll("[data-vs]").forEach(d=>d.onclick=e=>{if(e.target.closest("[data-vx]"))return;const i=+d.dataset.vs;const k=ST.show[i];if(k&&ST.owned[k])return openCard(CARDS[k]);pickCards({title:"Choisir une carte pour la vitrine",pool:Object.keys(ST.owned).map(k=>CARDS[k]).filter(Boolean),max:1,done:ks=>{if(ks[0]){ST.show[i]=ks[0];save();}renderProfile();}});});
