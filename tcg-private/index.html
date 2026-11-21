@@ -1806,9 +1806,9 @@ $("#dlg").addEventListener("click",e=>{if(e.target.id==="dlg")$("#dlg").hidden=t
 /* Admins : glisser une image sur la carte (ou Ctrl+V) pour la changer */
 function dropCard(){const bx=$("#dbox");if(!CANEDIT||$("#dlg").hidden||!bx.dataset.k||!bx.querySelector("#aadm-f"))return null;return CARDS[bx.dataset.k]||null;}
 const hasImg=e=>[...(e.dataTransfer&&e.dataTransfer.items||[])].some(i=>i.kind==="file"&&/^image\//.test(i.type)||i.type==="text/uri-list");
-["dragenter","dragover"].forEach(ev=>$("#dlg").addEventListener(ev,e=>{if(!dropCard()||!hasImg(e))return;e.preventDefault();e.dataTransfer.dropEffect="copy";$("#dbox").classList.add("dropping");}));
-$("#dlg").addEventListener("dragleave",e=>{if(!e.relatedTarget||!$("#dlg").contains(e.relatedTarget))$("#dbox").classList.remove("dropping");});
-$("#dlg").addEventListener("drop",e=>{const c=dropCard();$("#dbox").classList.remove("dropping");if(!c)return;e.preventDefault();
+["dragenter","dragover"].forEach(ev=>document.addEventListener(ev,e=>{if(!dropCard())return;e.preventDefault();e.dataTransfer.dropEffect="copy";$("#dbox").classList.add("dropping");}));
+document.addEventListener("dragleave",e=>{if(!e.relatedTarget)$("#dbox").classList.remove("dropping");});
+document.addEventListener("drop",e=>{const c=dropCard();$("#dbox").classList.remove("dropping");if(!c)return;e.preventDefault();
   const f=[...(e.dataTransfer.files||[])].find(f=>/^image\//.test(f.type));if(f){setArtFile(c,f);return;}
   const u=(e.dataTransfer.getData("text/uri-list")||e.dataTransfer.getData("text/plain")||"").split("\n")[0].trim();
   if(/^https:\/\/\S+$/.test(u))setArt(c,u);else toast("Glisse un fichier image (ou une image venant d'un site en https)");});
