@@ -652,7 +652,7 @@ body.tcg .dlg{background:rgba(8,7,10,.86)}
 .mk-f select{flex:none}
 .mk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:22px}
 .mkt{display:flex;flex-direction:column;border-radius:20px;background:var(--surface);border:1px solid var(--line);padding:12px 12px 14px;gap:12px}
-.mkt.mine{border-color:rgba(242,201,76,.35)}.mkt.top{border-color:rgba(236,106,61,.6)}
+.mkt.mine{border-color:rgba(242,201,76,.35)}.mkt.lead{border-color:rgba(236,106,61,.6)}
 .mk-c{cursor:pointer}
 .mk-i{display:flex;flex-direction:column;gap:6px;padding:0 4px}
 .mk-tag{align-self:flex-start;font-family:var(--f-mono);font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;padding:3px 10px;border-radius:999px;background:var(--surface-2);color:#cfc8c0}
@@ -2243,7 +2243,7 @@ function mkTile(L){const me=MU(),c=CARDS[L.k],mine=L.seller===me,open=mkOpen(L),
   else if(open&&auc)act=top?`<button class="btn" disabled>Tu es en tête</button>`:`<button class="btn primary" data-mk-bid="${L.id}">Enchérir</button>`;
   else if(open)act=`<button class="btn primary" data-mk-buy="${L.id}" ${ST.coins<L.price?"disabled":""}>Acheter</button>`;
   else act=`<span class="mk-st">${st}</span>`;
-  return `<div class="mkt${mine?" mine":""}${top?" top":""}${L.daily?" daily":""}"><div class="mk-c" data-mk-card="${L.k}">${cardHTML(c,true)}</div>
+  return `<div class="mkt${mine?" mine":""}${top?" lead":""}${L.daily?" daily":""}"><div class="mk-c" data-mk-card="${L.k}">${cardHTML(c,true)}</div>
     <div class="mk-i"><span class="mk-tag ${auc?"auc":""}">${L.daily?"Enchère du jour":auc?"Enchères":"Vente directe"}${auc&&open?` · <code data-end="${L.end}">${clk(L.end-Date.now())}</code>`:""}</span>
       <div class="mk-p"><b>${nf(mkPrice(L))}</b><span class="shell"></span></div>
       <small>${auc?(L.bid?`${L.nb} offre${L.nb>1?"s":""} · en tête : ${top?"toi":esc(L.bid.n||"Joueur")}`:"Prix de départ"):"Prix fixe"} · ${L.daily?"proposée par ORG-Central":`par ${mine?"toi":esc(L.sn||"Joueur")}`}</small>
