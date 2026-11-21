@@ -1214,12 +1214,12 @@ const SPECIAL=[
 
 function specialArt(x){return `<div class="xart" style="--x1:${x.c[0]};--x2:${x.c[1]}"><svg viewBox="0 0 100 100" aria-hidden="true">${x.svg.replace(/id="g"/g,`id="g-${x.id}"`).replace(/url\(#g\)/g,`url(#g-${x.id})`)}</svg></div>`;}
 
-// Bonus d'activité : 3 saisons ou plus sur les 12 derniers mois = un cran de plus, 6 ou plus = deux crans (jusqu'à mythique).
+// Bonus d'activité : 4 saisons ou plus sur les 12 derniers mois = un cran de plus. Il ne peut donner mythique qu'à un joueur déjà légendaire de base.
 const TIERS=["C","PC","R","E","L","M"];
 // Même ORG répétée : dans une ORG, les 3 premières saisons comptent en entier puis la moitié ; la 1re victoire en entier puis la moitié.
-function baseTier(p){const w=p.we!=null?p.we:(p.w||0),n=p.pe!=null?p.pe:(p.p||0);return w>=3||n>=10?"M":w>=2||n>=7?"L":w>=1||n>=4?"E":n>=3?"R":n===2?"PC":n===1?"C":"";}
-function actBonus(p){const r=p.r12||0;return r>=6?2:r>=3?1:0;}
-function tierOf(p){const b=baseTier(p);if(!b)return "";return TIERS[Math.min(5,TIERS.indexOf(b)+actBonus(p))];}
+function baseTier(p){const w=p.we!=null?p.we:(p.w||0),n=p.pe!=null?p.pe:(p.p||0);return w>=4||n>=22?"M":w>=2||n>=12?"L":w>=1||n>=6?"E":n>=4?"R":n>=2?"PC":n===1?"C":"";}
+function actBonus(p){return (p.r12||0)>=4?1:0;}
+function tierOf(p){const b=baseTier(p);if(!b)return "";const i=TIERS.indexOf(b);return TIERS[Math.min(i>=4?5:4,i+actBonus(p))];}
 function partTier(pl){return pl===1?"L":pl&&pl<=3?"E":pl&&pl<=6?"R":pl&&pl<=12?"PC":"C";}
 function prepD(d){const cut=Date.now()-365*864e5,yr=new Date().getFullYear();
   const recent=d.seasons.map(s=>s.st==="en_cours"||(s.d?Date.parse(s.d)>=cut:(s.y&&+s.y>=yr)));
