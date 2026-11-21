@@ -1,6 +1,6 @@
 // TCG d'ORG-Central. Avant la sortie : décompte et liste des cartes pour tous ; le propriétaire et les admins ont un bouton pour ouvrir le jeu.
 // Sans paramètre : petite page de chargement (publique, ne contient pas le jeu).
-// Avec ?f=… : fichier du jeu, envoyé seulement si le jeton Supabase est celui du propriétaire (rpc is_owner).
+// Les fichiers du jeu sont dans /tcg-files (statique, CDN). ?f=… reste en secours pour les anciens onglets.
 const fs = require("fs");
 const path = require("path");
 const SB = "https://czfgpgvkpxhmxyepvgzs.supabase.co";
@@ -26,7 +26,7 @@ async function isOwner(tok) {
 }
 
 function readFile(f) {
-  for (const base of [path.join(__dirname, "..", "tcg-private"), path.join(process.cwd(), "tcg-private")]) {
+  for (const base of [path.join(__dirname, "..", "tcg-files"), path.join(process.cwd(), "tcg-files")]) {
     try { return fs.readFileSync(path.join(base, f)); } catch (e) {}
   }
   return null;
@@ -53,7 +53,8 @@ const loader = (now) => `<!DOCTYPE html><html lang="fr"><head><meta charset="utf
     // Avant la sortie, le propriétaire et les admins voient le décompte comme tout le monde ; un bouton leur ouvre le jeu (mémorisé pour l'onglet).
     let adm=false;try{adm=sessionStorage.getItem("tcg-admin")==="1";}catch(e){}
     window.TCG_STAFF=staff;window.TCG_MODE=live?(s?"full":"login"):(staff&&adm?"full":"preview");
-    window.TCG_GET=async p=>{const t=await sess();return fetch("/api/tcg?f="+encodeURIComponent(p),{headers:t?{Authorization:"Bearer "+t.access_token}:{}});};
+    // Fichiers du jeu servis en statique par le CDN de Vercel (pas de fonction, pas de transfert depuis l'origine à chaque visite).
+    window.TCG_GET=p=>fetch("/tcg-files/"+p);
     const r=await window.TCG_GET("index.html");
     if(!r.ok){m.innerHTML='Le TCG n’a pas pu être chargé. <a href="/tcg">Réessayer</a>';return;}
     const html=await r.text();document.open();document.write(html);document.close();
@@ -73,7 +74,7 @@ module.exports = async (req, res) => {
   const body = readFile(f);
   if (!body) return res.status(404).send("Introuvable");
   res.setHeader("Content-Type", f.endsWith(".html") ? "text/html; charset=utf-8" : "application/json; charset=utf-8");
-  res.setHeader("Cache-Control", f.startsWith("img/") ? "private, max-age=86400" : "private, no-store");
+  res.setHeader("Cache-Control", f.startsWith("img/") ? "public, max-age=86400, s-maxage=31536000" : "public, max-age=0, s-maxage=300");
   res.setHeader("X-Robots-Tag", "noindex");
   return res.status(200).send(body);
 };
