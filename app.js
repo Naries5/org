@@ -2442,7 +2442,15 @@ async function onIncoming(m){
 }
 async function friendAction(act,uid){
   let res;
-  if(act==="add")res=await sb.from("friendships").insert({requester:S.me,addressee:uid});
+  if(act==="add"){res=await sb.from("friendships").insert({requester:S.me,addressee:uid});
+    // Une ligne existe déjà entre vous deux (demande refusée, demande de l'autre pas encore vue…) : on la reprend au lieu d'échouer
+    if(res.error&&(res.error.code==="23505"||/duplicate key|friendships_pair/i.test(res.error.message||""))){
+      const {data:ex}=await sb.from("friendships").select("*").or(`and(requester.eq.${S.me},addressee.eq.${uid}),and(requester.eq.${uid},addressee.eq.${S.me})`).maybeSingle();
+      if(ex&&ex.status==="accepted"){toast("Vous êtes déjà amis");await loadSocial();updateRole();render();return;}
+      if(ex&&ex.status==="pending"&&ex.requester===uid){act="accept";res=await sb.from("friendships").update({status:"accepted"}).eq("requester",uid).eq("addressee",S.me);}
+      else if(ex&&ex.status==="pending"){toast("Demande d'ami déjà envoyée");await loadSocial();updateRole();render();return;}
+      else{await sb.from("friendships").delete().or(`and(requester.eq.${S.me},addressee.eq.${uid}),and(requester.eq.${uid},addressee.eq.${S.me})`);
+        res=await sb.from("friendships").insert({requester:S.me,addressee:uid});}}}
   if(act==="accept")res=await sb.from("friendships").update({status:"accepted"}).eq("requester",uid).eq("addressee",S.me);
   if(act==="remove")res=await sb.from("friendships").delete().or(`and(requester.eq.${S.me},addressee.eq.${uid}),and(requester.eq.${uid},addressee.eq.${S.me})`);
   if(res&&res.error){toast(sbErr(res.error).message,true);return;}
