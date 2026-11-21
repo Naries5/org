@@ -935,9 +935,17 @@ body.pre .tabs,body.pre .wal,body.pre .me-menu{display:none!important}
 .xart::before{content:"";position:absolute;inset:0;background:repeating-conic-gradient(from 0deg at 50% 42%,rgba(255,255,255,.05) 0 6deg,transparent 6deg 18deg)}
 .xart svg{position:relative;width:74%;height:auto;margin-top:-18%;filter:drop-shadow(0 8px 14px rgba(0,0,0,.55))}
 .xtxt{font-style:italic;opacity:.9;line-height:1.25;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+
+body.hosted #site{display:none!important}
+#boot{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:#0e0d12;color:#cfc8c0;font:16px/1.4 system-ui,sans-serif}
+.boot-in{display:flex;flex-direction:column;align-items:center;gap:14px}
+.boot-emb{width:46px;height:46px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#ff8a5c,#EC6A3D 60%,#a8401f);box-shadow:0 0 0 3px #2a1a14;animation:bootp 1.1s ease-in-out infinite}
+@keyframes bootp{50%{transform:scale(.9);opacity:.7}}
 </style>
 </head>
 <body>
+<div id="boot" aria-live="polite"><div class="boot-in"><span class="boot-emb"></span><p>Chargement des cartes…</p></div></div>
+<script>if(window.TCG_HOSTED)document.body.classList.add("hosted");else document.getElementById("boot").remove();</script>
 <!-- ======= Copie du site ======= -->
 <div id="site">
   <header class="sitebar"><div class="wrap">
@@ -1399,7 +1407,7 @@ function tweenCoins(to){const el=$("#w-coins");if(!el)return;if(COINV==null||red
 function wallet(){const ma=$("#md-ach");if(ma&&ST)ma.textContent=`${ACH.filter(a=>ST.ach[a.id]).length}/${ACH.length}`;$("#w-stock").textContent=ST.test?"∞":ST.stock;tweenCoins(ST.coins);ring(ST.stock>=MAXSTOCK?0:CHARGE-((Date.now()-ST.last)%CHARGE));}
 const VIEWS=["boosters","collection","catalogue","marche","albums","succes","boutique","classement","profil","amis"];
 const MODE=window.TCG_MODE||"full",PREVIEW=MODE!=="full";
-function route(){const h0=(location.hash||"").slice(1);
+function route(){const bt=document.getElementById("boot");if(bt)bt.remove();const h0=(location.hash||"").slice(1);
   if(PREVIEW){if(h0==="site"){location.href="/";return;}document.querySelectorAll(".view").forEach(x=>x.hidden=x.id!=="v-prelaunch");$("#site").hidden=true;$("#tcg").hidden=false;document.body.classList.add("tcg","pre");renderPrelaunch();return;}
   // Sur orgcentral.fr, la copie de test du site n'existe pas : « site » ramène au vrai site, tout lien inconnu ramène aux boosters.
   if(window.TCG_HOSTED){if(h0==="site"){location.href="/";return;}if(!VIEWS.includes(h0)&&!h0.startsWith("album-")){history.replaceState(null,"","#boosters");}}
