@@ -725,9 +725,9 @@ body.tcg .dlg{background:rgba(8,7,10,.86)}
 .vit{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;margin-top:14px}
 @media (max-width:700px){.vit{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .vs{all:unset;box-sizing:border-box;cursor:pointer;position:relative;aspect-ratio:5/7;border-radius:14px;border:2px dashed var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--muted);transition:border-color .2s,color .2s}
-.vs:hover{border-color:var(--acc);color:var(--acc)}
-.vs span{font-size:2rem;line-height:1}
-.vs.full{border:0;cursor:pointer}
+.vs:not(.full):hover{border-color:var(--acc);color:var(--acc)}
+.vs:not(.full)>span{font-size:2rem;line-height:1}
+.vs.full{border:0;cursor:pointer;display:block;aspect-ratio:auto;color:inherit}.vs.full>.card{width:100%}
 .vs-x{all:unset;cursor:pointer;position:absolute;z-index:9;top:-8px;right:-8px;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--surface);border:1px solid var(--line);color:var(--ink);opacity:0;transition:opacity .15s}
 .vs.full:hover .vs-x,.vs-x:focus-visible{opacity:1}
 .rbars{display:flex;flex-direction:column;gap:12px;max-width:620px}
@@ -1005,6 +1005,7 @@ body.hosted #site{display:none!important}
 @media (hover:none){.ch-x{opacity:.6}}
 .ch-f{display:flex;gap:10px}.ch-f input{flex:1;height:46px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:inherit;font:inherit}
 .ch-empty{margin:auto;text-align:center}.ch-rule{margin:0}
+.bd-tabs{margin:0 0 22px}
 </style>
 </head>
 <body>
@@ -1944,23 +1945,32 @@ let BOARD_T=null;
 function pushBoard(){if(!DB||!UID)return;clearTimeout(BOARD_T);BOARD_T=setTimeout(async()=>{
   const row={uniq:uniq(),opened:ST.opened,myth:Object.keys(ST.owned).filter(k=>["M","S"].includes(CARDS[k].r)).length,ach:Object.keys(ST.ach).length,at:Date.now()};
   try{await DB.collection("board").doc(UID).set(row);}catch(e){}},1500);}
-async function renderBoard(){const tb=$("#board");tb.innerHTML=`<p class="muted">Chargement…</p>`;
-  if(!DB&&!SX()){tb.innerHTML=`<p class="muted">Le classement partagé n'est pas disponible dans cette vue. Ta progression est gardée dans ce navigateur.</p>`;return;}
+const BOARDS=[["uniq","Cartes","cartes différentes","carte","cartes"],["myth","Mythiques","mythiques","mythique","myth."],["ach","Succès","succès","succès","succès"],["opened","Boosters","boosters ouverts","booster","boosters"]];
+let BK="uniq";
+async function renderBoard(){const tb=$("#board"),B=BOARDS.find(b=>b[0]===BK)||BOARDS[0],K=B[0];
+  const tabs=`<div class="seg ysel bd-tabs" id="bd-tabs">${BOARDS.map(b=>`<button aria-pressed="${b[0]===K}" data-bk="${b[0]}">${b[1]}</button>`).join("")}</div>`;
+  const lede=$("#v-classement .lede");if(lede)lede.textContent=`Les collectionneurs, classés par ${B[2]}.`;
+  tb.innerHTML=tabs+`<p class="muted">Chargement…</p>`;
+  const bind=()=>tb.querySelectorAll("[data-bk]").forEach(b=>b.onclick=()=>{BK=b.dataset.bk;renderBoard();});bind();
+  if(!DB&&!SX()){tb.innerHTML=tabs+`<p class="muted">Le classement partagé n'est pas disponible dans cette vue. Ta progression est gardée dans ce navigateur.</p>`;bind();return;}
   try{await flush();let rows,ps={};const ME_ID=DB?UID:MEID();
-    if(DB){const snap=await DB.collection("board").orderBy("uniq","desc").limit(100).get();rows=snap.docs.map(d=>({id:d.id,...d.data()}));ps=USER?await USER.profiles(rows.map(r=>r.id)):{};}
-    else{await pushCol();const {data,error}=await SX().from("tcg_collections").select("user_id,uniq,myth,opened,ach").gt("uniq",0).gte("updated_at",LAUNCH_ISO()).order("uniq",{ascending:false}).limit(100);
-      if(error){tb.innerHTML=`<p class="muted">Le classement sera disponible une fois <b>update-22-tcg-collections.sql</b> lancé dans Supabase.</p>`;return;}
+    if(DB){const snap=await DB.collection("board").orderBy(K,"desc").limit(100).get();rows=snap.docs.map(d=>({id:d.id,...d.data()}));ps=USER?await USER.profiles(rows.map(r=>r.id)):{};}
+    else{await pushCol();const {data,error}=await SX().from("tcg_collections").select("user_id,uniq,myth,opened,ach").gt("uniq",0).gte("updated_at",LAUNCH_ISO()).order(K,{ascending:false}).order("uniq",{ascending:false}).limit(100);
+      if(error){tb.innerHTML=tabs+`<p class="muted">Le classement sera disponible une fois <b>update-22-tcg-collections.sql</b> lancé dans Supabase.</p>`;bind();return;}
       rows=(data||[]).map(r=>({id:r.user_id,uniq:r.uniq,myth:r.myth,opened:r.opened,ach:r.ach}));
       if(rows.length){const {data:pr}=await SX().from("profiles").select("id,discord_name,avatar_url").in("id",rows.map(r=>r.id));(pr||[]).forEach(p=>ps[p.id]={name:p.discord_name,avatar:p.avatar_url});}}
+    rows.sort((a,b)=>(b[K]||0)-(a[K]||0)||(b.uniq||0)-(a.uniq||0));
     const nm=r=>(ps[r.id]&&ps[r.id].name)||"Joueur",av=r=>{const p=ps[r.id]||{},u=p.avatar||p.image||p.picture;return u?`<img src="${esc(u)}" alt="">`:`<span>${esc(nm(r).slice(0,1).toUpperCase())}</span>`;};
-    if(!rows.length){tb.innerHTML=`<p class="muted">Personne n'est encore classé.</p>`;return;}
+    if(!rows.length){tb.innerHTML=tabs+`<p class="muted">Personne n'est encore classé.</p>`;bind();return;}
+    const v=r=>r[K]||0,unit=n=>n>1?B[2].split(" ")[0]:B[3];
+    const other=r=>K==="uniq"?`${nf(r.myth||0)} mythique${(r.myth||0)>1?"s":""}`:`${nf(r.uniq||0)} cartes`;
     const me=rows.findIndex(r=>r.id===ME_ID);
-    const pod=[1,0,2].filter(i=>rows[i]).map(i=>{const r=rows[i];return `<div class="pod p${i+1}"><div class="pav">${av(r)}</div><b class="pn">${esc(nm(r))}</b><small>${nf(r.myth||0)} mythique${(r.myth||0)>1?"s":""}</small>
-      <div class="pblock"><i class="prk">${i+1}</i><strong>${nf(r.uniq||0)}</strong><span>cartes</span></div></div>`;}).join("");
-    const row=(r,i)=>`<div class="br${r.id===ME_ID?" me":""}"><span class="brn">${i+1}</span><span class="bav">${av(r)}</span><span class="bname">${esc(nm(r))}${r.id===ME_ID?` <i class="toi">toi</i>`:""}<small>${nf(r.opened||0)} boosters · ${nf(r.ach||0)} succès</small></span><span class="bm">${nf(r.myth||0)}<small>myth.</small></span><span class="bs2"><strong>${nf(r.uniq||0)}</strong><small>cartes</small></span></div>`;
-    tb.innerHTML=(me>=0?`<div class="mebar"><span class="bav">${av(rows[me])}</span><div><small>Toi</small><b>${me+1}${me?"e":"er"} sur ${rows.length}</b></div><span class="muted">${me<3?"Tu es sur le podium":`à ${nf((rows[2].uniq||0)-(rows[me].uniq||0))} cartes du podium`}</span><strong>${nf(rows[me].uniq||0)}<small>cartes</small></strong></div>`:"")+
-      `<div class="podium stg">${pod}</div><div class="blist stg">${rows.slice(3).map((r,i)=>row(r,i+3)).join("")}</div>`;}
-  catch(e){tb.innerHTML=`<p class="muted">Le classement n'a pas pu être chargé.</p>`;}}
+    const pod=[1,0,2].filter(i=>rows[i]).map(i=>{const r=rows[i];return `<div class="pod p${i+1}"><div class="pav">${av(r)}</div><b class="pn">${esc(nm(r))}</b><small>${other(r)}</small>
+      <div class="pblock"><i class="prk">${i+1}</i><strong>${nf(v(r))}</strong><span>${unit(v(r))}</span></div></div>`;}).join("");
+    const row=(r,i)=>`<div class="br${r.id===ME_ID?" me":""}"><span class="brn">${i+1}</span><span class="bav">${av(r)}</span><span class="bname">${esc(nm(r))}${r.id===ME_ID?` <i class="toi">toi</i>`:""}<small>${BOARDS.filter(b=>b[0]!==K).map(b=>`${nf(r[b[0]]||0)} ${b[4]}`).join(" · ")}</small></span><span class="bs2"><strong>${nf(v(r))}</strong><small>${B[4]}</small></span></div>`;
+    tb.innerHTML=tabs+(me>=0?`<div class="mebar"><span class="bav">${av(rows[me])}</span><div><small>Toi</small><b>${me+1}${me?"e":"er"} sur ${rows.length}</b></div><span class="muted">${me<3?"Tu es sur le podium":`à ${nf(v(rows[2])-v(rows[me]))} ${B[4]} du podium`}</span><strong>${nf(v(rows[me]))}<small>${B[4]}</small></strong></div>`:"")+
+      `<div class="podium stg">${pod}</div><div class="blist stg">${rows.slice(3).map((r,i)=>row(r,i+3)).join("")}</div>`;bind();}
+  catch(e){console.warn(e);tb.innerHTML=tabs+`<p class="muted">Le classement n'a pas pu être chargé.</p>`;bind();}}
 
 
 /* ---------- Marché ---------- */
