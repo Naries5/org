@@ -1439,19 +1439,20 @@ async function cloudGet(){const {data,error}=await SX().from("tcg_saves").select
 /* Au démarrage : on prend la partie du compte, sauf si celle de ce navigateur est plus récente */
 async function cloudPull(){if(!cloudOn())return false;let r;try{r=await cloudGet();}catch(e){return false;}if(r===undefined)return false;
   const id=MEID(),mine=ST&&ST.uid===id;
-  if(r&&(!mine||(r.sv||0)>(ST.sv||0))){ST=JSON.parse(JSON.stringify(r));ST.uid=id;try{localStorage.setItem("oc-tcg-state",JSON.stringify(ST));}catch(e){}return true;}
+  // une partie locale jamais synchronisée (navigateur vidé, navigation privée…) ne remplace jamais celle du compte
+  if(r&&(!mine||!ST.cs||(r.sv||0)>(ST.sv||0))){ST=JSON.parse(JSON.stringify(r));ST.uid=id;ST.cs=1;try{localStorage.setItem("oc-tcg-state",JSON.stringify(ST));}catch(e){}return true;}
   if(!r&&ST&&ST.uid&&ST.uid!==id)ST=fresh();
   ST.uid=id;cloudQueue(true);return false;}
 function cloudQueue(now){if(!cloudOn()||!CLOUD_OK)return;clearTimeout(CLOUD_T);const wait=now?0:Math.max(1500,5000-(Date.now()-CLOUD_LAST));CLOUD_T=setTimeout(cloudPush,wait);}
 async function cloudPush(){if(!cloudOn()||!CLOUD_OK)return;if(CLOUD_BUSY){CLOUD_PEND=true;return;}CLOUD_BUSY=true;CLOUD_LAST=Date.now();
   const st=JSON.parse(JSON.stringify(ST));st.uid=MEID();
-  try{const {error}=await SX().from("tcg_saves").upsert({user_id:MEID(),state:st,updated_at:new Date().toISOString()});if(!error)CLOUD_SV=Math.max(CLOUD_SV,st.sv||0);else console.warn(error.message);}catch(e){}
+  st.cs=1;try{const {error}=await SX().from("tcg_saves").upsert({user_id:MEID(),state:st,updated_at:new Date().toISOString()});if(!error){CLOUD_SV=Math.max(CLOUD_SV,st.sv||0);if(ST&&!ST.cs){ST.cs=1;try{localStorage.setItem("oc-tcg-state",JSON.stringify(ST));}catch(e){}}}else console.warn(error.message);}catch(e){}
   CLOUD_BUSY=false;if(CLOUD_PEND){CLOUD_PEND=false;cloudQueue();}}
 /* En revenant sur l'onglet : si la partie a avancé sur un autre appareil, on la reprend */
 document.addEventListener("visibilitychange",async()=>{if(!ST||!cloudOn()||!CLOUD_OK)return;
   if(document.visibilityState==="hidden"){if(dirty)await flush();cloudPush();return;}
   let r;try{r=await cloudGet();}catch(e){return;}
-  if(r&&(r.sv||0)>(ST.sv||0)){ST=JSON.parse(JSON.stringify(r));ST.uid=MEID();try{localStorage.setItem("oc-tcg-state",JSON.stringify(ST));}catch(e){}
+  if(r&&(r.sv||0)>(ST.sv||0)){ST=JSON.parse(JSON.stringify(r));ST.uid=MEID();ST.cs=1;try{localStorage.setItem("oc-tcg-state",JSON.stringify(ST));}catch(e){}
     DONE_CACHE=null;COINV=null;try{stashSync();}catch(e){}tick();wallet();checkAll();route();toast("Partie mise à jour depuis ton autre appareil");}});
 async function flush(){if(!dirty)return;if(saving){setTimeout(flush,800);return;}dirty=false;
   if(MEID()){ST.uid=MEID();ST.sv=Math.max(ST.sv||0,CLOUD_SV)+1;}const data=JSON.parse(JSON.stringify(ST));
