@@ -1220,8 +1220,8 @@ function specialArt(x){return `<div class="xart" style="--x1:${x.c[0]};--x2:${x.
    Participation 10 pts (la moitié au-delà de 3 saisons dans la même ORG), classement jusqu'à 8 pts (1er = 8, dernier = 0),
    victoire 25 pts × taille du casting (racine de joueurs/14, entre 0,6 et 1,6 ; la moitié pour les victoires suivantes dans la même ORG),
    host d'une ORG : 10 pts par saison de l'ORG (même règle de répétition).
-   Puis classement des joueurs : 12 meilleurs mythiques, jusqu'au 160e légendaires, jusqu'au 600e épiques, les autres rares. */
-const TIERS=["C","PC","R","E","L","M"],RANKS={M:12,L:160,E:600};
+   Rareté selon le score : 240 pts et plus mythique, 60 et plus légendaire, 13 et plus épique, en dessous rare. */
+const TIERS=["C","PC","R","E","L","M"],SCT={M:240,L:60,E:13};
 const SC={part:10,place:8,win:25,host:10,speed:.5,roblox:.6,orgM:1.25,orgL:1.12,recent:1.15,rep:3};
 function partTier(pl){return pl===1?"L":pl&&pl<=3?"E":pl&&pl<=6?"R":pl&&pl<=12?"PC":"C";}
 function partTierFor(x){const s=D.seasons[x[1]],o=D.orgs[s.o]||{};const pl=!x[3]&&x[2]?x[2]:0;let t=TIERS.indexOf(partTier(pl));
@@ -1246,7 +1246,7 @@ function prepD(d){const now=Date.now(),cut=now-365*864e5,yr=new Date().getFullYe
   P.forEach(p=>{p.sc=Math.round((p.det.part+p.det.place+p.det.win+p.det.host)*10)/10;});
   const ord=P.map((p,i)=>i).filter(i=>P[i].p>0).sort((a,b)=>P[b].sc-P[a].sc);
   P.forEach(p=>{p.r="";p.rank=null;});
-  ord.forEach((i,k)=>{P[i].rank=k+1;P[i].r=k<RANKS.M?"M":k<RANKS.L?"L":k<RANKS.E?"E":"R";});
+  ord.forEach((i,k)=>{const p=P[i];p.rank=k+1;p.r=p.sc>=SCT.M?"M":p.sc>=SCT.L?"L":p.sc>=SCT.E?"E":"R";});
   d.nPlayers=ord.length;return d;}
 function keyOf(c,d){const P=d.players,S=d.seasons,O=d.orgs;if(c.t==="X")return "X:"+SPECIAL[c.i].id;
   if(c.r==="S")return "S:"+P[c.i].id;if(c.t==="J")return "J:"+P[c.i].id;if(c.t==="O")return "O:"+O[c.i].id;if(c.t==="R")return "R:"+S[c.i].id;
@@ -1725,7 +1725,7 @@ $("#recycle-all").onclick=()=>{let n=0,v=0;Object.keys(ST.owned).forEach(k=>{con
 function openCard(c){const P=D.players,S=D.seasons,O=D.orgs;const n=ST.owned[c.k]||0;let rows=[];
   if(c.t==="J"){const p=P[c.i],dt=p.det||{},r1=v=>Math.round(v||0);rows=[["Saisons",p.p],["Victoires",p.w],["Top 5",p.t],["Meilleure place",p.b?placeTxt(p.b):"–"],["Saisons sur 12 mois",p.r12||0]];
     if(p.hs)rows.push(["Saisons hostées",p.hs]);
-    if(p.sc!=null)rows.push(["Score",`${nf(Math.round(p.sc))} pts · ${p.rank}${p.rank===1?"er":"e"} sur ${nf(D.nPlayers)}`],["Détail",`participations ${r1(dt.part)} · classements ${r1(dt.place)} · victoires ${r1(dt.win)}${dt.host?` · host ${r1(dt.host)}`:""}`]);}
+    if(p.sc!=null)rows.push(["Score",`${nf(Math.round(p.sc))} pts · ${p.rank}${p.rank===1?"er":"e"} sur ${nf(D.nPlayers)}${p.r!=="M"?` · ${nf(Math.ceil(SCT[{R:"E",E:"L",L:"M"}[p.r]]-p.sc))} pts avant ${RAR[{R:"E",E:"L",L:"M"}[p.r]][0].toLowerCase()}`:""}`],["Détail",`participations ${r1(dt.part)} · classements ${r1(dt.place)} · victoires ${r1(dt.win)}${dt.host?` · host ${r1(dt.host)}`:""}`]);}
   else if(c.t==="O"){const o=O[c.i];rows=[["Format",o.f==="speed"?"Speed":"Format long"],["Saisons",o.ns]];}
   else if(c.t==="R"){const s=S[c.i];rows=[["ORG",(O[s.o]||{}).n],["Joueurs",s.c],["Année",s.y||"–"]];}
   else if(c.t==="X"){const x=SPECIAL[c.i];rows=[["Type",`Carte spéciale · ${x.ty}`],["Effet",x.txt]];}
