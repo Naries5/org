@@ -1545,9 +1545,10 @@ async function cloudPull(){if(!cloudOn())return false;let r;try{r=await cloudGet
   if(baseOk()&&(r.sv||0)!==(BASE.sv||0)){ST=merge3(BASE,ST,r);setBase(r);adoptLocal();cloudQueue(true);return true;}
   if(!baseOk()&&(r.sv||0)>(ST.sv||0)){ST=JSON.parse(JSON.stringify(r));ST.uid=id;ST.cs=1;setBase(r);adoptLocal();return true;}
   setBase(r);if((ST.sv||0)>(r.sv||0))cloudQueue(true);return false;}
-function cloudQueue(now){if(!cloudOn()||!CLOUD_OK)return;clearTimeout(CLOUD_T);const wait=now?0:Math.max(3000,30000-(Date.now()-CLOUD_LAST));CLOUD_T=setTimeout(cloudPush,wait);}
+function cloudQueue(now){if(!cloudOn()||!CLOUD_OK)return;clearTimeout(CLOUD_T);const wait=now?0:Math.max(5000,120000-(Date.now()-CLOUD_LAST)); // sauvegarde sur le compte toutes les 2 min (+ en quittant l'onglet et après chaque échange)CLOUD_T=setTimeout(cloudPush,wait);}
 async function cloudPush(tries){if(!cloudOn()||!CLOUD_OK)return;if(CLOUD_BUSY){CLOUD_PEND=true;return;}CLOUD_BUSY=true;CLOUD_LAST=Date.now();
   const me=MEID(),st=JSON.parse(JSON.stringify(ST));st.uid=me;st.cs=1;let ok=false;
+  if(baseOk()&&(st.sv||0)===(BASE.sv||0)){CLOUD_BUSY=false;return;} // rien de neuf depuis la dernière sauvegarde
   try{
     if(baseOk()){ // n'écrit que si le compte n'a pas bougé depuis notre base ; sinon on fusionne et on recommence
       const {data,error}=await SX().from("tcg_saves").update({state:st,updated_at:new Date().toISOString()}).eq("user_id",me).eq("state->>sv",String(BASE.sv)).select("user_id");
@@ -1723,7 +1724,7 @@ function tcgPres(force){const sb=SX();if(!sb||!window.TCG_HOSTED)return;const pg
   let vid="";try{vid=localStorage.getItem("oc-vid")||"";if(!vid){vid="v"+Math.random().toString(36).slice(2,12)+Date.now().toString(36);localStorage.setItem("oc-vid",vid);}}catch(e){vid="v"+Math.random().toString(36).slice(2,12);}
   try{(MEID()?sb.rpc("touch_seen",{p:pg}):sb.rpc("touch_visitor",{vid,p:pg})).then(()=>{},()=>{});}catch(e){}}
 window.addEventListener("hashchange",()=>tcgPres(false));
-setInterval(()=>{if(!document.hidden)tcgPres(true);},60000);
+setInterval(()=>{if(!document.hidden)tcgPres(true);},120000);
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")tcgPres(true);});
 setTimeout(()=>tcgPres(true),2500);
 function renderFan(){if(!D||$("#fan").childElementCount)return;
@@ -2919,7 +2920,7 @@ function colPayload(){ST.ft=(ST.ft||[]).filter(k=>ST.owned[k]&&CARDS[k]&&CARDS[k
   const owned={};Object.entries(ST.owned).forEach(([k,n])=>{if(CARDS[k]&&CARDS[k].r!=="S")owned[k]=n;});
   return {owned,fortrade:ST.ft,uniq:uniq(),myth:Object.keys(ST.owned).filter(k=>CARDS[k]&&["M","S"].includes(CARDS[k].r)).length,opened:ST.opened||0,ach:Object.keys(ST.ach||{}).length,...(COL_ALB?{albums:(()=>{countDone();return (DONE_CACHE.se||0)+(DONE_CACHE.pl||0)+(DONE_CACHE.og||0);})()}:{})};}
 let COL_ALB=true;
-function queueCol(){if(!SX()||!MEID()||PREVIEW||!ST)return;if(COLT)return;COLT=setTimeout(()=>{COLT=null;pushCol();},20000);}
+function queueCol(){if(!SX()||!MEID()||PREVIEW||!ST)return;if(COLT)return;COLT=setTimeout(()=>{COLT=null;pushCol();},120000);}
 async function pushCol(){if(!SX()||!MEID()||PREVIEW||!ST)return;const p=colPayload(),sig=JSON.stringify(p);if(sig===LASTCOL)return;
   try{let {error}=await SX().from("tcg_collections").upsert({user_id:MEID(),...p,updated_at:new Date().toISOString()});
     if(error&&COL_ALB&&/albums/i.test(error.message||"")){COL_ALB=false;const q=colPayload();({error}=await SX().from("tcg_collections").upsert({user_id:MEID(),...q,updated_at:new Date().toISOString()}));} // colonne pas encore créée (update-30)

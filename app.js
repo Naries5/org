@@ -338,10 +338,10 @@ const PRES={last:0,route:"",vid:""};
 function presVid(){if(PRES.vid)return PRES.vid;try{PRES.vid=localStorage.getItem("oc-vid")||"";if(!PRES.vid){PRES.vid="v"+Math.random().toString(36).slice(2,12)+Date.now().toString(36);localStorage.setItem("oc-vid",PRES.vid);}}catch(e){PRES.vid="v"+Math.random().toString(36).slice(2,12);}return PRES.vid;}
 function presStart(){presTrack(PRES.route,true);}
 function presTrack(route,force){const changed=route&&route!==PRES.route;if(route)PRES.route=route;
-  if(!force&&!changed&&Date.now()-PRES.last<25000)return;if(!force&&changed&&Date.now()-PRES.last<4000)return;
+  if(!force&&!changed&&Date.now()-PRES.last<110000)return;if(!force&&changed&&Date.now()-PRES.last<20000)return;
   PRES.last=Date.now();const pg=PRES.route||"accueil";
   try{(S.me?sb.rpc("touch_seen",{p:pg}):sb.rpc("touch_visitor",{vid:presVid(),p:pg})).then(()=>{},()=>{});}catch(e){}}
-setInterval(()=>presTrack(PRES.route,true),30000);
+setInterval(()=>{if(!document.hidden)presTrack(PRES.route,true);},120000); // une écriture toutes les 2 min (avant 30 s) : ménage les disques de la base
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")presTrack(PRES.route,true);});
 function presPageLabel(r){r=String(r||"accueil");const i=r.indexOf("-");const pg=i<0?r:r.slice(0,i),id=i<0?"":r.slice(i+1);
   if(pg==="tcg")return "TCG"+(id?" · "+(({boosters:"Boosters",collection:"Collection",albums:"Albums",marche:"Marché",boutique:"Boutique",amis:"Amis",classement:"Classement",profil:"Profil",succes:"Succès",missions:"Missions",catalogue:"Toutes les cartes",decompte:"Décompte"})[id]||id):"");
@@ -352,7 +352,7 @@ function pageWho(uid,name){const pl=uid&&linkedPlayer(uid);const p=uid&&ADM_PROF
   const av=pl&&avatarOf(pl)?ava(pl,"xs"):p&&p.avatar_url?`<img class="avatar xs" src="${esc(p.avatar_url)}" alt="">`:`<span class="avatar xs">${esc(initials(nm))}</span>`;
   return `<span class="who">${av}${pl?`<a href="#joueur-${esc(pl.id)}">${esc(nm)}</a>`:esc(nm)}</span>`;}
 let PRES_SEEN=null,PRES_VIS=[],PRES_TIMER=null;
-const ONLINE_MS=100000;
+const ONLINE_MS=300000;
 async function loadPresence(){if(!ADM_PROFS.length){const {data}=await sb.from("profiles").select("*");ADM_PROFS=data||[];}
   const [a,b]=await Promise.all([sb.from("last_seen").select("*").order("at",{ascending:false}).limit(300),sb.from("visitors").select("*").order("at",{ascending:false}).limit(200)]);
   PRES_SEEN=a.error?{error:a.error}:a.data||[];PRES_VIS=b.error?null:(b.data||[]);drawPresence();}
