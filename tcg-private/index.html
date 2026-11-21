@@ -2391,7 +2391,7 @@ function editBinder(){pickCards({title:"Mes cartes à l'échange",pool:Object.ke
   done:ks=>{ST.ft=ks;save();pushCol().then(()=>{toast(ks.length?`${ks.length} carte${ks.length>1?"s":""} proposée${ks.length>1?"s":""} à l'échange`:"Tu ne proposes plus de carte à l'échange");renderBinder();});}});}
 
 
-/* ---------- Boutique parodique (rien n'est à vendre) ---------- */
+/* ---------- Boutique ---------- */
 const STORE={
  pass:[
   {id:"basic",n:"ORG Pass Basic",p:"Gratuit",per:"",perks:["Tu peux first boot normalement","Accès au conseil (debout, au fond)","Pubs entre chaque vote*"],note:"*il n'y a pas de pubs"},
@@ -2420,7 +2420,6 @@ let STORE_T=null,STORE_END=0;
 function storeClock(){if(!STORE_END||Date.now()>STORE_END)STORE_END=Date.now()+(4*60+59)*1000;const l=STORE_END-Date.now();return `${String(Math.floor(l/6e4)).padStart(2,"0")}:${String(Math.floor(l/1e3)%60).padStart(2,"0")}`;}
 function storeBuy(name){ST.troll=(ST.troll||0)+1;save();const m=STORE_NO[Math.floor(Math.random()*STORE_NO.length)];
   dlgOpen(`<div class="mk-pick st-no"><p class="st-k">Paiement</p><h2>${esc(name)}</h2><p class="st-msg">${esc(m)}</p>
-    <p class="muted">Rassure-toi : cette boutique est une parodie. Rien n'est à vendre, aucun paiement n'est possible, et tes boosters restent gratuits.</p>
     <div class="acts"><button class="btn primary" id="st-ok">Bon, d'accord</button></div></div>`,true);
   $("#st-ok").onclick=()=>$("#dlg").hidden=true;checkAll();}
 function renderStore(){const b=$("#store");if(!b)return;
@@ -2428,7 +2427,6 @@ function renderStore(){const b=$("#store");if(!b)return;
       <p class="hero-sub">Passe Premium et deviens le joueur que l'host n'ose pas éliminer.</p>
       <div class="st-timer">Offre limitée · expire dans <code id="st-t">${storeClock()}</code></div></div>
       <div class="st-badge"><b>-90 %</b><span>sur tout*</span><small>*sur des prix inventés</small></div></div>
-    <p class="st-disc">Boutique parodique : rien n'est vraiment à vendre et aucun paiement n'est possible.</p>
     <h2 class="h2 st-sec">Abonnements</h2>
     <div class="st-pass stg">${STORE.pass.map(x=>`<div class="sp${x.hot?" hot":""}">${x.hot?`<span class="sp-hot">${esc(x.hot)}</span>`:""}<h3>${esc(x.n)}</h3>
       <p class="sp-p">${x.old?`<s>${esc(x.old)}</s>`:""}<b>${esc(x.p)}</b><span>${esc(x.per)}</span></p><ul>${x.perks.map(k=>`<li>${esc(k)}</li>`).join("")}</ul>
