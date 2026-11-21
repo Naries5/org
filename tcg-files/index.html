@@ -2053,7 +2053,10 @@ async function renderBoard(){const tb=$("#board"),B=BOARDS.find(b=>b[0]===BK)||B
 // l'acheteur récupère la carte, l'enchérisseur dépassé est remboursé. Le dernier des deux à régler supprime l'annonce.
 let ME_NAME="Joueur",MK=[],MKTAB="all",MKT=null,MKSYNC=false,MKON=null;
 /* ---------- Marché partagé (tables tcg_market et tcg_chat, update-28) ---------- */
-const MK_FEE=.05,MK_MAX=10,MK_DUR=[[3600e3,"1 heure"],[6*3600e3,"6 heures"],[24*3600e3,"24 heures"],[72*3600e3,"3 jours"]];
+/* Limites par joueur (pour ne pas surcharger le site) */
+const LIM={sell:5,ft:12,trades:5,sellGap:20000,tradeGap:30000,bidGap:5000,chatGap:3000};
+let LAST_ACT={};function tooSoon(k,gap){const t=Date.now()-(LAST_ACT[k]||0);if(t<gap){toast(`Attends encore ${Math.ceil((gap-t)/1000)} s avant de recommencer`);return true;}return false;}
+const MK_FEE=.05,MK_MAX=LIM.sell,MK_DUR=[[3600e3,"1 heure"],[6*3600e3,"6 heures"],[24*3600e3,"24 heures"],[72*3600e3,"3 jours"]];
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const net=v=>Math.floor(v*(1-MK_FEE));
 const MU=()=>MEID(),SNOW=()=>Date.now()+(window.TCG_OFFSET||0);
@@ -2148,7 +2151,7 @@ async function renderMarket(fetch){const g=$("#mk-grid"),v=$("#v-marche");
     const ft=(ST.ft||[]).filter(k=>ST.owned[k]&&CARDS[k]);
     html+=sect("Mes ventes et enchères",`${sales.length}/${MK_MAX}`)+(sales.length?sales.map(mkTile).join(""):`<p class="muted mk-empty">Tu n'as rien en vente. « Vendre une carte » pour en proposer une à prix fixe ou aux enchères.</p>`);
     html+=sect("Mes offres en cours",bids.length||"")+(bids.length?bids.map(mkTile).join(""):`<p class="muted mk-empty">Tu n'as fait aucune offre en ce moment.</p>`);
-    html+=sect("Mes cartes à l'échange",`${ft.length}/30`)+(ft.length?ft.map(k=>`<div class="mkt"><div class="mk-c" data-mk-card="${k}">${cardHTML(CARDS[k],true)}</div><div class="mk-i"><span class="mk-tag">À l'échange</span><small>Les autres joueurs peuvent te proposer un échange contre cette carte.</small><button class="btn" data-ft-x="${k}">Retirer de l'échange</button></div></div>`).join(""):`<p class="muted mk-empty">Tu ne proposes aucune carte à l'échange.</p>`)
+    html+=sect("Mes cartes à l'échange",`${ft.length}/${LIM.ft}`)+(ft.length?ft.map(k=>`<div class="mkt"><div class="mk-c" data-mk-card="${k}">${cardHTML(CARDS[k],true)}</div><div class="mk-i"><span class="mk-tag">À l'échange</span><small>Les autres joueurs peuvent te proposer un échange contre cette carte.</small><button class="btn" data-ft-x="${k}">Retirer de l'échange</button></div></div>`).join(""):`<p class="muted mk-empty">Tu ne proposes aucune carte à l'échange.</p>`)
       +`<div class="mk-empty"><button class="btn" id="mk-ft-edit">Choisir mes cartes à l'échange</button></div>`;
   }else{
     const daily=MK.filter(x=>x.daily&&mkOpen(x));
@@ -2199,7 +2202,8 @@ async function mkSell(c,mode,price,dur){const b=$("#sf-go")||{};
   if(!mkAvail())return toast("Le marché n'est pas disponible");if(c.r==="S")return toast("Les cartes secrètes ne se vendent pas");
   if(!(ST.owned[c.k]>0))return toast("Tu n'as plus cette carte");
   if(price<RECYCLE[c.r]||price>1e6)return toast(`Choisis un prix entre ${RECYCLE[c.r]} et 1 000 000`);
-  if(Object.keys(ST.mk.mine).length>=MK_MAX)return toast(`${MK_MAX} cartes en vente au maximum en même temps`);
+  if(Math.max(Object.keys(ST.mk.mine).length,MK.filter(x=>x.seller===MU()).length)>=MK_MAX)return toast(`${MK_MAX} cartes en vente au maximum en même temps : retires-en une ou attends qu'elle parte`);
+  if(tooSoon("sell",LIM.sellGap))return;LAST_ACT.sell=Date.now();
   b.disabled=true;
   const id=MU().replace(/[^a-zA-Z0-9]/g,"").slice(0,10)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
   const row={id,card:c.k,seller:MU(),seller_name:ME_NAME,mode};
@@ -2218,7 +2222,7 @@ async function mkBidForm(id){const L=await mkGet(id).catch(()=>null);if(!L||!mkO
     <p class="note">Tes coquillages sont mis de côté. Si quelqu'un enchérit plus haut, ils te sont rendus. Une offre dans la dernière minute prolonge l'enchère d'une minute.</p>
     <div class="acts"><button class="btn primary" id="bf-go">Enchérir</button><button class="btn" id="bf-x">Annuler</button></div></div>`);
   $("#bf-x").onclick=()=>$("#dlg").hidden=true;
-  $("#bf-go").onclick=async()=>{const a=Math.floor(+$("#bf-a").value||0);$("#bf-go").disabled=true;
+  $("#bf-go").onclick=async()=>{if(tooSoon("bid",LIM.bidGap))return;LAST_ACT.bid=Date.now();const a=Math.floor(+$("#bf-a").value||0);$("#bf-go").disabled=true;
     try{const L1=await mkGet(id);if(!L1||!mkOpen(L1)){toast("Cette enchère est terminée");$("#dlg").hidden=true;return renderMarket(true);}
       if(L1.seller===MU())return;const m1=mkMin(L1);if(a<m1){toast(`L'offre minimum est maintenant de ${nf(m1)}`);$("#bf-go").disabled=false;return;}
       const prev=ST.mk.held[id]||0;if(ST.coins+prev<a){toast("Pas assez de coquillages");$("#bf-go").disabled=false;return;}
@@ -2259,7 +2263,7 @@ function mountChat(){const g=$("#cp-b");if($("#ch-list"))return;
     <form class="ch-f" id="ch-f"><input id="ch-in" maxlength="300" autocomplete="off" placeholder="Écris à tous les joueurs…" aria-label="Message"><button class="btn primary" id="ch-go">Envoyer</button></form>
     <p class="note ch-rule">Visible par tous les joueurs du TCG. Reste correct : les admins peuvent supprimer les messages.</p></div>`;
   $("#ch-f").onsubmit=async e=>{e.preventDefault();const i=$("#ch-in"),t=i.value.trim();if(!t)return;
-    if(Date.now()-CHAT_SENT<1500){toast("Doucement, un message à la fois");return;}CHAT_SENT=Date.now();
+    if(Date.now()-CHAT_SENT<LIM.chatGap){toast("Doucement, un message toutes les 3 secondes");return;}CHAT_SENT=Date.now();
     $("#ch-go").disabled=true;const {error}=await SX().from("tcg_chat").insert({body:t.slice(0,300)});$("#ch-go").disabled=false;
     if(error){toast(CHAT_OK===false?"Le tchat n'est pas encore ouvert":"Le message n'a pas pu partir");return;}
     i.value="";i.focus();await loadChat();const l=$("#ch-list");if(l)l.dataset.done="";drawChat();chatSeen();};}
@@ -2436,7 +2440,10 @@ async function tradeForm(f,pre){if(!f)return;
   $("#tw-go").onclick=()=>tradeSend(f,[...T.give,...(T.gc?["$:"+T.gc]:[])],[...T.want,...(T.wc?["$:"+T.wc]:[])],$("#tw-n").value.trim());
   drawGrid("L");drawGrid("R");drawMid();}
 async function tradeSend(f,give,want,note){const sb=SX();const b=$("#tf-go")||{};b.disabled=true;
-  const b2=$("#tw-go");if(b2)b2.disabled=true;
+  const pend=TR.filter(t=>t.sender===MEID()&&t.status==="pending").length;
+  if(pend>=LIM.trades){toast(`${LIM.trades} propositions en attente au maximum : annule-en une ou attends les réponses`);return;}
+  if(tooSoon("trade",LIM.tradeGap))return;
+  const b2=$("#tw-go");if(b2)b2.disabled=true;LAST_ACT.trade=Date.now();
   if(trCards(give).some(k=>!(ST.owned[k]>0))){toast("Tu n'as plus une des cartes à donner");if(b2)b2.disabled=false;return;}
   if(trCoins(give)>ST.coins){toast("Tu n'as pas assez de coquillages");if(b2)b2.disabled=false;return;}
   give.forEach(k=>takeItem(k));save();wallet();
@@ -2720,7 +2727,7 @@ setInterval(()=>{if(!PREVIEW&&launchReset()){wallet();if(location.hash==="#boost
 /* ---------- Collections partagées (table tcg_collections, update-22) ---------- */
 const LAUNCH_ISO=()=>new Date(window.TCG_LAUNCH&&launchLeft()<=0?window.TCG_LAUNCH:0).toISOString();
 let COLT=null,COL_OK=null,LASTCOL="";const COLS={};
-function colPayload(){ST.ft=(ST.ft||[]).filter(k=>ST.owned[k]&&CARDS[k]&&CARDS[k].r!=="S");
+function colPayload(){ST.ft=(ST.ft||[]).filter(k=>ST.owned[k]&&CARDS[k]&&CARDS[k].r!=="S").slice(0,LIM.ft);
   const owned={};Object.entries(ST.owned).forEach(([k,n])=>{if(CARDS[k]&&CARDS[k].r!=="S")owned[k]=n;});
   return {owned,fortrade:ST.ft,uniq:uniq(),myth:Object.keys(ST.owned).filter(k=>CARDS[k]&&["M","S"].includes(CARDS[k].r)).length,opened:ST.opened||0,ach:Object.keys(ST.ach||{}).length};}
 function queueCol(){if(!SX()||!MEID()||PREVIEW||!ST)return;if(COLT)return;COLT=setTimeout(()=>{COLT=null;pushCol();},20000);}
@@ -2756,7 +2763,7 @@ async function renderBinder(){const g=$("#mk-grid");const sb=SX();
   g.querySelectorAll("[data-mk-card]").forEach(d=>d.onclick=()=>openCard(CARDS[d.dataset.mkCard]));
   g.querySelectorAll("[data-bx]").forEach(b=>b.onclick=()=>{const u=b.dataset.bx,pr=FTN[u]||{};const fr=FR.find(f=>f.id===u);
     tradeForm(fr||{id:u,name:pr.name||"Joueur",av:pr.av||"",pi:null},[b.dataset.bk]);});}
-function editBinder(){pickCards({title:"Mes cartes à l'échange",pool:Object.keys(ST.owned).map(k=>CARDS[k]),max:30,sel:(ST.ft||[]).filter(k=>ST.owned[k]),count:true,
+function editBinder(){pickCards({title:"Mes cartes à l'échange",pool:Object.keys(ST.owned).map(k=>CARDS[k]),max:LIM.ft,sel:(ST.ft||[]).filter(k=>ST.owned[k]),count:true,
   note:c=>ST.owned[c.k]>1?`<span class="pk-note have">Doublon ×${ST.owned[c.k]-1}</span>`:`<span class="pk-note warn">Ton seul exemplaire</span>`,
   done:ks=>{ST.ft=ks;save();pushCol().then(()=>{toast(ks.length?`${ks.length} carte${ks.length>1?"s":""} proposée${ks.length>1?"s":""} à l'échange`:"Tu ne proposes plus de carte à l'échange");renderBinder();});}});}
 
