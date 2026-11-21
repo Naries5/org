@@ -1012,6 +1012,22 @@ body.hosted #site{display:none!important}
 .drc:hover .drc-card,.drc:focus-visible .drc-card{transform:translateY(-4px)}
 .drc-w{display:flex;align-items:center;gap:7px;font-size:.88rem;min-width:0}.drc-w b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
 .drc time{color:var(--muted);font-size:.78rem;margin-top:-4px}
+.chat-fab{all:unset;box-sizing:border-box;cursor:pointer;position:fixed;right:22px;bottom:22px;z-index:60;display:flex;align-items:center;gap:8px;height:52px;padding:0 20px 0 16px;border-radius:999px;background:var(--acc);color:#17110a;font-weight:700;box-shadow:0 12px 30px -8px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.08) inset;transition:transform .15s}
+.chat-fab:hover{transform:translateY(-2px)}.chat-fab svg{width:22px;height:22px}
+.chat-fab .dotn{position:absolute;top:-6px;right:-4px;background:#d63a2a;box-shadow:0 0 0 2px var(--bg,#0d0c10)}
+body.chat-on .chat-fab{display:none}
+.chat-pane[hidden],.chat-fab[hidden],.chat-tab[hidden]{display:none!important}
+.chat-pane{position:fixed;top:0;right:0;bottom:0;z-index:70;width:min(400px,100vw);display:flex;flex-direction:column;background:var(--bg,#0d0c10);border-left:1px solid var(--line);box-shadow:-20px 0 50px -20px rgba(0,0,0,.7);animation:cpIn .22s cubic-bezier(.2,.75,.25,1)}
+@keyframes cpIn{from{transform:translateX(30px);opacity:0}}
+.cp-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 18px;border-bottom:1px solid var(--line)}
+.cp-h b{display:block;font-family:var(--f-ui);font-weight:800;font-size:1.1rem}.cp-h small{color:var(--muted);font-size:.8rem}
+.cp-x{all:unset;cursor:pointer;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-size:1.5rem;color:var(--muted)}.cp-x:hover{background:rgba(255,255,255,.06);color:var(--ink)}
+.cp-b{flex:1;min-height:0;display:flex;flex-direction:column;padding:12px 14px 14px}
+.cp-b .chat{flex:1;min-height:0;max-width:none}
+.cp-b .ch-list{flex:1;height:auto;min-height:0;border-radius:14px}
+.cp-b .ch-f input{height:44px;min-width:0}.cp-b .ch-f .btn{flex:none}
+.chat-tab{position:relative}.chat-tab[aria-pressed="true"]{color:var(--ink)}.chat-tab .dotn{margin-left:6px}
+@media (max-width:760px){.chat-fab span{display:none}.chat-fab{padding:0 15px;right:14px;bottom:14px}}
 </style>
 </head>
 <body>
@@ -1058,6 +1074,7 @@ body.hosted #site{display:none!important}
       <button class="tab" data-go="boutique">Boutique<i class="promo">-90 %</i></button>
       <button class="tab" data-go="amis">Amis<i class="tdot" id="t-amis" hidden></i></button>
       <button class="tab" data-go="classement">Classement</button>
+      <button class="tab chat-tab" id="chat-tab" type="button" hidden>Tchat<i class="dotn" id="chat-n" hidden></i></button>
     </nav>
     <div class="wallet"><a class="btn ghost pre-back" href="/">Retour au site</a>
       <span class="wal" title="Boosters gratuits en réserve et coquillages"><span class="ring" id="w-ring"><b id="w-stock">0</b></span><i class="sep"></i><span id="w-coins">0</span><span class="shell"></span></span>
@@ -1150,6 +1167,8 @@ body.hosted #site{display:none!important}
     </section>
   </main>
 </div>
+<button class="chat-fab" id="chat-fab" type="button" hidden aria-label="Ouvrir le tchat"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.2 3.6c-.5.4-1.3.1-1.3-.6V16A2.5 2.5 0 0 1 4 13.5z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg><span>Tchat</span><i class="dotn" id="chat-fn" hidden></i></button>
+<aside class="chat-pane" id="chat-pane" hidden aria-label="Tchat global"><div class="cp-h"><div><b>Tchat global</b><small id="cp-sub">Tous les joueurs du TCG</small></div><button class="cp-x" id="cp-x" type="button" aria-label="Fermer le tchat">×</button></div><div class="cp-b" id="cp-b"></div></aside>
 <div class="dlg" id="dlg" hidden role="dialog" aria-modal="true" aria-label="Détail de la carte"><div class="dbox" id="dbox"></div></div>
 <div class="ov" id="ov" hidden role="dialog" aria-modal="true" aria-label="Ouverture de booster"><div class="ov-in" id="ovin"></div></div>
 <div class="toast" id="toast" aria-live="polite"></div>
@@ -2051,7 +2070,7 @@ function mkTile(L){const me=MU(),c=CARDS[L.k],mine=L.seller===me,open=mkOpen(L),
       ${act}</div></div>`;}
 const sect=(t,sub)=>`<h2 class="sect mk-sect">${t}${sub?` <span>${sub}</span>`:""}</h2>`;
 function mkTabs(){const me=MU(),mineN=MK.filter(L=>L.seller===me).length+(ST.ft||[]).filter(k=>ST.owned[k]).length,bidN=MK.filter(L=>ST.mk.held[L.id]!=null).length;
-  const t=[["all","En vente"],["trade","À l'échange"],["mine",`Mes annonces${mineN+bidN?` <i class="dotn">${mineN+bidN}</i>`:""}`],["chat","Tchat"]];
+  const t=[["all","En vente"],["trade","À l'échange"],["mine",`Mes annonces${mineN+bidN?` <i class="dotn">${mineN+bidN}</i>`:""}`]];
   $("#mk-tabs").innerHTML=t.map(([k,x])=>`<button aria-pressed="${MKTAB===k}" data-mt="${k}">${x}</button>`).join("");
   $("#mk-tabs").querySelectorAll("[data-mt]").forEach(b=>b.onclick=()=>{MKTAB=b.dataset.mt;renderMarket(MKTAB!=="chat");});}
 function mkConfirmBuy(id){const L=MK.find(x=>x.id===id);if(!L)return mkBuy(id);const c=CARDS[L.k],have=ST.owned[L.k]||0;
@@ -2065,9 +2084,7 @@ function mkBind(g){g.querySelectorAll("[data-mk-buy]").forEach(b=>b.onclick=()=>
   g.querySelectorAll("[data-mk-card]").forEach(d=>d.onclick=()=>{const c=CARDS[d.dataset.mkCard];if(c)openCard(c);});}
 async function renderMarket(fetch){const g=$("#mk-grid"),v=$("#v-marche");
   if(!$("#mk-r").dataset.ok){$("#mk-r").insertAdjacentHTML("beforeend",LADDER.filter(r=>r!=="S").reverse().map(r=>`<option value="${r}">${RAR[r][0]}</option>`).join(""));$("#mk-r").dataset.ok=1;}
-  v.classList.toggle("chatting",MKTAB==="chat");
-  if(MKTAB==="chat"){mkTabs();$(".mk-f").style.display="none";$("#mk-sell").style.display="none";return renderChat();}
-  $(".mk-f").style.display="";$("#mk-sell").style.display="";
+  if(MKTAB==="chat")MKTAB="all";
   if(MKTAB==="trade"){mkTabs();return renderBinder();}
   $("#mk-m").hidden=false;$("#mk-s").hidden=false;$("#mk-sell").textContent="Vendre une carte";
   if(!SX()||!MU()){mkTabs();g.innerHTML=`<p class="muted">Connecte-toi pour utiliser le marché.</p>`;return;}
@@ -2186,20 +2203,30 @@ function drawChat(){const l=$("#ch-list");if(!l)return;const atEnd=l.scrollHeigh
     :`<p class="muted ch-empty">Personne n'a encore écrit. Lance la discussion !</p>`;
   if(atEnd||!l.dataset.done){l.scrollTop=l.scrollHeight;l.dataset.done=1;}
   l.querySelectorAll("[data-chx]").forEach(b=>b.onclick=async()=>{const {error}=await SX().from("tcg_chat").delete().eq("id",+b.dataset.chx);if(error){toast("Le message n'a pas pu être supprimé");return;}CHAT=CHAT.filter(m=>m.id!==+b.dataset.chx);drawChat();});}
-async function renderChat(){const g=$("#mk-grid");
-  if(!SX()||!MU()){g.innerHTML=`<p class="muted">Connecte-toi pour utiliser le tchat.</p>`;return;}
-  if(!$("#ch-list")){g.innerHTML=`<div class="chat"><div class="ch-list" id="ch-list"><p class="muted ch-empty">Chargement du tchat…</p></div>
+let CHAT_OPEN=false,CHAT_SEEN=0;try{CHAT_SEEN=+localStorage.getItem("oc-chat-seen")||0;}catch(e){}
+function chatUnread(){const me=MU(),n=CHAT.filter(m=>m.id>CHAT_SEEN&&m.user_id!==me).length;
+  [["#chat-n",n],["#chat-fn",n]].forEach(([q,v])=>{const e=$(q);if(e){e.hidden=!v;e.textContent=v>99?"99+":v;}});}
+function chatSeen(){const last=CHAT.length?CHAT[CHAT.length-1].id:0;if(last>CHAT_SEEN){CHAT_SEEN=last;try{localStorage.setItem("oc-chat-seen",String(last));}catch(e){}}chatUnread();}
+function mountChat(){const g=$("#cp-b");if($("#ch-list"))return;
+  g.innerHTML=`<div class="chat"><div class="ch-list" id="ch-list"><p class="muted ch-empty">Chargement du tchat…</p></div>
     <form class="ch-f" id="ch-f"><input id="ch-in" maxlength="300" autocomplete="off" placeholder="Écris à tous les joueurs…" aria-label="Message"><button class="btn primary" id="ch-go">Envoyer</button></form>
-    <p class="note ch-rule">Tchat visible par tous les joueurs du TCG. Reste correct : les admins peuvent supprimer les messages.</p></div>`;
-    $("#ch-f").onsubmit=async e=>{e.preventDefault();const i=$("#ch-in"),t=i.value.trim();if(!t)return;
-      if(Date.now()-CHAT_SENT<1500){toast("Doucement, un message à la fois");return;}CHAT_SENT=Date.now();
-      $("#ch-go").disabled=true;const {error}=await SX().from("tcg_chat").insert({body:t.slice(0,300)});$("#ch-go").disabled=false;
-      if(error){toast(CHAT_OK===false?"Le tchat n'est pas encore ouvert":"Le message n'a pas pu partir");return;}
-      i.value="";i.focus();await loadChat();const l=$("#ch-list");if(l)l.dataset.done="";drawChat();};}
-  const ok=await loadChat();
-  if(!ok){$("#ch-list").innerHTML=`<p class="muted ch-empty">Le tchat n'est pas encore ouvert.${OWNER||window.TCG_STAFF?" Il faut lancer <b>update-28-tcg-marche.sql</b> dans Supabase.":""}</p>`;return;}
-  drawChat();
-  clearInterval(CHAT_T);CHAT_T=setInterval(async()=>{if($("#v-marche").hidden||MKTAB!=="chat"||!$("#ch-list")){clearInterval(CHAT_T);return;}if(await loadChat())drawChat();},4000);}
+    <p class="note ch-rule">Visible par tous les joueurs du TCG. Reste correct : les admins peuvent supprimer les messages.</p></div>`;
+  $("#ch-f").onsubmit=async e=>{e.preventDefault();const i=$("#ch-in"),t=i.value.trim();if(!t)return;
+    if(Date.now()-CHAT_SENT<1500){toast("Doucement, un message à la fois");return;}CHAT_SENT=Date.now();
+    $("#ch-go").disabled=true;const {error}=await SX().from("tcg_chat").insert({body:t.slice(0,300)});$("#ch-go").disabled=false;
+    if(error){toast(CHAT_OK===false?"Le tchat n'est pas encore ouvert":"Le message n'a pas pu partir");return;}
+    i.value="";i.focus();await loadChat();const l=$("#ch-list");if(l)l.dataset.done="";drawChat();chatSeen();};}
+async function chatTick(){if(!SX()||!MU()||PREVIEW)return;const ok=await loadChat();
+  if(!ok){if(CHAT_OPEN&&$("#ch-list"))$("#ch-list").innerHTML=`<p class="muted ch-empty">Le tchat n'est pas encore ouvert.${OWNER||window.TCG_STAFF?" Il faut lancer <b>update-28-tcg-marche.sql</b> dans Supabase.":""}</p>`;return;}
+  if(CHAT_OPEN){drawChat();chatSeen();}else chatUnread();}
+function chatLoop(){clearInterval(CHAT_T);CHAT_T=setInterval(chatTick,CHAT_OPEN?4000:20000);}
+function openChat(on){CHAT_OPEN=on!=null?on:!CHAT_OPEN;$("#chat-pane").hidden=!CHAT_OPEN;document.body.classList.toggle("chat-on",CHAT_OPEN);$("#chat-tab").setAttribute("aria-pressed",CHAT_OPEN);
+  if(CHAT_OPEN){mountChat();const l=$("#ch-list");if(l)l.dataset.done="";drawChat();chatSeen();chatTick();setTimeout(()=>{const i=$("#ch-in");if(i&&matchMedia("(hover:hover)").matches)i.focus();},50);}chatLoop();}
+function renderChat(){openChat(true);}
+function initChat(){if(!SX()||!MU()||PREVIEW)return;$("#chat-fab").hidden=false;
+  $("#chat-fab").onclick=()=>openChat();$("#chat-tab").onclick=()=>openChat();$("#cp-x").onclick=()=>openChat(false);
+  document.addEventListener("keydown",e=>{if(e.key==="Escape"&&CHAT_OPEN&&$("#dlg").hidden)openChat(false);});
+  chatTick();chatLoop();}
 
 
 /* ---------- Profil, amis, échanges ---------- */
@@ -2688,7 +2715,7 @@ function startDrops(){refreshDrops();clearInterval(DROPS_T);DROPS_T=setInterval(
   document.addEventListener("click",e=>{const d=$("#me-drop");if(d&&!d.hidden&&!e.target.closest(".me-menu"))d.hidden=true;});
   $("#w-mis").onclick=()=>{location.hash="boosters";setTimeout(()=>{const m=$("#missions");if(m)m.scrollIntoView({behavior:reduced()?"auto":"smooth",block:"center"});},60);};if(PREVIEW)ST=fresh();CARDS=build();indexes();route();
   if(PREVIEW)return;
-  await load();const wasReset=launchReset();stashSync();await loadMe();sndLabel();$("#m-reset").hidden=!OWNER;$("#m-pre").hidden=!(window.TCG_STAFF&&launchLeft()>0);tick();wallet();checkAll();route();syncMarket().then(()=>wallet());
+  await load();const wasReset=launchReset();stashSync();await loadMe();sndLabel();$("#m-reset").hidden=!OWNER;$("#m-pre").hidden=!(window.TCG_STAFF&&launchLeft()>0);tick();wallet();checkAll();route();syncMarket().then(()=>wallet());try{initChat();}catch(e){}
   if(wasReset)setTimeout(()=>toast("Le TCG est ouvert : ta collection de test repart de zéro. Bonne chance !"),800);
   if(SX()){loadFriends().then(syncSocial).catch(()=>{});}
   window.addEventListener("pagehide",()=>flush());document.addEventListener("visibilitychange",()=>{if(document.hidden)flush();});
