@@ -1223,7 +1223,7 @@ function specialArt(x){return `<div class="xart" style="--x1:${x.c[0]};--x2:${x.
    Rareté selon le score : 240 pts et plus mythique, 100 et plus légendaire, 13 et plus épique, en dessous rare. */
 const TIERS=["C","PC","R","E","L","M"],SCT={M:240,L:100,E:13};
 const SC={part:10,place:8,win:25,host:10,speed:.5,roblox:.6,orgM:1.25,orgL:1.12,recent:1.15,rep:3};
-function partTier(pl){return pl===1?"L":pl&&pl<=3?"E":pl&&pl<=6?"R":pl&&pl<=12?"PC":"C";}
+function partTier(pl){return pl===1?"L":pl&&pl<=5?"R":pl&&pl<=12?"PC":"C";}
 function partTierFor(x){const s=D.seasons[x[1]],o=D.orgs[s.o]||{};const pl=!x[3]&&x[2]?x[2]:0;let t=TIERS.indexOf(partTier(pl));
   if(o.f==="speed"||o.pf==="roblox")t=Math.max(0,t-1);return TIERS[t];}
 function hostNames(h){return String(h||"").split(/\s*(?:,|&|\/|\+|\bet\b|\n)\s*/i).map(x=>x.trim()).filter(Boolean);}
