@@ -990,6 +990,21 @@ body.hosted #site{display:none!important}
 .dr-av{width:22px;height:22px;border-radius:50%;object-fit:cover;display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;background:#333}
 .dr time{color:var(--muted);font-size:.8rem;white-space:nowrap}
 @media (max-width:640px){.dr{grid-template-columns:auto minmax(0,1fr);row-gap:4px}.dr-w,.dr time{grid-column:2}}
+.mk-sect{grid-column:1/-1;margin:18px 0 2px}.mk-sect:first-child{margin-top:0}.mk-empty{grid-column:1/-1;margin:0}
+.mkt.daily{border-color:color-mix(in srgb,var(--r-M) 60%,transparent);box-shadow:0 0 0 1px color-mix(in srgb,var(--r-M) 30%,transparent),0 0 30px -10px var(--r-M)}
+.chatting .mk-grid{display:block}
+.chat{display:flex;flex-direction:column;gap:10px;max-width:900px}
+.ch-list{height:min(60vh,560px);overflow-y:auto;padding:14px;border:1px solid var(--line);border-radius:18px;background:var(--surface);display:flex;flex-direction:column;gap:2px}
+.chm{display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:10px;align-items:start;padding:4px 6px;border-radius:10px}
+.chm:not(.same){margin-top:8px}.chm:hover{background:rgba(255,255,255,.03)}
+.ch-av{width:36px;height:36px}.ch-av img,.ch-av .avi{width:36px;height:36px;border-radius:50%;object-fit:cover;display:flex;align-items:center;justify-content:center;background:#333;font-weight:700}
+.chb{min-width:0}.ch-h{margin:0 0 2px;display:flex;gap:8px;align-items:baseline}.ch-h time{color:var(--muted);font-size:.75rem}
+.chm.me .ch-h b{color:var(--yel)}
+.ch-t{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.45;color:#e8e2da}
+.ch-x{opacity:0;border:0;background:none;color:var(--muted);font-size:1.1rem;cursor:pointer;padding:0 6px}.chm:hover .ch-x,.ch-x:focus{opacity:1}
+@media (hover:none){.ch-x{opacity:.6}}
+.ch-f{display:flex;gap:10px}.ch-f input{flex:1;height:46px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:inherit;font:inherit}
+.ch-empty{margin:auto;text-align:center}.ch-rule{margin:0}
 </style>
 </head>
 <body>
@@ -1078,7 +1093,7 @@ body.hosted #site{display:none!important}
     </section>
     <section class="view" id="v-marche" hidden>
       <h1 class="h">Marché</h1>
-      <p class="lede" id="mk-lede">Échange tes cartes avec les autres joueurs : propose tes doublons dans « À l'échange » et regarde ce que les autres proposent.</p>
+      <p class="lede" id="mk-lede">Achète, vends et mets tes cartes aux enchères, échange tes doublons et discute avec les autres joueurs. Chaque jour, 3 mythiques sont mises aux enchères à partir de 500 coquillages.</p>
       <div class="mk-bar"><div class="seg ysel" id="mk-tabs"></div><button class="btn primary" id="mk-sell">Vendre une carte</button></div>
       <div class="filters mk-f">
         <input id="mk-q" type="search" placeholder="Chercher un joueur, une ORG, une saison…" autocomplete="off" aria-label="Chercher">
@@ -1622,7 +1637,7 @@ function renderBoosters(){tick();wallet();startDrops();
       <div><b class="acc">${k==="sceau"?"—":Math.max(0,PITY-ST.sinceMyth)}</b><span>${k==="sceau"?"ne touche pas la garantie":"avant mythique sûre"}</span></div><div><b class="yel">${EPITY-ST.sinceGold}</b><span>avant épique sûre</span></div></div>
     <button class="seeall" data-go="catalogue"><span class="sa-f">${["E","L","M"].map(r=>`<i style="background:var(${RAR[r][1]})"></i>`).join("")}</span>Voir les ${nf(visTotal())} cartes</button>
     <p class="bd-k">Chance par booster</p>
-    <div class="bd-ch">${chances(k).map(([r,v])=>`<div class="ch"><span class="ch-n" style="--c:var(${RAR[r][1]})"><i></i>${RAR[r][0]}</span><span class="ch-b"><i style="width:${Math.max(1.5,v)}%;background:var(${RAR[r][1]})"></i></span><code>${pct(v)}</code></div>`).join("")}</div>
+    <div class="bd-ch">${chances(k).map(([r,v])=>`<div class="ch"><span class="ch-n" style="--c:var(${RAR[r][1]})"><i></i>${RAR[r][0]}</span><span class="chb"><i style="width:${Math.max(1.5,v)}%;background:var(${RAR[r][1]})"></i></span><code>${pct(v)}</code></div>`).join("")}</div>
     ${btn}
     ${it.free?`<div class="bd-more"><button class="btn ghost" id="b-all" ${ST.stock>1||ST.test?"":"disabled"}>${ST.test?"Ouvrir 10 d'un coup":`Tout ouvrir (${ST.stock})`}</button><code id="timer">${ST.stock>=MAXSTOCK?"Réserve pleine":`Prochain gratuit dans ${clk(left)}`}</code></div>`:""}
     ${OWNER?`<div class="testbox"><p class="bd-k">Outils de test <small>(visible par toi seul)</small></p>
@@ -1845,7 +1860,7 @@ function openCard(c){const P=D.players,S=D.seasons,O=D.orgs;const n=ST.owned[c.k
 ${artBox(c,true)}
       ${c.r==="S"?"":c.base?`<p>Changée à la main. Automatiquement, elle serait ${RAR[c.base][0].toLowerCase()}. <button class="linkbtn" id="radm-x">Revenir à l'automatique</button></p>`:`<p>Rareté calculée automatiquement. Les changements s'appliquent pour tous les joueurs.</p>`}</div>`:""}
     ${!CANEDIT&&canArt(c)?`<div class="radm">${artBox(c,false)}</div>`:""}
-    <div class="acts">${n&&c.r!=="S"&&DB?`<button class="btn" id="sell1">Vendre au marché</button>`:""}${n>1?`<button class="btn" id="rec1">Recycler 1 doublon (+${RECYCLE[c.r]})</button>`:""}${alb.join("")}<button class="btn primary" id="dclose">Fermer</button></div></div>`;
+    <div class="acts">${n&&c.r!=="S"&&mkAvail()?`<button class="btn" id="sell1">Vendre au marché</button>`:""}${n>1?`<button class="btn" id="rec1">Recycler 1 doublon (+${RECYCLE[c.r]})</button>`:""}${alb.join("")}<button class="btn primary" id="dclose">Fermer</button></div></div>`;
   $("#dlg").hidden=false;$("#dclose").focus();
   $("#dclose").onclick=()=>$("#dlg").hidden=true;
   $("#dbox").querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>{$("#dlg").hidden=true;}));
@@ -1952,89 +1967,123 @@ async function renderBoard(){const tb=$("#board");tb.innerHTML=`<p class="muted"
 // Chaque annonce est un document partagé "market/<id>". La carte quitte la collection du vendeur dès la mise en vente
 // et les coquillages d'un enchérisseur sont mis de côté (ST.mk.held). Chacun règle ensuite sa part : le vendeur encaisse,
 // l'acheteur récupère la carte, l'enchérisseur dépassé est remboursé. Le dernier des deux à régler supprime l'annonce.
-let ME_NAME="Joueur",MK=[],MKTAB="all",MKT=null,MKSYNC=false;
+let ME_NAME="Joueur",MK=[],MKTAB="all",MKT=null,MKSYNC=false,MKON=null;
+/* ---------- Marché partagé (tables tcg_market et tcg_chat, update-28) ---------- */
 const MK_FEE=.05,MK_MAX=10,MK_DUR=[[3600e3,"1 heure"],[6*3600e3,"6 heures"],[24*3600e3,"24 heures"],[72*3600e3,"3 jours"]];
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const net=v=>Math.floor(v*(1-MK_FEE));
-function mkRef(id){return DB.collection("market").doc(id);}
-async function mkGet(id){const d=await mkRef(id).get();return d&&d.exists?{id,...d.data()}:null;}
-async function mkFetch(){if(!DB)return [];const snap=await DB.collection("market").orderBy("created","desc").limit(400).get();MK=snap.docs.map(d=>({id:d.id,...d.data()})).filter(L=>CARDS[L.k]);return MK;}
+const MU=()=>MEID(),SNOW=()=>Date.now()+(window.TCG_OFFSET||0);
+const mkAvail=()=>!!(SX()&&MU()&&MKON!==false&&!PREVIEW);
+function mkRow(r){return {id:r.id,k:r.card,seller:r.seller,sn:r.seller_name,mode:r.mode,created:Date.parse(r.created_at),st:r.status,
+  buyer:r.buyer?{u:r.buyer,n:r.buyer_name}:null,bid:r.bid_user?{u:r.bid_user,n:r.bid_name,a:r.bid_amount}:null,nb:r.nb||0,
+  price:r.price,start:r.start_price,end:r.end_at?Date.parse(r.end_at)-(window.TCG_OFFSET||0):0,sellerPaid:r.seller_paid,buyerGot:r.buyer_got,daily:/^daily-/.test(r.id)};}
+async function mkGet(id){const {data,error}=await SX().from("tcg_market").select("*").eq("id",id).maybeSingle();if(error)throw error;return data?mkRow(data):null;}
+async function mkFetch(){if(!SX())return [];const {data,error}=await SX().from("tcg_market").select("*").order("created_at",{ascending:false}).limit(400);
+  if(error){MKON=false;throw error;}MKON=true;MK=(data||[]).map(mkRow).filter(L=>CARDS[L.k]);return MK;}
+async function mkRpc(fn,args){const {data,error}=await SX().rpc(fn,args);if(error){console.warn(fn,error.message);return false;}return data!==false;}
 function mkEnded(L){return L.mode==="auction"&&Date.now()>=L.end;}
 function mkOpen(L){return L.st==="open"&&!L.buyer&&!mkEnded(L);}
 function mkPrice(L){return L.mode==="auction"?(L.bid?L.bid.a:L.start):L.price;}
 function mkMin(L){return L.bid?L.bid.a+Math.max(1,Math.ceil(L.bid.a*.05)):L.start;}
 function giveCard(k){const n=ST.owned[k]||0;ST.owned[k]=n+1;ST.firsts[CARDS[k].r]=true;return n===0;}
-async function mkSettle(L){ // règle la part du vendeur (encaisser) ou de l'acheteur (recevoir)
-  const r=mkRef(L.id);
-  if(L.seller===UID){
+async function mkSettle(L){const me=MU(); // règle la part du vendeur (encaisser) ou du gagnant d'une enchère (recevoir)
+  if(L.seller===me){
     const sold=L.mode==="direct"?!!L.buyer:(mkEnded(L)&&!!L.bid);
-    if(sold&&!L.sellerPaid){const v=net(L.mode==="direct"?L.price:L.bid.a);ST.coins+=v;ST.mk.n=(ST.mk.n||0)+1;delete ST.mk.mine[L.id];save();
-      toast(`Vendue : ${label(CARDS[L.k])} pour ${nf(v)} coquillages`);
-      if(L.buyerGot)await r.delete();else await r.update({sellerPaid:true});return true;}
-    if(L.mode==="auction"&&mkEnded(L)&&!L.bid&&L.st==="open"){giveCard(L.k);delete ST.mk.mine[L.id];save();toast(`Aucune offre : ${label(CARDS[L.k])} revient dans ta collection`);await r.delete();return true;}
+    if(sold&&!L.sellerPaid&&await mkRpc("tcg_mk_done",{p_id:L.id})){const v=net(L.mode==="direct"?L.price:L.bid.a);ST.coins+=v;ST.mk.n=(ST.mk.n||0)+1;delete ST.mk.mine[L.id];save();
+      toast(`Vendue : ${label(CARDS[L.k])} pour ${nf(v)} coquillages`);return true;}
+    if(L.mode==="auction"&&mkEnded(L)&&!L.bid&&await mkRpc("tcg_mk_cancel",{p_id:L.id})){giveCard(L.k);delete ST.mk.mine[L.id];save();toast(`Aucune offre : ${label(CARDS[L.k])} revient dans ta collection`);return true;}
   }
-  if(L.mode==="auction"&&mkEnded(L)&&L.bid&&L.bid.u===UID&&!L.buyerGot&&ST.mk.held[L.id]!=null){
-    delete ST.mk.held[L.id];giveCard(L.k);ST.mk.n=(ST.mk.n||0)+1;save();checkAll();toast(`Enchère gagnée : ${label(CARDS[L.k])}`);
-    if(L.sellerPaid)await r.delete();else await r.update({buyerGot:true});return true;}
+  if(L.mode==="auction"&&mkEnded(L)&&L.bid&&L.bid.u===me&&!L.buyerGot&&ST.mk.held[L.id]!=null&&await mkRpc("tcg_mk_done",{p_id:L.id})){
+    delete ST.mk.held[L.id];const nw=giveCard(L.k);ST.mk.n=(ST.mk.n||0)+1;save();checkAll();toast(`Enchère gagnée : ${label(CARDS[L.k])}${nw?" · nouvelle carte !":""}`);return true;}
   return false;}
-async function syncMarket(){if(!DB||!UID||MKSYNC)return;MKSYNC=true;
-  try{await mkFetch();let ch=false;const byId=Object.fromEntries(MK.map(L=>[L.id,L]));
-    for(const L of MK)if(L.seller===UID||(L.bid&&L.bid.u===UID)){try{if(await mkSettle(L))ch=true;}catch(e){}}
+/* Les 3 mythiques du jour : même tirage pour tout le monde (graine = date du jour à Paris) */
+let MK_DAILY_TRY="";
+function parisDay(){return new Date(SNOW()).toLocaleDateString("sv-SE",{timeZone:"Europe/Paris"});}
+function dailyPicks(day){let h=2166136261;for(const ch of "oc-daily-"+day){h^=ch.charCodeAt(0);h=Math.imul(h,16777619);}
+  const rnd=()=>{h=Math.imul(h^(h>>>15),2246822507);h=Math.imul(h^(h>>>13),3266489909);h^=h>>>16;return (h>>>0)/4294967296;};
+  const pool=Object.values(CARDS).filter(c=>c.r==="M"&&!/#/.test(c.k)).map(c=>c.k).sort(),out=[];
+  while(out.length<3&&pool.length)out.push(pool.splice(Math.floor(rnd()*pool.length),1)[0]);return out;}
+async function ensureDaily(){const d=parisDay();if(MK_DAILY_TRY===d||MK.some(L=>L.id.startsWith("daily-"+d+"-")))return false;MK_DAILY_TRY=d;
+  const ks=dailyPicks(d);if(ks.length<3)return false;await mkRpc("tcg_mk_daily",{p_cards:ks});return true;}
+async function syncMarket(){if(!mkAvail()||MKSYNC)return;MKSYNC=true;const me=MU();
+  try{await mkFetch();if(await ensureDaily())await mkFetch();let ch=false;const byId=Object.fromEntries(MK.map(L=>[L.id,L]));
+    for(const L of MK)if(L.seller===me||(L.bid&&L.bid.u===me)){try{if(await mkSettle(L))ch=true;}catch(e){}}
     for(const id of Object.keys(ST.mk.held)){const L=byId[id];
-      if(!L||!L.bid||L.bid.u!==UID){ST.coins+=ST.mk.held[id];toast(`Enchère dépassée : ${nf(ST.mk.held[id])} coquillages rendus`);delete ST.mk.held[id];save();ch=true;}}
-    for(const id of Object.keys(ST.mk.mine))if(!byId[id]){delete ST.mk.mine[id];save();}
+      if(!L||!L.bid||L.bid.u!==me){ST.coins+=ST.mk.held[id];toast(`Enchère dépassée : ${nf(ST.mk.held[id])} coquillages rendus`);delete ST.mk.held[id];save();ch=true;}}
+    for(const id of Object.keys(ST.mk.mine)){const m=ST.mk.mine[id];if(byId[id]||!m||Date.now()-(m.t||0)<120000)continue;
+      // annonce disparue sans avoir été encaissée (retirée par un admin ou sur un autre appareil) : la carte revient
+      if(m.k&&CARDS[m.k])giveCard(m.k);delete ST.mk.mine[id];save();ch=true;}
     if(ch){wallet();await mkFetch();}}
   catch(e){console.warn(e);}finally{MKSYNC=false;}}
-function mkTile(L){const c=CARDS[L.k],mine=L.seller===UID,open=mkOpen(L),auc=L.mode==="auction",top=L.bid&&L.bid.u===UID;
-  let st="";if(!open){st=L.buyer||(auc&&L.bid)?(mine?"Vendue":(L.buyer&&L.buyer.u===UID)||top?"Gagnée":"Vendue"):"Terminée";}
+function mkTile(L){const me=MU(),c=CARDS[L.k],mine=L.seller===me,open=mkOpen(L),auc=L.mode==="auction",top=L.bid&&L.bid.u===me;
+  let st="";if(!open){st=L.buyer||(auc&&L.bid)?(mine?"Vendue":(L.buyer&&L.buyer.u===me)||top?"Gagnée":"Vendue"):"Terminée";}
   let act="";
   if(open&&mine)act=(auc&&L.bid)?`<button class="btn" disabled>${L.nb} offre${L.nb>1?"s":""} en cours</button>`:`<button class="btn" data-mk-cancel="${L.id}">Retirer</button>`;
   else if(open&&auc)act=top?`<button class="btn" disabled>Tu es en tête</button>`:`<button class="btn primary" data-mk-bid="${L.id}">Enchérir</button>`;
   else if(open)act=`<button class="btn primary" data-mk-buy="${L.id}" ${ST.coins<L.price?"disabled":""}>Acheter</button>`;
   else act=`<span class="mk-st">${st}</span>`;
-  return `<div class="mkt${mine?" mine":""}${top?" top":""}"><div class="mk-c" data-mk-card="${L.k}">${cardHTML(c,true)}</div>
-    <div class="mk-i"><span class="mk-tag ${auc?"auc":""}">${auc?`Enchères${open?` · <code data-end="${L.end}">${clk(L.end-Date.now())}</code>`:""}`:"Vente directe"}</span>
+  return `<div class="mkt${mine?" mine":""}${top?" top":""}${L.daily?" daily":""}"><div class="mk-c" data-mk-card="${L.k}">${cardHTML(c,true)}</div>
+    <div class="mk-i"><span class="mk-tag ${auc?"auc":""}">${L.daily?"Enchère du jour":auc?"Enchères":"Vente directe"}${auc&&open?` · <code data-end="${L.end}">${clk(L.end-Date.now())}</code>`:""}</span>
       <div class="mk-p"><b>${nf(mkPrice(L))}</b><span class="shell"></span></div>
-      <small>${auc?(L.bid?`${L.nb} offre${L.nb>1?"s":""} · en tête : ${esc(L.bid.n)}`:"Prix de départ"):"Prix fixe"} · par ${mine?"toi":esc(L.sn||"Joueur")}</small>
+      <small>${auc?(L.bid?`${L.nb} offre${L.nb>1?"s":""} · en tête : ${top?"toi":esc(L.bid.n||"Joueur")}`:"Prix de départ"):"Prix fixe"} · ${L.daily?"proposée par ORG-Central":`par ${mine?"toi":esc(L.sn||"Joueur")}`}</small>
       ${act}</div></div>`;}
-async function renderMarket(fetch){const g=$("#mk-grid");
-  if(!$("#mk-r").dataset.ok){$("#mk-r").insertAdjacentHTML("beforeend",LADDER.filter(r=>r!=="S").reverse().map(r=>`<option value="${r}">${RAR[r][0]}</option>`).join(""));$("#mk-r").dataset.ok=1;}
-  if(!DB&&MKTAB!=="trade")MKTAB="trade";
-  const tabs=[...(DB?[["all","En vente"]]:[]),["trade","À l'échange"],...(DB?[["mine","Mes ventes"],["bids","Mes enchères"]]:[])];
-  if(MKTAB==="trade"){$("#mk-tabs").innerHTML=tabs.map(([k,t])=>`<button aria-pressed="${MKTAB===k}" data-mt="${k}">${t}</button>`).join("");
-    $("#mk-tabs").querySelectorAll("[data-mt]").forEach(b=>b.onclick=()=>{MKTAB=b.dataset.mt;$("#mk-m").hidden=false;$("#mk-s").hidden=false;$("#mk-sell").textContent="Vendre une carte";renderMarket(true);});
-    return renderBinder();}
-  if(fetch){if(!MK.length)g.innerHTML=`<p class="muted">Chargement du marché…</p>`;try{await syncMarket();}catch(e){g.innerHTML=`<p class="muted">Le marché n'a pas pu être chargé.</p>`;return;}}
-  const mineN=MK.filter(L=>L.seller===UID).length,bidN=MK.filter(L=>ST.mk.held[L.id]!=null||(L.bid&&L.bid.u===UID)).length;
-  $("#mk-tabs").innerHTML=[["all","En vente"],["trade","À l'échange"],["mine",`Mes ventes${mineN?` <i class="dotn">${mineN}</i>`:""}`],["bids",`Mes enchères${bidN?` <i class="dotn">${bidN}</i>`:""}`]].map(([k,t])=>`<button aria-pressed="${MKTAB===k}" data-mt="${k}">${t}</button>`).join("");
-  const q=norm($("#mk-q").value.trim()),r=$("#mk-r").value,m=$("#mk-m").value,so=$("#mk-s").value;
-  let L=MK.filter(x=>MKTAB==="mine"?x.seller===UID:MKTAB==="bids"?(ST.mk.held[x.id]!=null||(x.bid&&x.bid.u===UID)):mkOpen(x))
-    .filter(x=>{const c=CARDS[x.k];return (!r||c.r===r)&&(!m||x.mode===m)&&(!q||c.s.includes(q));});
-  const end=x=>x.mode==="auction"?x.end:Infinity;
-  L.sort(so==="end"?(a,b)=>end(a)-end(b):so==="lo"?(a,b)=>mkPrice(a)-mkPrice(b):so==="hi"?(a,b)=>mkPrice(b)-mkPrice(a):(a,b)=>b.created-a.created);
-  g.innerHTML=L.length?L.map(mkTile).join(""):`<p class="muted">${MKTAB==="mine"?"Tu n'as rien en vente. Ouvre une carte de ta collection et choisis « Vendre au marché ».":MKTAB==="bids"?"Tu n'as aucune enchère en cours.":"Rien ne correspond pour l'instant."}</p>`;
-  $("#mk-tabs").querySelectorAll("[data-mt]").forEach(b=>b.onclick=()=>{MKTAB=b.dataset.mt;renderMarket(false);});
-  g.querySelectorAll("[data-mk-buy]").forEach(b=>b.onclick=()=>mkBuy(b.dataset.mkBuy,b));
+const sect=(t,sub)=>`<h2 class="sect mk-sect">${t}${sub?` <span>${sub}</span>`:""}</h2>`;
+function mkTabs(){const me=MU(),mineN=MK.filter(L=>L.seller===me).length+(ST.ft||[]).filter(k=>ST.owned[k]).length,bidN=MK.filter(L=>ST.mk.held[L.id]!=null).length;
+  const t=[["all","En vente"],["trade","À l'échange"],["mine",`Mes annonces${mineN+bidN?` <i class="dotn">${mineN+bidN}</i>`:""}`],["chat","Tchat"]];
+  $("#mk-tabs").innerHTML=t.map(([k,x])=>`<button aria-pressed="${MKTAB===k}" data-mt="${k}">${x}</button>`).join("");
+  $("#mk-tabs").querySelectorAll("[data-mt]").forEach(b=>b.onclick=()=>{MKTAB=b.dataset.mt;renderMarket(MKTAB!=="chat");});}
+function mkBind(g){g.querySelectorAll("[data-mk-buy]").forEach(b=>b.onclick=()=>mkBuy(b.dataset.mkBuy,b));
   g.querySelectorAll("[data-mk-bid]").forEach(b=>b.onclick=()=>mkBidForm(b.dataset.mkBid));
   g.querySelectorAll("[data-mk-cancel]").forEach(b=>b.onclick=()=>mkCancel(b.dataset.mkCancel,b));
-  g.querySelectorAll("[data-mk-card]").forEach(d=>d.onclick=()=>{const c=CARDS[d.dataset.mkCard];if(c)openCard(c);});
-  clearInterval(MKT);MKT=setInterval(()=>{if($("#v-marche").hidden){clearInterval(MKT);return;}renderMarket(true);},20000);}
+  g.querySelectorAll("[data-mk-card]").forEach(d=>d.onclick=()=>{const c=CARDS[d.dataset.mkCard];if(c)openCard(c);});}
+async function renderMarket(fetch){const g=$("#mk-grid"),v=$("#v-marche");
+  if(!$("#mk-r").dataset.ok){$("#mk-r").insertAdjacentHTML("beforeend",LADDER.filter(r=>r!=="S").reverse().map(r=>`<option value="${r}">${RAR[r][0]}</option>`).join(""));$("#mk-r").dataset.ok=1;}
+  v.classList.toggle("chatting",MKTAB==="chat");
+  if(MKTAB==="chat"){mkTabs();$(".mk-f").style.display="none";$("#mk-sell").style.display="none";return renderChat();}
+  $(".mk-f").style.display="";$("#mk-sell").style.display="";
+  if(MKTAB==="trade"){mkTabs();return renderBinder();}
+  $("#mk-m").hidden=false;$("#mk-s").hidden=false;$("#mk-sell").textContent="Vendre une carte";
+  if(!SX()||!MU()){mkTabs();g.innerHTML=`<p class="muted">Connecte-toi pour utiliser le marché.</p>`;return;}
+  if(fetch){if(!MK.length)g.innerHTML=`<p class="muted">Chargement du marché…</p>`;await syncMarket();}
+  mkTabs();
+  if(MKON===false){g.innerHTML=`<p class="muted">Le marché n'est pas encore ouvert.${OWNER||window.TCG_STAFF?" Il faut lancer <b>update-28-tcg-marche.sql</b> dans Supabase.":""}</p>`;return;}
+  const me=MU(),q=norm($("#mk-q").value.trim()),r=$("#mk-r").value,m=$("#mk-m").value,so=$("#mk-s").value;
+  const flt=x=>{const c=CARDS[x.k];return (!r||c.r===r)&&(!m||x.mode===m)&&(!q||c.s.includes(q));};
+  const end=x=>x.mode==="auction"?x.end:Infinity;
+  const srt=so==="end"?(a,b)=>end(a)-end(b):so==="lo"?(a,b)=>mkPrice(a)-mkPrice(b):so==="hi"?(a,b)=>mkPrice(b)-mkPrice(a):(a,b)=>b.created-a.created;
+  let html="";
+  if(MKTAB==="mine"){
+    const sales=MK.filter(x=>x.seller===me).sort(srt),bids=MK.filter(x=>x.seller!==me&&(ST.mk.held[x.id]!=null||(x.bid&&x.bid.u===me&&!x.buyerGot))).sort(srt);
+    const ft=(ST.ft||[]).filter(k=>ST.owned[k]&&CARDS[k]);
+    html+=sect("Mes ventes et enchères",`${sales.length}/${MK_MAX}`)+(sales.length?sales.map(mkTile).join(""):`<p class="muted mk-empty">Tu n'as rien en vente. « Vendre une carte » pour en proposer une à prix fixe ou aux enchères.</p>`);
+    html+=sect("Mes offres en cours",bids.length||"")+(bids.length?bids.map(mkTile).join(""):`<p class="muted mk-empty">Tu n'as fait aucune offre en ce moment.</p>`);
+    html+=sect("Mes cartes à l'échange",`${ft.length}/30`)+(ft.length?ft.map(k=>`<div class="mkt"><div class="mk-c" data-mk-card="${k}">${cardHTML(CARDS[k],true)}</div><div class="mk-i"><span class="mk-tag">À l'échange</span><small>Les autres joueurs peuvent te proposer un échange contre cette carte.</small><button class="btn" data-ft-x="${k}">Retirer de l'échange</button></div></div>`).join(""):`<p class="muted mk-empty">Tu ne proposes aucune carte à l'échange.</p>`)
+      +`<div class="mk-empty"><button class="btn" id="mk-ft-edit">Choisir mes cartes à l'échange</button></div>`;
+  }else{
+    const daily=MK.filter(x=>x.daily&&mkOpen(x));
+    const rest=MK.filter(x=>!x.daily&&mkOpen(x)).filter(flt).sort(srt);
+    if(daily.length&&!q&&(!r||r==="M")&&m!=="direct")html+=sect("Enchères du jour","3 mythiques · départ à 500 · fin à minuit")+daily.map(mkTile).join("");
+    html+=sect("Cartes des joueurs",rest.length||"")+(rest.length?rest.map(mkTile).join(""):`<p class="muted mk-empty">Rien ne correspond pour l'instant. Mets une carte en vente avec « Vendre une carte ».</p>`);
+  }
+  g.innerHTML=html;mkBind(g);
+  g.querySelectorAll("[data-ft-x]").forEach(b=>b.onclick=()=>{ST.ft=(ST.ft||[]).filter(k=>k!==b.dataset.ftX);save();pushCol().then(()=>{toast(`${label(CARDS[b.dataset.ftX])} n'est plus à l'échange`);renderMarket(false);});});
+  const fe=$("#mk-ft-edit");if(fe)fe.onclick=()=>editBinder();
+  clearInterval(MKT);MKT=setInterval(()=>{if($("#v-marche").hidden||MKTAB==="chat"||MKTAB==="trade"){clearInterval(MKT);return;}renderMarket(true);},20000);}
 ["#mk-q","#mk-r","#mk-m","#mk-s"].forEach(s=>{let t;$(s).addEventListener("input",()=>{clearTimeout(t);t=setTimeout(()=>MKTAB==="trade"?renderBinder():renderMarket(false),150);});});
 async function mkBuy(id,btn){if(btn)btn.disabled=true;
   try{const L=await mkGet(id);if(!L||!mkOpen(L)){toast("Cette carte n'est plus en vente");return renderMarket(true);}
-    if(L.seller===UID)return;if(ST.coins<L.price){toast("Pas assez de coquillages");return;}
+    if(L.seller===MU())return;if(ST.coins<L.price){toast("Pas assez de coquillages");return;}
     ST.coins-=L.price;save();wallet();
-    await mkRef(id).update({buyer:{u:UID,n:ME_NAME,at:Date.now()},st:"sold"});await wait(800);
-    const L2=await mkGet(id);
-    if(!L2||!L2.buyer||L2.buyer.u!==UID){ST.coins+=L.price;save();wallet();toast("Quelqu'un a été plus rapide : coquillages rendus");return renderMarket(true);}
+    if(!await mkRpc("tcg_mk_buy",{p_id:id,p_name:ME_NAME})){ST.coins+=L.price;save();wallet();toast("Quelqu'un a été plus rapide : coquillages rendus");return renderMarket(true);}
     const nw=giveCard(L.k);ST.mk.n=(ST.mk.n||0)+1;save();checkAll();toast(`Achetée : ${label(CARDS[L.k])}${nw?" · nouvelle carte !":""}`);
-    if(L2.sellerPaid)await mkRef(id).delete();else await mkRef(id).update({buyerGot:true});}
+    await mkRpc("tcg_mk_done",{p_id:id});}
   catch(e){toast("L'achat n'a pas pu se faire");}
   renderMarket(true);}
 async function mkCancel(id,btn){if(btn)btn.disabled=true;
-  try{const L=await mkGet(id);if(!L||L.seller!==UID)return renderMarket(true);
+  try{const L=await mkGet(id);if(!L||L.seller!==MU())return renderMarket(true);
     if(L.buyer||L.bid){toast("Trop tard : quelqu'un a déjà acheté ou enchéri");return renderMarket(true);}
-    await mkRef(id).delete();giveCard(L.k);delete ST.mk.mine[id];save();toast(`${label(CARDS[L.k])} revient dans ta collection`);}
+    if(!await mkRpc("tcg_mk_cancel",{p_id:id})){toast("Trop tard : quelqu'un a déjà acheté ou enchéri");return renderMarket(true);}
+    giveCard(L.k);delete ST.mk.mine[id];save();toast(`${label(CARDS[L.k])} revient dans ta collection`);}
   catch(e){toast("Le retrait n'a pas pu se faire");}
   renderMarket(true);}
 function dlgOpen(html,single){$("#dbox").classList.toggle("single",!!single);$("#dbox").innerHTML=html;$("#dlg").hidden=false;}
@@ -2056,21 +2105,23 @@ function mkSellForm(c){const n=ST.owned[c.k]||0,min=RECYCLE[c.r];let mode="direc
   $("#sf-p").oninput=upd;upd();$("#sf-x").onclick=()=>$("#dlg").hidden=true;
   $("#sf-go").onclick=()=>mkSell(c,mode,Math.floor(+$("#sf-p").value||0),+$("#sf-d").value);}
 async function mkSell(c,mode,price,dur){const b=$("#sf-go")||{};
-  if(!DB||!UID)return;if(c.r==="S")return toast("Les cartes secrètes ne se vendent pas");
+  if(!mkAvail())return toast("Le marché n'est pas disponible");if(c.r==="S")return toast("Les cartes secrètes ne se vendent pas");
   if(!(ST.owned[c.k]>0))return toast("Tu n'as plus cette carte");
   if(price<RECYCLE[c.r]||price>1e6)return toast(`Choisis un prix entre ${RECYCLE[c.r]} et 1 000 000`);
   if(Object.keys(ST.mk.mine).length>=MK_MAX)return toast(`${MK_MAX} cartes en vente au maximum en même temps`);
   b.disabled=true;
-  const id=UID.replace(/[^a-zA-Z0-9]/g,"").slice(0,10)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
-  const doc={k:c.k,seller:UID,sn:ME_NAME,mode,created:Date.now(),st:"open",buyer:null,bid:null,nb:0,sellerPaid:false,buyerGot:false};
-  if(mode==="auction"){doc.start=price;doc.end=Date.now()+(dur||864e5);}else doc.price=price;
-  ST.owned[c.k]--;if(!ST.owned[c.k])delete ST.owned[c.k];ST.mk.mine[id]={k:c.k};save();
-  try{await mkRef(id).set(doc);await flush();toast(`${label(c)} est en vente`);$("#dlg").hidden=true;MKTAB="mine";
-    if($("#v-marche").hidden)location.hash="marche";else renderMarket(true);if(!$("#v-collection").hidden)renderCollection(true);}
-  catch(e){giveCard(c.k);delete ST.mk.mine[id];save();b.disabled=false;toast("La mise en vente n'a pas pu se faire");}}
+  const id=MU().replace(/[^a-zA-Z0-9]/g,"").slice(0,10)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+  const row={id,card:c.k,seller:MU(),seller_name:ME_NAME,mode};
+  if(mode==="auction"){row.start_price=price;row.end_at=new Date(SNOW()+(dur||864e5)).toISOString();}else row.price=price;
+  ST.owned[c.k]--;if(!ST.owned[c.k])delete ST.owned[c.k];ST.mk.mine[id]={k:c.k,t:Date.now()};
+  if((ST.ft||[]).includes(c.k)&&!ST.owned[c.k])ST.ft=ST.ft.filter(k=>k!==c.k);save();
+  const {error}=await SX().from("tcg_market").insert(row);
+  if(error){giveCard(c.k);delete ST.mk.mine[id];save();b.disabled=false;toast("La mise en vente n'a pas pu se faire");return;}
+  await flush();toast(`${label(c)} est en vente`);$("#dlg").hidden=true;MKTAB="mine";
+  if($("#v-marche").hidden)location.hash="marche";else renderMarket(true);if(!$("#v-collection").hidden)renderCollection(true);}
 async function mkBidForm(id){const L=await mkGet(id).catch(()=>null);if(!L||!mkOpen(L)){toast("Cette enchère est terminée");return renderMarket(true);}
-  const c=CARDS[L.k],min=mkMin(L),had=ST.mk.held[id]||0;
-  dlgOpen(cardHTML(c,true)+`<div class="dinfo mk-form"><span class="k" style="color:var(${RAR[c.r][1]})">${RAR[c.r][0]} · enchère de ${esc(L.sn||"Joueur")}</span><h2>${esc(label(c))}</h2>
+  const c=CARDS[L.k],min=mkMin(L);
+  dlgOpen(cardHTML(c,true)+`<div class="dinfo mk-form"><span class="k" style="color:var(${RAR[c.r][1]})">${RAR[c.r][0]} · ${L.daily?"enchère du jour":`enchère de ${esc(L.sn||"Joueur")}`}</span><h2>${esc(label(c))}</h2>
     <dl><dt>${L.bid?"Offre actuelle":"Prix de départ"}</dt><dd>${nf(mkPrice(L))}</dd><dt>Fin dans</dt><dd><code data-end="${L.end}">${clk(L.end-Date.now())}</code></dd><dt>Ton solde</dt><dd>${nf(ST.coins)}</dd></dl>
     <label class="fl"><span>Ton offre (minimum ${nf(min)})</span><span class="fin"><input id="bf-a" type="number" inputmode="numeric" min="${min}" step="1" value="${min}"><span class="shell"></span></span></label>
     <p class="note">Tes coquillages sont mis de côté. Si quelqu'un enchérit plus haut, ils te sont rendus. Une offre dans la dernière minute prolonge l'enchère d'une minute.</p>
@@ -2078,20 +2129,50 @@ async function mkBidForm(id){const L=await mkGet(id).catch(()=>null);if(!L||!mkO
   $("#bf-x").onclick=()=>$("#dlg").hidden=true;
   $("#bf-go").onclick=async()=>{const a=Math.floor(+$("#bf-a").value||0);$("#bf-go").disabled=true;
     try{const L1=await mkGet(id);if(!L1||!mkOpen(L1)){toast("Cette enchère est terminée");$("#dlg").hidden=true;return renderMarket(true);}
-      if(L1.seller===UID)return;const m1=mkMin(L1);if(a<m1){toast(`L'offre minimum est maintenant de ${nf(m1)}`);$("#bf-go").disabled=false;return;}
+      if(L1.seller===MU())return;const m1=mkMin(L1);if(a<m1){toast(`L'offre minimum est maintenant de ${nf(m1)}`);$("#bf-go").disabled=false;return;}
       const prev=ST.mk.held[id]||0;if(ST.coins+prev<a){toast("Pas assez de coquillages");$("#bf-go").disabled=false;return;}
       ST.coins+=prev;ST.coins-=a;ST.mk.held[id]=a;save();wallet();
-      const end=L1.end-Date.now()<60000?Date.now()+60000:L1.end;
-      await mkRef(id).update({bid:{u:UID,n:ME_NAME,a,at:Date.now()},nb:(L1.nb||0)+1,end});await wait(800);
-      const L2=await mkGet(id);
-      if(!L2||!L2.bid||L2.bid.u!==UID){ST.coins+=a;delete ST.mk.held[id];save();wallet();toast("Quelqu'un a enchéri en même temps : coquillages rendus");}
+      if(!await mkRpc("tcg_mk_bid",{p_id:id,p_amount:a,p_name:ME_NAME})){ST.coins+=a-prev;if(prev)ST.mk.held[id]=prev;else delete ST.mk.held[id];save();wallet();toast("Quelqu'un a enchéri en même temps : coquillages rendus");}
       else toast(`Offre posée : ${nf(a)} coquillages`);
       $("#dlg").hidden=true;}
     catch(e){toast("L'offre n'a pas pu être posée");$("#bf-go").disabled=false;return;}
     renderMarket(true);};}
 $("#mk-sell").onclick=()=>MKTAB==="trade"?editBinder():mkSellPick();
 setInterval(()=>{document.querySelectorAll("[data-end]").forEach(e=>{const l=+e.dataset.end-Date.now();e.textContent=l>0?clk(l):"terminée";});},1000);
-setInterval(()=>{if(ST&&DB&&$("#v-marche").hidden)syncMarket().then(()=>wallet());},60000);
+setInterval(()=>{if(ST&&mkAvail()&&$("#v-marche").hidden)syncMarket().then(()=>wallet());},60000);
+
+/* ---------- Tchat global du marché ---------- */
+let CHAT=[],CHAT_T=null,CHAT_OK=null,CHAT_SENT=0;
+async function loadChat(){const sb=SX();if(!sb)return false;
+  const {data,error}=await sb.from("tcg_chat").select("id,user_id,body,created_at").order("created_at",{ascending:false}).limit(80);
+  if(error){CHAT_OK=false;return false;}CHAT_OK=true;CHAT=(data||[]).sort((a,b)=>a.id-b.id);
+  const miss=[...new Set(CHAT.map(m=>m.user_id))].filter(u=>!PCACHE[u]);
+  if(miss.length){const {data:pr}=await sb.from("profiles").select("id,discord_name,avatar_url").in("id",miss);(pr||[]).forEach(p=>PCACHE[p.id]={name:p.discord_name||"Joueur",av:p.avatar_url||""});}
+  return true;}
+function chatTime(t){const d=new Date(t),td=new Date();const hm=d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});return d.toDateString()===td.toDateString()?hm:d.toLocaleDateString("fr-FR",{day:"numeric",month:"short"})+" "+hm;}
+function drawChat(){const l=$("#ch-list");if(!l)return;const atEnd=l.scrollHeight-l.scrollTop-l.clientHeight<60;const me=MU();
+  l.innerHTML=CHAT.length?CHAT.map((m,i)=>{const u=m.user_id===me?{name:ME.name,av:ME.av}:(PCACHE[m.user_id]||{name:"Joueur",av:""}),prev=CHAT[i-1];
+    const same=prev&&prev.user_id===m.user_id&&new Date(m.created_at)-new Date(prev.created_at)<5*60e3;
+    return `<div class="chm${same?" same":""}${m.user_id===me?" me":""}">${same?`<span class="ch-av"></span>`:`<span class="ch-av">${avHTML(u.av,u.name,"")}</span>`}
+      <div class="chb">${same?"":`<p class="ch-h"><b>${esc(u.name)}</b><time>${chatTime(m.created_at)}</time></p>`}<p class="ch-t">${esc(m.body)}</p></div>
+      ${m.user_id===me||CANEDIT?`<button class="ch-x" data-chx="${m.id}" title="Supprimer" aria-label="Supprimer le message">×</button>`:""}</div>`;}).join("")
+    :`<p class="muted ch-empty">Personne n'a encore écrit. Lance la discussion !</p>`;
+  if(atEnd||!l.dataset.done){l.scrollTop=l.scrollHeight;l.dataset.done=1;}
+  l.querySelectorAll("[data-chx]").forEach(b=>b.onclick=async()=>{const {error}=await SX().from("tcg_chat").delete().eq("id",+b.dataset.chx);if(error){toast("Le message n'a pas pu être supprimé");return;}CHAT=CHAT.filter(m=>m.id!==+b.dataset.chx);drawChat();});}
+async function renderChat(){const g=$("#mk-grid");
+  if(!SX()||!MU()){g.innerHTML=`<p class="muted">Connecte-toi pour utiliser le tchat.</p>`;return;}
+  if(!$("#ch-list")){g.innerHTML=`<div class="chat"><div class="ch-list" id="ch-list"><p class="muted ch-empty">Chargement du tchat…</p></div>
+    <form class="ch-f" id="ch-f"><input id="ch-in" maxlength="300" autocomplete="off" placeholder="Écris à tous les joueurs…" aria-label="Message"><button class="btn primary" id="ch-go">Envoyer</button></form>
+    <p class="note ch-rule">Tchat visible par tous les joueurs du TCG. Reste correct : les admins peuvent supprimer les messages.</p></div>`;
+    $("#ch-f").onsubmit=async e=>{e.preventDefault();const i=$("#ch-in"),t=i.value.trim();if(!t)return;
+      if(Date.now()-CHAT_SENT<1500){toast("Doucement, un message à la fois");return;}CHAT_SENT=Date.now();
+      $("#ch-go").disabled=true;const {error}=await SX().from("tcg_chat").insert({body:t.slice(0,300)});$("#ch-go").disabled=false;
+      if(error){toast(CHAT_OK===false?"Le tchat n'est pas encore ouvert":"Le message n'a pas pu partir");return;}
+      i.value="";i.focus();await loadChat();const l=$("#ch-list");if(l)l.dataset.done="";drawChat();};}
+  const ok=await loadChat();
+  if(!ok){$("#ch-list").innerHTML=`<p class="muted ch-empty">Le tchat n'est pas encore ouvert.${OWNER||window.TCG_STAFF?" Il faut lancer <b>update-28-tcg-marche.sql</b> dans Supabase.":""}</p>`;return;}
+  drawChat();
+  clearInterval(CHAT_T);CHAT_T=setInterval(async()=>{if($("#v-marche").hidden||MKTAB!=="chat"||!$("#ch-list")){clearInterval(CHAT_T);return;}if(await loadChat())drawChat();},4000);}
 
 
 /* ---------- Profil, amis, échanges ---------- */
@@ -2140,7 +2221,7 @@ function badgeTrades(){const n=TR.filter(t=>t.recipient===MEID()&&t.status==="pe
 function renderProfile(){const v=$("#v-profil"),u=uniq(),tot=visTotal(),got=ACH.filter(a=>ST.ach[a.id]).length;
   const myth=Object.keys(ST.owned).filter(k=>["M","S"].includes(CARDS[k].r)).length;
   const mine=playerCard(ME.pi),mineOwned=mine&&ownCardOwned();
-  const rows=LADDER.slice().reverse().filter(r=>r!=="S"||ST.firsts.S).map(r=>{const all=POOL[r].length,own=POOL[r].filter(k=>ST.owned[k]).length;return `<div class="rb"><span style="color:var(${RAR[r][1]})">${RAR[r][0]}</span><span class="ch-b"><i style="width:${Math.max(own?1.5:0,own/all*100)}%;background:var(${RAR[r][1]})"></i></span><code>${nf(own)} / ${nf(all)}</code></div>`;}).join("");
+  const rows=LADDER.slice().reverse().filter(r=>r!=="S"||ST.firsts.S).map(r=>{const all=POOL[r].length,own=POOL[r].filter(k=>ST.owned[k]).length;return `<div class="rb"><span style="color:var(${RAR[r][1]})">${RAR[r][0]}</span><span class="chb"><i style="width:${Math.max(own?1.5:0,own/all*100)}%;background:var(${RAR[r][1]})"></i></span><code>${nf(own)} / ${nf(all)}</code></div>`;}).join("");
   const recent=ACH.filter(a=>ST.ach[a.id]).sort((a,b)=>ST.ach[b.id]-ST.ach[a.id]).slice(0,4);
   const slots=Array.from({length:5},(_,i)=>{const k=ST.show[i],c=k&&CARDS[k]&&ST.owned[k]?CARDS[k]:null;
     return c?`<div class="vs full" data-vs="${i}">${cardHTML(c,true)}<button class="vs-x" data-vx="${i}" aria-label="Retirer de la vitrine">×</button></div>`:`<button class="vs" data-vs="${i}"><span>+</span><small>Ajouter</small></button>`;}).join("");
