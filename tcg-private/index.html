@@ -1216,13 +1216,19 @@ function specialArt(x){return `<div class="xart" style="--x1:${x.c[0]};--x2:${x.
 
 // Bonus d'activité : 3 saisons ou plus sur les 12 derniers mois = un cran de plus, 6 ou plus = deux crans (jusqu'à mythique).
 const TIERS=["C","PC","R","E","L","M"];
-function baseTier(p){const w=p.w||0,n=p.p||0;return w>=3||n>=10?"M":w>=2||n>=7?"L":w>=1||n>=4?"E":n>=3?"R":n===2?"PC":n===1?"C":"";}
+// Même ORG répétée : dans une ORG, les 3 premières saisons comptent en entier puis la moitié ; la 1re victoire en entier puis la moitié.
+function baseTier(p){const w=p.we!=null?p.we:(p.w||0),n=p.pe!=null?p.pe:(p.p||0);return w>=3||n>=10?"M":w>=2||n>=7?"L":w>=1||n>=4?"E":n>=3?"R":n===2?"PC":n===1?"C":"";}
 function actBonus(p){const r=p.r12||0;return r>=6?2:r>=3?1:0;}
 function tierOf(p){const b=baseTier(p);if(!b)return "";return TIERS[Math.min(5,TIERS.indexOf(b)+actBonus(p))];}
 function partTier(pl){return pl===1?"L":pl&&pl<=3?"E":pl&&pl<=6?"R":pl&&pl<=12?"PC":"C";}
 function prepD(d){const cut=Date.now()-365*864e5,yr=new Date().getFullYear();
   const recent=d.seasons.map(s=>s.st==="en_cours"||(s.d?Date.parse(s.d)>=cut:(s.y&&+s.y>=yr)));
   d.players.forEach(p=>p.r12=0);d.parts.forEach(x=>{if(recent[x[1]])d.players[x[0]].r12++;});
+  const so=d.players.map(()=>({})),wo=d.players.map(()=>({}));
+  d.parts.forEach(x=>{const o=d.seasons[x[1]].o;so[x[0]][o]=(so[x[0]][o]||0)+1;});
+  d.seasons.forEach(s=>(s.w||[]).forEach(i=>{if(wo[i])wo[i][s.o]=(wo[i][s.o]||0)+1;}));
+  const eff=(m,cap)=>Object.values(m).reduce((a,k)=>a+Math.min(k,cap)+.5*Math.max(0,k-cap),0);
+  d.players.forEach((p,i)=>{p.pe=Math.floor(eff(so[i],3)+1e-9);p.we=Math.floor(eff(wo[i],1)+1e-9);});
   d.players.forEach(p=>p.r=tierOf(p));
   const rk=d.orgs.map((o,i)=>[o.ns||0,i]).filter(x=>x[0]>0).sort((a,b)=>b[0]-a[0]).map(x=>x[1]);
   d.orgs.forEach((o,i)=>{const j=rk.indexOf(i);o.r=j>=0&&j<10?"M":j>=10&&j<25?"L":"E";});return d;}
@@ -1701,7 +1707,8 @@ $("#recycle-all").onclick=()=>{let n=0,v=0;Object.keys(ST.owned).forEach(k=>{con
 
 /* ---------- Détail d'une carte ---------- */
 function openCard(c){const P=D.players,S=D.seasons,O=D.orgs;const n=ST.owned[c.k]||0;let rows=[];
-  if(c.t==="J"){const p=P[c.i];rows=[["Saisons",p.p],["Victoires",p.w],["Top 5",p.t],["Meilleure place",p.b?placeTxt(p.b):"–"],["Saisons sur 12 mois",(p.r12||0)+(actBonus(p)?` · bonus d'activité +${actBonus(p)}`:"")]];}
+  if(c.t==="J"){const p=P[c.i];rows=[["Saisons",p.p],["Victoires",p.w],["Top 5",p.t],["Meilleure place",p.b?placeTxt(p.b):"–"],["Saisons sur 12 mois",(p.r12||0)+(actBonus(p)?` · bonus d'activité +${actBonus(p)}`:"")]];
+    if(p.pe!=null&&(p.pe<p.p||p.we<p.w))rows.push(["Comptées pour la rareté",`${p.pe} saison${p.pe>1?"s":""} et ${p.we} victoire${p.we>1?"s":""} (même ORG répétée)`]);}
   else if(c.t==="O"){const o=O[c.i];rows=[["Format",o.f==="speed"?"Speed":"Format long"],["Saisons",o.ns]];}
   else if(c.t==="R"){const s=S[c.i];rows=[["ORG",(O[s.o]||{}).n],["Joueurs",s.c],["Année",s.y||"–"]];}
   else if(c.t==="X"){const x=SPECIAL[c.i];rows=[["Type",`Carte spéciale · ${x.ty}`],["Effet",x.txt]];}
