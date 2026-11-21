@@ -1373,13 +1373,38 @@ function fresh(){return {v:1,kv:3,lr:(window.TCG_LAUNCH&&launchLeft()<=0)?1:0,st
 function tick(){const now=Date.now();if(ST.stock>=MAXSTOCK){ST.last=now;return;}
   const n=Math.floor((now-ST.last)/CHARGE);if(n>0){ST.stock=Math.min(MAXSTOCK,ST.stock+n);ST.last=ST.stock>=MAXSTOCK?now:ST.last+n*CHARGE;save();}}
 function save(){dirty=true;clearTimeout(saveT);saveT=setTimeout(flush,700);if(typeof queueCol==="function")queueCol();}
-async function flush(){if(!dirty)return;if(saving){setTimeout(flush,800);return;}dirty=false;const data=JSON.parse(JSON.stringify(ST));
+/* ---------- Sauvegarde sur le compte (table tcg_saves, update-26) ---------- */
+let CLOUD_OK=false,CLOUD_SV=0,CLOUD_BUSY=false,CLOUD_PEND=false,CLOUD_T=null,CLOUD_LAST=0;
+const cloudOn=()=>!!(SX()&&MEID()&&window.TCG_LAUNCH&&launchLeft()<=0);
+async function cloudGet(){const {data,error}=await SX().from("tcg_saves").select("state").eq("user_id",MEID()).maybeSingle();
+  if(error){CLOUD_OK=false;if(OWNER||window.TCG_STAFF)console.warn("tcg_saves :",error.message);return undefined;}CLOUD_OK=true;
+  const r=data&&data.state&&data.state.v?data.state:null;if(r)CLOUD_SV=Math.max(CLOUD_SV,r.sv||0);return r;}
+/* Au démarrage : on prend la partie du compte, sauf si celle de ce navigateur est plus récente */
+async function cloudPull(){if(!cloudOn())return false;let r;try{r=await cloudGet();}catch(e){return false;}if(r===undefined)return false;
+  const id=MEID(),mine=ST&&ST.uid===id;
+  if(r&&(!mine||(r.sv||0)>(ST.sv||0))){ST=JSON.parse(JSON.stringify(r));ST.uid=id;try{localStorage.setItem("oc-tcg-state",JSON.stringify(ST));}catch(e){}return true;}
+  if(!r&&ST&&ST.uid&&ST.uid!==id)ST=fresh();
+  ST.uid=id;cloudQueue(true);return false;}
+function cloudQueue(now){if(!cloudOn()||!CLOUD_OK)return;clearTimeout(CLOUD_T);const wait=now?0:Math.max(1500,5000-(Date.now()-CLOUD_LAST));CLOUD_T=setTimeout(cloudPush,wait);}
+async function cloudPush(){if(!cloudOn()||!CLOUD_OK)return;if(CLOUD_BUSY){CLOUD_PEND=true;return;}CLOUD_BUSY=true;CLOUD_LAST=Date.now();
+  const st=JSON.parse(JSON.stringify(ST));st.uid=MEID();
+  try{const {error}=await SX().from("tcg_saves").upsert({user_id:MEID(),state:st,updated_at:new Date().toISOString()});if(!error)CLOUD_SV=Math.max(CLOUD_SV,st.sv||0);else console.warn(error.message);}catch(e){}
+  CLOUD_BUSY=false;if(CLOUD_PEND){CLOUD_PEND=false;cloudQueue();}}
+/* En revenant sur l'onglet : si la partie a avancé sur un autre appareil, on la reprend */
+document.addEventListener("visibilitychange",async()=>{if(!ST||!cloudOn()||!CLOUD_OK)return;
+  if(document.visibilityState==="hidden"){if(dirty)await flush();cloudPush();return;}
+  let r;try{r=await cloudGet();}catch(e){return;}
+  if(r&&(r.sv||0)>(ST.sv||0)){ST=JSON.parse(JSON.stringify(r));ST.uid=MEID();try{localStorage.setItem("oc-tcg-state",JSON.stringify(ST));}catch(e){}
+    DONE_CACHE=null;COINV=null;try{stashSync();}catch(e){}tick();wallet();checkAll();route();toast("Partie mise à jour depuis ton autre appareil");}});
+async function flush(){if(!dirty)return;if(saving){setTimeout(flush,800);return;}dirty=false;
+  if(MEID()){ST.uid=MEID();ST.sv=Math.max(ST.sv||0,CLOUD_SV)+1;}const data=JSON.parse(JSON.stringify(ST));
   try{localStorage.setItem("oc-tcg-state",JSON.stringify(data));}catch(e){}
   if(DB&&UID){saving=true;try{await DB.collection("data/users/"+UID).doc("tcg").set(data);}catch(e){console.warn(e);}saving=false;}
-  pushBoard();}
+  pushBoard();cloudQueue();}
 async function load(){
   let local=null;try{local=JSON.parse(localStorage.getItem("oc-tcg-state")||"null");}catch(e){}
   ST=local||fresh();if(!window.claude&&!window.TCG_SB)OWNER=true;
+  if(window.TCG_SB&&!PREVIEW)await cloudPull();
   try{const c=window.claude&&await Promise.race([claude.use("db"),new Promise(r=>setTimeout(()=>r(null),10000))]);
     USER=window.claude&&await claude.use("user");
     if(USER){try{OWNER=!!(await Promise.resolve(USER.isOwner()));}catch(e){}}
@@ -1387,7 +1412,7 @@ async function load(){
       const snap=await DB.collection("data/users/"+UID).doc("tcg").get();
       const remote=snap&&snap.exists?snap.data():null;
       if(remote&&remote.v)ST=JSON.parse(JSON.stringify(remote));else save();}}catch(e){console.warn(e);}
-  if(!ST.owned)ST=Object.assign(fresh(),ST);
+  {const f=fresh();for(const k in f)if(ST[k]==null)ST[k]=f[k];}
   if(!ST.inv)ST.inv={gold:ST.gold||0,sceau:0};delete ST.gold;
   if(ST.kv!==3)await migrateKeys();
   if(!ST.mk)ST.mk={mine:{},held:{}};if(!ST.tr)ST.tr={n:0,held:{},done:{}};if(!ST.show)ST.show=[];
