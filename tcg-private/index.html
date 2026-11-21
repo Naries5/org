@@ -1220,8 +1220,8 @@ function specialArt(x){return `<div class="xart" style="--x1:${x.c[0]};--x2:${x.
    Participation 10 pts (la moitié au-delà de 3 saisons dans la même ORG), classement jusqu'à 8 pts (1er = 8, dernier = 0),
    victoire 25 pts × taille du casting (racine de joueurs/14, entre 0,6 et 1,6 ; la moitié pour les victoires suivantes dans la même ORG),
    host d'une ORG : 10 pts par saison de l'ORG (même règle de répétition).
-   Rareté selon le score : 240 pts et plus mythique, 60 et plus légendaire, 13 et plus épique, en dessous rare. */
-const TIERS=["C","PC","R","E","L","M"],SCT={M:240,L:60,E:13};
+   Rareté selon le score : 240 pts et plus mythique, 100 et plus légendaire, 13 et plus épique, en dessous rare. */
+const TIERS=["C","PC","R","E","L","M"],SCT={M:240,L:100,E:13};
 const SC={part:10,place:8,win:25,host:10,speed:.5,roblox:.6,orgM:1.25,orgL:1.12,recent:1.15,rep:3};
 function partTier(pl){return pl===1?"L":pl&&pl<=3?"E":pl&&pl<=6?"R":pl&&pl<=12?"PC":"C";}
 function partTierFor(x){const s=D.seasons[x[1]],o=D.orgs[s.o]||{};const pl=!x[3]&&x[2]?x[2]:0;let t=TIERS.indexOf(partTier(pl));
