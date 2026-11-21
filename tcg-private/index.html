@@ -1831,7 +1831,8 @@ $("#c-more").onclick=()=>renderCollection(false);
 new IntersectionObserver(es=>{if(es.some(x=>x.isIntersecting)&&!$("#c-more").hidden&&!$("#v-collection").hidden)renderCollection(false);},{rootMargin:"500px"}).observe($("#c-more"));
 document.addEventListener("click",e=>{const w=e.target.closest(".cwrap[data-ck]");if(w)openCard(CARDS[w.dataset.ck]);});
 document.addEventListener("keydown",e=>{if(OV&&!$("#ov").hidden&&(e.key===" "||e.key==="ArrowRight"||e.key==="Enter")){const tgt=e.target;if(tgt&&tgt.tagName==="BUTTON"&&tgt.id!=="rtop"&&e.key!==" ")return;if($("#rtop")){e.preventDefault();ovStep();return;}if($("#wo")){e.preventDefault();$("#wo").click();return;}if($("#bpack")&&e.key===" "){e.preventDefault();$("#bpack").click();return;}}if((e.key==="Enter"||e.key===" ")&&e.target.closest&&e.target.closest(".cwrap[data-ck]")){e.preventDefault();openCard(CARDS[e.target.closest(".cwrap").dataset.ck]);}if(e.key==="Escape"&&!$("#dlg").hidden)$("#dlg").hidden=true;});
-function recycle(k,n){SFX.coin();const c=CARDS[k];const v=RECYCLE[c.r]*n;ST.owned[k]-=n;ST.coins+=v;ST.recycled+=n;
+function recycle(k,n){SFX.coin();const c=CARDS[k];n=Math.min(n,ST.owned[k]||0);const v=RECYCLE[c.r]*n;ST.owned[k]-=n;ST.coins+=v;ST.recycled+=n;
+  if(!(ST.owned[k]>0)){delete ST.owned[k];if(ST.show)ST.show=ST.show.map(x=>x===k?null:x);if(ST.ft)ST.ft=ST.ft.filter(x=>x!==k);}
   const td=today();if(ST.mis.date!==td)ST.mis={date:td,open:0,recycle:0,rare:0,done:[],bonus:false};ST.mis.recycle+=n;return v;}
 $("#recycle-all").onclick=()=>{let n=0,v=0;Object.keys(ST.owned).forEach(k=>{const d=ST.owned[k]-1;if(d>0){n+=d;v+=recycle(k,d);}});
   if(!n){toast("Aucun doublon à recycler");return;}toast(`${nf(n)} doublons recyclés : +${nf(v)} coquillages`);checkAll();renderCollection(true);};
@@ -1867,7 +1868,7 @@ function openCard(c){const P=D.players,S=D.seasons,O=D.orgs;const n=ST.owned[c.k
 ${artBox(c,true)}
       ${c.r==="S"?"":c.base?`<p>Changée à la main. Automatiquement, elle serait ${RAR[c.base][0].toLowerCase()}. <button class="linkbtn" id="radm-x">Revenir à l'automatique</button></p>`:`<p>Rareté calculée automatiquement. Les changements s'appliquent pour tous les joueurs.</p>`}</div>`:""}
     ${!CANEDIT&&canArt(c)?`<div class="radm">${artBox(c,false)}</div>`:""}
-    <div class="acts">${n&&c.r!=="S"&&mkAvail()?`<button class="btn" id="sell1">Vendre au marché</button>`:""}${n>1?`<button class="btn" id="rec1">Recycler 1 doublon (+${RECYCLE[c.r]})</button>`:""}${alb.join("")}<button class="btn primary" id="dclose">Fermer</button></div></div>`;
+    <div class="acts">${n&&c.r!=="S"&&mkAvail()?`<button class="btn" id="sell1">Vendre au marché</button>`:""}${n>1?`<button class="btn" id="rec1">Recycler 1 doublon (+${RECYCLE[c.r]})</button>`:n===1?`<button class="btn" id="rec1">Défausser la carte (+${RECYCLE[c.r]})</button>`:""}${alb.join("")}<button class="btn primary" id="dclose">Fermer</button></div></div>`;
   $("#dlg").hidden=false;$("#dclose").focus();
   $("#dclose").onclick=()=>$("#dlg").hidden=true;
   $("#dbox").querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>{$("#dlg").hidden=true;}));
@@ -1881,6 +1882,9 @@ ${artBox(c,true)}
     if(dc&&!dc.querySelector(".dropx"))dc.insertAdjacentHTML("beforeend",`<div class="dropx"><b>Lâche l'image ici</b><span>Elle remplacera celle de la carte</span></div>`);}
   const ro=$("#radm-out");if(ro)ro.onclick=async()=>{const p=D.players[c.pl];ro.disabled=true;const {error}=await SX().from("tcg_optout").insert({player_id:p.id});
     if(error){toast("Le retrait n'a pas pu se faire");return;}OPT.add(p.id);$("#dlg").hidden=true;toast(`${p.n} est retiré du TCG`);applyOptOut();stashSync();};
+  if(n===1){let armed=false;$("#rec1").onclick=()=>{const b=$("#rec1");
+    if(!armed){armed=true;b.classList.add("danger");b.textContent=`Confirmer : la carte quitte ta collection (+${RECYCLE[c.r]})`;setTimeout(()=>{if(b.isConnected&&armed){armed=false;b.classList.remove("danger");b.textContent=`Défausser la carte (+${RECYCLE[c.r]})`;}},5000);return;}
+    const v=recycle(c.k,1);save();toast(`${label(c)} défaussée : +${v} coquillages`);checkAll();openCard(c);if(!$("#v-collection").hidden)renderCollection(true);};}
   if(n>1)$("#rec1").onclick=()=>{const v=recycle(c.k,1);toast(`+${v} coquillages`);checkAll();openCard(c);if(!$("#v-collection").hidden)renderCollection(true);};
   const card=$("#dbox .card");card.addEventListener("pointermove",e=>{const r=card.getBoundingClientRect();const x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;
     if(!matchMedia("(prefers-reduced-motion:reduce)").matches)card.style.transform=`perspective(900px) rotateY(${(x-.5)*16}deg) rotateX(${(.5-y)*16}deg)`;
