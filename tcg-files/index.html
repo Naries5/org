@@ -1032,6 +1032,42 @@ body.chat-on .chat-fab{display:none}
 .rp{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;gap:12px;padding:8px 10px;border:1px solid var(--line);border-radius:12px}
 .rp b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rp .btn{height:34px;padding:0 12px;font-size:.85rem}
 .br-rs{margin-left:10px;font-size:.8rem;color:#ff8a7a}
+.dbox.wide{width:min(1500px,100%);max-height:calc(100vh - 40px);display:block;overflow:hidden}
+.tw{display:flex;flex-direction:column;gap:14px;height:min(900px,calc(100vh - 40px));background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:20px 22px}
+.tw-h{display:flex;align-items:center;justify-content:space-between}.tw-h h2{margin:0;font-family:var(--f-ui);font-weight:800;font-size:1.4rem}
+.tw-x{all:unset;cursor:pointer;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:1.5rem;border:1px solid var(--line)}.tw-x:hover{background:rgba(255,255,255,.06)}
+.tw-bal{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center;padding:12px 16px;border:1px solid var(--line);border-radius:16px;background:var(--surface-2)}
+.tw-bal small{display:block;font-family:var(--f-mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}.tw-bal b{font-family:var(--f-mono);font-size:1.1rem}.tw-bal .r{text-align:right}
+.tw-bal p{grid-column:1/-1;margin:0;font-size:.78rem}
+.tw-bar{height:8px;border-radius:99px;background:#3a3f8f;overflow:hidden}.tw-bar i{display:block;height:100%;background:var(--acc);transition:width .25s}
+.tw-g{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,380px) minmax(0,1fr);gap:16px}
+.tw-side,.tw-mid{min-height:0;display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid var(--line);border-radius:18px;background:var(--surface-2)}
+.tw-sh{display:flex;justify-content:space-between;align-items:baseline}.tw-sh b{font-family:var(--f-ui);font-weight:800;font-size:1.1rem}.tw-sh span{font-family:var(--f-mono);font-size:.8rem;color:var(--muted)}
+.tw-f{display:flex;gap:8px;flex-wrap:wrap}.tw-f input{flex:1;min-width:140px;height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:inherit;font:inherit}
+.tw-f button,.tw-chips button{all:unset;cursor:pointer;height:34px;padding:0 12px;border-radius:999px;border:1px solid var(--line);font-size:.82rem;font-weight:600;display:inline-flex;align-items:center}
+.tw-f button[aria-pressed="true"],.tw-chips button[aria-pressed="true"]{background:var(--yel);color:#17110a;border-color:var(--yel)}
+.tw-chips{display:flex;gap:6px;flex-wrap:wrap}.tw-chips button[style]{color:var(--c);min-width:20px;justify-content:center}
+.tw-chips button[style][aria-pressed="true"]{background:var(--c);border-color:var(--c);color:#111}
+.tw-grid{flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:12px;align-content:start;padding:2px 4px 8px 2px}
+.tw-c{all:unset;box-sizing:border-box;cursor:pointer;position:relative;display:flex;flex-direction:column;gap:5px;border-radius:14px;padding:3px}
+.tw-c.on{outline:3px solid var(--yel);outline-offset:1px;background:rgba(242,201,76,.08)}
+.tw-c:hover .card{transform:translateY(-2px)}
+.tw-n{position:absolute;top:8px;right:8px;z-index:3;font-family:var(--f-mono);font-size:.72rem;padding:1px 6px;border-radius:999px;background:rgba(0,0,0,.75);color:#fff}
+.tw-ft{position:absolute;top:8px;left:8px;z-index:3;font-size:.65rem;font-weight:700;padding:2px 7px;border-radius:999px;background:var(--yel);color:#17110a}
+.tw-v{display:flex;align-items:center;gap:4px;font-family:var(--f-mono);font-size:.8rem}.tw-v .shell{transform:scale(.8)}
+.tw-t{margin-left:auto;font-family:var(--f-ui);font-size:.66rem;font-weight:700;padding:2px 6px;border-radius:6px;background:rgba(255,255,255,.08);color:var(--muted);white-space:nowrap}
+.tw-t.lack{background:rgba(60,190,120,.18);color:#5fe0a0}
+.tw-mid{gap:12px;overflow-y:auto}.tw-box{display:flex;flex-direction:column;gap:10px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.tw-box>b{font-family:var(--f-ui);font-weight:800}.tw-arrow{text-align:center;color:var(--acc);font-size:1.3rem;line-height:1}
+.tw-sel{display:flex;flex-wrap:wrap;gap:8px;min-height:60px}.tw-sel p{margin:0;font-size:.85rem}
+.tw-s{all:unset;cursor:pointer;position:relative;width:62px}.tw-s i{position:absolute;top:-6px;right:-6px;z-index:3;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-style:normal;background:#c43c3c;color:#fff;font-size:.8rem}
+.tw-coin{display:flex;align-items:center;gap:10px}.tw-coin>span:first-child{font-size:.88rem;color:var(--muted);min-width:90px}
+.tw-coin input,.tw-note{flex:1;min-width:0;height:40px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface-2);color:inherit;font:inherit}
+.tw-hint{margin:0;font-size:.82rem}.tw-acts{display:grid;grid-template-columns:1fr 2fr;gap:10px;margin-top:auto}.tw-acts .btn{justify-content:center;height:46px}
+.tw-more{grid-column:1/-1;justify-content:center}
+.tr-coin{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:74px;aspect-ratio:5/7;border-radius:10px;border:1px dashed var(--line);background:var(--surface)}
+.tr-coin b{font-family:var(--f-mono)}.tr-coin small{font-size:.65rem;color:var(--muted)}
+@media (max-width:1100px){.tw{height:auto;max-height:none}.dbox.wide{overflow:auto}.tw-g{grid-template-columns:1fr}.tw-grid{max-height:420px}.tw-mid{order:-1}}
 </style>
 </head>
 <body>
@@ -2033,7 +2069,11 @@ function mkEnded(L){return L.mode==="auction"&&Date.now()>=L.end;}
 function mkOpen(L){return L.st==="open"&&!L.buyer&&!mkEnded(L);}
 function mkPrice(L){return L.mode==="auction"?(L.bid?L.bid.a:L.start):L.price;}
 function mkMin(L){return L.bid?L.bid.a+Math.max(1,Math.ceil(L.bid.a*.05)):L.start;}
-function giveCard(k){const n=ST.owned[k]||0;ST.owned[k]=n+1;ST.firsts[CARDS[k].r]=true;return n===0;}
+function giveCard(k){if(isCoin(k)){ST.coins+=coinOf(k);return false;}if(!CARDS[k])return false;const n=ST.owned[k]||0;ST.owned[k]=n+1;ST.firsts[CARDS[k].r]=true;return n===0;}
+/* Dans un échange, "$:500" = 500 coquillages (rangés avec les cartes dans give / want) */
+const isCoin=k=>/^\$:\d+$/.test(String(k)),coinOf=k=>+String(k).slice(2)||0;
+const trCards=a=>(a||[]).filter(k=>!isCoin(k)),trCoins=a=>(a||[]).filter(isCoin).reduce((x,k)=>x+coinOf(k),0);
+function takeItem(k){if(isCoin(k)){ST.coins-=coinOf(k);return;}ST.owned[k]--;if(!(ST.owned[k]>0))delete ST.owned[k];}
 async function mkSettle(L){const me=MU(); // règle la part du vendeur (encaisser) ou du gagnant d'une enchère (recevoir)
   if(L.seller===me){
     const sold=L.mode==="direct"?!!L.buyer:(mkEnded(L)&&!!L.bid);
@@ -2137,7 +2177,7 @@ async function mkCancel(id,btn){if(btn)btn.disabled=true;
     giveCard(L.k);delete ST.mk.mine[id];save();toast(`${label(CARDS[L.k])} revient dans ta collection`);}
   catch(e){toast("Le retrait n'a pas pu se faire");}
   renderMarket(true);}
-function dlgOpen(html,single){$("#dbox").classList.toggle("single",!!single);$("#dbox").innerHTML=html;$("#dlg").hidden=false;}
+function dlgOpen(html,single){$("#dbox").classList.toggle("single",!!single);$("#dbox").classList.remove("wide");$("#dbox").innerHTML=html;$("#dlg").hidden=false;}
 function mkSellPick(){const own=Object.keys(ST.owned).map(k=>CARDS[k]).filter(c=>c&&c.r!=="S").sort((a,b)=>RI(b.r)-RI(a.r)||(ST.owned[b.k]-ST.owned[a.k]));
   if(!own.length){toast("Ta collection est vide");return;}
   dlgOpen(`<div class="mk-pick"><div class="mk-ph"><h2>Quelle carte vendre ?</h2><input id="mk-pq" type="search" placeholder="Chercher…" aria-label="Chercher"><button class="btn" id="mk-px">Fermer</button></div><div class="cgrid" id="mk-pg"></div></div>`,true);
@@ -2267,7 +2307,7 @@ async function loadTrades(){const sb=SX(),id=MEID();TR=[];if(!sb||!id){TR_OK=fal
 async function settleTrades(){if(!TR_OK)return;const sb=SX(),id=MEID();let ch=false;
   for(const t of TR){if(t.sender!==id||t.sender_done||t.status==="pending")continue;
     if(!ST.tr.done[t.id]){
-      if(t.status==="accepted"){t.want.forEach(k=>giveCard(k));ST.tr.n=(ST.tr.n||0)+1;toast(`Échange accepté par ${frName(t.recipient)} : tu reçois ${t.want.length} carte${t.want.length>1?"s":""}`);}
+      if(t.status==="accepted"){t.want.forEach(k=>giveCard(k));ST.tr.n=(ST.tr.n||0)+1;const nc=trCards(t.want).length,co=trCoins(t.want);toast(`Échange accepté par ${frName(t.recipient)} : tu reçois ${[nc?`${nc} carte${nc>1?"s":""}`:"",co?`${nf(co)} coquillages`:""].filter(Boolean).join(" et ")||"rien"}`);}
       else (ST.tr.held[t.id]||t.give).forEach(k=>giveCard(k));
       if(t.status==="declined")toast(`${frName(t.recipient)} a refusé ton échange : tes cartes reviennent`);
       ST.tr.done[t.id]=1;delete ST.tr.held[t.id];save();ch=true;}
@@ -2312,7 +2352,7 @@ function pickCards(o){let sel=(o.sel||[]).slice();const pool=o.pool.filter(c=>c&
       if(sel.includes(k))sel=sel.filter(x=>x!==k);else if(sel.length<o.max)sel.push(k);else toast(`${o.max} cartes au maximum`);draw();});};
   draw();$("#pk-q").oninput=draw;const tg=$("#pk-t");if(tg)tg.onchange=draw;$("#pk-ok").onclick=()=>{$("#dlg").hidden=true;o.done(o.max===1?[]:sel);};}
 // --- amis et échanges
-function miniCards(ks){return `<div class="tr-cs">${ks.length?ks.map(k=>CARDS[k]?`<div class="tr-c" data-ck="${k}" title="${esc(label(CARDS[k]))}">${cardHTML(CARDS[k],true)}</div>`:"").join(""):`<span class="muted">rien</span>`}</div>`;}
+function miniCards(ks){return `<div class="tr-cs">${ks.length?ks.map(k=>isCoin(k)?`<div class="tr-coin"><b>${nf(coinOf(k))}</b><span class="shell"></span><small>coquillages</small></div>`:CARDS[k]?`<div class="tr-c" data-ck="${k}" title="${esc(label(CARDS[k]))}">${cardHTML(CARDS[k],true)}</div>`:"").join(""):`<span class="muted">rien</span>`}</div>`;}
 async function renderFriends(fetch){const v=$("#v-amis");
   if(!SX()){v.innerHTML=`<h1 class="h">Amis</h1><p class="lede">Tes amis viennent de ton compte ORG-Central : cette page marche sur orgcentral.fr/tcg.</p>`;return;}
   if(fetch){if(!v.innerHTML)v.innerHTML=`<h1 class="h">Amis</h1><p class="muted">Chargement…</p>`;try{await loadFriends();await syncSocial();}catch(e){v.innerHTML=`<h1 class="h">Amis</h1><p class="muted">Tes amis n'ont pas pu être chargés.</p>`;return;}}
@@ -2329,7 +2369,7 @@ async function renderFriends(fetch){const v=$("#v-amis");
         return `<div class="trd"><div class="trd-h"><span class="fr-av sm">${avHTML((PCACHE[other]||{}).av,frName(other),"")}</span><b>${mineS?`Toi → ${esc(frName(other))}`:`${esc(frName(other))} te propose`}</b>${t.status!=="pending"?`<span class="mk-tag">${st[t.status]}</span>`:""}</div>
           ${t.note?`<p class="trd-note">« ${esc(t.note)} »</p>`:""}
           <div class="trd-x"><div><small>${mineS?"Tu donnes":"Tu reçois"}</small>${miniCards(t.give)}</div><span class="trd-arrow">⇄</span><div><small>${mineS?"Tu demandes":"Tu donnes"}</small>${miniCards(t.want)}</div></div>
-          ${t.status==="pending"?(mineS?`<div class="acts"><button class="btn" data-tc="${t.id}">Annuler</button></div>`:`<div class="acts"><button class="btn primary" data-ta="${t.id}" ${t.want.every(k=>ST.owned[k]>0)?"":"disabled"}>Accepter</button><button class="btn" data-td="${t.id}">Refuser</button>${t.want.every(k=>ST.owned[k]>0)?"":`<small class="muted">Il te manque une carte demandée.</small>`}</div>`):""}</div>`;}).join(""):`<p class="muted">${TRTAB==="in"?"Aucune proposition reçue.":TRTAB==="out"?"Aucune proposition envoyée.":"Aucun échange terminé."}</p>`}</div></div></div>`;
+          ${t.status==="pending"?(mineS?`<div class="acts"><button class="btn" data-tc="${t.id}">Annuler</button></div>`:`<div class="acts"><button class="btn primary" data-ta="${t.id}" ${trCards(t.want).every(k=>ST.owned[k]>0)&&ST.coins>=trCoins(t.want)?"":"disabled"}>Accepter</button><button class="btn" data-td="${t.id}">Refuser</button>${t.want.every(k=>ST.owned[k]>0)?"":`<small class="muted">Il te manque une carte demandée.</small>`}</div>`):""}</div>`;}).join(""):`<p class="muted">${TRTAB==="in"?"Aucune proposition reçue.":TRTAB==="out"?"Aucune proposition envoyée.":"Aucun échange terminé."}</p>`}</div></div></div>`;
   v.querySelectorAll("[data-ck]").forEach(d=>d.onclick=()=>openCard(CARDS[d.dataset.ck]));
   v.querySelectorAll("[data-tt]").forEach(b=>b.onclick=()=>{TRTAB=b.dataset.tt;renderFriends(false);});
   v.querySelectorAll("[data-trade]").forEach(b=>b.onclick=()=>tradeForm(FR.find(f=>f.id===b.dataset.trade)));
@@ -2337,39 +2377,79 @@ async function renderFriends(fetch){const v=$("#v-amis");
   v.querySelectorAll("[data-td]").forEach(b=>b.onclick=()=>tradeAnswer(+b.dataset.td,false,b));
   v.querySelectorAll("[data-tc]").forEach(b=>b.onclick=()=>tradeCancel(+b.dataset.tc,b));
   clearInterval(FRT);FRT=setInterval(()=>{if($("#v-amis").hidden){clearInterval(FRT);return;}syncSocial().then(()=>{if(!$("#v-amis").hidden&&$("#dlg").hidden)renderFriends(false);});},45000);}
-async function tradeForm(f,pre){if(!f)return;let give=[],want=(pre||[]).slice(0,5);
+const TVAL=c=>RECYCLE[c.r]||0;
+async function tradeForm(f,pre){if(!f)return;
   const col=SX()?await getCol(f.id,true):null,their=(col&&col.owned)||null,theirFt=new Set((col&&col.fortrade)||[]);
-  const draw=()=>{dlgOpen(`<div class="mk-pick tr-form"><div class="mk-ph"><h2>Échange avec ${esc(f.name)}</h2><button class="btn" id="tf-x">Fermer</button></div>
-    <div class="tf-cols"><div><div class="pf-sh"><b>Tu donnes</b><button class="btn ghost" id="tf-g">Choisir (${give.length}/5)</button></div>${miniCards(give)}</div>
-      <div><div class="pf-sh"><b>Tu demandes</b><button class="btn ghost" id="tf-w">Choisir (${want.length}/5)</button></div>${miniCards(want)}</div></div>
-    <label class="fl"><span class="muted">Un petit mot (facultatif)</span><input id="tf-n" maxlength="200" placeholder="Ex. : ta Layte contre ma Naries ?"></label>
-    <p class="note">Les cartes que tu donnes sont mises de côté jusqu'à la réponse. Si ${esc(f.name)} refuse ou si tu annules, elles reviennent.${ST.firsts.S?" Les cartes secrètes ne s'échangent pas.":""}</p>
-    <div class="acts"><button class="btn primary" id="tf-go" ${give.length+want.length?"":"disabled"}>Envoyer la proposition</button></div></div>`,true);
-    $("#tf-x").onclick=()=>$("#dlg").hidden=true;
-    $("#tf-g").onclick=()=>pickCards({title:"Cartes que tu donnes",pool:Object.keys(ST.owned).map(k=>CARDS[k]),max:5,sel:give,count:true,
-      intro:their?`Sous chaque carte : est-ce que ${esc(f.name)} l'a déjà ?`:"",note:their?c=>haveTag(their[c.k]||0,"Il l'a"):null,
-      toggle:their?`Seulement les cartes que ${f.name} n'a pas`:"",toggleFn:c=>!their[c.k],
-      sort:their?(a,b)=>(!!their[a.k])-(!!their[b.k])||RI(b.r)-RI(a.r):null,done:ks=>{give=ks;draw();}});
-    $("#tf-w").onclick=()=>pickCards({title:their?`La collection de ${f.name}`:`Cartes que tu demandes à ${f.name}`,
-      pool:their?Object.keys(their).map(k=>CARDS[k]):Object.values(CARDS),max:5,sel:want,
-      intro:their?`${nf(Object.keys(their).length)} cartes. Sous chaque carte : est-ce que tu l'as déjà ?`:`${esc(f.name)} n'a pas encore partagé sa collection : tu vois toutes les cartes du jeu.`,
-      note:c=>haveTag(ST.owned[c.k]||0,"Tu l'as"),badge:c=>theirFt.has(c.k)?`<span class="cnt own">À l'échange</span>`:their&&their[c.k]>1?`<span class="cnt">×${their[c.k]}</span>`:"",
-      toggle:"Seulement les cartes que je n'ai pas",toggleFn:c=>!ST.owned[c.k],
-      sort:(a,b)=>(theirFt.has(b.k)-theirFt.has(a.k))||(!!ST.owned[a.k])-(!!ST.owned[b.k])||RI(b.r)-RI(a.r),done:ks=>{want=ks;draw();}});
-    $("#tf-go").onclick=()=>tradeSend(f,give,want,$("#tf-n").value.trim());};
-  draw();}
+  const T={give:[],want:(pre||[]).filter(k=>CARDS[k]).slice(0,5),gc:0,wc:0,L:{q:"",r:"",f:""},R:{q:"",r:"",f:""},nL:60,nR:60};
+  const mine=Object.keys(ST.owned).filter(k=>ST.owned[k]>0&&CARDS[k]&&CARDS[k].r!=="S").map(k=>CARDS[k]);
+  const theirs=(their?Object.keys(their).filter(k=>their[k]>0):Object.keys(CARDS)).map(k=>CARDS[k]).filter(c=>c&&c.r!=="S");
+  const rar=["C","PC","R","E","L","M"];
+  const chips=side=>`<div class="tw-chips"><button data-${side}r="" aria-pressed="${!T[side].r}">Toutes</button>${rar.map(r=>`<button data-${side}r="${r}" aria-pressed="${T[side].r===r}" style="--c:var(${RAR[r][1]})" title="${RAR[r][0]}">${r==="PC"?"PC":r}</button>`).join("")}</div>`;
+  const maxC=w=>(w==="give"?T.gc:T.wc)>0?4:5;
+  dlgOpen(`<div class="tw"><div class="tw-h"><h2>Proposer un échange à ${esc(f.name)}</h2><button class="tw-x" id="tw-x" aria-label="Fermer">×</button></div>
+    <div class="tw-bal" id="tw-bal"></div>
+    <div class="tw-g">
+      <section class="tw-side"><div class="tw-sh"><b>Mes cartes</b><span>${nf(mine.length)}</span></div>
+        <div class="tw-f"><input id="tw-lq" type="search" placeholder="Chercher une carte…"><button data-lf="dup">Mes doubles</button>${their?`<button data-lf="miss">Il lui manque</button>`:""}</div>${chips("L")}
+        <div class="tw-grid" id="tw-lg"></div></section>
+      <section class="tw-mid">
+        <div class="tw-box"><b>Tu donnes</b><div id="tw-give"></div><label class="tw-coin"><span>Coquillages</span><input id="tw-gc" type="number" min="0" step="1" inputmode="numeric" value="0"><span class="shell"></span></label></div>
+        <div class="tw-arrow">⇅</div>
+        <div class="tw-box"><b>Tu reçois</b><div id="tw-want"></div><label class="tw-coin"><span>Coquillages</span><input id="tw-wc" type="number" min="0" step="1" inputmode="numeric" value="0"><span class="shell"></span></label></div>
+        <input id="tw-n" class="tw-note" maxlength="200" placeholder="Un petit mot (facultatif)">
+        <p class="note tw-hint" id="tw-hint"></p>
+        <div class="tw-acts"><button class="btn" id="tw-c">Annuler</button><button class="btn primary" id="tw-go">Envoyer la proposition</button></div></section>
+      <section class="tw-side"><div class="tw-sh"><b>Cartes de ${esc(f.name)}</b><span>${their?nf(theirs.length):"collection non partagée"}</span></div>
+        <div class="tw-f"><input id="tw-rq" type="search" placeholder="Chercher une carte…"><button data-rf="have">Je l'ai</button><button data-rf="miss">Il me manque</button>${their?`<button data-rf="dup">Ses doubles</button>`:""}</div>${chips("R")}
+        <div class="tw-grid" id="tw-rg"></div></section>
+    </div></div>`,true);
+  $("#dbox").classList.add("wide");
+  const tile=(c,side)=>{const sel=(side==="L"?T.give:T.want).includes(c.k),n=side==="L"?ST.owned[c.k]:their?their[c.k]:0;
+    const tag=side==="L"?(their?(their[c.k]?`<span class="tw-t">Il l'a</span>`:`<span class="tw-t lack">Il lui manque</span>`):""):(ST.owned[c.k]?`<span class="tw-t">Tu l'as</span>`:`<span class="tw-t lack">Il me manque</span>`);
+    return `<button class="tw-c${sel?" on":""}" data-${side}k="${c.k}">${cardHTML(c,true)}${n>1?`<span class="tw-n">×${n}</span>`:""}${side==="R"&&theirFt.has(c.k)?`<span class="tw-ft">À l'échange</span>`:""}<span class="tw-v"><b>${nf(TVAL(c))}</b><span class="shell"></span>${tag}</span></button>`;};
+  const list=side=>{const st=T[side],q=norm(st.q.trim());let L=(side==="L"?mine:theirs).filter(c=>(!st.r||c.r===st.r)&&(!q||c.s.includes(q)));
+    if(side==="L"){if(st.f==="dup")L=L.filter(c=>ST.owned[c.k]>1);if(st.f==="miss"&&their)L=L.filter(c=>!their[c.k]);}
+    else{if(st.f==="have")L=L.filter(c=>ST.owned[c.k]);if(st.f==="miss")L=L.filter(c=>!ST.owned[c.k]);if(st.f==="dup"&&their)L=L.filter(c=>their[c.k]>1);}
+    return L.sort((a,b)=>side==="R"?(theirFt.has(b.k)-theirFt.has(a.k))||RI(b.r)-RI(a.r)||TVAL(b)-TVAL(a):RI(b.r)-RI(a.r)||(ST.owned[b.k]-ST.owned[a.k]));};
+  const drawGrid=side=>{const L=list(side),n=side==="L"?T.nL:T.nR,g=$(side==="L"?"#tw-lg":"#tw-rg");
+    g.innerHTML=L.length?L.slice(0,n).map(c=>tile(c,side)).join("")+(L.length>n?`<button class="btn tw-more" data-more="${side}">Afficher plus (${nf(L.length-n)})</button>`:""):`<p class="muted">Aucune carte.</p>`;
+    g.querySelectorAll(`[data-${side.toLowerCase()}k]`).forEach(b=>b.onclick=()=>{const k=b.getAttribute(`data-${side.toLowerCase()}k`),arr=side==="L"?T.give:T.want,w=side==="L"?"give":"want";
+      const i=arr.indexOf(k);if(i>=0)arr.splice(i,1);else{if(arr.length>=maxC(w)){toast(`${maxC(w)} cartes maximum de chaque côté${maxC(w)===4?" (avec des coquillages)":""}`);return;}arr.push(k);}
+      b.classList.toggle("on",i<0);drawMid();});
+    const m=g.querySelector("[data-more]");if(m)m.onclick=()=>{if(side==="L")T.nL+=60;else T.nR+=60;drawGrid(side);};};
+  const sel=(arr,w)=>`<div class="tw-sel">${arr.length?arr.map(k=>`<button class="tw-s" data-rm="${w}:${k}" title="Retirer">${cardHTML(CARDS[k],true)}<i>×</i></button>`).join(""):`<p class="muted">${w==="give"?"Choisis tes cartes à gauche, ou ajoute des coquillages.":"Choisis ses cartes à droite, ou demande des coquillages."}</p>`}</div>`;
+  const drawMid=()=>{$("#tw-give").innerHTML=sel(T.give,"give");$("#tw-want").innerHTML=sel(T.want,"want");
+    document.querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{const [w,k]=b.dataset.rm.split(/:(.+)/);const arr=T[w];arr.splice(arr.indexOf(k),1);drawMid();drawGrid(w==="give"?"L":"R");});
+    const gv=T.give.reduce((a,k)=>a+TVAL(CARDS[k]),0)+T.gc,wv=T.want.reduce((a,k)=>a+TVAL(CARDS[k]),0)+T.wc,tot=gv+wv;
+    $("#tw-bal").innerHTML=`<div><small>Tu donnes</small><b>${nf(gv)}</b><span class="shell"></span></div><span class="tw-bar"><i style="width:${tot?gv/tot*100:50}%"></i></span><div class="r"><small>Tu reçois</small><b>${nf(wv)}</b><span class="shell"></span></div><p class="muted">Valeur estimée (valeur de recyclage des cartes + coquillages).</p>`;
+    const err=T.gc>ST.coins?"Tu n'as pas assez de coquillages.":!(T.give.length+T.want.length+(T.gc?1:0)+(T.wc?1:0))?"Choisis ce que tu donnes et ce que tu demandes.":"";
+    $("#tw-hint").textContent=err||`Ce que tu donnes est mis de côté jusqu'à la réponse de ${f.name}. S'il refuse ou si tu annules, tout te revient.`;
+    $("#tw-go").disabled=!!err;};
+  const bindSide=side=>{const lo=side.toLowerCase();
+    $(`#tw-${lo}q`).oninput=e=>{T[side].q=e.target.value;if(side==="L")T.nL=60;else T.nR=60;drawGrid(side);};
+    document.querySelectorAll(`[data-${lo}f]`).forEach(b=>b.onclick=()=>{const v=b.getAttribute(`data-${lo}f`);T[side].f=T[side].f===v?"":v;document.querySelectorAll(`[data-${lo}f]`).forEach(x=>x.setAttribute("aria-pressed",x===b&&T[side].f===v));drawGrid(side);});
+    document.querySelectorAll(`[data-${side}r]`).forEach(b=>b.onclick=()=>{T[side].r=b.getAttribute(`data-${side}r`);document.querySelectorAll(`[data-${side}r]`).forEach(x=>x.setAttribute("aria-pressed",x===b));drawGrid(side);});};
+  bindSide("L");bindSide("R");
+  const coin=(id,key,w)=>{$(id).oninput=e=>{let v=Math.max(0,Math.min(1e6,Math.floor(+e.target.value||0)));T[key]=v;const arr=T[w];if(v>0&&arr.length>4){arr.length=4;drawGrid(w==="give"?"L":"R");toast("Avec des coquillages : 4 cartes maximum de ce côté");}drawMid();};};
+  coin("#tw-gc","gc","give");coin("#tw-wc","wc","want");
+  $("#tw-x").onclick=$("#tw-c").onclick=()=>$("#dlg").hidden=true;
+  $("#tw-go").onclick=()=>tradeSend(f,[...T.give,...(T.gc?["$:"+T.gc]:[])],[...T.want,...(T.wc?["$:"+T.wc]:[])],$("#tw-n").value.trim());
+  drawGrid("L");drawGrid("R");drawMid();}
 async function tradeSend(f,give,want,note){const sb=SX();const b=$("#tf-go")||{};b.disabled=true;
-  if(give.some(k=>!(ST.owned[k]>0))){toast("Tu n'as plus une des cartes à donner");b.disabled=false;return;}
-  give.forEach(k=>{ST.owned[k]--;if(!ST.owned[k])delete ST.owned[k];});save();
-  const {data,error}=await sb.from("tcg_trades").insert({sender:MEID(),recipient:f.id,give,want,note:note||null}).select().single();
-  if(error){give.forEach(k=>giveCard(k));save();b.disabled=false;toast(/row-level|policy/i.test(error.message||"")?"Vous devez être amis pour échanger (ou lancer update-22 dans Supabase)":"La proposition n'a pas pu être envoyée");return;}
+  const b2=$("#tw-go");if(b2)b2.disabled=true;
+  if(trCards(give).some(k=>!(ST.owned[k]>0))){toast("Tu n'as plus une des cartes à donner");if(b2)b2.disabled=false;return;}
+  if(trCoins(give)>ST.coins){toast("Tu n'as pas assez de coquillages");if(b2)b2.disabled=false;return;}
+  give.forEach(k=>takeItem(k));save();wallet();
+  let data=null,error=null;try{({data,error}=await sb.from("tcg_trades").insert({sender:MEID(),recipient:f.id,give,want,note:note||null}).select().single());}catch(e){error=e;}
+  if(error){give.forEach(k=>giveCard(k));save();wallet();if(b2)b2.disabled=false;toast(/row-level|policy/i.test(error.message||"")?"Vous devez être amis pour échanger (ou lancer update-22 dans Supabase)":"La proposition n'a pas pu être envoyée");return;}
   ST.tr.held[data.id]=give;save();await flush();toast(`Proposition envoyée à ${f.name}`);$("#dlg").hidden=true;TRTAB="out";PCACHE[f.id]=PCACHE[f.id]||{name:f.name,av:f.av||""};
   if(!$("#v-amis").hidden)renderFriends(true);else location.hash="amis";}
 async function tradeAnswer(id,ok,b){const sb=SX();if(b)b.disabled=true;const t=TR.find(x=>x.id===id);if(!t)return;
-  if(ok&&!t.want.every(k=>ST.owned[k]>0)){toast("Il te manque une carte demandée");return renderFriends(false);}
+  if(ok&&!trCards(t.want).every(k=>ST.owned[k]>0)){toast("Il te manque une carte demandée");return renderFriends(false);}
+  if(ok&&ST.coins<trCoins(t.want)){toast("Tu n'as pas assez de coquillages pour cet échange");return renderFriends(false);}
   const {data,error}=await sb.from("tcg_trades").update({status:ok?"accepted":"declined"}).eq("id",id).eq("status","pending").select();
   if(error||!data||!data.length){toast("Cet échange n'est plus disponible");return renderFriends(true);}
-  if(ok){t.want.forEach(k=>{ST.owned[k]--;if(!ST.owned[k])delete ST.owned[k];});t.give.forEach(k=>giveCard(k));ST.tr.n=(ST.tr.n||0)+1;save();checkAll();toast("Échange réussi !");}
+  if(ok){t.want.forEach(k=>takeItem(k));t.give.forEach(k=>giveCard(k));ST.tr.n=(ST.tr.n||0)+1;save();checkAll();toast("Échange réussi !");}
   else toast("Proposition refusée");
   renderFriends(true);}
 async function tradeCancel(id,b){const sb=SX();if(b)b.disabled=true;const t=TR.find(x=>x.id===id);if(!t)return;
