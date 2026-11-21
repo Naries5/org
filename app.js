@@ -2423,14 +2423,20 @@ function friendState(uid){const r=S.friends.find(f=>(f.requester===S.me&&f.addre
   if(!r)return "none";if(r.status==="accepted")return "friends";return r.requester===S.me?"sent":"received";}
 async function loadSocial(){
   S.friends=[];S.unread=0;if(!S.me)return;
+  // la liste de tous les comptes n'est rechargée qu'une fois toutes les 10 minutes (avant : à chaque ami ajouté n'importe où sur le site)
+  const needProfiles=!S.profilesAt||Date.now()-S.profilesAt>600000||!Object.keys(S.profiles).length;
   const [fr,pr,un]=await Promise.all([
     sb.from("friendships").select("*").or(`requester.eq.${S.me},addressee.eq.${S.me}`),
-    sb.from("profiles").select("id,discord_name,avatar_url"),
+    needProfiles?sb.from("profiles").select("id,discord_name,avatar_url"):Promise.resolve(null),
     sb.from("messages").select("id",{count:"exact",head:true}).eq("recipient",S.me).is("read_at",null)]);
-  S.friends=fr.data||[];S.profiles={};(pr.data||[]).forEach(p=>S.profiles[p.id]=p);S.unread=un.count||0;
+  S.friends=fr.data||[];if(pr&&pr.data){S.profiles={};pr.data.forEach(p=>S.profiles[p.id]=p);S.profilesAt=Date.now();}S.unread=un.count||0;
+  const missing=[...new Set(S.friends.flatMap(f=>[f.requester,f.addressee]))].filter(u=>u&&!S.profiles[u]);
+  if(missing.length){const {data}=await sb.from("profiles").select("id,discord_name,avatar_url").in("id",missing);(data||[]).forEach(p=>S.profiles[p.id]=p);}
   if(!MSG_CH){MSG_CH=sb.channel("social-"+S.me)
     .on("postgres_changes",{event:"INSERT",schema:"public",table:"messages",filter:"recipient=eq."+S.me},m=>onIncoming(m.new))
-    .on("postgres_changes",{event:"*",schema:"public",table:"friendships"},async()=>{await loadSocial();updateRole();if(curRoute().page==="social")render();})
+    // seulement les demandes d'ami qui me concernent (avant : chaque changement sur tout le site rechargeait tout chez tout le monde)
+    .on("postgres_changes",{event:"*",schema:"public",table:"friendships",filter:"requester=eq."+S.me},async()=>{await loadSocial();updateRole();if(curRoute().page==="social")render();})
+    .on("postgres_changes",{event:"*",schema:"public",table:"friendships",filter:"addressee=eq."+S.me},async()=>{await loadSocial();updateRole();if(curRoute().page==="social")render();})
     .subscribe();}
 }
 function socialPending(){return S.friends.filter(f=>f.addressee===S.me&&f.status==="pending").length;}

@@ -1564,6 +1564,8 @@ async function cloudPush(tries){if(!cloudOn()||!CLOUD_OK)return;if(CLOUD_BUSY){C
 /* En revenant sur l'onglet : si la partie a avancé sur un autre appareil, on fusionne */
 document.addEventListener("visibilitychange",async()=>{if(!ST||!cloudOn()||!CLOUD_OK)return;
   if(document.visibilityState==="hidden"){if(dirty)await flush();cloudPush();return;}
+  try{const {data}=await SX().from("tcg_saves").select("sv:state->sv").eq("user_id",MEID()).maybeSingle(); // juste le numéro de version
+    if(data&&baseOk()&&+data.sv===+BASE.sv)return;if(data&&!baseOk()&&+data.sv<=(ST.sv||0))return;}catch(e){}
   let r;try{r=await cloudGet();}catch(e){return;}if(!r)return;
   if(baseOk()&&(r.sv||0)!==(BASE.sv||0)){ST=merge3(BASE,ST,r);setBase(r);adoptLocal();save();refreshAll();cloudQueue(true);toast("Partie mise à jour avec ton autre appareil");}
   else if(!baseOk()&&(r.sv||0)>(ST.sv||0)){ST=JSON.parse(JSON.stringify(r));ST.uid=MEID();ST.cs=1;setBase(r);adoptLocal();refreshAll();toast("Partie mise à jour depuis ton autre appareil");}});
@@ -2204,7 +2206,9 @@ function mkRow(r){return {id:r.id,k:r.card,seller:r.seller,sn:r.seller_name,mode
   buyer:r.buyer?{u:r.buyer,n:r.buyer_name}:null,bid:r.bid_user?{u:r.bid_user,n:r.bid_name,a:r.bid_amount}:null,nb:r.nb||0,
   price:r.price,start:r.start_price,end:r.end_at?Date.parse(r.end_at)-(window.TCG_OFFSET||0):0,sellerPaid:r.seller_paid,buyerGot:r.buyer_got,daily:/^daily-/.test(r.id)};}
 async function mkGet(id){const {data,error}=await SX().from("tcg_market").select("*").eq("id",id).maybeSingle();if(error)throw error;return data?mkRow(data):null;}
-async function mkFetch(){if(!SX())return [];const {data,error}=await SX().from("tcg_market").select("*").order("created_at",{ascending:false}).limit(400);
+async function mkFetch(mineOnly){if(!SX())return [];const me=MU();let q=SX().from("tcg_market").select("*");
+  if(mineOnly&&me)q=q.or(`seller.eq.${me},bid_user.eq.${me},buyer.eq.${me}`); // en arrière-plan : seulement mes annonces et mes offres
+  const {data,error}=await q.order("created_at",{ascending:false}).limit(mineOnly?60:300);
   if(error){MKON=false;throw error;}MKON=true;MK=(data||[]).map(mkRow).filter(L=>CARDS[L.k]);return MK;}
 /* Appel d'une fonction du marché. Si la réponse se perd (délai dépassé), on relit l'annonce pour savoir si l'action a bien eu lieu :
    sinon on risquerait de rendre une carte ou des coquillages alors que l'action est passée (= duplication). */
@@ -2247,8 +2251,8 @@ function dailyPicks(day){let h=2166136261;for(const ch of "oc-daily-"+day){h^=ch
   while(out.length<3&&pool.length)out.push(pool.splice(Math.floor(rnd()*pool.length),1)[0]);return out;}
 async function ensureDaily(){const d=parisDay();if(MK_DAILY_TRY===d||MK.some(L=>L.id.startsWith("daily-"+d+"-")))return false;MK_DAILY_TRY=d;
   const ks=dailyPicks(d);if(ks.length<3)return false;await mkRpc("tcg_mk_daily",{p_cards:ks});return true;}
-async function syncMarket(){if(!mkAvail()||MKSYNC)return;MKSYNC=true;const me=MU();
-  try{await mkFetch();if(await ensureDaily())await mkFetch();let ch=false;const byId=Object.fromEntries(MK.map(L=>[L.id,L]));
+async function syncMarket(bg){if(!mkAvail()||MKSYNC)return;MKSYNC=true;const me=MU();
+  try{await mkFetch(bg);if(!bg&&await ensureDaily())await mkFetch();let ch=false;const byId=Object.fromEntries(MK.map(L=>[L.id,L]));
     for(const L of MK){ // mise de côté perdue (partie rechargée) : on la refait avant de régler
       if(L.seller===me&&!L.sellerPaid&&!ST.mk.mine[L.id]){if(ST.owned[L.k]>0){takeItem(L.k);ST.mk.mine[L.id]={k:L.k,t:Date.now()};ch=true;}
         else if(mkOpen(L)&&!L.bid&&await mkRpc("tcg_mk_cancel",{p_id:L.id}))ch=true;}
@@ -2260,7 +2264,7 @@ async function syncMarket(){if(!mkAvail()||MKSYNC)return;MKSYNC=true;const me=MU
     for(const id of Object.keys(ST.mk.mine)){const m=ST.mk.mine[id];if(byId[id]||!m||Date.now()-(m.t||0)<120000)continue;
       // annonce disparue sans avoir été encaissée (retirée par un admin ou sur un autre appareil) : la carte revient
       if(m.k&&CARDS[m.k])giveCard(m.k);delete ST.mk.mine[id];save();ch=true;}
-    if(ch){await commitNow();wallet();await mkFetch();}}
+    if(ch){await commitNow();wallet();await mkFetch(bg);}}
   catch(e){console.warn(e);}finally{MKSYNC=false;}}
 function mkTile(L){const me=MU(),c=CARDS[L.k],mine=L.seller===me,open=mkOpen(L),auc=L.mode==="auction",top=L.bid&&L.bid.u===me;
   let st="";if(!open){st=L.buyer||(auc&&L.bid)?(mine?"Vendue":(L.buyer&&L.buyer.u===me)||top?"Gagnée":"Vendue"):"Terminée";}
@@ -2392,13 +2396,18 @@ async function mkBidForm(id){const L=await mkGet(id).catch(()=>null);if(!L||!mkO
     renderMarket(true);};}
 $("#mk-sell").onclick=()=>MKTAB==="trade"?editBinder():mkSellPick();
 setInterval(()=>{document.querySelectorAll("[data-end]").forEach(e=>{const l=+e.dataset.end-Date.now();e.textContent=l>0?clk(l):"terminée";});},1000);
-setInterval(()=>{if(ST&&!document.hidden&&mkAvail()&&$("#v-marche").hidden)syncMarket().then(()=>wallet());},180000);
+setInterval(()=>{if(ST&&!document.hidden&&mkAvail()&&$("#v-marche").hidden)syncMarket(true).then(()=>wallet());},180000);
 
 /* ---------- Tchat global du marché ---------- */
 let CHAT=[],CHAT_T=null,CHAT_OK=null,CHAT_SENT=0;
-async function loadChat(){const sb=SX();if(!sb)return false;
-  const {data,error}=await sb.from("tcg_chat").select("id,user_id,body,created_at").order("created_at",{ascending:false}).limit(80);
-  if(error){CHAT_OK=false;return false;}CHAT_OK=true;CHAT=(data||[]).sort((a,b)=>a.id-b.id);
+let CHAT_FULL=0;
+async function loadChat(full){const sb=SX();if(!sb)return false;
+  // en temps normal on ne demande que les nouveaux messages ; la liste complète (pour voir les suppressions) seulement de temps en temps
+  const last=CHAT.length?CHAT[CHAT.length-1].id:0,inc=!full&&last&&Date.now()-CHAT_FULL<120000;
+  let q=sb.from("tcg_chat").select("id,user_id,body,created_at");q=inc?q.gt("id",last).order("id",{ascending:true}).limit(50):q.order("created_at",{ascending:false}).limit(80);
+  const {data,error}=await q;
+  if(error){CHAT_OK=false;return false;}CHAT_OK=true;
+  if(inc){const have=new Set(CHAT.map(m=>m.id)),nw=(data||[]).filter(m=>!have.has(m.id));if(nw.length)CHAT=CHAT.concat(nw).sort((a,b)=>a.id-b.id).slice(-120);}else{CHAT_FULL=Date.now();CHAT=(data||[]).sort((a,b)=>a.id-b.id);}
   const miss=[...new Set(CHAT.map(m=>m.user_id))].filter(u=>!PCACHE[u]);
   if(miss.length){const {data:pr}=await sb.from("profiles").select("id,discord_name,avatar_url").in("id",miss);(pr||[]).forEach(p=>PCACHE[p.id]={name:p.discord_name||"Joueur",av:p.avatar_url||""});}
   return true;}
@@ -2430,7 +2439,7 @@ async function chatTick(){if(!SX()||!MU()||PREVIEW)return;const ok=await loadCha
   if(CHAT_OPEN){drawChat();chatSeen();}else chatUnread();}
 function chatLoop(){clearInterval(CHAT_T);CHAT_T=setInterval(()=>{if(!document.hidden)chatTick();},CHAT_OPEN?6000:60000);}
 function openChat(on){CHAT_OPEN=on!=null?on:!CHAT_OPEN;$("#chat-pane").hidden=!CHAT_OPEN;document.body.classList.toggle("chat-on",CHAT_OPEN);$("#chat-tab").setAttribute("aria-pressed",CHAT_OPEN);
-  if(CHAT_OPEN){mountChat();const l=$("#ch-list");if(l)l.dataset.done="";drawChat();chatSeen();chatTick();setTimeout(()=>{const i=$("#ch-in");if(i&&matchMedia("(hover:hover)").matches)i.focus();},50);}chatLoop();}
+  if(CHAT_OPEN){mountChat();const l=$("#ch-list");if(l)l.dataset.done="";drawChat();chatSeen();CHAT_FULL=0;chatTick();setTimeout(()=>{const i=$("#ch-in");if(i&&matchMedia("(hover:hover)").matches)i.focus();},50);}chatLoop();}
 function renderChat(){openChat(true);}
 function initChat(){if(!SX()||!MU()||PREVIEW)return;$("#chat-fab").hidden=false;
   $("#chat-fab").onclick=()=>openChat();$("#chat-tab").onclick=()=>openChat();$("#cp-x").onclick=()=>openChat(false);
@@ -2464,7 +2473,7 @@ async function loadFriends(){const sb=SX(),id=MEID();FR=[];if(!sb||!id)return;
   FR=ids.map(u=>{const p=(pr.data||[]).find(x=>x.id===u)||{};let pi=D.players.findIndex(p=>p.id===pid[u]);if(pi<0)pi=pIdx(pls[u]);PCACHE[u]={name:p.discord_name||"Ami",av:p.avatar_url||""};return {id:u,name:p.discord_name||"Ami",av:p.avatar_url||"",pi,card:playerCard(pi)};})
     .sort((a,b)=>a.name.localeCompare(b.name));}
 async function loadTrades(){const sb=SX(),id=MEID();TR=[];if(!sb||!id){TR_OK=false;return;}
-  const {data,error}=await sb.from("tcg_trades").select("*").or(`sender.eq.${id},recipient.eq.${id}`).order("created_at",{ascending:false}).limit(100);
+  const {data,error}=await sb.from("tcg_trades").select("*").or(`sender.eq.${id},recipient.eq.${id}`).order("created_at",{ascending:false}).limit(40);
   if(error){TR_OK=false;return;}TR_OK=true;TR=data||[];}
 async function settleTrades(){if(!TR_OK)return;const sb=SX(),id=MEID();let ch=false;
   for(const t of TR){if(t.sender!==id||t.sender_done||t.status==="pending")continue;
@@ -2998,7 +3007,7 @@ let DROPS=null,DROPS_T=null,DROPS_AT=0;
 function postDrops(ks){const sb=SX();if(!ks.length||!sb||!MEID()||PREVIEW)return;
   sb.from("tcg_drops").insert(ks.map(k=>({card:k.replace(/#\d+$/,""),rarity:CARDS[k].r}))).then(()=>{DROPS_AT=0;},()=>{});}
 async function loadDrops(){const sb=SX();if(!sb)return;
-  try{const {data,error}=await sb.from("tcg_drops").select("user_id,card,rarity,created_at").order("created_at",{ascending:false}).limit(40);
+  try{const {data,error}=await sb.from("tcg_drops").select("user_id,card,rarity,created_at").order("created_at",{ascending:false}).limit(20);
     if(error){DROPS=null;return;}DROPS=(data||[]).filter(d=>CARDS[d.card]&&(d.rarity==='M'||d.rarity==='L')).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));DROPS_AT=Date.now();
     const miss=[...new Set(DROPS.map(d=>d.user_id))].filter(u=>!PCACHE[u]);
     if(miss.length){const {data:pr}=await sb.from("profiles").select("id,discord_name,avatar_url").in("id",miss);(pr||[]).forEach(p=>PCACHE[p.id]={name:p.discord_name||"Joueur",av:p.avatar_url||""});}}catch(e){DROPS=null;}}
@@ -3023,7 +3032,7 @@ function startDrops(){refreshDrops();clearInterval(DROPS_T);DROPS_T=setInterval(
   document.addEventListener("click",e=>{const d=$("#me-drop");if(d&&!d.hidden&&!e.target.closest(".me-menu"))d.hidden=true;});
   $("#w-mis").onclick=()=>{location.hash="boosters";setTimeout(()=>{const m=$("#missions");if(m)m.scrollIntoView({behavior:reduced()?"auto":"smooth",block:"center"});},60);};if(PREVIEW)ST=fresh();CARDS=build();indexes();route();
   if(PREVIEW)return;
-  await load();const wasReset=launchReset();stashSync();await loadMe();sndLabel();$("#m-reset").hidden=!OWNER;$("#m-preset").hidden=!OWNER;$("#m-pre").hidden=!(window.TCG_STAFF&&launchLeft()>0);tick();wallet();checkAll();route();syncMarket().then(()=>wallet());try{initChat();}catch(e){}checkReset();
+  await load();const wasReset=launchReset();stashSync();await loadMe();sndLabel();$("#m-reset").hidden=!OWNER;$("#m-preset").hidden=!OWNER;$("#m-pre").hidden=!(window.TCG_STAFF&&launchLeft()>0);tick();wallet();checkAll();route();syncMarket(location.hash!=="#marche").then(()=>wallet());try{initChat();}catch(e){}checkReset();
   if(wasReset)setTimeout(()=>toast("Le TCG est ouvert : ta collection de test repart de zéro. Bonne chance !"),800);
   if(SX()){loadFriends().then(syncSocial).catch(()=>{});}
   window.addEventListener("pagehide",()=>flush());document.addEventListener("visibilitychange",()=>{if(document.hidden)flush();});
