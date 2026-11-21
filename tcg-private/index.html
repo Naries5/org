@@ -1214,9 +1214,16 @@ const SPECIAL=[
 
 function specialArt(x){return `<div class="xart" style="--x1:${x.c[0]};--x2:${x.c[1]}"><svg viewBox="0 0 100 100" aria-hidden="true">${x.svg.replace(/id="g"/g,`id="g-${x.id}"`).replace(/url\(#g\)/g,`url(#g-${x.id})`)}</svg></div>`;}
 
-function tierOf(p){const w=p.w||0,n=p.p||0;return w>=3||n>=10?"M":w>=2||n>=7?"L":w>=1||n>=4?"E":n>=3?"R":n===2?"PC":n===1?"C":"";}
+// Bonus d'activité : 3 saisons ou plus sur les 12 derniers mois = un cran de plus, 6 ou plus = deux crans (jusqu'à mythique).
+const TIERS=["C","PC","R","E","L","M"];
+function baseTier(p){const w=p.w||0,n=p.p||0;return w>=3||n>=10?"M":w>=2||n>=7?"L":w>=1||n>=4?"E":n>=3?"R":n===2?"PC":n===1?"C":"";}
+function actBonus(p){const r=p.r12||0;return r>=6?2:r>=3?1:0;}
+function tierOf(p){const b=baseTier(p);if(!b)return "";return TIERS[Math.min(5,TIERS.indexOf(b)+actBonus(p))];}
 function partTier(pl){return pl===1?"L":pl&&pl<=3?"E":pl&&pl<=6?"R":pl&&pl<=12?"PC":"C";}
-function prepD(d){d.players.forEach(p=>p.r=tierOf(p));
+function prepD(d){const cut=Date.now()-365*864e5,yr=new Date().getFullYear();
+  const recent=d.seasons.map(s=>s.st==="en_cours"||(s.d?Date.parse(s.d)>=cut:(s.y&&+s.y>=yr)));
+  d.players.forEach(p=>p.r12=0);d.parts.forEach(x=>{if(recent[x[1]])d.players[x[0]].r12++;});
+  d.players.forEach(p=>p.r=tierOf(p));
   const rk=d.orgs.map((o,i)=>[o.ns||0,i]).filter(x=>x[0]>0).sort((a,b)=>b[0]-a[0]).map(x=>x[1]);
   d.orgs.forEach((o,i)=>{const j=rk.indexOf(i);o.r=j>=0&&j<10?"M":j>=10&&j<25?"L":"E";});return d;}
 function keyOf(c,d){const P=d.players,S=d.seasons,O=d.orgs;if(c.t==="X")return "X:"+SPECIAL[c.i].id;
@@ -1694,7 +1701,7 @@ $("#recycle-all").onclick=()=>{let n=0,v=0;Object.keys(ST.owned).forEach(k=>{con
 
 /* ---------- Détail d'une carte ---------- */
 function openCard(c){const P=D.players,S=D.seasons,O=D.orgs;const n=ST.owned[c.k]||0;let rows=[];
-  if(c.t==="J"){const p=P[c.i];rows=[["Saisons",p.p],["Victoires",p.w],["Top 5",p.t],["Meilleure place",p.b?placeTxt(p.b):"–"]];}
+  if(c.t==="J"){const p=P[c.i];rows=[["Saisons",p.p],["Victoires",p.w],["Top 5",p.t],["Meilleure place",p.b?placeTxt(p.b):"–"],["Saisons sur 12 mois",(p.r12||0)+(actBonus(p)?` · bonus d'activité +${actBonus(p)}`:"")]];}
   else if(c.t==="O"){const o=O[c.i];rows=[["Format",o.f==="speed"?"Speed":"Format long"],["Saisons",o.ns]];}
   else if(c.t==="R"){const s=S[c.i];rows=[["ORG",(O[s.o]||{}).n],["Joueurs",s.c],["Année",s.y||"–"]];}
   else if(c.t==="X"){const x=SPECIAL[c.i];rows=[["Type",`Carte spéciale · ${x.ty}`],["Effet",x.txt]];}
@@ -2142,7 +2149,7 @@ async function liveData(){
   return {live:true,date:new Date().toLocaleDateString("fr-FR"),
     orgs:oids.map(o=>({id:o,n:orgs[o].name||"?",l:orgs[o].logo||"",f:orgs[o].format||"",pf:orgs[o].platform||"",ns:ns[o]||0})),
     seasons:Ss.map(se=>{const s=se.data||{};return {id:se.id,o:oi[s.orgId]??-1,n:s.number,t:s.title||"",l:s.logo||"",st:s.status,
-      w:[...winners(s)].filter(x=>x in pi).map(x=>pi[x]).sort((a,b)=>a-b),c:(s.cast||[]).filter(c=>c.playerId in pi).length,y:String(s.start||s.end||"").slice(0,4),x:s.external?1:0};}),
+      w:[...winners(s)].filter(x=>x in pi).map(x=>pi[x]).sort((a,b)=>a-b),c:(s.cast||[]).filter(c=>c.playerId in pi).length,y:String(s.start||s.end||"").slice(0,4),d:String(s.end||s.start||"").slice(0,10),x:s.external?1:0};}),
     players:pids.map(p=>({id:p,n:players[p].pseudo||"?",a:players[p].avatar||"",p:part[p],w:wins[p]||0,t:top5[p]||0,b:best[p]??null,o:(porgs[p]||new Set()).size,g:players[p].ownerUid?1:0})),
     parts};}
 
