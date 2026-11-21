@@ -1100,6 +1100,15 @@ body.chat-on .chat-fab{display:none}
 .ms-si{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--surface-2);border:1px solid var(--line);font-size:1rem}
 .ms-s.got .ms-si{background:rgba(95,224,160,.15);color:#5fe0a0;border-color:rgba(95,224,160,.4);font-weight:800}
 .ms-sb{display:flex;flex-direction:column;gap:6px;min-width:0}.ms-sb b{font-size:.92rem}.ms-sb small{color:var(--muted);font-size:.8rem;line-height:1.35}.ms-sb code{font-size:.72rem;color:var(--muted);text-align:right}
+.favb{position:absolute;top:8px;left:8px;z-index:4;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.7);color:var(--yel);font-size:.85rem;pointer-events:none}
+.wishb{position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:4;white-space:nowrap;font-size:.68rem;font-weight:700;padding:3px 8px;border-radius:999px;background:var(--yel);color:#17110a;pointer-events:none}
+.wishb.in{position:static;transform:none;align-self:flex-start;margin:2px 0}
+.favbtn{all:unset;cursor:pointer;margin-top:10px;display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--line);font-weight:600;font-size:.88rem}
+.favbtn.on{background:rgba(242,201,76,.14);border-color:var(--yel);color:var(--yel)}
+.aitem{position:relative}.awish{position:absolute;top:8px;right:10px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:1.05rem;color:var(--muted);background:rgba(0,0,0,.35);cursor:pointer}
+.awish:hover{color:var(--yel)}.awish.on{color:var(--yel)}
+.btn.on,.awbtn.on{border-color:var(--yel);color:var(--yel)}
+.tw-t.want{background:rgba(242,201,76,.2);color:var(--yel)}
 </style>
 </head>
 <body>
@@ -1182,7 +1191,7 @@ body.chat-on .chat-fab{display:none}
         <input id="c-q" type="search" placeholder="Chercher un joueur, une ORG, une saison…" autocomplete="off" aria-label="Chercher">
         <select id="c-r" aria-label="Rareté"><option value="">Toutes les raretés</option></select>
         <select id="c-t" aria-label="Type"><option value="">Tous les types</option><option value="J">Joueur</option><option value="P">Participation</option><option value="R">Saison</option><option value="O">ORG</option><option value="X">Spéciales</option></select>
-        <select id="c-o" aria-label="Affichage"><option value="own">Mes cartes</option><option value="dup">Mes doublons</option><option value="all">Toutes (manquantes en gris)</option></select>
+        <select id="c-o" aria-label="Affichage"><option value="own">Mes cartes</option><option value="dup">Mes doublons</option><option value="fav">Mes favoris</option><option value="wish">Albums recherchés</option><option value="all">Toutes (manquantes en gris)</option></select>
         <button class="btn" id="recycle-all">Recycler les doublons</button>
       </div>
       <div class="cgrid stg" id="c-grid"></div>
@@ -1962,12 +1971,20 @@ function ovEnd(){ovClear();const its=OV.items;const nNew=its.filter(x=>x.isNew).
 function ovClose(){ovClear();OV=null;$("#ov").hidden=true;document.body.style.overflow="";HOLDT=false;const q=TQ;TQ=[];q.forEach((m,i)=>setTimeout(()=>Array.isArray(m)?toast(m[0],m[1]):toast(m),300+i*450));if(!$("#v-boosters").hidden)renderBoosters();wallet();}
 /* ---------- Collection ---------- */
 let CV=[],CSHOWN=0;
+/* Favoris et albums recherchés */
+const isFav=k=>!!(ST.fav&&ST.fav[k]);
+function toggleFav(k){ST.fav=ST.fav||{};if(ST.fav[k])delete ST.fav[k];else ST.fav[k]=1;save();}
+const isWish=id=>!!(ST.wish&&ST.wish[id]);
+function toggleWish(id){ST.wish=ST.wish||{};if(ST.wish[id])delete ST.wish[id];else ST.wish[id]=1;WISHK=null;save();}
+let WISHK=null,WISHSIG="";function wishKeys(){const sig=Object.keys(ST.wish||{}).join(",");if(WISHK&&sig===WISHSIG)return WISHK;WISHSIG=sig;WISHK=new Set();const L={se:BY_SE,pl:BY_PL,og:BY_ORG};
+  Object.keys(ST.wish||{}).forEach(id=>{const m=/^(se|pl|og)(\d+)$/.exec(id);if(m)(L[m[1]][+m[2]]||[]).forEach(k=>WISHK.add(k));});return WISHK;}
+const wanted=k=>!ST.owned[k]&&wishKeys().has(k);
 function colFilter(){const q=norm($("#c-q").value.trim()),r=$("#c-r").value,t=$("#c-t").value,o=$("#c-o").value;
-  return CARDS.filter(c=>(c.r!=="S"||ST.owned[c.k])&&(!r||c.r===r)&&(!t||c.t===t)&&(o==="all"||(o==="own"?ST.owned[c.k]:ST.owned[c.k]>1))&&(!q||c.s.includes(q)));}
+  return CARDS.filter(c=>(c.r!=="S"||ST.owned[c.k])&&(!r||c.r===r)&&(!t||c.t===t)&&(o==="all"||(o==="own"?ST.owned[c.k]:o==="fav"?isFav(c.k)&&ST.owned[c.k]:o==="wish"?wishKeys().has(c.k):ST.owned[c.k]>1))&&(!q||c.s.includes(q)));}
 function visTotal(){return CARDS.filter(c=>c.r!=="S"||ST.owned[c.k]).length;}
 function tileHTML(c){const n=ST.owned[c.k]||0;if(!n&&c.r==="S")return "";
-  if(!n)return `<div class="cwrap">${cardHTML(c,true).replace('class="card ','class="card missing ')}<span class="miss">?</span><span class="missname">${esc(label(c))}</span></div>`;
-  return `<div class="cwrap" data-ck="${c.k}">${cardHTML(c,true).replace("<article ",'<article tabindex="0" ')}${n>1?`<span class="cnt">×${n}</span>`:""}</div>`;}
+  if(!n)return `<div class="cwrap">${cardHTML(c,true).replace('class="card ','class="card missing ')}<span class="miss">?</span><span class="missname">${esc(label(c))}</span>${wishKeys().has(c.k)?`<span class="wishb">★ Recherchée</span>`:""}</div>`;
+  return `<div class="cwrap" data-ck="${c.k}">${cardHTML(c,true).replace("<article ",'<article tabindex="0" ')}${n>1?`<span class="cnt">×${n}</span>`:""}${isFav(c.k)?`<span class="favb" title="Favori">★</span>`:""}</div>`;}
 function renderCollection(reset){
   const okS=!!ST.firsts.S,sel=$("#c-r");if(sel.dataset.ok!==String(okS)){const v=sel.value;sel.innerHTML=`<option value="">Toutes les raretés</option>`+LADDER.slice().reverse().filter(r=>r!=="S"||okS).map(r=>`<option value="${r}">${RAR[r][0]}</option>`).join("");sel.value=v==="S"&&!okS?"":v;sel.dataset.ok=String(okS);}
   const u=uniq();const dups=Object.values(ST.owned).reduce((a,n)=>a+Math.max(0,n-1),0);
@@ -1982,7 +1999,7 @@ document.addEventListener("keydown",e=>{if(OV&&!$("#ov").hidden&&(e.key===" "||e
 function recycle(k,n){SFX.coin();const c=CARDS[k];n=Math.min(n,ST.owned[k]||0);const v=RECYCLE[c.r]*n;ST.owned[k]-=n;ST.coins+=v;ST.recycled+=n;
   if(!(ST.owned[k]>0)){delete ST.owned[k];if(ST.show)ST.show=ST.show.map(x=>x===k?null:x);if(ST.ft)ST.ft=ST.ft.filter(x=>x!==k);}
   const td=today();if(ST.mis.date!==td)ST.mis={date:td,open:0,recycle:0,rare:0,done:[],bonus:false};ST.mis.recycle+=n;ensureWeek().recycle+=n;return v;}
-$("#recycle-all").onclick=()=>{let n=0,v=0;Object.keys(ST.owned).forEach(k=>{const d=ST.owned[k]-1;if(d>0){n+=d;v+=recycle(k,d);}});
+$("#recycle-all").onclick=()=>{let n=0,v=0;Object.keys(ST.owned).forEach(k=>{if(isFav(k))return;const d=ST.owned[k]-1;if(d>0){n+=d;v+=recycle(k,d);}});
   if(!n){toast("Aucun doublon à recycler");return;}toast(`${nf(n)} doublons recyclés : +${nf(v)} coquillages`);checkAll();renderCollection(true);};
 
 /* ---------- Détail d'une carte ---------- */
@@ -2011,6 +2028,7 @@ function openCard(c){const P=D.players,S=D.seasons,O=D.orgs;const n=ST.owned[c.k
   $("#dbox").innerHTML=cardHTML(c,true)+`<div class="dinfo"><span class="k" style="color:var(${RAR[c.r][1]})">${RAR[c.r][0]} · ${esc(c.no)}</span><h2>${esc(label(c))}</h2>
     <dl>${rows.map(([a,b])=>`<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl>
     ${links.length?`<div class="slinks">${links.join("")}</div>`:""}
+    ${n&&c.r!=="S"?`<button class="favbtn${isFav(c.k)?" on":""}" id="fav1" type="button">${isFav(c.k)?"★ Dans tes favoris":"☆ Ajouter aux favoris"}</button>`:""}
     ${CANEDIT?`<div class="radm">${c.r!=="S"?`<label><span>Rareté <small>admins</small></span><select id="radm">${["M","L","E","R","PC","C"].map(r=>`<option value="${r}" ${c.r===r?"selected":""}>${RAR[r][0]}${(c.base||c.r)===r?" (automatique)":""}</option>`).join("")}</select></label>`:""}
       ${c.pl!=null&&OPT_OK?`<p><button class="linkbtn" id="radm-out">Retirer ${esc(D.players[c.pl].n)} du TCG</button> (toutes ses cartes, pour tout le monde)</p>`:""}
 ${artBox(c,true)}
@@ -2030,8 +2048,9 @@ ${artBox(c,true)}
     if(dc&&!dc.querySelector(".dropx"))dc.insertAdjacentHTML("beforeend",`<div class="dropx"><b>Lâche l'image ici</b><span>Elle remplacera celle de la carte</span></div>`);}
   const ro=$("#radm-out");if(ro)ro.onclick=async()=>{const p=D.players[c.pl];ro.disabled=true;const {error}=await SX().from("tcg_optout").insert({player_id:p.id});
     if(error){toast("Le retrait n'a pas pu se faire");return;}OPT.add(p.id);$("#dlg").hidden=true;toast(`${p.n} est retiré du TCG`);applyOptOut();stashSync();};
+  const fb=$("#fav1");if(fb)fb.onclick=()=>{toggleFav(c.k);fb.classList.toggle("on",isFav(c.k));fb.textContent=isFav(c.k)?"★ Dans tes favoris":"☆ Ajouter aux favoris";if(!$("#v-collection").hidden)renderCollection(true);};
   if(n===1){let armed=false;$("#rec1").onclick=()=>{const b=$("#rec1");
-    if(!armed){armed=true;b.classList.add("danger");b.textContent=`Confirmer : la carte quitte ta collection (+${RECYCLE[c.r]})`;setTimeout(()=>{if(b.isConnected&&armed){armed=false;b.classList.remove("danger");b.textContent=`Défausser la carte (+${RECYCLE[c.r]})`;}},5000);return;}
+    if(!armed){armed=true;b.classList.add("danger");b.textContent=`${isFav(c.k)?"C'est un favori ! ":""}Confirmer : la carte quitte ta collection (+${RECYCLE[c.r]})`;setTimeout(()=>{if(b.isConnected&&armed){armed=false;b.classList.remove("danger");b.textContent=`Défausser la carte (+${RECYCLE[c.r]})`;}},5000);return;}
     const v=recycle(c.k,1);save();toast(`${label(c)} défaussée : +${v} coquillages`);checkAll();openCard(c);if(!$("#v-collection").hidden)renderCollection(true);};}
   if(n>1)$("#rec1").onclick=()=>{const v=recycle(c.k,1);toast(`+${v} coquillages`);checkAll();openCard(c);if(!$("#v-collection").hidden)renderCollection(true);};
   const card=$("#dbox .card");card.addEventListener("pointermove",e=>{const r=card.getBoundingClientRect();const x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;
@@ -2059,16 +2078,20 @@ function albumList(kind){const list=kind==="og"?BY_ORG:kind==="pl"?BY_PL:BY_SE;
   return list.map((keys,i)=>({i,keys,have:keys.filter(k=>ST.owned[k]).length})).filter(a=>a.keys.length>1);}
 function aTitle(kind,i){return kind==="og"?D.orgs[i].n:kind==="pl"?D.players[i].n:sFull(D.seasons[i]);}
 function aImg(kind,i){if(kind==="og")return D.orgs[i].l;if(kind==="pl")return D.players[i].a;const s=D.seasons[i];return s.l||(D.orgs[s.o]||{}).l;}
+let AW=false;
 function renderAlbums(h){const m=/^album-(og|pl|se)-(\d+)$/.exec(h||"");if(m)return renderAlbum(m[1],+m[2]);
-  const list=albumList(AK).filter(a=>!AQ||norm(aTitle(AK,a.i)).includes(norm(AQ)));
+  const list=albumList(AK).filter(a=>(!AQ||norm(aTitle(AK,a.i)).includes(norm(AQ)))&&(!AW||isWish(AK+a.i)));
   list.sort((a,b)=>(b.have/b.keys.length)-(a.have/a.keys.length)||b.have-a.have||norm(aTitle(AK,a.i)).localeCompare(norm(aTitle(AK,b.i))));
   const done=albumList(AK).filter(a=>a.have===a.keys.length).length;
   $("#v-albums").innerHTML=`<h1 class="h">Albums</h1><p class="lede">Complète toutes les cartes d'une ORG, d'une saison ou d'un joueur. Un album terminé d'au moins ${ALB_MIN} cartes rapporte des coquillages, d'autant plus qu'il est grand : ${ALB_PER.se} par carte pour une saison, ${ALB_PER.pl} pour un joueur, ${ALB_PER.og} pour une ORG (avec un Sceau mythique en plus).</p>
     <div class="filters"><div class="seg" role="group" aria-label="Type d'album">${[["og","ORGs"],["se","Saisons"],["pl","Joueurs"]].map(([k,l])=>`<button aria-pressed="${AK===k}" data-ak="${k}">${l}</button>`).join("")}</div>
-    <input id="a-q" type="search" placeholder="Chercher un album…" value="${esc(AQ)}" aria-label="Chercher un album"><span class="note">${done} album${done>1?"s":""} complété${done>1?"s":""}</span></div>
+    <input id="a-q" type="search" placeholder="Chercher un album…" value="${esc(AQ)}" aria-label="Chercher un album"><button class="btn${AW?" on":""}" id="a-w" aria-pressed="${AW}">★ Recherchés${Object.keys(ST.wish||{}).length?` (${Object.keys(ST.wish).length})`:""}</button><span class="note">${done} album${done>1?"s":""} complété${done>1?"s":""}</span></div>
     <div class="alist stg">${list.slice(0,AK==="pl"?240:500).map(a=>`<button class="aitem${a.have===a.keys.length?" complete":""}" data-go="album-${AK}-${a.i}"><span class="aimg">${pic(aImg(AK,a.i),aTitle(AK,a.i))}</span><span class="ainfo"><b>${esc(aTitle(AK,a.i))}</b><span class="prog"><span class="bar"><b style="width:${a.have/a.keys.length*100}%"></b></span><span>${a.have}/${a.keys.length}</span></span></span></button>`).join("")}</div>
     ${AK==="pl"&&list.length>240?`<p class="note">Les 240 premiers joueurs sont affichés : cherche un pseudo pour trouver les autres.</p>`:""}`;
   $("#v-albums").querySelectorAll("[data-ak]").forEach(b=>b.onclick=()=>{AK=b.dataset.ak;renderAlbums();});
+  $("#a-w").onclick=()=>{AW=!AW;renderAlbums();};
+  $("#v-albums").querySelectorAll(".aitem").forEach(b=>{const id=b.dataset.go.replace(/^album-(og|pl|se)-(\d+)$/,"$1$2");b.insertAdjacentHTML("beforeend",`<span class="awish${isWish(id)?" on":""}" data-wid="${id}" role="button" tabindex="0" title="${isWish(id)?"Ne plus rechercher":"Je recherche cet album"}">${isWish(id)?"★":"☆"}</span>`);});
+  $("#v-albums").querySelectorAll("[data-wid]").forEach(x=>x.onclick=e=>{e.stopPropagation();e.preventDefault();toggleWish(x.dataset.wid);toast(isWish(x.dataset.wid)?"Album ajouté à tes recherches":"Album retiré de tes recherches");renderAlbums();});
   let t;$("#a-q").oninput=e=>{clearTimeout(t);t=setTimeout(()=>{AQ=e.target.value;renderAlbums();const q=$("#a-q");q.focus();q.setSelectionRange(q.value.length,q.value.length);},200);};}
 function renderAlbum(kind,i){const keys=(kind==="og"?BY_ORG:kind==="pl"?BY_PL:BY_SE)[i]||[];const have=keys.filter(k=>ST.owned[k]).length;
   const id=kind+i,complete=have===keys.length,claimed=ST.claimed[id],RW=albumReward(kind,keys.length);
@@ -2081,7 +2104,9 @@ function renderAlbum(kind,i){const keys=(kind==="og"?BY_ORG:kind==="pl"?BY_PL:BY
   else body=grid(keys);
   $("#v-albums").innerHTML=`<p><a href="#albums">← Tous les albums</a></p><div class="ahead"><span class="aimg">${pic(aImg(kind,i),aTitle(kind,i))}</span><div style="flex:1;min-width:220px"><span class="note">${kind==="og"?"Album d'ORG":kind==="pl"?"Album de joueur":"Album de saison"}</span><h1 class="h" style="margin:0">${esc(aTitle(kind,i))}</h1>
     <div class="prog" style="max-width:360px"><span class="bar"><b style="width:${have/keys.length*100}%"></b></span><span>${have}/${keys.length}</span></div></div>
+    <button class="btn awbtn${isWish(id)?" on":""}" id="awish">${isWish(id)?"★ Album recherché":"☆ Je recherche cet album"}</button>
     ${!RW?`<span class="note">Pas de récompense : il faut au moins ${ALB_MIN} cartes dans l'album.</span>`:complete?(claimed?`<span class="pill">Récompense récupérée</span>`:`<button class="btn primary" id="aclaim">Récupérer +${nf(RW)}</button>`):`<span class="note">Récompense : +${nf(RW)} coquillages${kind==="og"?" et un Sceau mythique":""}</span>`}</div>${body}`;
+  $("#awish").onclick=()=>{toggleWish(id);renderAlbum(kind,i);};
   if(RW&&complete&&!claimed)$("#aclaim").onclick=()=>{if(ST.claimed[id])return;ST.claimed[id]=Date.now();ST.coins+=RW;if(kind==="og")ST.inv.sceau++;save();toast(`Album complété : +${nf(RW)} coquillages${kind==="og"?" et un Sceau mythique":""}`);checkAll();renderAlbum(kind,i);};}
 
 /* ---------- Succès ---------- */
@@ -2131,7 +2156,7 @@ let BOARD_T=null;
 function pushBoard(){if(!DB||!UID)return;clearTimeout(BOARD_T);BOARD_T=setTimeout(async()=>{
   const row={uniq:uniq(),opened:ST.opened,myth:Object.keys(ST.owned).filter(k=>["M","S"].includes(CARDS[k].r)).length,ach:Object.keys(ST.ach).length,at:Date.now()};
   try{await DB.collection("board").doc(UID).set(row);}catch(e){}},1500);}
-const BOARDS=[["uniq","Cartes","cartes différentes","carte","cartes"],["myth","Mythiques","mythiques","mythique","myth."],["ach","Succès","succès","succès","succès"],["opened","Boosters","boosters ouverts","booster","boosters"]];
+const BOARDS=[["uniq","Cartes","cartes différentes","carte","cartes"],["myth","Mythiques","mythiques","mythique","myth."],["albums","Albums","albums complétés","album","albums"],["ach","Succès","succès","succès","succès"],["opened","Boosters","boosters ouverts","booster","boosters"]];
 let BK="uniq";
 async function renderBoard(){const tb=$("#board"),B=BOARDS.find(b=>b[0]===BK)||BOARDS[0],K=B[0];
   const tabs=`<div class="seg ysel bd-tabs" id="bd-tabs">${BOARDS.map(b=>`<button aria-pressed="${b[0]===K}" data-bk="${b[0]}">${b[1]}</button>`).join("")}</div>`;
@@ -2141,19 +2166,20 @@ async function renderBoard(){const tb=$("#board"),B=BOARDS.find(b=>b[0]===BK)||B
   if(!DB&&!SX()){tb.innerHTML=tabs+`<p class="muted">Le classement partagé n'est pas disponible dans cette vue. Ta progression est gardée dans ce navigateur.</p>`;bind();return;}
   try{await flush();let rows,ps={};const ME_ID=DB?UID:MEID();
     if(DB){const snap=await DB.collection("board").orderBy(K,"desc").limit(100).get();rows=snap.docs.map(d=>({id:d.id,...d.data()}));ps=USER?await USER.profiles(rows.map(r=>r.id)):{};}
-    else{await pushCol();const {data,error}=await SX().from("tcg_collections").select("user_id,uniq,myth,opened,ach").gt("uniq",0).gte("updated_at",LAUNCH_ISO()).order(K,{ascending:false}).order("uniq",{ascending:false}).limit(100);
-      if(error){tb.innerHTML=tabs+`<p class="muted">Le classement sera disponible une fois <b>update-22-tcg-collections.sql</b> lancé dans Supabase.</p>`;bind();return;}
-      rows=(data||[]).map(r=>({id:r.user_id,uniq:r.uniq,myth:r.myth,opened:r.opened,ach:r.ach}));
+    else{await pushCol();const {data,error}=await SX().from("tcg_collections").select("user_id,uniq,myth,opened,ach"+(K==="albums"?",albums":"")).gt("uniq",0).gte("updated_at",LAUNCH_ISO()).order(K,{ascending:false}).order("uniq",{ascending:false}).limit(100);
+      if(error){tb.innerHTML=tabs+`<p class="muted">${K==="albums"?`Le classement des albums sera disponible une fois <b>update-30-tcg-albums.sql</b> lancé dans Supabase.`:`Le classement sera disponible une fois <b>update-22-tcg-collections.sql</b> lancé dans Supabase.`}</p>`;bind();return;}
+      rows=(data||[]).map(r=>({id:r.user_id,uniq:r.uniq,myth:r.myth,opened:r.opened,ach:r.ach,albums:r.albums||0}));
       if(rows.length){const {data:pr}=await SX().from("profiles").select("id,discord_name,avatar_url").in("id",rows.map(r=>r.id));(pr||[]).forEach(p=>ps[p.id]={name:p.discord_name,avatar:p.avatar_url});}}
     rows.sort((a,b)=>(b[K]||0)-(a[K]||0)||(b.uniq||0)-(a.uniq||0));
     const nm=r=>(ps[r.id]&&ps[r.id].name)||"Joueur",av=r=>{const p=ps[r.id]||{},u=p.avatar||p.image||p.picture;return u?`<img src="${esc(u)}" alt="">`:`<span>${esc(nm(r).slice(0,1).toUpperCase())}</span>`;};
     if(!rows.length){tb.innerHTML=tabs+`<p class="muted">Personne n'est encore classé.</p>`;bind();return;}
     const v=r=>r[K]||0,unit=n=>n>1?B[2].split(" ")[0]:B[3];
     const other=r=>K==="uniq"?`${nf(r.myth||0)} mythique${(r.myth||0)>1?"s":""}`:`${nf(r.uniq||0)} cartes`;
+    const shown=BOARDS.filter(b=>b[0]!==K&&(b[0]!=="albums"||K==="albums"||rows.some(r=>r.albums)));
     const me=rows.findIndex(r=>r.id===ME_ID);
     const pod=[1,0,2].filter(i=>rows[i]).map(i=>{const r=rows[i];return `<div class="pod p${i+1}"><div class="pav">${av(r)}</div><b class="pn">${esc(nm(r))}</b><small>${other(r)}</small>
       <div class="pblock"><i class="prk">${i+1}</i><strong>${nf(v(r))}</strong><span>${unit(v(r))}</span></div></div>`;}).join("");
-    const row=(r,i)=>`<div class="br${r.id===ME_ID?" me":""}"><span class="brn">${i+1}</span><span class="bav">${av(r)}</span><span class="bname">${esc(nm(r))}${r.id===ME_ID?` <i class="toi">toi</i>`:""}<small>${BOARDS.filter(b=>b[0]!==K).map(b=>`${nf(r[b[0]]||0)} ${b[4]}`).join(" · ")}</small></span><span class="bs2"><strong>${nf(v(r))}</strong><small>${B[4]}</small></span>${OWNER&&!DB?`<button class="linkbtn br-rs" data-rs="${r.id}" data-rsn="${esc(nm(r))}" title="Remettre ce joueur à zéro">Reset</button>`:""}</div>`;
+    const row=(r,i)=>`<div class="br${r.id===ME_ID?" me":""}"><span class="brn">${i+1}</span><span class="bav">${av(r)}</span><span class="bname">${esc(nm(r))}${r.id===ME_ID?` <i class="toi">toi</i>`:""}<small>${shown.map(b=>`${nf(r[b[0]]||0)} ${b[4]}`).join(" · ")}</small></span><span class="bs2"><strong>${nf(v(r))}</strong><small>${B[4]}</small></span>${OWNER&&!DB?`<button class="linkbtn br-rs" data-rs="${r.id}" data-rsn="${esc(nm(r))}" title="Remettre ce joueur à zéro">Reset</button>`:""}</div>`;
     tb.innerHTML=tabs+(me>=0?`<div class="mebar"><span class="bav">${av(rows[me])}</span><div><small>Toi</small><b>${me+1}${me?"e":"er"} sur ${rows.length}</b></div><span class="muted">${me<3?"Tu es sur le podium":`à ${nf(v(rows[2])-v(rows[me]))} ${B[4]} du podium`}</span><strong>${nf(v(rows[me]))}<small>${B[4]}</small></strong></div>`:"")+
       `<div class="podium stg">${pod}</div><div class="blist stg">${(OWNER&&!DB?rows:rows.slice(3)).map((r,i)=>row(r,OWNER&&!DB?i:i+3)).join("")}</div>`;bind();
     tb.querySelectorAll("[data-rs]").forEach(b=>b.onclick=()=>resetPlayer(b.dataset.rs,b.dataset.rsn));}
@@ -2246,6 +2272,7 @@ function mkTile(L){const me=MU(),c=CARDS[L.k],mine=L.seller===me,open=mkOpen(L),
   return `<div class="mkt${mine?" mine":""}${top?" lead":""}${L.daily?" daily":""}"><div class="mk-c" data-mk-card="${L.k}">${cardHTML(c,true)}</div>
     <div class="mk-i"><span class="mk-tag ${auc?"auc":""}">${L.daily?"Enchère du jour":auc?"Enchères":"Vente directe"}${auc&&open?` · <code data-end="${L.end}">${clk(L.end-Date.now())}</code>`:""}</span>
       <div class="mk-p"><b>${nf(mkPrice(L))}</b><span class="shell"></span></div>
+      ${wanted(L.k)?`<span class="wishb in">★ Album recherché</span>`:""}
       <small>${auc?(L.bid?`${L.nb} offre${L.nb>1?"s":""} · en tête : ${top?"toi":esc(L.bid.n||"Joueur")}`:"Prix de départ"):"Prix fixe"} · ${L.daily?"proposée par ORG-Central":`par ${mine?"toi":esc(L.sn||"Joueur")}`}</small>
       ${act}</div></div>`;}
 const sect=(t,sub)=>`<h2 class="sect mk-sect">${t}${sub?` <span>${sub}</span>`:""}</h2>`;
@@ -2552,12 +2579,12 @@ async function tradeForm(f,pre){if(!f)return;
     </div></div>`,true);
   $("#dbox").classList.add("wide");
   const tile=(c,side)=>{const sel=(side==="L"?T.give:T.want).includes(c.k),n=side==="L"?ST.owned[c.k]:their?their[c.k]:0;
-    const tag=side==="L"?(their?(their[c.k]?`<span class="tw-t">Il l'a</span>`:`<span class="tw-t lack">Il lui manque</span>`):""):(ST.owned[c.k]?`<span class="tw-t">Tu l'as</span>`:`<span class="tw-t lack">Il me manque</span>`);
+    const tag=side==="L"?(their?(their[c.k]?`<span class="tw-t">Il l'a</span>`:`<span class="tw-t lack">Il lui manque</span>`):""):(ST.owned[c.k]?`<span class="tw-t">Tu l'as</span>`:wanted(c.k)?`<span class="tw-t want">★ Recherchée</span>`:`<span class="tw-t lack">Il me manque</span>`);
     return `<button class="tw-c${sel?" on":""}" data-${side}k="${c.k}">${cardHTML(c,true)}${n>1?`<span class="tw-n">×${n}</span>`:""}${side==="R"&&theirFt.has(c.k)?`<span class="tw-ft">À l'échange</span>`:""}<span class="tw-v"><b>${nf(TVAL(c))}</b><span class="shell"></span>${tag}</span></button>`;};
   const list=side=>{const st=T[side],q=norm(st.q.trim());let L=(side==="L"?mine:theirs).filter(c=>(!st.r||c.r===st.r)&&(!q||c.s.includes(q)));
     if(side==="L"){if(st.f==="dup")L=L.filter(c=>ST.owned[c.k]>1);if(st.f==="miss"&&their)L=L.filter(c=>!their[c.k]);}
     else{if(st.f==="have")L=L.filter(c=>ST.owned[c.k]);if(st.f==="miss")L=L.filter(c=>!ST.owned[c.k]);if(st.f==="dup"&&their)L=L.filter(c=>their[c.k]>1);}
-    return L.sort((a,b)=>side==="R"?(theirFt.has(b.k)-theirFt.has(a.k))||RI(b.r)-RI(a.r)||TVAL(b)-TVAL(a):RI(b.r)-RI(a.r)||(ST.owned[b.k]-ST.owned[a.k]));};
+    return L.sort((a,b)=>side==="R"?(wanted(b.k)-wanted(a.k))||(theirFt.has(b.k)-theirFt.has(a.k))||RI(b.r)-RI(a.r)||TVAL(b)-TVAL(a):RI(b.r)-RI(a.r)||(ST.owned[b.k]-ST.owned[a.k]));};
   const drawGrid=side=>{const L=list(side),n=side==="L"?T.nL:T.nR,g=$(side==="L"?"#tw-lg":"#tw-rg");
     g.innerHTML=L.length?L.slice(0,n).map(c=>tile(c,side)).join("")+(L.length>n?`<button class="btn tw-more" data-more="${side}">Afficher plus (${nf(L.length-n)})</button>`:""):`<p class="muted">Aucune carte.</p>`;
     g.querySelectorAll(`[data-${side.toLowerCase()}k]`).forEach(b=>b.onclick=()=>{const k=b.getAttribute(`data-${side.toLowerCase()}k`),arr=side==="L"?T.give:T.want,w=side==="L"?"give":"want";
@@ -2876,10 +2903,13 @@ const LAUNCH_ISO=()=>new Date(window.TCG_LAUNCH&&launchLeft()<=0?window.TCG_LAUN
 let COLT=null,COL_OK=null,LASTCOL="";const COLS={};
 function colPayload(){ST.ft=(ST.ft||[]).filter(k=>ST.owned[k]&&CARDS[k]&&CARDS[k].r!=="S").slice(0,LIM.ft);
   const owned={};Object.entries(ST.owned).forEach(([k,n])=>{if(CARDS[k]&&CARDS[k].r!=="S")owned[k]=n;});
-  return {owned,fortrade:ST.ft,uniq:uniq(),myth:Object.keys(ST.owned).filter(k=>CARDS[k]&&["M","S"].includes(CARDS[k].r)).length,opened:ST.opened||0,ach:Object.keys(ST.ach||{}).length};}
+  return {owned,fortrade:ST.ft,uniq:uniq(),myth:Object.keys(ST.owned).filter(k=>CARDS[k]&&["M","S"].includes(CARDS[k].r)).length,opened:ST.opened||0,ach:Object.keys(ST.ach||{}).length,...(COL_ALB?{albums:(()=>{countDone();return (DONE_CACHE.se||0)+(DONE_CACHE.pl||0)+(DONE_CACHE.og||0);})()}:{})};}
+let COL_ALB=true;
 function queueCol(){if(!SX()||!MEID()||PREVIEW||!ST)return;if(COLT)return;COLT=setTimeout(()=>{COLT=null;pushCol();},20000);}
 async function pushCol(){if(!SX()||!MEID()||PREVIEW||!ST)return;const p=colPayload(),sig=JSON.stringify(p);if(sig===LASTCOL)return;
-  try{const {error}=await SX().from("tcg_collections").upsert({user_id:MEID(),...p,updated_at:new Date().toISOString()});if(error){COL_OK=false;return;}COL_OK=true;LASTCOL=sig;}catch(e){COL_OK=false;}}
+  try{let {error}=await SX().from("tcg_collections").upsert({user_id:MEID(),...p,updated_at:new Date().toISOString()});
+    if(error&&COL_ALB&&/albums/i.test(error.message||"")){COL_ALB=false;const q=colPayload();({error}=await SX().from("tcg_collections").upsert({user_id:MEID(),...q,updated_at:new Date().toISOString()}));} // colonne pas encore créée (update-30)
+    if(error){COL_OK=false;return;}COL_OK=true;LASTCOL=sig;}catch(e){COL_OK=false;}}
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")pushCol();});
 async function getCol(uid,fresh){if(!fresh&&COLS[uid]&&Date.now()-COLS[uid].t<60000)return COLS[uid].v;
   try{let {data,error}=await SX().from("tcg_collections").select("owned,fortrade,updated_at").eq("user_id",uid).maybeSingle();if(error){COL_OK=false;return null;}COL_OK=true;if(data&&data.updated_at<LAUNCH_ISO())data=null;COLS[uid]={t:Date.now(),v:data};return data;}catch(e){return null;}}
