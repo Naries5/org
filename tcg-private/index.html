@@ -1761,6 +1761,11 @@ $("#recycle-all").onclick=()=>{let n=0,v=0;Object.keys(ST.owned).forEach(k=>{con
   if(!n){toast("Aucun doublon à recycler");return;}toast(`${nf(n)} doublons recyclés : +${nf(v)} coquillages`);checkAll();renderCollection(true);};
 
 /* ---------- Détail d'une carte ---------- */
+function artBox(c,adm){return `<div class="aadm"><span>Image ${adm?"<small>admins</small>":"<small>ta participation</small>"}</span>
+        <label class="btn aadm-b">Choisir une image<input type="file" id="aadm-f" accept="image/*" hidden></label>
+        <button class="btn aadm-b" id="aadm-u">Coller un lien</button>${ART[c.k]&&(adm||ARTBY[c.k]===MEID())?`<button class="linkbtn" id="aadm-x">Remettre l'image d'origine</button>`:""}</div>
+      <p>Tu peux aussi glisser une image sur la carte, ou la coller avec Ctrl+V.${adm?` ${ART[c.k]?"Image changée.":"Image d'origine."}${c.t==="J"?" La nouvelle image sert aussi pour ses cartes de participation qui n'ont pas de photo de saison.":""}`:" C'est ta carte de participation : la nouvelle image s'affiche pour tous les joueurs. Format portrait 5:7, garde ton visage dans le haut."}</p>`;}
+
 function openCard(c){const P=D.players,S=D.seasons,O=D.orgs;const n=ST.owned[c.k]||0;let rows=[];
   if(c.t==="J"){const p=P[c.i],dt=p.det||{},r1=v=>Math.round(v||0);rows=[["Saisons",p.p],["Victoires",p.w],["Top 5",p.t],["Meilleure place",p.b?placeTxt(p.b):"–"],["Saisons sur 12 mois",p.r12||0]];
     if(p.hs)rows.push(["Saisons hostées",p.hs]);
@@ -1778,11 +1783,9 @@ function openCard(c){const P=D.players,S=D.seasons,O=D.orgs;const n=ST.owned[c.k
     <dl>${rows.map(([a,b])=>`<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl>
     ${CANEDIT?`<div class="radm">${c.r!=="S"?`<label><span>Rareté <small>admins</small></span><select id="radm">${["M","L","E","R","PC","C"].map(r=>`<option value="${r}" ${c.r===r?"selected":""}>${RAR[r][0]}${(c.base||c.r)===r?" (automatique)":""}</option>`).join("")}</select></label>`:""}
       ${c.pl!=null&&OPT_OK?`<p><button class="linkbtn" id="radm-out">Retirer ${esc(D.players[c.pl].n)} du TCG</button> (toutes ses cartes, pour tout le monde)</p>`:""}
-      <div class="aadm"><span>Image <small>admins</small></span>
-        <label class="btn aadm-b">Choisir une image<input type="file" id="aadm-f" accept="image/*" hidden></label>
-        <button class="btn aadm-b" id="aadm-u">Coller un lien</button>${ART[c.k]?`<button class="linkbtn" id="aadm-x">Remettre l'image d'origine</button>`:""}</div>
-      <p>Tu peux aussi glisser une image sur la carte, ou la coller avec Ctrl+V. ${ART[c.k]?"Image changée par un admin.":"Image d'origine."} ${c.t==="J"?"La nouvelle image sert aussi pour ses cartes de participation qui n'ont pas de photo de saison.":""}</p>
+${artBox(c,true)}
       ${c.r==="S"?"":c.base?`<p>Changée à la main. Automatiquement, elle serait ${RAR[c.base][0].toLowerCase()}. <button class="linkbtn" id="radm-x">Revenir à l'automatique</button></p>`:`<p>Rareté calculée automatiquement. Les changements s'appliquent pour tous les joueurs.</p>`}</div>`:""}
+    ${!CANEDIT&&canArt(c)?`<div class="radm">${artBox(c,false)}</div>`:""}
     <div class="acts">${n&&c.r!=="S"&&DB?`<button class="btn" id="sell1">Vendre au marché</button>`:""}${n>1?`<button class="btn" id="rec1">Recycler 1 doublon (+${RECYCLE[c.r]})</button>`:""}${alb.join("")}<button class="btn primary" id="dclose">Fermer</button></div></div>`;
   $("#dlg").hidden=false;$("#dclose").focus();
   $("#dclose").onclick=()=>$("#dlg").hidden=true;
@@ -1793,7 +1796,7 @@ function openCard(c){const P=D.players,S=D.seasons,O=D.orgs;const n=ST.owned[c.k
   const af=$("#aadm-f");if(af)af.onchange=()=>{const f=af.files[0];if(f)setArtFile(c,f);};
   const au=$("#aadm-u");if(au)au.onclick=()=>{const u=prompt("Lien de l'image (https://…)",ART[c.k]||"");if(u==null)return;if(!/^https:\/\/\S+$/.test(u.trim())){toast("Le lien doit commencer par https://");return;}setArt(c,u.trim());};
   const ax=$("#aadm-x");if(ax)ax.onclick=()=>setArt(c,null);
-  if(CANEDIT){const bx=$("#dbox"),dc=bx.querySelector(".card");bx.dataset.k=c.k;
+  if(canArt(c)){const bx=$("#dbox"),dc=bx.querySelector(".card");bx.dataset.k=c.k;
     if(dc&&!dc.querySelector(".dropx"))dc.insertAdjacentHTML("beforeend",`<div class="dropx"><b>Lâche l'image ici</b><span>Elle remplacera celle de la carte</span></div>`);}
   const ro=$("#radm-out");if(ro)ro.onclick=async()=>{const p=D.players[c.pl];ro.disabled=true;const {error}=await SX().from("tcg_optout").insert({player_id:p.id});
     if(error){toast("Le retrait n'a pas pu se faire");return;}OPT.add(p.id);$("#dlg").hidden=true;toast(`${p.n} est retiré du TCG`);applyOptOut();stashSync();};
@@ -1804,7 +1807,7 @@ function openCard(c){const P=D.players,S=D.seasons,O=D.orgs;const n=ST.owned[c.k
   card.addEventListener("pointerleave",()=>{card.style.transform="";});}
 $("#dlg").addEventListener("click",e=>{if(e.target.id==="dlg")$("#dlg").hidden=true;});
 /* Admins : glisser une image sur la carte (ou Ctrl+V) pour la changer */
-function dropCard(){const bx=$("#dbox");if(!CANEDIT||$("#dlg").hidden||!bx.dataset.k||!bx.querySelector("#aadm-f"))return null;return CARDS[bx.dataset.k]||null;}
+function dropCard(){const bx=$("#dbox");if($("#dlg").hidden||!bx.dataset.k||!bx.querySelector("#aadm-f"))return null;return CARDS[bx.dataset.k]||null;}
 const hasImg=e=>[...(e.dataTransfer&&e.dataTransfer.items||[])].some(i=>i.kind==="file"&&/^image\//.test(i.type)||i.type==="text/uri-list");
 ["dragenter","dragover"].forEach(ev=>document.addEventListener(ev,e=>{if(!dropCard())return;e.preventDefault();e.dataTransfer.dropEffect="copy";$("#dbox").classList.add("dropping");}));
 document.addEventListener("dragleave",e=>{if(!e.relatedTarget)$("#dbox").classList.remove("dropping");});
@@ -2317,24 +2320,28 @@ async function loadRoles(){const sb=SX();if(!sb)return;
 async function loadOverrides(){const sb=SX();if(!sb)return;
   try{const {data,error}=await sb.from("tcg_rarity").select("card,rarity,updated_at");if(!error&&data){OVR={};data.forEach(r=>{if(Date.parse(r.updated_at)>=OVR_SINCE)OVR[r.card]=r.rarity;});}}catch(e){}}
 const OVR_SINCE=Date.parse("2026-11-21T09:15:00Z");
-/* Images choisies par les admins (table tcg_art, update-24) */
+/* Images choisies par les admins (table tcg_art, update-24) ; les joueurs pour leurs participations (update-25) */
+let MYPIDS=new Set(),ARTBY={};
+async function loadMine(){const sb=SX(),id=MEID();if(!sb||!id)return;
+  try{const {data}=await sb.from("players").select("id").eq("data->>ownerUid",id);MYPIDS=new Set((data||[]).map(r=>r.id));}catch(e){}}
+function canArt(c){if(!c)return false;if(CANEDIT)return true;return c.t==="P"&&!!D.parts[c.i]&&MYPIDS.has(D.players[D.parts[c.i][0]].id);}
 async function loadArt(){const sb=SX();if(!sb)return;
-  try{const {data,error}=await sb.from("tcg_art").select("card,url");if(!error&&data){ART={};data.forEach(r=>{if(/^https:\/\//.test(r.url))ART[r.card]=r.url;});}}catch(e){}}
+  try{const {data,error}=await sb.from("tcg_art").select("card,url,updated_by");if(!error&&data){ART={};ARTBY={};data.forEach(r=>{if(/^https:\/\//.test(r.url)){ART[r.card]=r.url;ARTBY[r.card]=r.updated_by;}});}}catch(e){}}
 function shrinkImage(file,max){return new Promise((ok,ko)=>{const u=URL.createObjectURL(file),i=new Image();
   i.onload=()=>{const k=Math.min(1,max/Math.max(i.width,i.height)),w=Math.round(i.width*k),h=Math.round(i.height*k),cv=document.createElement("canvas");cv.width=w;cv.height=h;
     cv.getContext("2d").drawImage(i,0,0,w,h);URL.revokeObjectURL(u);cv.toBlob(b=>b?ok(b):ko(new Error("image")),"image/webp",.88);};
   i.onerror=()=>{URL.revokeObjectURL(u);ko(new Error("image"));};i.src=u;});}
-async function setArtFile(c,f){const sb=SX();if(!sb||!CANEDIT)return;
+async function setArtFile(c,f){const sb=SX();if(!sb||!canArt(c))return;
   if(!/^image\//.test(f.type)){toast("Ce fichier n'est pas une image");return;}
   toast("Envoi de l'image…");
   try{const b=await shrinkImage(f,900);const path=`tcg/${MEID()||"admin"}/${c.k.replace(/[^a-z0-9]+/gi,"-")}-${Date.now().toString(36)}.webp`;
     const {error}=await sb.storage.from("images").upload(path,b,{contentType:"image/webp",upsert:false});if(error)throw error;
     await setArt(c,sb.storage.from("images").getPublicUrl(path).data.publicUrl);}
   catch(e){console.warn(e);toast("L'image n'a pas pu être envoyée");}}
-async function setArt(c,url){const sb=SX();if(!sb||!CANEDIT)return;
+async function setArt(c,url){const sb=SX();if(!sb||!canArt(c))return;
   const {error}=await(url?sb.from("tcg_art").upsert({card:c.k,url,updated_at:new Date().toISOString()}):sb.from("tcg_art").delete().eq("card",c.k));
-  if(error){toast(/relation|does not exist|schema cache/i.test(error.message||"")?"Il faut d'abord lancer update-24-tcg-images.sql dans Supabase":"L'image n'a pas pu être changée");return;}
-  if(url)ART[c.k]=url;else delete ART[c.k];
+  if(error){toast(/relation|does not exist|schema cache/i.test(error.message||"")?(CANEDIT?"Il faut d'abord lancer update-24-tcg-images.sql dans Supabase":"Le changement d'image n'est pas encore ouvert"):(!CANEDIT&&/row-level|policy|permission/i.test(error.message||"")?"Le changement d'image n'est pas encore ouvert":"L'image n'a pas pu être changée"));return;}
+  if(url){ART[c.k]=url;ARTBY[c.k]=MEID();}else{delete ART[c.k];delete ARTBY[c.k];}
   route();openCard(CARDS[c.k]||c);toast(url?`Nouvelle image pour ${label(c)}`:`${label(c)} : image d'origine remise`);}
 async function setRarity(c,r){const sb=SX();if(!sb||!CANEDIT)return;const auto=c.base||c.r;
   const q=r===auto?sb.from("tcg_rarity").delete().eq("card",c.k):sb.from("tcg_rarity").upsert({card:c.k,rarity:r,updated_at:new Date().toISOString()});
@@ -2486,7 +2493,7 @@ function renderStore(){const b=$("#store");if(!b)return;
 /* ---------- Démarrage ---------- */
 (async()=>{
   try{if(window.TCG_HOSTED){try{D=await liveData();}catch(e){console.warn("données en direct indisponibles",e);D=null;}}
-    if(!D)D=await (await tget("cards.json")).json();prepD(D);orgFallback();await Promise.all([loadOverrides(),loadRoles(),loadOptOut(),loadArt()]);}catch(e){document.body.insertAdjacentHTML("afterbegin",`<p style="padding:20px">Les cartes n'ont pas pu être chargées. Recharge la page.</p>`);return;}
+    if(!D)D=await (await tget("cards.json")).json();prepD(D);orgFallback();await Promise.all([loadOverrides(),loadRoles(),loadOptOut(),loadArt(),loadMine()]);}catch(e){document.body.insertAdjacentHTML("afterbegin",`<p style="padding:20px">Les cartes n'ont pas pu être chargées. Recharge la page.</p>`);return;}
   $(".tl-emb").innerHTML=TORCH;$("#me-btn").onclick=e=>{e.stopPropagation();const d=$("#me-drop");d.hidden=!d.hidden;$("#me-btn").setAttribute("aria-expanded",String(!d.hidden));};
   document.addEventListener("click",e=>{const d=$("#me-drop");if(d&&!d.hidden&&!e.target.closest(".me-menu"))d.hidden=true;});
   $("#w-mis").onclick=()=>{location.hash="boosters";setTimeout(()=>{const m=$("#missions");if(m)m.scrollIntoView({behavior:reduced()?"auto":"smooth",block:"center"});},60);};if(PREVIEW)ST=fresh();CARDS=build();indexes();route();
