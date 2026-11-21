@@ -2171,7 +2171,7 @@ async function renderBoard(){const tb=$("#board"),B=BOARDS.find(b=>b[0]===BK)||B
     else{await pushCol();const {data,error}=await SX().from("tcg_collections").select("user_id,uniq,myth,opened,ach"+(K==="albums"?",albums":"")).gt("uniq",0).gte("updated_at",LAUNCH_ISO()).order(K,{ascending:false}).order("uniq",{ascending:false}).limit(100);
       if(error){tb.innerHTML=tabs+`<p class="muted">${K==="albums"?`Le classement des albums sera disponible une fois <b>update-30-tcg-albums.sql</b> lancé dans Supabase.`:`Le classement sera disponible une fois <b>update-22-tcg-collections.sql</b> lancé dans Supabase.`}</p>`;bind();return;}
       rows=(data||[]).map(r=>({id:r.user_id,uniq:r.uniq,myth:r.myth,opened:r.opened,ach:r.ach,albums:r.albums||0}));
-      if(rows.length){const {data:pr}=await SX().from("profiles").select("id,discord_name,avatar_url").in("id",rows.map(r=>r.id));(pr||[]).forEach(p=>ps[p.id]={name:p.discord_name,avatar:p.avatar_url});}}
+      if(rows.length){const {data:pr}=await SX().from("profiles").select("id,discord_name,avatar_url").in("id",rows.map(r=>r.id));await siteNames(pr);(pr||[]).forEach(p=>ps[p.id]={name:p.discord_name,avatar:p.avatar_url});}}
     rows.sort((a,b)=>(b[K]||0)-(a[K]||0)||(b.uniq||0)-(a.uniq||0));
     const nm=r=>(ps[r.id]&&ps[r.id].name)||"Joueur",av=r=>{const p=ps[r.id]||{},u=p.avatar||p.image||p.picture;return u?`<img src="${esc(u)}" alt="">`:`<span>${esc(nm(r).slice(0,1).toUpperCase())}</span>`;};
     if(!rows.length){tb.innerHTML=tabs+`<p class="muted">Personne n'est encore classé.</p>`;bind();return;}
@@ -2409,7 +2409,7 @@ async function loadChat(full){const sb=SX();if(!sb)return false;
   if(error){CHAT_OK=false;return false;}CHAT_OK=true;
   if(inc){const have=new Set(CHAT.map(m=>m.id)),nw=(data||[]).filter(m=>!have.has(m.id));if(nw.length)CHAT=CHAT.concat(nw).sort((a,b)=>a.id-b.id).slice(-120);}else{CHAT_FULL=Date.now();CHAT=(data||[]).sort((a,b)=>a.id-b.id);}
   const miss=[...new Set(CHAT.map(m=>m.user_id))].filter(u=>!PCACHE[u]);
-  if(miss.length){const {data:pr}=await sb.from("profiles").select("id,discord_name,avatar_url").in("id",miss);(pr||[]).forEach(p=>PCACHE[p.id]={name:p.discord_name||"Joueur",av:p.avatar_url||""});}
+  if(miss.length){const {data:pr}=await sb.from("profiles").select("id,discord_name,avatar_url").in("id",miss);await siteNames(pr);(pr||[]).forEach(p=>PCACHE[p.id]={name:p.discord_name||"Joueur",av:p.avatar_url||""});}
   return true;}
 function chatTime(t){const d=new Date(t),td=new Date();const hm=d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});return d.toDateString()===td.toDateString()?hm:d.toLocaleDateString("fr-FR",{day:"numeric",month:"short"})+" "+hm;}
 function drawChat(){const l=$("#ch-list");if(!l)return;const atEnd=l.scrollHeight-l.scrollTop-l.clientHeight<60;const me=MU();
@@ -2453,6 +2453,12 @@ function initChat(){if(!SX()||!MU()||PREVIEW)return;$("#chat-fab").hidden=false;
 const SX=()=>window.TCG_SB||null,MEID=()=>window.TCG_UID||null;
 let ME={name:"Toi",av:"",pi:null,ok:false},FR=[],TR=[],TR_OK=null,TRTAB="in",FRT=null;
 const PCACHE={};
+/* Pseudo du site en priorité (fiche joueur liée au compte), sinon le nom Discord */
+const SITEN={};
+async function siteNames(rows){rows=(rows||[]).filter(r=>r&&r.id);const need=rows.map(r=>r.id).filter(u=>!(u in SITEN));
+  if(need.length&&SX()){for(let i=0;i<need.length;i+=100){const part=need.slice(i,i+100);part.forEach(u=>SITEN[u]=null);
+    try{const {data}=await SX().from("players").select("pseudo:data->>pseudo,owner:data->>ownerUid").in("data->>ownerUid",part);(data||[]).forEach(r=>{if(r.owner&&r.pseudo)SITEN[r.owner]=r.pseudo;});}catch(e){}}}
+  rows.forEach(r=>{if(SITEN[r.id])r.discord_name=SITEN[r.id];});return rows;}
 function avHTML(u,n,cls){return u?`<img class="${cls||""}" src="${esc(u)}" alt="" loading="lazy">`:`<span class="${cls||""} avi">${esc((n||"?").slice(0,1).toUpperCase())}</span>`;}
 function pIdx(pseudo){if(!pseudo)return null;const n=pseudo.toLowerCase();const i=D.players.findIndex(p=>p.n.toLowerCase()===n);return i<0?null:i;}
 function playerCard(i){if(i==null)return null;let c=CARDS.find(c=>c.t==="J"&&c.i===i);
@@ -2461,8 +2467,7 @@ function ownCardOwned(){if(ME.pi==null)return false;return (BY_PL[ME.pi]||[]).so
 async function loadMe(){const sb=SX(),id=MEID();
   if(sb&&id){try{const [pr,pl]=await Promise.all([sb.from("profiles").select("discord_name,avatar_url").eq("id",id).maybeSingle(),
       sb.from("players").select("id,pseudo:data->>pseudo").eq("data->>ownerUid",id).limit(1)]);
-    const p=pr.data||{};ME.name=p.discord_name||"Toi";ME.av=p.avatar_url||"";ME_NAME=ME.name;
-    const row=(pl.data||[])[0];if(row){const j=D.players.findIndex(p=>p.id===row.id);ME.pi=j>=0?j:pIdx(row.pseudo);ME.pid=row.id;}ME.ok=true;}catch(e){console.warn(e);}}
+    const p=pr.data||{};const row=(pl.data||[])[0];ME.name=(row&&row.pseudo)||p.discord_name||"Toi";ME.av=p.avatar_url||"";ME_NAME=ME.name;if(row&&row.pseudo)SITEN[id]=row.pseudo;if(row){const j=D.players.findIndex(p=>p.id===row.id);ME.pi=j>=0?j:pIdx(row.pseudo);ME.pid=row.id;}ME.ok=true;}catch(e){console.warn(e);}}
   else{ME.name=ME_NAME&&ME_NAME!=="Joueur"?ME_NAME:"Toi";ME.pi=pIdx(ME_NAME);}
   $("#me-av").innerHTML=avHTML(ME.av,ME.name,"");$("#me-n").textContent=ME.name;}
 async function loadFriends(){const sb=SX(),id=MEID();FR=[];if(!sb||!id)return;
@@ -2470,7 +2475,7 @@ async function loadFriends(){const sb=SX(),id=MEID();FR=[];if(!sb||!id)return;
   const ids=(data||[]).map(f=>f.requester===id?f.addressee:f.requester);if(!ids.length)return;
   const [pr,pl]=await Promise.all([sb.from("profiles").select("id,discord_name,avatar_url").in("id",ids),sb.from("players").select("id,pseudo:data->>pseudo,owner:data->>ownerUid").in("data->>ownerUid",ids)]);
   const pls={},pid={};(pl.data||[]).forEach(r=>{pls[r.owner]=r.pseudo;pid[r.owner]=r.id;});
-  FR=ids.map(u=>{const p=(pr.data||[]).find(x=>x.id===u)||{};let pi=D.players.findIndex(p=>p.id===pid[u]);if(pi<0)pi=pIdx(pls[u]);PCACHE[u]={name:p.discord_name||"Ami",av:p.avatar_url||""};return {id:u,name:p.discord_name||"Ami",av:p.avatar_url||"",pi,card:playerCard(pi)};})
+  FR=ids.map(u=>{const p=(pr.data||[]).find(x=>x.id===u)||{};let pi=D.players.findIndex(p=>p.id===pid[u]);if(pi<0)pi=pIdx(pls[u]);const nm=pls[u]||p.discord_name||"Ami";SITEN[u]=pls[u]||null;PCACHE[u]={name:nm,av:p.avatar_url||""};return {id:u,name:nm,av:p.avatar_url||"",pi,card:playerCard(pi)};})
     .sort((a,b)=>a.name.localeCompare(b.name));}
 async function loadTrades(){const sb=SX(),id=MEID();TR=[];if(!sb||!id){TR_OK=false;return;}
   const {data,error}=await sb.from("tcg_trades").select("*").or(`sender.eq.${id},recipient.eq.${id}`).order("created_at",{ascending:false}).limit(40);
@@ -2498,7 +2503,7 @@ function replayAnswers(){return;const me=MEID();let ch=false;ST.tr.ans=ST.tr.ans
     t.give.forEach(k=>giveCard(k));ST.tr.ans[t.id]=1;ch=true;}
   if(ch){commitNow();wallet();}}
 async function syncSocial(){try{await loadTrades();const miss=[...new Set(TR.map(t=>t.sender===MEID()?t.recipient:t.sender))].filter(u=>!PCACHE[u]);
-    if(miss.length){const {data}=await SX().from("profiles").select("id,discord_name,avatar_url").in("id",miss);(data||[]).forEach(p=>PCACHE[p.id]={name:p.discord_name||"Joueur",av:p.avatar_url||""});}
+    if(miss.length){const {data}=await SX().from("profiles").select("id,discord_name,avatar_url").in("id",miss);await siteNames(data);(data||[]).forEach(p=>PCACHE[p.id]={name:p.discord_name||"Joueur",av:p.avatar_url||""});}
     await settleTrades();badgeTrades();}catch(e){console.warn(e);}}
 function badgeTrades(){const n=TR.filter(t=>t.recipient===MEID()&&t.status==="pending").length;const d=$("#t-amis");if(d){d.hidden=!n;d.textContent=n||"";}}
 // --- profil
@@ -2891,7 +2896,7 @@ async function resetPicker(){const sb=SX();if(!sb||!OWNER)return;$("#me-drop").h
   const {data,error}=await sb.from("tcg_collections").select("user_id,uniq,updated_at").order("updated_at",{ascending:false}).limit(500);
   if(error){toast("La liste des joueurs n'a pas pu être chargée");return;}
   const ids=(data||[]).map(r=>r.user_id),names={};
-  for(let i=0;i<ids.length;i+=100){const {data:pr}=await sb.from("profiles").select("id,discord_name,avatar_url").in("id",ids.slice(i,i+100));(pr||[]).forEach(p=>{names[p.id]=p;PCACHE[p.id]={name:p.discord_name||"Joueur",av:p.avatar_url||""};});}
+  for(let i=0;i<ids.length;i+=100){const {data:pr}=await sb.from("profiles").select("id,discord_name,avatar_url").in("id",ids.slice(i,i+100));await siteNames(pr);(pr||[]).forEach(p=>{names[p.id]=p;PCACHE[p.id]={name:p.discord_name||"Joueur",av:p.avatar_url||""};});}
   const rows=(data||[]).map(r=>({id:r.user_id,n:(names[r.user_id]||{}).discord_name||"Joueur",av:(names[r.user_id]||{}).avatar_url||"",u:r.uniq||0}));
   dlgOpen(`<div class="mk-pick"><div class="mk-ph"><h2>Remettre un joueur à zéro</h2><input id="rp-q" type="search" placeholder="Chercher un pseudo…" aria-label="Chercher"><button class="btn" id="rp-x">Fermer</button></div>
     <p class="muted pk-intro">Les joueurs qui ont joué au TCG, du plus récent au plus ancien.</p><div class="rp-l" id="rp-l"></div></div>`,true);
@@ -2928,7 +2933,7 @@ async function loadBinder(){const sb=SX(),me=MEID();FT=[];if(!sb)return false;
   const {data,error}=await sb.from("tcg_collections").select("user_id,fortrade,updated_at").neq("fortrade","{}").gte("updated_at",LAUNCH_ISO()).order("updated_at",{ascending:false}).limit(300);
   if(error){COL_OK=false;return false;}COL_OK=true;
   const ids=[...new Set((data||[]).map(r=>r.user_id))];
-  if(ids.length){const {data:pr}=await sb.from("profiles").select("id,discord_name,avatar_url").in("id",ids);(pr||[]).forEach(p=>{FTN[p.id]={name:p.discord_name||"Joueur",av:p.avatar_url||""};PCACHE[p.id]=FTN[p.id];});}
+  if(ids.length){const {data:pr}=await sb.from("profiles").select("id,discord_name,avatar_url").in("id",ids);await siteNames(pr);(pr||[]).forEach(p=>{FTN[p.id]={name:p.discord_name||"Joueur",av:p.avatar_url||""};PCACHE[p.id]=FTN[p.id];});}
   (data||[]).forEach(r=>(r.fortrade||[]).forEach(k=>{if(CARDS[k])FT.push({k,u:r.user_id,mine:r.user_id===me});}));return true;}
 function haveTag(n,who){return n?`<span class="pk-note have">${who} ${n>1?`×${n}`:""}</span>`:`<span class="pk-note nope">${who==="Tu l'as"?"Tu ne l'as pas":who==="Il l'a"?"Il ne l'a pas":"—"}</span>`;}
 async function renderBinder(){const g=$("#mk-grid");const sb=SX();
@@ -3010,7 +3015,7 @@ async function loadDrops(){const sb=SX();if(!sb)return;
   try{const {data,error}=await sb.from("tcg_drops").select("user_id,card,rarity,created_at").order("created_at",{ascending:false}).limit(20);
     if(error){DROPS=null;return;}DROPS=(data||[]).filter(d=>CARDS[d.card]&&(d.rarity==='M'||d.rarity==='L')).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));DROPS_AT=Date.now();
     const miss=[...new Set(DROPS.map(d=>d.user_id))].filter(u=>!PCACHE[u]);
-    if(miss.length){const {data:pr}=await sb.from("profiles").select("id,discord_name,avatar_url").in("id",miss);(pr||[]).forEach(p=>PCACHE[p.id]={name:p.discord_name||"Joueur",av:p.avatar_url||""});}}catch(e){DROPS=null;}}
+    if(miss.length){const {data:pr}=await sb.from("profiles").select("id,discord_name,avatar_url").in("id",miss);await siteNames(pr);(pr||[]).forEach(p=>PCACHE[p.id]={name:p.discord_name||"Joueur",av:p.avatar_url||""});}}catch(e){DROPS=null;}}
 function ago(t){const d=(Date.now()+(window.TCG_OFFSET||0)-new Date(t))/1000;if(d<60)return "à l'instant";if(d<3600)return `il y a ${Math.floor(d/60)} min`;if(d<86400)return `il y a ${Math.floor(d/3600)} h`;return `il y a ${Math.floor(d/86400)} j`;}
 function drawDrops(){const b=$("#drops");if(!b)return;
   if(!DROPS){const st=OWNER||window.TCG_STAFF||CANEDIT;b.hidden=!st;if(st)b.innerHTML=`<h3 class="ph">Derniers gros tirages</h3><p class="muted" style="margin:0">Pas encore activé : il faut lancer <b>update-27-tcg-drops.sql</b> dans Supabase. (Message visible par les admins seulement.)</p>`;return;}b.hidden=false;
