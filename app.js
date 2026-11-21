@@ -284,7 +284,11 @@ function bust(){try{const b=Number(localStorage.getItem("oc-bust")||0);return Da
 function markBust(){try{localStorage.setItem("oc-bust",String(Date.now()));}catch(e){}}
 async function fetchPublic(table){let out=[],from=0;const b=bust();
   for(let n=0;n<200;n++){const r=await fetch("/api/data?t="+table+"&from="+from+(b?"&b="+b:""));if(!r.ok)throw new Error("Données indisponibles ("+r.status+")");const j=await r.json();out=out.concat(j.rows||[]);if(j.next==null)break;from=j.next;}return out;}
-async function fetchAll(table){if(!DIRECT&&PATHMODE){try{return await fetchPublic(table);}catch(e){console.warn("cache indisponible, lecture directe",e);}}let out=[],from=0;for(;;){const {data,error}=await sb.from(table).select("id,data").range(from,from+999);if(error)throw sbErr(error);out=out.concat(data);if(data.length<1000)break;from+=1000;}return out;}
+async function fetchAll(table){if(!DIRECT&&PATHMODE){
+    // Les visiteurs ne lisent JAMAIS la base directement : si le cache ne répond pas, on réessaie plus tard.
+    // (Avant, chaque visiteur se rabattait sur une lecture complète de la base, ce qui l'achevait quand elle ramait.)
+    let last;for(const w of [0,4000,12000,30000]){if(w)await new Promise(r=>setTimeout(r,w));try{return await fetchPublic(table);}catch(e){last=e;console.warn("cache indisponible, nouvel essai",e);}}
+    throw last;}let out=[],from=0;for(;;){const {data,error}=await sb.from(table).select("id,data").range(from,from+999);if(error)throw sbErr(error);out=out.concat(data);if(data.length<1000)break;from+=1000;}return out;}
 // En mode public, les images arrivent sous forme de liens courts (/api/blob, /api/st).
 // Avant d'écrire, on remet les vraies valeurs pour ne jamais enregistrer ces liens dans la base.
 async function restoreRefs(d){const refs=new Map();
