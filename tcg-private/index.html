@@ -2641,7 +2641,8 @@ async function loadDrops(){const sb=SX();if(!sb)return;
     const miss=[...new Set(DROPS.map(d=>d.user_id))].filter(u=>!PCACHE[u]);
     if(miss.length){const {data:pr}=await sb.from("profiles").select("id,discord_name,avatar_url").in("id",miss);(pr||[]).forEach(p=>PCACHE[p.id]={name:p.discord_name||"Joueur",av:p.avatar_url||""});}}catch(e){DROPS=null;}}
 function ago(t){const d=(Date.now()+(window.TCG_OFFSET||0)-new Date(t))/1000;if(d<60)return "à l'instant";if(d<3600)return `il y a ${Math.floor(d/60)} min`;if(d<86400)return `il y a ${Math.floor(d/3600)} h`;return `il y a ${Math.floor(d/86400)} j`;}
-function drawDrops(){const b=$("#drops");if(!b)return;if(!DROPS){b.hidden=true;return;}b.hidden=false;
+function drawDrops(){const b=$("#drops");if(!b)return;
+  if(!DROPS){const st=OWNER||window.TCG_STAFF||CANEDIT;b.hidden=!st;if(st)b.innerHTML=`<h3 class="ph">Derniers gros tirages</h3><p class="muted" style="margin:0">Pas encore activé : il faut lancer <b>update-27-tcg-drops.sql</b> dans Supabase. (Message visible par les admins seulement.)</p>`;return;}b.hidden=false;
   const list=DROPS.slice(0,15);
   b.innerHTML=`<h3 class="ph">Derniers gros tirages</h3><p class="note" style="margin:0 0 10px">Les mythiques et légendaires sortis des boosters des joueurs.</p>
     ${list.length?`<ul class="dr-l">${list.map(d=>{const c=CARDS[d.card],me=d.user_id===MEID(),who=me?"Toi":(PCACHE[d.user_id]||{}).name||"Un joueur";
