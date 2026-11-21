@@ -922,6 +922,14 @@ body.pre .tabs,body.pre .wal,body.pre .me-menu{display:none!important}
 .oo p{margin:8px 0 0;color:#cfc8c0}.oo .acts{margin-top:14px}
 .pf-me #pf-opt .oo{margin:0 0 20px;padding:16px}.pf-me #pf-opt .h3{font-size:1rem}
 .pre-list-h{margin:0 0 6px}
+
+.pk-note{position:absolute;z-index:6;left:50%;bottom:-11px;transform:translateX(-50%);white-space:nowrap;font-family:var(--f-mono);font-size:.7rem;padding:3px 9px;border-radius:999px;border:1px solid var(--line);background:var(--bg)}
+.pk-note.have{color:#6fd39a;border-color:rgba(111,211,154,.45)}.pk-note.nope{color:var(--yel);border-color:rgba(242,201,76,.5)}.pk-note.warn{color:#f2a14c;border-color:rgba(242,161,76,.45)}
+.cwrap.noted{margin-bottom:14px}.cwrap.noted .cnt{bottom:auto;top:-8px;z-index:7}
+.mk-i .pk-note{position:static;transform:none;align-self:flex-start}
+.pk-intro{margin:-6px 0 10px}
+.bd-top{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.bd-u{display:flex;align-items:center;gap:8px}
 </style>
 </head>
 <body>
@@ -1007,7 +1015,7 @@ body.pre .tabs,body.pre .wal,body.pre .me-menu{display:none!important}
     </section>
     <section class="view" id="v-marche" hidden>
       <h1 class="h">Marché</h1>
-      <p class="lede">Achète et vends des cartes aux autres joueurs, en vente directe ou aux enchères. Une taxe de 5 % est prélevée sur chaque vente. Les cartes secrètes ne se vendent pas.</p>
+      <p class="lede" id="mk-lede">Échange tes cartes avec les autres joueurs : propose tes doublons dans « À l'échange » et regarde ce que les autres proposent. Les cartes secrètes ne s'échangent pas.</p>
       <div class="mk-bar"><div class="seg ysel" id="mk-tabs"></div><button class="btn primary" id="mk-sell">Vendre une carte</button></div>
       <div class="filters mk-f">
         <input id="mk-q" type="search" placeholder="Chercher un joueur, une ORG, une saison…" autocomplete="off" aria-label="Chercher">
@@ -1208,7 +1216,7 @@ function fresh(){return {v:1,kv:3,lr:(window.TCG_LAUNCH&&launchLeft()<=0)?1:0,st
   inv:{gold:0,sceau:0},daily:{date:"",day:0},mis:{date:"",open:0,recycle:0,rare:0,done:[],bonus:false},ach:{},claimed:{},firsts:{}};}
 function tick(){const now=Date.now();if(ST.stock>=MAXSTOCK){ST.last=now;return;}
   const n=Math.floor((now-ST.last)/CHARGE);if(n>0){ST.stock=Math.min(MAXSTOCK,ST.stock+n);ST.last=ST.stock>=MAXSTOCK?now:ST.last+n*CHARGE;save();}}
-function save(){dirty=true;clearTimeout(saveT);saveT=setTimeout(flush,700);}
+function save(){dirty=true;clearTimeout(saveT);saveT=setTimeout(flush,700);if(typeof queueCol==="function")queueCol();}
 async function flush(){if(!dirty)return;if(saving){setTimeout(flush,800);return;}dirty=false;const data=JSON.parse(JSON.stringify(ST));
   try{localStorage.setItem("oc-tcg-state",JSON.stringify(data));}catch(e){}
   if(DB&&UID){saving=true;try{await DB.collection("data/users/"+UID).doc("tcg").set(data);}catch(e){console.warn(e);}saving=false;}
@@ -1684,16 +1692,19 @@ function pushBoard(){if(!DB||!UID)return;clearTimeout(BOARD_T);BOARD_T=setTimeou
   const row={uniq:uniq(),opened:ST.opened,myth:Object.keys(ST.owned).filter(k=>["M","S"].includes(CARDS[k].r)).length,ach:Object.keys(ST.ach).length,at:Date.now()};
   try{await DB.collection("board").doc(UID).set(row);}catch(e){}},1500);}
 async function renderBoard(){const tb=$("#board");tb.innerHTML=`<p class="muted">Chargement…</p>`;
-  if(!DB){tb.innerHTML=`<p class="muted">Le classement partagé n'est pas disponible dans cette vue. Ta progression est gardée dans ce navigateur.</p>`;return;}
-  try{await flush();const snap=await DB.collection("board").orderBy("uniq","desc").limit(100).get();
-    const rows=snap.docs.map(d=>({id:d.id,...d.data()}));
-    const ps=USER?await USER.profiles(rows.map(r=>r.id)):{};
+  if(!DB&&!SX()){tb.innerHTML=`<p class="muted">Le classement partagé n'est pas disponible dans cette vue. Ta progression est gardée dans ce navigateur.</p>`;return;}
+  try{await flush();let rows,ps={};const ME_ID=DB?UID:MEID();
+    if(DB){const snap=await DB.collection("board").orderBy("uniq","desc").limit(100).get();rows=snap.docs.map(d=>({id:d.id,...d.data()}));ps=USER?await USER.profiles(rows.map(r=>r.id)):{};}
+    else{await pushCol();const {data,error}=await SX().from("tcg_collections").select("user_id,uniq,myth,opened,ach").gt("uniq",0).order("uniq",{ascending:false}).limit(100);
+      if(error){tb.innerHTML=`<p class="muted">Le classement sera disponible une fois <b>update-22-tcg-collections.sql</b> lancé dans Supabase.</p>`;return;}
+      rows=(data||[]).map(r=>({id:r.user_id,uniq:r.uniq,myth:r.myth,opened:r.opened,ach:r.ach}));
+      if(rows.length){const {data:pr}=await SX().from("profiles").select("id,discord_name,avatar_url").in("id",rows.map(r=>r.id));(pr||[]).forEach(p=>ps[p.id]={name:p.discord_name,avatar:p.avatar_url});}}
     const nm=r=>(ps[r.id]&&ps[r.id].name)||"Joueur",av=r=>{const p=ps[r.id]||{},u=p.avatar||p.image||p.picture;return u?`<img src="${esc(u)}" alt="">`:`<span>${esc(nm(r).slice(0,1).toUpperCase())}</span>`;};
     if(!rows.length){tb.innerHTML=`<p class="muted">Personne n'est encore classé.</p>`;return;}
-    const me=rows.findIndex(r=>r.id===UID);
+    const me=rows.findIndex(r=>r.id===ME_ID);
     const pod=[1,0,2].filter(i=>rows[i]).map(i=>{const r=rows[i];return `<div class="pod p${i+1}"><div class="pav">${av(r)}</div><b class="pn">${esc(nm(r))}</b><small>${nf(r.myth||0)} mythique${(r.myth||0)>1?"s":""} et secrète${(r.myth||0)>1?"s":""}</small>
       <div class="pblock"><i class="prk">${i+1}</i><strong>${nf(r.uniq||0)}</strong><span>cartes</span></div></div>`;}).join("");
-    const row=(r,i)=>`<div class="br${r.id===UID?" me":""}"><span class="brn">${i+1}</span><span class="bav">${av(r)}</span><span class="bname">${esc(nm(r))}${r.id===UID?` <i class="toi">toi</i>`:""}<small>${nf(r.opened||0)} boosters · ${nf(r.ach||0)} succès</small></span><span class="bm">${nf(r.myth||0)}<small>myth.</small></span><span class="bs2"><strong>${nf(r.uniq||0)}</strong><small>cartes</small></span></div>`;
+    const row=(r,i)=>`<div class="br${r.id===ME_ID?" me":""}"><span class="brn">${i+1}</span><span class="bav">${av(r)}</span><span class="bname">${esc(nm(r))}${r.id===ME_ID?` <i class="toi">toi</i>`:""}<small>${nf(r.opened||0)} boosters · ${nf(r.ach||0)} succès</small></span><span class="bm">${nf(r.myth||0)}<small>myth.</small></span><span class="bs2"><strong>${nf(r.uniq||0)}</strong><small>cartes</small></span></div>`;
     tb.innerHTML=(me>=0?`<div class="mebar"><span class="bav">${av(rows[me])}</span><div><small>Toi</small><b>${me+1}${me?"e":"er"} sur ${rows.length}</b></div><span class="muted">${me<3?"Tu es sur le podium":`à ${nf((rows[2].uniq||0)-(rows[me].uniq||0))} cartes du podium`}</span><strong>${nf(rows[me].uniq||0)}<small>cartes</small></strong></div>`:"")+
       `<div class="podium stg">${pod}</div><div class="blist stg">${rows.slice(3).map((r,i)=>row(r,i+3)).join("")}</div>`;}
   catch(e){tb.innerHTML=`<p class="muted">Le classement n'a pas pu être chargé.</p>`;}}
@@ -1750,10 +1761,14 @@ function mkTile(L){const c=CARDS[L.k],mine=L.seller===UID,open=mkOpen(L),auc=L.m
       ${act}</div></div>`;}
 async function renderMarket(fetch){const g=$("#mk-grid");
   if(!$("#mk-r").dataset.ok){$("#mk-r").insertAdjacentHTML("beforeend",LADDER.filter(r=>r!=="S").reverse().map(r=>`<option value="${r}">${RAR[r][0]}</option>`).join(""));$("#mk-r").dataset.ok=1;}
-  if(!DB){$("#mk-tabs").innerHTML="";$("#mk-sell").hidden=true;g.innerHTML=`<p class="muted">Le marché a besoin de la version partagée du TCG : il n'est pas disponible dans cette vue.</p>`;return;}
+  if(!DB&&MKTAB!=="trade")MKTAB="trade";
+  const tabs=[...(DB?[["all","En vente"]]:[]),["trade","À l'échange"],...(DB?[["mine","Mes ventes"],["bids","Mes enchères"]]:[])];
+  if(MKTAB==="trade"){$("#mk-tabs").innerHTML=tabs.map(([k,t])=>`<button aria-pressed="${MKTAB===k}" data-mt="${k}">${t}</button>`).join("");
+    $("#mk-tabs").querySelectorAll("[data-mt]").forEach(b=>b.onclick=()=>{MKTAB=b.dataset.mt;$("#mk-m").hidden=false;$("#mk-s").hidden=false;$("#mk-sell").textContent="Vendre une carte";renderMarket(true);});
+    return renderBinder();}
   if(fetch){if(!MK.length)g.innerHTML=`<p class="muted">Chargement du marché…</p>`;try{await syncMarket();}catch(e){g.innerHTML=`<p class="muted">Le marché n'a pas pu être chargé.</p>`;return;}}
   const mineN=MK.filter(L=>L.seller===UID).length,bidN=MK.filter(L=>ST.mk.held[L.id]!=null||(L.bid&&L.bid.u===UID)).length;
-  $("#mk-tabs").innerHTML=[["all","En vente"],["mine",`Mes ventes${mineN?` <i class="dotn">${mineN}</i>`:""}`],["bids",`Mes enchères${bidN?` <i class="dotn">${bidN}</i>`:""}`]].map(([k,t])=>`<button aria-pressed="${MKTAB===k}" data-mt="${k}">${t}</button>`).join("");
+  $("#mk-tabs").innerHTML=[["all","En vente"],["trade","À l'échange"],["mine",`Mes ventes${mineN?` <i class="dotn">${mineN}</i>`:""}`],["bids",`Mes enchères${bidN?` <i class="dotn">${bidN}</i>`:""}`]].map(([k,t])=>`<button aria-pressed="${MKTAB===k}" data-mt="${k}">${t}</button>`).join("");
   const q=norm($("#mk-q").value.trim()),r=$("#mk-r").value,m=$("#mk-m").value,so=$("#mk-s").value;
   let L=MK.filter(x=>MKTAB==="mine"?x.seller===UID:MKTAB==="bids"?(ST.mk.held[x.id]!=null||(x.bid&&x.bid.u===UID)):mkOpen(x))
     .filter(x=>{const c=CARDS[x.k];return (!r||c.r===r)&&(!m||x.mode===m)&&(!q||c.s.includes(q));});
@@ -1766,7 +1781,7 @@ async function renderMarket(fetch){const g=$("#mk-grid");
   g.querySelectorAll("[data-mk-cancel]").forEach(b=>b.onclick=()=>mkCancel(b.dataset.mkCancel,b));
   g.querySelectorAll("[data-mk-card]").forEach(d=>d.onclick=()=>{const c=CARDS[d.dataset.mkCard];if(c)openCard(c);});
   clearInterval(MKT);MKT=setInterval(()=>{if($("#v-marche").hidden){clearInterval(MKT);return;}renderMarket(true);},20000);}
-["#mk-q","#mk-r","#mk-m","#mk-s"].forEach(s=>{let t;$(s).addEventListener("input",()=>{clearTimeout(t);t=setTimeout(()=>renderMarket(false),150);});});
+["#mk-q","#mk-r","#mk-m","#mk-s"].forEach(s=>{let t;$(s).addEventListener("input",()=>{clearTimeout(t);t=setTimeout(()=>MKTAB==="trade"?renderBinder():renderMarket(false),150);});});
 async function mkBuy(id,btn){if(btn)btn.disabled=true;
   try{const L=await mkGet(id);if(!L||!mkOpen(L)){toast("Cette carte n'est plus en vente");return renderMarket(true);}
     if(L.seller===UID)return;if(ST.coins<L.price){toast("Pas assez de coquillages");return;}
@@ -1836,7 +1851,7 @@ async function mkBidForm(id){const L=await mkGet(id).catch(()=>null);if(!L||!mkO
       $("#dlg").hidden=true;}
     catch(e){toast("L'offre n'a pas pu être posée");$("#bf-go").disabled=false;return;}
     renderMarket(true);};}
-$("#mk-sell").onclick=()=>mkSellPick();
+$("#mk-sell").onclick=()=>MKTAB==="trade"?editBinder():mkSellPick();
 setInterval(()=>{document.querySelectorAll("[data-end]").forEach(e=>{const l=+e.dataset.end-Date.now();e.textContent=l>0?clk(l):"terminée";});},1000);
 setInterval(()=>{if(ST&&DB&&$("#v-marche").hidden)syncMarket().then(()=>wallet());},60000);
 
@@ -1879,7 +1894,9 @@ async function settleTrades(){if(!TR_OK)return;const sb=SX(),id=MEID();let ch=fa
     try{await sb.from("tcg_trades").update({sender_done:true}).eq("id",t.id);t.sender_done=true;}catch(e){}}
   if(ch){checkAll();wallet();}}
 function frName(u){return (PCACHE[u]&&PCACHE[u].name)||"Un ami";}
-async function syncSocial(){try{await loadTrades();await settleTrades();badgeTrades();}catch(e){console.warn(e);}}
+async function syncSocial(){try{await loadTrades();const miss=[...new Set(TR.map(t=>t.sender===MEID()?t.recipient:t.sender))].filter(u=>!PCACHE[u]);
+    if(miss.length){const {data}=await SX().from("profiles").select("id,discord_name,avatar_url").in("id",miss);(data||[]).forEach(p=>PCACHE[p.id]={name:p.discord_name||"Joueur",av:p.avatar_url||""});}
+    await settleTrades();badgeTrades();}catch(e){console.warn(e);}}
 function badgeTrades(){const n=TR.filter(t=>t.recipient===MEID()&&t.status==="pending").length;const d=$("#t-amis");if(d){d.hidden=!n;d.textContent=n||"";}}
 // --- profil
 function renderProfile(){const v=$("#v-profil"),u=uniq(),tot=visTotal(),got=ACH.filter(a=>ST.ach[a.id]).length;
@@ -1904,15 +1921,16 @@ function renderProfile(){const v=$("#v-profil"),u=uniq(),tot=visTotal(),got=ACH.
   v.querySelectorAll("[data-vs]").forEach(d=>d.onclick=e=>{if(e.target.closest("[data-vx]"))return;const i=+d.dataset.vs;const k=ST.show[i];if(k&&ST.owned[k])return openCard(CARDS[k]);pickCards({title:"Choisir une carte pour la vitrine",pool:Object.keys(ST.owned).map(k=>CARDS[k]).filter(Boolean),max:1,done:ks=>{if(ks[0]){ST.show[i]=ks[0];save();}renderProfile();}});});
   v.querySelectorAll("[data-vx]").forEach(b=>b.onclick=()=>{ST.show[+b.dataset.vx]=null;save();renderProfile();});}
 // --- sélecteur de cartes réutilisable
-function pickCards(o){let sel=(o.sel||[]).slice();const pool=o.pool.filter(c=>c&&c.r!=="S").sort((a,b)=>RI(b.r)-RI(a.r));
+function pickCards(o){let sel=(o.sel||[]).slice();const pool=o.pool.filter(c=>c&&c.r!=="S").sort(o.sort||((a,b)=>RI(b.r)-RI(a.r)));
   dlgOpen(`<div class="mk-pick"><div class="mk-ph"><h2>${esc(o.title)}</h2><input id="pk-q" type="search" placeholder="Chercher…" aria-label="Chercher"><button class="btn primary" id="pk-ok">${o.max>1?"Valider":"Fermer"}</button></div>
-    ${o.max>1?`<p class="muted" id="pk-n"></p>`:""}<div class="cgrid sm" id="pk-g"></div></div>`,true);
+    ${o.intro?`<p class="muted pk-intro">${o.intro}</p>`:""}${o.toggle?`<label class="tline"><input type="checkbox" id="pk-t"> ${esc(o.toggle)}</label>`:""}${o.max>1?`<p class="muted" id="pk-n"></p>`:""}<div class="cgrid sm" id="pk-g"></div></div>`,true);
   const draw=()=>{const q=norm($("#pk-q").value.trim());const n=$("#pk-n");if(n)n.textContent=`${sel.length} / ${o.max} sélectionnée${sel.length>1?"s":""}`;
-    $("#pk-g").innerHTML=pool.filter(c=>!q||c.s.includes(q)).slice(0,90).map(c=>`<div class="cwrap pick${sel.includes(c.k)?" on":""}" data-pk="${c.k}">${cardHTML(c,true)}${o.count&&ST.owned[c.k]>1?`<span class="cnt">×${ST.owned[c.k]}</span>`:""}</div>`).join("")||`<p class="muted">Aucune carte.</p>`;
+    const tg=$("#pk-t"),tf=tg&&tg.checked&&o.toggleFn;
+    $("#pk-g").innerHTML=pool.filter(c=>(!q||c.s.includes(q))&&(!tf||o.toggleFn(c))).slice(0,120).map(c=>`<div class="cwrap pick${sel.includes(c.k)?" on":""}${o.note?" noted":""}" data-pk="${c.k}">${cardHTML(c,true)}${o.note?o.note(c):""}${o.badge?o.badge(c):""}${o.count&&ST.owned[c.k]>1?`<span class="cnt">×${ST.owned[c.k]}</span>`:""}</div>`).join("")||`<p class="muted">Aucune carte.</p>`;
     $("#pk-g").querySelectorAll("[data-pk]").forEach(d=>d.onclick=()=>{const k=d.dataset.pk;
       if(o.max===1){$("#dlg").hidden=true;return o.done([k]);}
       if(sel.includes(k))sel=sel.filter(x=>x!==k);else if(sel.length<o.max)sel.push(k);else toast(`${o.max} cartes au maximum`);draw();});};
-  draw();$("#pk-q").oninput=draw;$("#pk-ok").onclick=()=>{$("#dlg").hidden=true;o.done(o.max===1?[]:sel);};}
+  draw();$("#pk-q").oninput=draw;const tg=$("#pk-t");if(tg)tg.onchange=draw;$("#pk-ok").onclick=()=>{$("#dlg").hidden=true;o.done(o.max===1?[]:sel);};}
 // --- amis et échanges
 function miniCards(ks){return `<div class="tr-cs">${ks.length?ks.map(k=>CARDS[k]?`<div class="tr-c" data-ck="${k}" title="${esc(label(CARDS[k]))}">${cardHTML(CARDS[k],true)}</div>`:"").join(""):`<span class="muted">rien</span>`}</div>`;}
 async function renderFriends(fetch){const v=$("#v-amis");
@@ -1939,7 +1957,8 @@ async function renderFriends(fetch){const v=$("#v-amis");
   v.querySelectorAll("[data-td]").forEach(b=>b.onclick=()=>tradeAnswer(+b.dataset.td,false,b));
   v.querySelectorAll("[data-tc]").forEach(b=>b.onclick=()=>tradeCancel(+b.dataset.tc,b));
   clearInterval(FRT);FRT=setInterval(()=>{if($("#v-amis").hidden){clearInterval(FRT);return;}syncSocial().then(()=>{if(!$("#v-amis").hidden&&$("#dlg").hidden)renderFriends(false);});},20000);}
-function tradeForm(f){if(!f)return;let give=[],want=[];
+async function tradeForm(f,pre){if(!f)return;let give=[],want=(pre||[]).slice(0,5);
+  const col=SX()?await getCol(f.id,true):null,their=(col&&col.owned)||null,theirFt=new Set((col&&col.fortrade)||[]);
   const draw=()=>{dlgOpen(`<div class="mk-pick tr-form"><div class="mk-ph"><h2>Échange avec ${esc(f.name)}</h2><button class="btn" id="tf-x">Fermer</button></div>
     <div class="tf-cols"><div><div class="pf-sh"><b>Tu donnes</b><button class="btn ghost" id="tf-g">Choisir (${give.length}/5)</button></div>${miniCards(give)}</div>
       <div><div class="pf-sh"><b>Tu demandes</b><button class="btn ghost" id="tf-w">Choisir (${want.length}/5)</button></div>${miniCards(want)}</div></div>
@@ -1947,16 +1966,25 @@ function tradeForm(f){if(!f)return;let give=[],want=[];
     <p class="note">Les cartes que tu donnes sont mises de côté jusqu'à la réponse. Si ${esc(f.name)} refuse ou si tu annules, elles reviennent. Les cartes secrètes ne s'échangent pas.</p>
     <div class="acts"><button class="btn primary" id="tf-go" ${give.length+want.length?"":"disabled"}>Envoyer la proposition</button></div></div>`,true);
     $("#tf-x").onclick=()=>$("#dlg").hidden=true;
-    $("#tf-g").onclick=()=>pickCards({title:"Cartes que tu donnes",pool:Object.keys(ST.owned).map(k=>CARDS[k]),max:5,sel:give,count:true,done:ks=>{give=ks;draw();}});
-    $("#tf-w").onclick=()=>pickCards({title:`Cartes que tu demandes à ${f.name}`,pool:Object.values(CARDS),max:5,sel:want,done:ks=>{want=ks;draw();}});
+    $("#tf-g").onclick=()=>pickCards({title:"Cartes que tu donnes",pool:Object.keys(ST.owned).map(k=>CARDS[k]),max:5,sel:give,count:true,
+      intro:their?`Sous chaque carte : est-ce que ${esc(f.name)} l'a déjà ?`:"",note:their?c=>haveTag(their[c.k]||0,"Il l'a"):null,
+      toggle:their?`Seulement les cartes que ${f.name} n'a pas`:"",toggleFn:c=>!their[c.k],
+      sort:their?(a,b)=>(!!their[a.k])-(!!their[b.k])||RI(b.r)-RI(a.r):null,done:ks=>{give=ks;draw();}});
+    $("#tf-w").onclick=()=>pickCards({title:their?`La collection de ${f.name}`:`Cartes que tu demandes à ${f.name}`,
+      pool:their?Object.keys(their).map(k=>CARDS[k]):Object.values(CARDS),max:5,sel:want,
+      intro:their?`${nf(Object.keys(their).length)} cartes. Sous chaque carte : est-ce que tu l'as déjà ?`:`${esc(f.name)} n'a pas encore partagé sa collection : tu vois toutes les cartes du jeu.`,
+      note:c=>haveTag(ST.owned[c.k]||0,"Tu l'as"),badge:c=>theirFt.has(c.k)?`<span class="cnt own">À l'échange</span>`:their&&their[c.k]>1?`<span class="cnt">×${their[c.k]}</span>`:"",
+      toggle:"Seulement les cartes que je n'ai pas",toggleFn:c=>!ST.owned[c.k],
+      sort:(a,b)=>(theirFt.has(b.k)-theirFt.has(a.k))||(!!ST.owned[a.k])-(!!ST.owned[b.k])||RI(b.r)-RI(a.r),done:ks=>{want=ks;draw();}});
     $("#tf-go").onclick=()=>tradeSend(f,give,want,$("#tf-n").value.trim());};
   draw();}
 async function tradeSend(f,give,want,note){const sb=SX();const b=$("#tf-go")||{};b.disabled=true;
   if(give.some(k=>!(ST.owned[k]>0))){toast("Tu n'as plus une des cartes à donner");b.disabled=false;return;}
   give.forEach(k=>{ST.owned[k]--;if(!ST.owned[k])delete ST.owned[k];});save();
   const {data,error}=await sb.from("tcg_trades").insert({sender:MEID(),recipient:f.id,give,want,note:note||null}).select().single();
-  if(error){give.forEach(k=>giveCard(k));save();b.disabled=false;toast("La proposition n'a pas pu être envoyée");return;}
-  ST.tr.held[data.id]=give;save();await flush();toast(`Proposition envoyée à ${f.name}`);$("#dlg").hidden=true;TRTAB="out";renderFriends(true);}
+  if(error){give.forEach(k=>giveCard(k));save();b.disabled=false;toast(/row-level|policy/i.test(error.message||"")?"Vous devez être amis pour échanger (ou lancer update-22 dans Supabase)":"La proposition n'a pas pu être envoyée");return;}
+  ST.tr.held[data.id]=give;save();await flush();toast(`Proposition envoyée à ${f.name}`);$("#dlg").hidden=true;TRTAB="out";PCACHE[f.id]=PCACHE[f.id]||{name:f.name,av:f.av||""};
+  if(!$("#v-amis").hidden)renderFriends(true);else location.hash="amis";}
 async function tradeAnswer(id,ok,b){const sb=SX();if(b)b.disabled=true;const t=TR.find(x=>x.id===id);if(!t)return;
   if(ok&&!t.want.every(k=>ST.owned[k]>0)){toast("Il te manque une carte demandée");return renderFriends(false);}
   const {data,error}=await sb.from("tcg_trades").update({status:ok?"accepted":"declined"}).eq("id",id).eq("status","pending").select();
@@ -2166,6 +2194,49 @@ function launchReset(){if(!window.TCG_LAUNCH||!ST||ST.lr===1||launchLeft()>0)ret
   ST.inv={gold:0,sceau:0};ST.mk={mine:{},held:{}};ST.tr={n:0,held:{},done:{}};ST.show=[];ST.stash={};
   DONE_CACHE=null;COINV=null;save();try{flush();}catch(e){}return true;}
 setInterval(()=>{if(!PREVIEW&&launchReset()){wallet();if(location.hash==="#boosters")route();else location.hash="boosters";toast("Le TCG est ouvert : ta collection de test repart de zéro. Bonne chance !");}},20000);
+
+
+/* ---------- Collections partagées (table tcg_collections, update-22) ---------- */
+let COLT=null,COL_OK=null,LASTCOL="";const COLS={};
+function colPayload(){ST.ft=(ST.ft||[]).filter(k=>ST.owned[k]&&CARDS[k]&&CARDS[k].r!=="S");
+  const owned={};Object.entries(ST.owned).forEach(([k,n])=>{if(CARDS[k]&&CARDS[k].r!=="S")owned[k]=n;});
+  return {owned,fortrade:ST.ft,uniq:uniq(),myth:Object.keys(ST.owned).filter(k=>CARDS[k]&&["M","S"].includes(CARDS[k].r)).length,opened:ST.opened||0,ach:Object.keys(ST.ach||{}).length};}
+function queueCol(){if(!SX()||!MEID()||PREVIEW||!ST)return;clearTimeout(COLT);COLT=setTimeout(pushCol,3000);}
+async function pushCol(){if(!SX()||!MEID()||PREVIEW||!ST)return;const p=colPayload(),sig=JSON.stringify(p);if(sig===LASTCOL)return;
+  try{const {error}=await SX().from("tcg_collections").upsert({user_id:MEID(),...p,updated_at:new Date().toISOString()});if(error){COL_OK=false;return;}COL_OK=true;LASTCOL=sig;}catch(e){COL_OK=false;}}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")pushCol();});
+async function getCol(uid,fresh){if(!fresh&&COLS[uid]&&Date.now()-COLS[uid].t<60000)return COLS[uid].v;
+  try{const {data,error}=await SX().from("tcg_collections").select("owned,fortrade,updated_at").eq("user_id",uid).maybeSingle();if(error){COL_OK=false;return null;}COL_OK=true;COLS[uid]={t:Date.now(),v:data};return data;}catch(e){return null;}}
+/* ---------- Marché : cartes à l'échange ---------- */
+let FT=[],FTN={};
+async function loadBinder(){const sb=SX(),me=MEID();FT=[];if(!sb)return false;
+  const {data,error}=await sb.from("tcg_collections").select("user_id,fortrade,updated_at").neq("fortrade","{}").order("updated_at",{ascending:false}).limit(300);
+  if(error){COL_OK=false;return false;}COL_OK=true;
+  const ids=[...new Set((data||[]).map(r=>r.user_id))];
+  if(ids.length){const {data:pr}=await sb.from("profiles").select("id,discord_name,avatar_url").in("id",ids);(pr||[]).forEach(p=>{FTN[p.id]={name:p.discord_name||"Joueur",av:p.avatar_url||""};PCACHE[p.id]=FTN[p.id];});}
+  (data||[]).forEach(r=>(r.fortrade||[]).forEach(k=>{if(CARDS[k])FT.push({k,u:r.user_id,mine:r.user_id===me});}));return true;}
+function haveTag(n,who){return n?`<span class="pk-note have">${who} ${n>1?`×${n}`:""}</span>`:`<span class="pk-note nope">${who==="Tu l'as"?"Tu ne l'as pas":who==="Il l'a"?"Il ne l'a pas":"—"}</span>`;}
+async function renderBinder(){const g=$("#mk-grid");const sb=SX();
+  $("#mk-sell").hidden=false;$("#mk-sell").textContent="Mes cartes à l'échange";$("#mk-m").hidden=true;$("#mk-s").hidden=true;
+  if(!sb||!MEID()){g.innerHTML=`<p class="muted">Connecte-toi pour voir les cartes proposées à l'échange.</p>`;return;}
+  if(!g.dataset.bl)g.innerHTML=`<p class="muted">Chargement…</p>`;
+  const ok=await loadBinder();g.dataset.bl=1;
+  if(!ok){g.innerHTML=`<p class="muted">Les cartes à l'échange ne sont pas encore activées : il faut lancer <b>update-22-tcg-collections.sql</b> dans Supabase.</p>`;return;}
+  const q=norm($("#mk-q").value.trim()),r=$("#mk-r").value,only=$("#mk-only")&&$("#mk-only").checked;
+  const mine=FT.filter(x=>x.mine).length;
+  let L=FT.filter(x=>!x.mine).filter(x=>{const c=CARDS[x.k];return (!r||c.r===r)&&(!q||c.s.includes(q)||norm((FTN[x.u]||{}).name||"").includes(q))&&(!only||!ST.owned[x.k]);})
+    .sort((a,b)=>(!!ST.owned[a.k])-(!!ST.owned[b.k])||RI(CARDS[b.k].r)-RI(CARDS[a.k].r));
+  g.innerHTML=`<div class="bd-top"><label class="tline"><input type="checkbox" id="mk-only" ${only?"checked":""}> Seulement les cartes que je n'ai pas</label><span class="muted">Tu proposes ${mine} carte${mine>1?"s":""} à l'échange.</span></div>`+
+    (L.length?L.map(x=>{const c=CARDS[x.k],u=FTN[x.u]||{name:"Joueur"};return `<div class="mkt"><div class="mk-c" data-mk-card="${x.k}">${cardHTML(c,true)}</div><div class="mk-i">
+      <span class="mk-tag">À l'échange</span><small class="bd-u"><span class="fr-av sm">${avHTML(u.av,u.name,"")}</span>chez <b>${esc(u.name)}</b></small>${haveTag(ST.owned[x.k]||0,"Tu l'as")}
+      <button class="btn primary" data-bx="${x.u}" data-bk="${x.k}">Proposer un échange</button></div></div>`;}).join(""):`<p class="muted">Personne ne propose encore de carte${only?" que tu n'as pas":""}. Propose les tiennes avec « Mes cartes à l'échange ».</p>`);
+  const o=$("#mk-only");if(o)o.onchange=()=>renderBinder();
+  g.querySelectorAll("[data-mk-card]").forEach(d=>d.onclick=()=>openCard(CARDS[d.dataset.mkCard]));
+  g.querySelectorAll("[data-bx]").forEach(b=>b.onclick=()=>{const u=b.dataset.bx,pr=FTN[u]||{};const fr=FR.find(f=>f.id===u);
+    tradeForm(fr||{id:u,name:pr.name||"Joueur",av:pr.av||"",pi:null},[b.dataset.bk]);});}
+function editBinder(){pickCards({title:"Mes cartes à l'échange",pool:Object.keys(ST.owned).map(k=>CARDS[k]),max:30,sel:(ST.ft||[]).filter(k=>ST.owned[k]),count:true,
+  note:c=>ST.owned[c.k]>1?`<span class="pk-note have">Doublon ×${ST.owned[c.k]-1}</span>`:`<span class="pk-note warn">Ton seul exemplaire</span>`,
+  done:ks=>{ST.ft=ks;save();pushCol().then(()=>{toast(ks.length?`${ks.length} carte${ks.length>1?"s":""} proposée${ks.length>1?"s":""} à l'échange`:"Tu ne proposes plus de carte à l'échange");renderBinder();});}});}
 
 /* ---------- Démarrage ---------- */
 (async()=>{
