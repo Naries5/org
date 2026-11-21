@@ -1130,7 +1130,11 @@ const RATES={C:62,PC:25,R:11.4,E:1.4,L:0.15,M:0.025,S:0.012};
 const PITY=250,EPITY=10;
 const RECYCLE={C:2,PC:5,R:15,E:60,L:250,M:1000,S:1500};
 const STREAK=[20,30,40,50,60,80,100];
-const CHARGE=10*60*1000,MAXSTOCK=10;
+const CHARGE=10*60*1000;
+/* Réserve de boosters : 15 pendant les 2 premiers jours après la sortie, 10 ensuite */
+const BOOST_DAYS=2*86400000;
+function maxStock(){const L=window.TCG_LAUNCH;if(!L)return 10;const t=Date.now()+(window.TCG_OFFSET||0);return t<L+BOOST_DAYS?15:10;}
+let MAXSTOCK=maxStock();setInterval(()=>{const m=maxStock();if(m!==MAXSTOCK){MAXSTOCK=m;try{wallet();}catch(e){}}},60000);
 let D=null,IMG={},CARDS=[],OVR={},ART={},CANEDIT=false;
 function orgFallback(){D.orgs.forEach((o,i)=>{if(o.l)return;let best=null,sc=-1;
   D.seasons.forEach(se=>{if(se.o!==i||!se.l)return;const v=(se.st==="en_cours"?1e6:0)+(+se.n||0);if(v>sc){sc=v;best=se.l;}});
@@ -1881,7 +1885,7 @@ async function renderBoard(){const tb=$("#board");tb.innerHTML=`<p class="muted"
   if(!DB&&!SX()){tb.innerHTML=`<p class="muted">Le classement partagé n'est pas disponible dans cette vue. Ta progression est gardée dans ce navigateur.</p>`;return;}
   try{await flush();let rows,ps={};const ME_ID=DB?UID:MEID();
     if(DB){const snap=await DB.collection("board").orderBy("uniq","desc").limit(100).get();rows=snap.docs.map(d=>({id:d.id,...d.data()}));ps=USER?await USER.profiles(rows.map(r=>r.id)):{};}
-    else{await pushCol();const {data,error}=await SX().from("tcg_collections").select("user_id,uniq,myth,opened,ach").gt("uniq",0).order("uniq",{ascending:false}).limit(100);
+    else{await pushCol();const {data,error}=await SX().from("tcg_collections").select("user_id,uniq,myth,opened,ach").gt("uniq",0).gte("updated_at",LAUNCH_ISO()).order("uniq",{ascending:false}).limit(100);
       if(error){tb.innerHTML=`<p class="muted">Le classement sera disponible une fois <b>update-22-tcg-collections.sql</b> lancé dans Supabase.</p>`;return;}
       rows=(data||[]).map(r=>({id:r.user_id,uniq:r.uniq,myth:r.myth,opened:r.opened,ach:r.ach}));
       if(rows.length){const {data:pr}=await SX().from("profiles").select("id,discord_name,avatar_url").in("id",rows.map(r=>r.id));(pr||[]).forEach(p=>ps[p.id]={name:p.discord_name,avatar:p.avatar_url});}}
@@ -2400,13 +2404,14 @@ function stashSync(){if(!ST)return;ST.stash=ST.stash||{};let ch=false;
 /* ---------- Remise à zéro à la sortie ---------- */
 // Toute progression commencée avant la sortie (tests du propriétaire et des admins) repart de zéro à 14 h.
 function launchReset(){if(!window.TCG_LAUNCH||!ST||ST.lr===1||launchLeft()>0)return false;
-  const test=ST.test,force=ST.force,fa=ST.forceAll;ST=fresh();ST.lr=1;ST.test=test;ST.force=force;ST.forceAll=fa;
+  ST=fresh();ST.lr=1;
   ST.inv={gold:0,sceau:0};ST.mk={mine:{},held:{}};ST.tr={n:0,held:{},done:{}};ST.show=[];ST.stash={};
   DONE_CACHE=null;COINV=null;save();try{flush();}catch(e){}return true;}
 setInterval(()=>{if(!PREVIEW&&launchReset()){wallet();if(location.hash==="#boosters")route();else location.hash="boosters";toast("Le TCG est ouvert : ta collection de test repart de zéro. Bonne chance !");}},20000);
 
 
 /* ---------- Collections partagées (table tcg_collections, update-22) ---------- */
+const LAUNCH_ISO=()=>new Date(window.TCG_LAUNCH&&launchLeft()<=0?window.TCG_LAUNCH:0).toISOString();
 let COLT=null,COL_OK=null,LASTCOL="";const COLS={};
 function colPayload(){ST.ft=(ST.ft||[]).filter(k=>ST.owned[k]&&CARDS[k]&&CARDS[k].r!=="S");
   const owned={};Object.entries(ST.owned).forEach(([k,n])=>{if(CARDS[k]&&CARDS[k].r!=="S")owned[k]=n;});
@@ -2416,11 +2421,11 @@ async function pushCol(){if(!SX()||!MEID()||PREVIEW||!ST)return;const p=colPaylo
   try{const {error}=await SX().from("tcg_collections").upsert({user_id:MEID(),...p,updated_at:new Date().toISOString()});if(error){COL_OK=false;return;}COL_OK=true;LASTCOL=sig;}catch(e){COL_OK=false;}}
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")pushCol();});
 async function getCol(uid,fresh){if(!fresh&&COLS[uid]&&Date.now()-COLS[uid].t<60000)return COLS[uid].v;
-  try{const {data,error}=await SX().from("tcg_collections").select("owned,fortrade,updated_at").eq("user_id",uid).maybeSingle();if(error){COL_OK=false;return null;}COL_OK=true;COLS[uid]={t:Date.now(),v:data};return data;}catch(e){return null;}}
+  try{let {data,error}=await SX().from("tcg_collections").select("owned,fortrade,updated_at").eq("user_id",uid).maybeSingle();if(error){COL_OK=false;return null;}COL_OK=true;if(data&&data.updated_at<LAUNCH_ISO())data=null;COLS[uid]={t:Date.now(),v:data};return data;}catch(e){return null;}}
 /* ---------- Marché : cartes à l'échange ---------- */
 let FT=[],FTN={};
 async function loadBinder(){const sb=SX(),me=MEID();FT=[];if(!sb)return false;
-  const {data,error}=await sb.from("tcg_collections").select("user_id,fortrade,updated_at").neq("fortrade","{}").order("updated_at",{ascending:false}).limit(300);
+  const {data,error}=await sb.from("tcg_collections").select("user_id,fortrade,updated_at").neq("fortrade","{}").gte("updated_at",LAUNCH_ISO()).order("updated_at",{ascending:false}).limit(300);
   if(error){COL_OK=false;return false;}COL_OK=true;
   const ids=[...new Set((data||[]).map(r=>r.user_id))];
   if(ids.length){const {data:pr}=await sb.from("profiles").select("id,discord_name,avatar_url").in("id",ids);(pr||[]).forEach(p=>{FTN[p.id]={name:p.discord_name||"Joueur",av:p.avatar_url||""};PCACHE[p.id]=FTN[p.id];});}
