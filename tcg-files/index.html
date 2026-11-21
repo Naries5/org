@@ -2418,13 +2418,15 @@ async function settleTrades(){if(!TR_OK)return;const sb=SX(),id=MEID();let ch=fa
     try{await sb.from("tcg_trades").update({sender_done:true}).eq("id",t.id);t.sender_done=true;}catch(e){}}
   if(ch){checkAll();wallet();}}
 function frName(u){return (PCACHE[u]&&PCACHE[u].name)||"Un ami";}
-function replayAnswers(){const me=MEID();let ch=false;ST.tr.ans=ST.tr.ans||{};
+/* Désactivé : un onglet resté sur l'ancienne version accepte sans laisser de marque, et le rejeu doublait la carte reçue.
+   L'enregistrement immédiat (commitNow) suffit à éviter le retour en arrière. */
+function replayAnswers(){return;const me=MEID();let ch=false;ST.tr.ans=ST.tr.ans||{};
   for(const t of TR){if(t.recipient!==me||t.status!=="accepted"||ST.tr.ans[t.id]||!(String(t.updated_at||"")>ANS_SINCE))continue;
     // échange accepté ici, mais la partie a été rechargée avant l'enregistrement : on le réapplique une seule fois
     trCards(t.want).forEach(k=>{if(ST.owned[k]>0)takeItem(k);});const wc=trCoins(t.want);if(wc)ST.coins=Math.max(0,ST.coins-wc);
     t.give.forEach(k=>giveCard(k));ST.tr.ans[t.id]=1;ch=true;}
   if(ch){commitNow();wallet();}}
-async function syncSocial(){try{await loadTrades();replayAnswers();const miss=[...new Set(TR.map(t=>t.sender===MEID()?t.recipient:t.sender))].filter(u=>!PCACHE[u]);
+async function syncSocial(){try{await loadTrades();const miss=[...new Set(TR.map(t=>t.sender===MEID()?t.recipient:t.sender))].filter(u=>!PCACHE[u]);
     if(miss.length){const {data}=await SX().from("profiles").select("id,discord_name,avatar_url").in("id",miss);(data||[]).forEach(p=>PCACHE[p.id]={name:p.discord_name||"Joueur",av:p.avatar_url||""});}
     await settleTrades();badgeTrades();}catch(e){console.warn(e);}}
 function badgeTrades(){const n=TR.filter(t=>t.recipient===MEID()&&t.status==="pending").length;const d=$("#t-amis");if(d){d.hidden=!n;d.textContent=n||"";}}
