@@ -1443,7 +1443,7 @@ async function cloudPull(){if(!cloudOn())return false;let r;try{r=await cloudGet
   if(r&&(!mine||!ST.cs||(r.sv||0)>(ST.sv||0))){ST=JSON.parse(JSON.stringify(r));ST.uid=id;ST.cs=1;try{localStorage.setItem("oc-tcg-state",JSON.stringify(ST));}catch(e){}return true;}
   if(!r&&ST&&ST.uid&&ST.uid!==id)ST=fresh();
   ST.uid=id;cloudQueue(true);return false;}
-function cloudQueue(now){if(!cloudOn()||!CLOUD_OK)return;clearTimeout(CLOUD_T);const wait=now?0:Math.max(1500,5000-(Date.now()-CLOUD_LAST));CLOUD_T=setTimeout(cloudPush,wait);}
+function cloudQueue(now){if(!cloudOn()||!CLOUD_OK)return;clearTimeout(CLOUD_T);const wait=now?0:Math.max(3000,30000-(Date.now()-CLOUD_LAST));CLOUD_T=setTimeout(cloudPush,wait);}
 async function cloudPush(){if(!cloudOn()||!CLOUD_OK)return;if(CLOUD_BUSY){CLOUD_PEND=true;return;}CLOUD_BUSY=true;CLOUD_LAST=Date.now();
   const st=JSON.parse(JSON.stringify(ST));st.uid=MEID();
   st.cs=1;try{const {error}=await SX().from("tcg_saves").upsert({user_id:MEID(),state:st,updated_at:new Date().toISOString()});if(!error){CLOUD_SV=Math.max(CLOUD_SV,st.sv||0);if(ST&&!ST.cs){ST.cs=1;try{localStorage.setItem("oc-tcg-state",JSON.stringify(ST));}catch(e){}}}else console.warn(error.message);}catch(e){}
@@ -1589,7 +1589,7 @@ function tcgPres(force){const sb=SX();if(!sb||!window.TCG_HOSTED)return;const pg
   let vid="";try{vid=localStorage.getItem("oc-vid")||"";if(!vid){vid="v"+Math.random().toString(36).slice(2,12)+Date.now().toString(36);localStorage.setItem("oc-vid",vid);}}catch(e){vid="v"+Math.random().toString(36).slice(2,12);}
   try{(MEID()?sb.rpc("touch_seen",{p:pg}):sb.rpc("touch_visitor",{vid,p:pg})).then(()=>{},()=>{});}catch(e){}}
 window.addEventListener("hashchange",()=>tcgPres(false));
-setInterval(()=>tcgPres(true),30000);
+setInterval(()=>{if(!document.hidden)tcgPres(true);},60000);
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")tcgPres(true);});
 setTimeout(()=>tcgPres(true),2500);
 function renderFan(){if(!D||$("#fan").childElementCount)return;
@@ -2119,7 +2119,7 @@ async function renderMarket(fetch){const g=$("#mk-grid"),v=$("#v-marche");
   g.innerHTML=html;mkBind(g);
   g.querySelectorAll("[data-ft-x]").forEach(b=>b.onclick=()=>{ST.ft=(ST.ft||[]).filter(k=>k!==b.dataset.ftX);save();pushCol().then(()=>{toast(`${label(CARDS[b.dataset.ftX])} n'est plus à l'échange`);renderMarket(false);});});
   const fe=$("#mk-ft-edit");if(fe)fe.onclick=()=>editBinder();
-  clearInterval(MKT);MKT=setInterval(()=>{if($("#v-marche").hidden||MKTAB==="chat"||MKTAB==="trade"){clearInterval(MKT);return;}renderMarket(true);},20000);}
+  clearInterval(MKT);MKT=setInterval(()=>{if($("#v-marche").hidden||MKTAB==="chat"||MKTAB==="trade"){clearInterval(MKT);return;}renderMarket(true);},45000);}
 ["#mk-q","#mk-r","#mk-m","#mk-s"].forEach(s=>{let t;$(s).addEventListener("input",()=>{clearTimeout(t);t=setTimeout(()=>MKTAB==="trade"?renderBinder():renderMarket(false),150);});});
 async function mkBuy(id,btn){if(btn)btn.disabled=true;
   try{const L=await mkGet(id);if(!L||!mkOpen(L)){toast("Cette carte n'est plus en vente");return renderMarket(true);}
@@ -2190,7 +2190,7 @@ async function mkBidForm(id){const L=await mkGet(id).catch(()=>null);if(!L||!mkO
     renderMarket(true);};}
 $("#mk-sell").onclick=()=>MKTAB==="trade"?editBinder():mkSellPick();
 setInterval(()=>{document.querySelectorAll("[data-end]").forEach(e=>{const l=+e.dataset.end-Date.now();e.textContent=l>0?clk(l):"terminée";});},1000);
-setInterval(()=>{if(ST&&mkAvail()&&$("#v-marche").hidden)syncMarket().then(()=>wallet());},60000);
+setInterval(()=>{if(ST&&!document.hidden&&mkAvail()&&$("#v-marche").hidden)syncMarket().then(()=>wallet());},180000);
 
 /* ---------- Tchat global du marché ---------- */
 let CHAT=[],CHAT_T=null,CHAT_OK=null,CHAT_SENT=0;
@@ -2226,7 +2226,7 @@ function mountChat(){const g=$("#cp-b");if($("#ch-list"))return;
 async function chatTick(){if(!SX()||!MU()||PREVIEW)return;const ok=await loadChat();
   if(!ok){if(CHAT_OPEN&&$("#ch-list"))$("#ch-list").innerHTML=`<p class="muted ch-empty">Le tchat n'est pas encore ouvert.${OWNER||window.TCG_STAFF?" Il faut lancer <b>update-28-tcg-marche.sql</b> dans Supabase.":""}</p>`;return;}
   if(CHAT_OPEN){drawChat();chatSeen();}else chatUnread();}
-function chatLoop(){clearInterval(CHAT_T);CHAT_T=setInterval(chatTick,CHAT_OPEN?4000:20000);}
+function chatLoop(){clearInterval(CHAT_T);CHAT_T=setInterval(()=>{if(!document.hidden)chatTick();},CHAT_OPEN?6000:60000);}
 function openChat(on){CHAT_OPEN=on!=null?on:!CHAT_OPEN;$("#chat-pane").hidden=!CHAT_OPEN;document.body.classList.toggle("chat-on",CHAT_OPEN);$("#chat-tab").setAttribute("aria-pressed",CHAT_OPEN);
   if(CHAT_OPEN){mountChat();const l=$("#ch-list");if(l)l.dataset.done="";drawChat();chatSeen();chatTick();setTimeout(()=>{const i=$("#ch-in");if(i&&matchMedia("(hover:hover)").matches)i.focus();},50);}chatLoop();}
 function renderChat(){openChat(true);}
@@ -2336,7 +2336,7 @@ async function renderFriends(fetch){const v=$("#v-amis");
   v.querySelectorAll("[data-ta]").forEach(b=>b.onclick=()=>tradeAnswer(+b.dataset.ta,true,b));
   v.querySelectorAll("[data-td]").forEach(b=>b.onclick=()=>tradeAnswer(+b.dataset.td,false,b));
   v.querySelectorAll("[data-tc]").forEach(b=>b.onclick=()=>tradeCancel(+b.dataset.tc,b));
-  clearInterval(FRT);FRT=setInterval(()=>{if($("#v-amis").hidden){clearInterval(FRT);return;}syncSocial().then(()=>{if(!$("#v-amis").hidden&&$("#dlg").hidden)renderFriends(false);});},20000);}
+  clearInterval(FRT);FRT=setInterval(()=>{if($("#v-amis").hidden){clearInterval(FRT);return;}syncSocial().then(()=>{if(!$("#v-amis").hidden&&$("#dlg").hidden)renderFriends(false);});},45000);}
 async function tradeForm(f,pre){if(!f)return;let give=[],want=(pre||[]).slice(0,5);
   const col=SX()?await getCol(f.id,true):null,their=(col&&col.owned)||null,theirFt=new Set((col&&col.fortrade)||[]);
   const draw=()=>{dlgOpen(`<div class="mk-pick tr-form"><div class="mk-ph"><h2>Échange avec ${esc(f.name)}</h2><button class="btn" id="tf-x">Fermer</button></div>
@@ -2377,7 +2377,7 @@ async function tradeCancel(id,b){const sb=SX();if(b)b.disabled=true;const t=TR.f
   if(error||!data||!data.length){toast("Trop tard : ton ami a déjà répondu");return renderFriends(true);}
   if(!ST.tr.done[id]){(ST.tr.held[id]||t.give).forEach(k=>giveCard(k));ST.tr.done[id]=1;delete ST.tr.held[id];save();}
   toast("Proposition annulée : tes cartes reviennent");renderFriends(true);}
-setInterval(()=>{if(ST&&SX()&&$("#v-amis").hidden)syncSocial();},60000);
+setInterval(()=>{if(ST&&!document.hidden&&SX()&&$("#v-amis").hidden)syncSocial();},180000);
 
 
 /* ---------- Toutes les cartes ---------- */
@@ -2602,7 +2602,7 @@ async function checkReset(){const sb=SX(),id=MEID();if(!sb||!id||PREVIEW||!ST)re
     wipeState();ST.rs=t;save();try{await flush();}catch(e){}cloudQueue(true);
     wallet();checkAll();if(location.hash==="#boosters")route();else location.hash="boosters";
     toast("Ta progression du TCG a été remise à zéro par un admin.");return true;}catch(e){return false;}}
-setInterval(()=>{if(ST&&!document.hidden)checkReset();},90000);
+setInterval(()=>{if(ST&&!document.hidden)checkReset();},300000);
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&ST)checkReset();});
 async function resetPlayer(uid,name){const sb=SX();if(!sb||!OWNER)return;
   dlgOpen(`<div class="mk-pick rs-box"><h2>Remettre ${esc(name)} à zéro</h2>
@@ -2643,7 +2643,7 @@ let COLT=null,COL_OK=null,LASTCOL="";const COLS={};
 function colPayload(){ST.ft=(ST.ft||[]).filter(k=>ST.owned[k]&&CARDS[k]&&CARDS[k].r!=="S");
   const owned={};Object.entries(ST.owned).forEach(([k,n])=>{if(CARDS[k]&&CARDS[k].r!=="S")owned[k]=n;});
   return {owned,fortrade:ST.ft,uniq:uniq(),myth:Object.keys(ST.owned).filter(k=>CARDS[k]&&["M","S"].includes(CARDS[k].r)).length,opened:ST.opened||0,ach:Object.keys(ST.ach||{}).length};}
-function queueCol(){if(!SX()||!MEID()||PREVIEW||!ST)return;clearTimeout(COLT);COLT=setTimeout(pushCol,3000);}
+function queueCol(){if(!SX()||!MEID()||PREVIEW||!ST)return;if(COLT)return;COLT=setTimeout(()=>{COLT=null;pushCol();},20000);}
 async function pushCol(){if(!SX()||!MEID()||PREVIEW||!ST)return;const p=colPayload(),sig=JSON.stringify(p);if(sig===LASTCOL)return;
   try{const {error}=await SX().from("tcg_collections").upsert({user_id:MEID(),...p,updated_at:new Date().toISOString()});if(error){COL_OK=false;return;}COL_OK=true;LASTCOL=sig;}catch(e){COL_OK=false;}}
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")pushCol();});
@@ -2748,8 +2748,8 @@ function drawDrops(){const b=$("#drops");if(!b)return;
         <span class="drc-w">${avHTML(me?ME.av:(PCACHE[d.user_id]||{}).av,who,"dr-av")}<b>${esc(who)}</b></span><time>${ago(d.created_at)}</time></button>`;}).join("")}</div>`
       :`<p class="muted">Personne n'a encore tiré de mythique ou de légendaire. Ce sera peut-être toi.</p>`}`;
   b.querySelectorAll("[data-k]").forEach(x=>x.onclick=()=>openCard(CARDS[x.dataset.k]));}
-async function refreshDrops(){if(PREVIEW||!SX())return;if(Date.now()-DROPS_AT>15000)await loadDrops();if(location.hash.slice(1)==="boosters"||!location.hash)drawDrops();}
-function startDrops(){refreshDrops();clearInterval(DROPS_T);DROPS_T=setInterval(()=>{const v=$("#v-boosters");if(!v||v.hidden){clearInterval(DROPS_T);return;}refreshDrops();},20000);}
+async function refreshDrops(){if(PREVIEW||!SX())return;if(Date.now()-DROPS_AT>45000)await loadDrops();if(location.hash.slice(1)==="boosters"||!location.hash)drawDrops();}
+function startDrops(){refreshDrops();clearInterval(DROPS_T);DROPS_T=setInterval(()=>{const v=$("#v-boosters");if(!v||v.hidden){clearInterval(DROPS_T);return;}if(!document.hidden)refreshDrops();},60000);}
 
 /* ---------- Démarrage ---------- */
 (async()=>{
