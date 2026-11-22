@@ -97,6 +97,8 @@ function noPicSet(){if(_np.src===S.seasons&&_np.set)return _np.set;const orgsOf=
   const set=new Set();Object.entries(orgsOf).forEach(([pid,os])=>{if([...os].every(o=>NOPIC_ORGS.has(o)))set.add(pid);});
   _np={src:S.seasons,set};return set;}
 const noPic=id=>!!id&&noPicSet().has(id);
+/* Profils retirés du site : joueurs qui n'ont fait QUE Survisland. Les admins les voient encore (pour ne rien casser en modifiant une saison). */
+function applyHidden(){const all=S.allPlayers||S.players||[];if(S.isAdmin){S.players=all;return;}const h=noPicSet();S.players=all.filter(p=>!h.has(p.id));}
 function avatarOf(p){return p?(noPic(p.id)?"":(p.avatar||seasonAvatarMap()[p.id]||"")):"";}
 function framing(f){if(!f||typeof f!=="object")return "";const x=Math.max(0,Math.min(100,+f.x||50)),y=Math.max(0,Math.min(100,+f.y||50)),z=Math.max(1,Math.min(4,+f.z||1));return `object-position:${x}% ${y}%;${z>1?`transform:scale(${z});transform-origin:${x}% ${y}%;`:""}`;}
 const ava=(p,size)=>pic(avatarOf(p),p&&p.pseudo,"avatar "+size,p&&p.avatar&&avatarOf(p)===p.avatar?framing(p.avatarPos):"");
@@ -412,11 +414,11 @@ function drawPresence(){const a=document.getElementById("pres-now"),b=document.g
   b.innerHTML=PRES_SEEN.length?`<div class="table-wrap"><table><thead><tr><th>Joueur</th><th>Dernière visite</th><th>Dernière page</th></tr></thead><tbody>${PRES_SEEN.map(r=>`<tr><td>${pageWho(r.user_id)}</td><td>${on(r)?`<b class="pres-on">En ligne</b>`:`<span title="${esc(new Date(r.at).toLocaleString("fr-FR"))}">${relTime(r.at)}</span>`}</td><td class="muted">${esc(presPageLabel(r.page))}</td></tr>`).join("")}</tbody></table></div>
   ${never.length?`<p class="hint">${never.length} compte${never.length>1?"s":""} sans visite enregistrée depuis la mise en place du suivi.</p>`:""}`:`<p class="muted">Aucune visite enregistrée pour l'instant.</p>`;}
 async function loadAuth(){
-  S.me=null;S.isAdmin=false;S.isHost=false;S.hostOrgs=new Set();S.profile=null;S.myClaims=[];S.banned=false;S.invites=null;
+  S.me=null;S.isAdmin=false;S.isHost=false;S.hostOrgs=new Set();S.profile=null;S.myClaims=[];S.banned=false;S.invites=null;if(S.allPlayers)applyHidden();
   const {data:{session}}=await sb.auth.getSession();
   if(session){S.me=session.user.id;
     const {data:prof}=await sb.from("profiles").select("*").eq("id",S.me).maybeSingle();S.profile=prof||{discord_name:session.user.user_metadata.full_name,avatar_url:session.user.user_metadata.avatar_url,role:"player"};
-    S.isAdmin=S.profile.role==="admin";S.isHost=S.isAdmin||S.profile.role==="host";
+    S.isAdmin=S.profile.role==="admin";S.isHost=S.isAdmin||S.profile.role==="host";if(S.allPlayers)applyHidden();
     const {data:h}=await sb.from("org_hosts").select("org_id").eq("user_id",S.me);(h||[]).forEach(x=>S.hostOrgs.add(x.org_id));
     const {data:cl}=await sb.from("claims").select("player_id,status").eq("user_id",S.me);S.myClaims=cl||[];
     try{const {data:bn,error:be}=await sb.from("bans").select("reason").eq("user_id",S.me).maybeSingle();S.banned=!be&&!!bn;}catch(e){}
@@ -452,6 +454,7 @@ async function init(){
   COLS.forEach(c=>{
     db.collection(c).onSnapshot(snap=>{
       S[c]=snap.docs.map(d=>Object.assign({id:d.id},d.data()));
+      if(c==="players"){S.allPlayers=S.players;}if(c==="players"||c==="seasons")applyHidden();
       S.loaded.add(c);scheduleRender();
     },err=>{S.loaded.add(c);toast("Chargement impossible ("+c+") : "+errMsg(err),true);render();});
   });
