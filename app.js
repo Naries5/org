@@ -462,6 +462,7 @@ async function init(){
       S.loaded.add(c);scheduleRender();
     },err=>{S.loaded.add(c);toast("Chargement impossible ("+c+") : "+errMsg(err),true);render();});
   });
+  setTimeout(infoNotice,1500);
 }
 function unavailable(){app.innerHTML=`<div class="unavailable"><h2>Données indisponibles ici</h2><p>Ouvre cette page sur claude.ai en étant connecté pour voir et modifier le wiki.</p></div>`;}
 
@@ -1188,6 +1189,29 @@ async function thanks100(){if(!S.me||Date.now()>THANKS100_END)return;const k="oc
     <p>S'il manque une saison, une ORG ou un détail, passe par <a href="#contribuer" data-close="1">Contribuer</a>.</p></div>`,
     onSave:async()=>{}});
   const c=modalRoot.querySelector('.dfoot .btn.ghost');if(c)c.remove();}
+// Information sur les données et appel à contributeurs : 3 affichages maximum par navigateur, jusqu'au 24 novembre 2026 à 17 h (heure de Paris).
+const NOTICE_END=Date.parse("2026-11-24T16:00:00Z"),NOTICE_KEY="oc-info-legal-1122",NOTICE_MAX=3;
+function infoNotice(){if(Date.now()>NOTICE_END)return;let n=0;
+  try{n=parseInt(localStorage.getItem(NOTICE_KEY)||"0",10)||0;}catch(e){return;}
+  if(n>=NOTICE_MAX)return;
+  if(!modalRoot.hidden||!S.loaded.has("players")){setTimeout(infoNotice,2000);return;}
+  const set=v=>{try{localStorage.setItem(NOTICE_KEY,String(v));}catch(e){}};set(n+1);
+  openModal({title:"Information : protection des données et retrait des fiches",saveLabel:"Fermer",wide:true,body:`<div class="infonote">
+    <p>Depuis le 22 novembre 2026, les dispositions suivantes s'appliquent sur ORG-Central.</p>
+    <ol>
+    <li>Une page « Mentions légales et confidentialité » est disponible en bas de chaque page. Elle indique l'éditeur du site, les hébergeurs, les données conservées, leur finalité et leur durée de conservation.</li>
+    <li>Un joueur dont la fiche est reliée à son compte peut la retirer du wiki depuis sa fiche (bouton « Me retirer du wiki »). Le profil et la photo ne sont alors plus affichés, et le nom est remplacé par « Joueur anonyme » dans les castings et les classements. Les résultats des saisons sont conservés. La fiche peut être réaffichée à tout moment.</li>
+    <li>Toute personne, connectée ou non, peut demander le retrait d'une fiche depuis celle-ci (bouton « Demander le retrait »). L'indication d'un pseudo Discord est facultative. Les demandes sont traitées par les administrateurs.</li>
+    <li>Les clics vers les liens extérieurs (serveurs Discord et sites des ORGs) sont enregistrés à des fins de sécurité, afin de pouvoir identifier l'origine d'un raid ou d'un abus. Ces données, ainsi que les données de présence, ne sont consultables que par les administrateurs et sont supprimées après 30 jours.</li>
+    </ol>
+    <p>Pour toute question : Naries ou Layte, sur Discord.</p>
+    <h3>Appel à contributeurs : conception et développement du site</h3>
+    <p>Une partie du site a été réalisée à l'aide d'outils d'intelligence artificielle. Nous souhaitons réduire puis arrêter cet usage, et confier la conception et l'évolution du site à des membres de la communauté.</p>
+    <p>Nous recherchons des personnes ayant des compétences en webdesign, en développement web (HTML, CSS, JavaScript) ou en gestion de bases de données. Toute aide, même ponctuelle, sera utile.</p>
+    <p>Les personnes intéressées peuvent contacter Naries ou Layte sur Discord.</p></div>`,
+    onSave:async()=>{set(NOTICE_MAX);},
+    onMount:()=>{const c=modalRoot.querySelector('.dfoot .btn.ghost');if(c){c.removeAttribute("data-close");c.textContent="Consulter la page";c.addEventListener("click",()=>{set(NOTICE_MAX);closeModal();location.hash="legal";});}}});
+}
 function openModal(o){
   if(closeTimer){clearTimeout(closeTimer);closeTimer=null;}
   const active=(lastPress&&Date.now()-lastPressAt<1500&&!modalRoot.contains(lastPress))?lastPress:document.activeElement;
