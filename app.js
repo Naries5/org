@@ -1884,7 +1884,7 @@ const TH={credits:[],people:null};
 function pageLegal(){
   return `<section class="block legal"><div class="block-head"><h1>Mentions légales et confidentialité</h1></div>
   <h2>Qui édite le site</h2>
-  <p>ORG-Central (orgcentral.fr) est un wiki communautaire et gratuit, édité à titre personnel et non professionnel par <b>Naries</b>, directeur de la publication. Pour toute demande : envoie un ticket depuis <a href="#contribuer">Contribuer</a> (connexion Discord), ou contacte Naries sur Discord.</p>
+  <p>ORG-Central (orgcentral.fr) est un wiki communautaire et gratuit, édité à titre personnel et non professionnel par <b>Naries</b> (directeur de la publication) et <b>Layte</b>. Pour toute demande : envoie un ticket depuis <a href="#contribuer">Contribuer</a>, ou contacte Naries ou Layte sur Discord.</p>
   <h2>Hébergement</h2>
   <p>Le site est hébergé par <b>Vercel Inc.</b>, 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis (vercel.com). Les données (fiches, comptes, messages) sont stockées chez <b>Supabase</b> (supabase.com), sur des serveurs situés en Irlande (Union européenne).</p>
   <h2>Ce que le site garde, et pourquoi</h2>
@@ -2268,7 +2268,7 @@ function askRemoval(id){const p=player(id);if(!p)return;
       const {error}=await sb.from("tickets").insert({kind:"autre",status:"open",data:{message:text,playerId:p.id,removal:true,discord:dc||null,anonymous:!S.me}});
       if(error){if(S.me)throw sbErr(error);
         // la base n'accepte pas encore les demandes sans compte : on donne le texte à envoyer à la main
-        setTimeout(()=>openModal({title:"Envoie ta demande sur Discord",body:`<p>Les demandes sans compte ne sont pas encore activées. Copie ce message et envoie-le à <b>Naries</b> sur Discord :</p><textarea readonly rows="5" style="width:100%">${esc(text)}</textarea>`,saveLabel:"Copier",onSave:async()=>{try{await navigator.clipboard.writeText(text);toast("Message copié");}catch(e){}}}),50);return;}
+        setTimeout(()=>openModal({title:"Envoie ta demande sur Discord",body:`<p>Les demandes sans compte ne sont pas encore activées. Copie ce message et envoie-le à <b>Naries</b> ou <b>Layte</b> sur Discord :</p><textarea readonly rows="5" style="width:100%">${esc(text)}</textarea>`,saveLabel:"Copier",onSave:async()=>{try{await navigator.clipboard.writeText(text);toast("Message copié");}catch(e){}}}),50);return;}
       toast("Demande envoyée aux admins");}});}
 async function claimPlayer(id,on){
   const p=player(id);if(!p||!S.me)return;
