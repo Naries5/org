@@ -35,8 +35,8 @@ function readFile(f) {
 // Sortie publique : samedi 21 novembre 2026 à 14 h (heure de Paris).
 const LAUNCH = Date.parse("2026-11-21T14:00:00+01:00");
 // ── Interrupteur de maintenance ── true = TCG fermé aux joueurs (le propriétaire et les admins gardent un bouton d'accès).
-const CLOSED = false;
-const CLOSED_MSG = "Le TCG est fermé temporairement pour maintenance. Tes cartes et ta progression sont gardées : reviens un peu plus tard !";
+const CLOSED = true;
+const CLOSED_MSG = ["Bonjour, et merci pour l’intérêt porté au jeu !", "L’engouement était beaucoup plus grand que ce que nous avions imaginé et, de ce fait, pour éviter tout problème, nous avons pris la décision de fermer le TCG, peut-être définitivement, peut-être pas.", "Le problème étant qu’à l’origine, cela partait d’une blague et, avec tout ça, des personnes ne souhaitant pas que leur image soit utilisée comme ça ont montré leur mécontentement, et les critiques sont parfaitement justifiées. Nous allons réfléchir à des mesures afin de pouvoir arranger tout le monde. Mais n’oubliez pas que le premier objectif d’ORG Central est de rassembler une communauté de passionnés dans un même endroit et en aucun cas de diviser.", "Nous nous excusons personnellement pour tout ça, c’était maladroit, nous assumons nos responsabilités."];
 const loader = (now) => `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ORG-Central TCG</title><meta name="description" content="Le TCG d'ORG-Central : toutes les ORG, les saisons et les joueurs du wiki en cartes à collectionner."><link rel="icon" href="/favicon.svg">
 <style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0e0d12;color:#F1ECE4;font:16px/1.5 system-ui,sans-serif;text-align:center;padding:20px}a{color:#EC6A3D}</style></head>
@@ -60,8 +60,8 @@ const loader = (now) => `<!DOCTYPE html><html lang="fr"><head><meta charset="utf
     let adm=false;try{adm=sessionStorage.getItem("tcg-admin")==="1";}catch(e){}
     window.TCG_STAFF=staff;window.TCG_MODE=live?(s?"full":"login"):(staff&&adm?"full":"preview");
     if(${CLOSED}&&!(staff&&adm)){ // maintenance : on n'ouvre pas le jeu
-      document.title="TCG en maintenance · ORG-Central";
-      m.innerHTML='<b style="font-size:1.4rem">TCG en maintenance</b><br><span style="opacity:.8">'+${JSON.stringify(CLOSED_MSG)}+'</span><br><br><a href="/">Retour au site</a>'+(staff?'<br><br><button id="adm" style="font:inherit;padding:10px 18px;border-radius:999px;border:1px solid #EC6A3D;background:none;color:#EC6A3D;cursor:pointer">Accéder au TCG (admin)</button>':'');
+      document.title="TCG fermé · ORG-Central";
+      m.style.maxWidth="640px";m.style.textAlign="left";m.innerHTML='<b style="display:block;text-align:center;font-size:1.5rem;margin-bottom:14px">Le TCG est fermé</b>'+${JSON.stringify(CLOSED_MSG.map(t=>"<p style=\"opacity:.88;margin:0 0 12px\">"+t.replace(/&/g,"&amp;").replace(/</g,"&lt;")+"</p>").join(""))}+'<p style="text-align:center;margin-top:22px"><a href="/">Retour au site</a></p>'+(staff?'<br><br><button id="adm" style="font:inherit;padding:10px 18px;border-radius:999px;border:1px solid #EC6A3D;background:none;color:#EC6A3D;cursor:pointer">Accéder au TCG (admin)</button>':'');
       const b=document.getElementById("adm");if(b)b.onclick=()=>{try{sessionStorage.setItem("tcg-admin","1");}catch(e){}location.reload();};
       return;}
     // Fichiers du jeu servis en statique par le CDN de Vercel (pas de fonction, pas de transfert depuis l'origine à chaque visite).
