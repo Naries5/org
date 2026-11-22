@@ -40,7 +40,7 @@ function withTransition(fn,from,to){
     try{const t=document.startViewTransition(fn);t.finished.finally(()=>{document.documentElement.dataset.vt="";});return;}catch(e){}}
   fn();
 }
-const ROUTE_PAGES=new Set(["presence","clics","accueil","orgs","saisons","org","saison","joueurs","joueur","annonces","admin","journal","tickets","calendrier","contribuer","social","moi","merci","guide","qualite","comptes","palmares"]);
+const ROUTE_PAGES=new Set(["presence","clics","accueil","orgs","saisons","org","saison","joueurs","joueur","annonces","admin","journal","tickets","calendrier","contribuer","social","moi","merci","guide","legal","qualite","comptes","palmares"]);
 function isRoute(r){r=String(r||"");const i=r.indexOf("-");return ROUTE_PAGES.has(i<0?r:r.slice(0,i));}
 function routePath(r){r=String(r||"");if(!r||r==="accueil")return "/";const i=r.indexOf("-");return i<0?"/"+r:"/"+r.slice(0,i)+"/"+encodeURIComponent(r.slice(i+1));}
 function routeStr(){const h=decodeURIComponent(location.hash.slice(1));if(h&&!/access_token=/.test(h))return h;
@@ -74,7 +74,7 @@ function today(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth
 function strip(o){const r=Object.assign({},o||{});delete r.id;return r;}
 const _idx=new WeakMap();const byId=(arr,id)=>{if(!arr)return undefined;let m=_idx.get(arr);if(!m){m=new Map();for(const x of arr)m.set(x.id,x);_idx.set(arr,m);}return m.get(id);};
 const org=id=>byId(S.orgs,id), player=id=>byId(S.players,id), season=id=>byId(S.seasons,id), newsItem=id=>byId(S.news,id);
-const pName=id=>{const p=player(id);return p?(p.pseudo||"Sans pseudo"):"Joueur supprimé";};
+const pName=id=>{if(S.hiddenIds&&S.hiddenIds.has(id)&&!S.isAdmin)return "Joueur anonyme";const p=player(id);return p?(p.pseudo||"Sans pseudo"):"Joueur supprimé";};
 function initials(n){n=String(n||"?").trim();const parts=n.split(/\s+/).filter(Boolean);return ((parts[0]||"?")[0]+(parts[1]?parts[1][0]:(parts[0]||"")[1]||"")).toUpperCase();}
 function imgSrc(v){if(!v)return "";v=String(v);
   // images du stockage : chargées directement chez Supabase (CDN) au lieu de passer par une fonction Vercel
@@ -98,8 +98,11 @@ function noPicSet(){if(_np.src===S.seasons&&_np.set)return _np.set;const orgsOf=
   _np={src:S.seasons,set};return set;}
 const noPic=id=>!!id&&noPicSet().has(id);
 /* Profils retirés du site : joueurs qui n'ont fait QUE Survisland. Les admins les voient encore (pour ne rien casser en modifiant une saison). */
-function applyHidden(){const all=S.allPlayers||S.players||[];if(S.isAdmin){S.players=all;return;}const h=noPicSet();S.players=all.filter(p=>!h.has(p.id));}
-function avatarOf(p){return p?(noPic(p.id)?"":(p.avatar||seasonAvatarMap()[p.id]||"")):"";}
+function applyHidden(){const all=S.allPlayers||S.players||[];const h=noPicSet();
+  // fiches masquées : seulement Survisland, ou retirées par le joueur lui-même (« Me retirer du wiki »)
+  S.hiddenIds=new Set(all.filter(p=>h.has(p.id)||p.hidden).map(p=>p.id));
+  if(S.isAdmin){S.players=all;return;}S.players=all.filter(p=>!S.hiddenIds.has(p.id)||(S.me&&p.ownerUid===S.me));}
+function avatarOf(p){return p?(noPic(p.id)||(p.hidden&&!S.isAdmin&&p.ownerUid!==S.me)?"":(p.avatar||seasonAvatarMap()[p.id]||"")):"";}
 function framing(f){if(!f||typeof f!=="object")return "";const x=Math.max(0,Math.min(100,+f.x||50)),y=Math.max(0,Math.min(100,+f.y||50)),z=Math.max(1,Math.min(4,+f.z||1));return `object-position:${x}% ${y}%;${z>1?`transform:scale(${z});transform-origin:${x}% ${y}%;`:""}`;}
 const ava=(p,size)=>pic(avatarOf(p),p&&p.pseudo,"avatar "+size,p&&p.avatar&&avatarOf(p)===p.avatar?framing(p.avatarPos):"");
 function safeUrl(u){u=String(u||"").trim();return /^https?:\/\//i.test(u)?u:"";}
@@ -369,7 +372,7 @@ async function loadPresence(){if(!ADM_PROFS.length){const {data}=await sb.from("
 document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest("a[href]");if(!a||!sb)return;const h=a.getAttribute("href")||"";
   if(!/^https?:\/\//i.test(h))return;try{if(new URL(h).host===location.host)return;}catch(err){return;}
   const row={url:h.slice(0,600),label:(a.innerText||a.textContent||"").replace(/[↗]/g,"").replace(/\s+/g," ").trim().slice(0,120),page:routeStr().slice(0,120),vid:S.me?"":presVid()};
-  try{sb.from("link_clicks").insert(row).then(()=>{},()=>{});}catch(err){}},true);
+  /* historique des clics désactivé (confidentialité) */ void row;},true);
 const CLK={f:"all"};
 function pageClicks(){
   if(!S.isOwner)return `<div class="empty"><h2>Page privée</h2></div>`;
@@ -550,6 +553,7 @@ function render(){
     case "calendrier":html=pageCalendar(id);break;
     case "contribuer":html=pageContrib();break;
     case "merci":html=pageThanks();break;
+    case "legal":html=pageLegal();break;
     case "guide":html=pageGuide();break;
     case "qualite":html=pageQuality();break;
     case "comptes":html=pageAccounts();break;
@@ -621,8 +625,8 @@ function infobox(img,title,rows,picAct,picId,canPic){
 }
 function bigImg(v,label){const u=imgSrc(v);return u?`<img src="${esc(u)}" alt="">`:`<span class="ib-ph">${esc(initials(label))}</span>`;}
 function castEntry(s,id){return s&&(s.cast||[]).find(c=>c.playerId===id)||null;}
-function sName(s,id){const c=castEntry(s,id);return c&&c.sPseudo?c.sPseudo:pName(id);}
-function sAvatar(s,id){if(noPic(id))return "";const c=castEntry(s,id);const p=player(id);return (c&&c.sAvatar)||avatarOf(p);}
+function sName(s,id){if(S.hiddenIds&&S.hiddenIds.has(id)&&!S.isAdmin)return "Joueur anonyme";const c=castEntry(s,id);return c&&c.sPseudo?c.sPseudo:pName(id);}
+function sAvatar(s,id){if(noPic(id)||(S.hiddenIds&&S.hiddenIds.has(id)&&!S.isAdmin))return "";const c=castEntry(s,id);const p=player(id);return (c&&c.sAvatar)||avatarOf(p);}
 function sAva(s,id,size){return pic(sAvatar(s,id),sName(s,id),"avatar "+size);}
 function splink(s,id){return id?`<a href="#joueur-${esc(id)}">${esc(sName(s,id))}</a>`:"";}
 function plink(id){return id?`<a href="#joueur-${esc(id)}">${esc(pName(id))}</a>`:"";}
@@ -1877,6 +1881,30 @@ async function qaIgnAll(sid){const s=season(sid);if(!s)return;const keys=qaVotes
 async function qaIgnore(sid,key){const s=season(sid);if(!s)return;await db.doc("seasons/"+sid).update({qaIgnore:[...new Set([...(s.qaIgnore||[]),key])]});qaInvalidate();render();}
 function bindQuality(){const o=document.getElementById("qa-org");if(o&&!o._b){o._b=1;o.addEventListener("change",()=>{QA.org=o.value;render();});}}
 const TH={credits:[],people:null};
+function pageLegal(){
+  return `<section class="block legal"><div class="block-head"><h1>Mentions légales et confidentialité</h1></div>
+  <h2>Qui édite le site</h2>
+  <p>ORG-Central (orgcentral.fr) est un wiki communautaire et gratuit, édité à titre personnel et non professionnel par <b>Naries</b>, directeur de la publication. Pour toute demande : envoie un ticket depuis <a href="#contribuer">Contribuer</a> (connexion Discord), ou contacte Naries sur Discord.</p>
+  <h2>Hébergement</h2>
+  <p>Le site est hébergé par <b>Vercel Inc.</b>, 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis (vercel.com). Les données (fiches, comptes, messages) sont stockées chez <b>Supabase</b> (supabase.com), sur des serveurs situés en Irlande (Union européenne).</p>
+  <h2>Ce que le site garde, et pourquoi</h2>
+  <ul>
+    <li><b>Fiches des joueurs</b> : pseudo, photo éventuelle, participations, classements, votes et awards des ORGs. But : garder une mémoire des ORGs de la communauté. Ces informations viennent des hosts, des contributeurs et des wikis cités sur chaque page.</li>
+    <li><b>Compte</b> (si tu te connectes) : identifiant, pseudo et photo Discord. But : te permettre de contribuer, de relier ta fiche, d'ajouter des amis et d'envoyer des messages privés. Tes messages privés et ta liste d'amis ne sont visibles que de toi et des personnes concernées.</li>
+    <li><b>Présence</b> (« qui est en ligne ») : la dernière page ouverte et l'heure. But : modération et statistiques de fréquentation. Ces traces sont effacées au bout de 30 jours.</li>
+  </ul>
+  <p>Le site n'affiche pas de publicité et ne vend ni ne partage tes données. Il n'utilise pas de cookies publicitaires ; seul le stockage du navigateur sert à garder ta connexion et tes préférences.</p>
+  <h2>Tes droits</h2>
+  <p>Tu peux à tout moment demander à <b>consulter, corriger ou supprimer</b> les informations qui te concernent, ou t'opposer à leur affichage :</p>
+  <ul>
+    <li>si ta fiche est reliée à ton compte, clique sur <b>« Me retirer du wiki »</b> sur ta fiche : elle disparaît tout de suite (ton nom devient « Joueur anonyme ») ;</li>
+    <li>sinon, clique sur <b>« C'est toi ? Demander le retrait »</b> sur la fiche, ou envoie un ticket depuis <a href="#contribuer">Contribuer</a> ;</li>
+    <li>pour un mineur de moins de 15 ans, un parent peut faire la demande.</li>
+  </ul>
+  <p>Les demandes sont traitées au plus vite. Si tu estimes que tes droits ne sont pas respectés, tu peux saisir la CNIL (cnil.fr).</p>
+  <h2>Contenus</h2>
+  <p>Les logos, images et textes appartiennent à leurs auteurs. Si un contenu te pose problème (image, award, information fausse ou blessante), signale-le par un ticket : il sera corrigé ou retiré.</p>
+  </section>`;}
 function pageThanks(){
   setTimeout(loadThanks,0);
   return `<section class="block"><div class="block-head"><h1>Remerciements</h1>${S.isAdmin?`<span class="actions"><button class="btn primary" data-act="new-credit">+ Ajouter un remerciement</button></span>`:""}</div>
@@ -2220,9 +2248,22 @@ function playerActions(p){
   if(S.me&&!p.ownerUid&&!myPlayer())b.push(pend?`<span class="btn ghost" aria-disabled="true">Demande envoyée</span>`:`<button class="btn primary" data-act="claim" data-id="${esc(p.id)}">C'est moi</button>`);
   if(!S.me&&!p.ownerUid)b.push(`<button class="btn ghost" data-act="login">C'est moi ? Connecte-toi</button>`);
   if(mine)b.push(`<button class="btn ghost" data-act="unclaim" data-id="${esc(p.id)}">Ce n'est pas moi</button>`);
+  if(mine)b.push(p.hidden?`<button class="btn primary" data-act="unhide-me" data-id="${esc(p.id)}">Réafficher ma fiche</button>`:`<button class="btn ghost" data-act="hide-me" data-id="${esc(p.id)}">Me retirer du wiki</button>`);
+  if(!mine&&!S.isAdmin)b.push(`<button class="btn ghost" data-act="ask-removal" data-id="${esc(p.id)}">C'est toi ? Demander le retrait</button>`);
   if(S.isAdmin)b.push(`<details class="pp-more"><summary class="btn" aria-label="Plus d'actions">⋯</summary><div class="pp-more-m"><button type="button" data-act="merge-player" data-id="${esc(p.id)}">Fusionner avec…</button><button type="button" data-act="split-player" data-id="${esc(p.id)}">Séparer…</button><button type="button" data-act="move-seasons" data-id="${esc(p.id)}">Associer des saisons à un autre joueur…</button><button type="button" class="dg" data-act="del-player" data-id="${esc(p.id)}">Supprimer la fiche</button></div></details>`);
   return b.length?`<div class="actions">${b.join("")}</div>`:"";
 }
+/* Retrait du wiki : le joueur masque sa fiche (profil, photo, nom remplacé par « Joueur anonyme » dans les castings) */
+function hideMe(id,on){const p=player(id);if(!p||!S.me||p.ownerUid!==S.me)return;
+  const go=async()=>{try{await db.doc("players/"+id).update({hidden:on});toast(on?"Ta fiche est retirée du wiki":"Ta fiche est de nouveau visible");}catch(e){toast(errMsg(e),true);}};
+  if(!on)return go();
+  confirmModal("Me retirer du wiki","Ta fiche ne sera plus visible : ton profil et ta photo disparaissent, et ton nom est remplacé par « Joueur anonyme » dans les castings et les classements. Les résultats des saisons restent justes. Tu pourras la réafficher quand tu veux depuis ta fiche (toi seul la vois).","Retirer ma fiche",go);}
+function askRemoval(id){const p=player(id);if(!p)return;
+  if(!S.me){openModal({title:"Demander le retrait d'une fiche",body:`<p>Pour demander le retrait de la fiche <b>${esc(p.pseudo)}</b>, connecte-toi avec Discord : la demande arrive directement aux admins, qui la traitent rapidement.</p><p class="muted">Si c'est ta fiche, tu peux aussi cliquer sur « C'est moi » après connexion, puis la retirer toi-même en un clic.</p>`,saveLabel:"Se connecter",onSave:()=>login()});return;}
+  openModal({title:"Demander le retrait d'une fiche",body:`<p>Tu demandes le retrait de la fiche <b>${esc(p.pseudo)}</b> (profil, photo et nom). Les admins la masqueront ; les résultats des saisons resteront justes mais anonymes.</p>
+    <label class="field"><span>Précision (facultatif)</span><textarea id="rm-msg" rows="3" placeholder="Ex. : c'est moi, ou c'est un membre de ma famille, ou seulement la photo…"></textarea></label>`,saveLabel:"Envoyer la demande",
+    onSave:async()=>{const m=(document.getElementById("rm-msg")||{}).value||"";const {error}=await sb.from("tickets").insert({kind:"autre",status:"open",data:{message:"Demande de retrait du wiki — fiche « "+p.pseudo+" » (id "+p.id+")."+(m.trim()?"\n\n"+m.trim():""),playerId:p.id,removal:true}});
+      if(error)throw sbErr(error);toast("Demande envoyée aux admins");}});}
 async function claimPlayer(id,on){
   const p=player(id);if(!p||!S.me)return;
   try{
@@ -2816,7 +2857,7 @@ document.addEventListener("click",e=>{
     "new-season":()=>seasonForm(null,b.dataset.org),"edit-season":()=>seasonForm(season(id)),"del-season":()=>delSeason(id),
     "cast":()=>castEditor(season(id)),"tierlist":()=>tierList(season(id)),"optimize-images":()=>optimizeImages(),"export-all":async()=>{try{await exportAll();toast("Sauvegarde téléchargée");}catch(e){toast(errMsg(e),true);}},"slooks":()=>seasonLooksEditor(season(id)),"awards":()=>awardsEditor(season(id)),
     "filter":()=>{S.f[b.dataset.k]=b.dataset.v;render();},"opal":()=>{S.f.opal=b.dataset.v;render();},"votes":()=>votesEditor(season(id)),
-    "new-player":()=>playerForm(),"new-mine":()=>{if(myPlayer()){location.hash="joueur-"+myPlayer().id;return;}playerForm(null,true);},"edit-player":()=>playerForm(player(id)),"del-player":()=>delPlayer(id),"merge-player":()=>mergeForm(player(id)),"claim":()=>claimPlayer(id,true),"login":()=>login(),"fr-add":()=>friendAction("add",b.dataset.u),"block":()=>blockAction(b.dataset.u,true),"unblock":()=>blockAction(b.dataset.u,false),"fr-accept":()=>friendAction("accept",b.dataset.u),"fr-remove":()=>friendAction("remove",b.dataset.u),"appform":()=>appFormEditor(season(id)),"apptoggle":()=>toggleApps(season(id)),"logout":()=>logout(),"claim-ok":()=>claimDecision(b.dataset.p,b.dataset.u,true),"claim-no":()=>claimDecision(b.dataset.p,b.dataset.u,false),"unsign":()=>signAction(id,"unsign"),"su-ok":()=>signAction(b.dataset.s,"ok",b.dataset.u),"su-no":()=>signAction(b.dataset.s,"no",b.dataset.u),"unclaim":()=>claimPlayer(id,false),"split-player":()=>splitForm(player(id)),"move-seasons":()=>moveSeasonsForm(player(id)),
+    "new-player":()=>playerForm(),"new-mine":()=>{if(myPlayer()){location.hash="joueur-"+myPlayer().id;return;}playerForm(null,true);},"edit-player":()=>playerForm(player(id)),"del-player":()=>delPlayer(id),"merge-player":()=>mergeForm(player(id)),"claim":()=>claimPlayer(id,true),"hide-me":()=>hideMe(id,true),"unhide-me":()=>hideMe(id,false),"ask-removal":()=>askRemoval(id),"login":()=>login(),"fr-add":()=>friendAction("add",b.dataset.u),"block":()=>blockAction(b.dataset.u,true),"unblock":()=>blockAction(b.dataset.u,false),"fr-accept":()=>friendAction("accept",b.dataset.u),"fr-remove":()=>friendAction("remove",b.dataset.u),"appform":()=>appFormEditor(season(id)),"apptoggle":()=>toggleApps(season(id)),"logout":()=>logout(),"claim-ok":()=>claimDecision(b.dataset.p,b.dataset.u,true),"claim-no":()=>claimDecision(b.dataset.p,b.dataset.u,false),"unsign":()=>signAction(id,"unsign"),"su-ok":()=>signAction(b.dataset.s,"ok",b.dataset.u),"su-no":()=>signAction(b.dataset.s,"no",b.dataset.u),"unclaim":()=>claimPlayer(id,false),"split-player":()=>splitForm(player(id)),"move-seasons":()=>moveSeasonsForm(player(id)),
     "new-news":()=>newsForm(null,b.dataset.org),"edit-news":()=>newsForm(newsItem(id)),"del-news":()=>delNews(id),
     "new-credit":()=>creditForm(null),"edit-credit":()=>creditForm(TH.credits.find(c=>c.id===id)),"del-credit":()=>delCredit(id),
     "qa-tab":()=>{QA.tab=b.dataset.v;QA.lim=15;render();},"qa-miss":()=>{QA.miss=b.dataset.v;QA.lim=15;render();},"qa-more":()=>{QA.lim+=15;render();},"qa-none":()=>qaNone(id,b.dataset.k),"qa-ignall":()=>qaIgnAll(id),
