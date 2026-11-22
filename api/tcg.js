@@ -34,6 +34,9 @@ function readFile(f) {
 
 // Sortie publique : samedi 21 novembre 2026 à 14 h (heure de Paris).
 const LAUNCH = Date.parse("2026-11-21T14:00:00+01:00");
+// ── Interrupteur de maintenance ── true = TCG fermé aux joueurs (le propriétaire et les admins gardent un bouton d'accès).
+const CLOSED = false;
+const CLOSED_MSG = "Le TCG est fermé temporairement pour maintenance. Tes cartes et ta progression sont gardées : reviens un peu plus tard !";
 const loader = (now) => `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ORG-Central TCG</title><meta name="description" content="Le TCG d'ORG-Central : toutes les ORG, les saisons et les joueurs du wiki en cartes à collectionner."><link rel="icon" href="/favicon.svg">
 <style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0e0d12;color:#F1ECE4;font:16px/1.5 system-ui,sans-serif;text-align:center;padding:20px}a{color:#EC6A3D}</style></head>
@@ -56,6 +59,11 @@ const loader = (now) => `<!DOCTYPE html><html lang="fr"><head><meta charset="utf
     // Avant la sortie, le propriétaire et les admins voient le décompte comme tout le monde ; un bouton leur ouvre le jeu (mémorisé pour l'onglet).
     let adm=false;try{adm=sessionStorage.getItem("tcg-admin")==="1";}catch(e){}
     window.TCG_STAFF=staff;window.TCG_MODE=live?(s?"full":"login"):(staff&&adm?"full":"preview");
+    if(${CLOSED}&&!(staff&&adm)){ // maintenance : on n'ouvre pas le jeu
+      document.title="TCG en maintenance · ORG-Central";
+      m.innerHTML='<b style="font-size:1.4rem">TCG en maintenance</b><br><span style="opacity:.8">'+${JSON.stringify(CLOSED_MSG)}+'</span><br><br><a href="/">Retour au site</a>'+(staff?'<br><br><button id="adm" style="font:inherit;padding:10px 18px;border-radius:999px;border:1px solid #EC6A3D;background:none;color:#EC6A3D;cursor:pointer">Accéder au TCG (admin)</button>':'');
+      const b=document.getElementById("adm");if(b)b.onclick=()=>{try{sessionStorage.setItem("tcg-admin","1");}catch(e){}location.reload();};
+      return;}
     // Fichiers du jeu servis en statique par le CDN de Vercel (pas de fonction, pas de transfert depuis l'origine à chaque visite).
     window.TCG_GET=p=>fetch("/tcg-files/"+p);
     const r=await window.TCG_GET("index.html");
