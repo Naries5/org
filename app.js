@@ -490,6 +490,7 @@ let freshTimer=null;
 let revealIO=null;
 function playEntrance(){
   moveNavInd();
+  return; // animations d'entrée en cascade désactivées (sobriété) : même rendu qu'avec « réduire les animations »
   if(reduceMotion.matches)return;
   app.querySelectorAll(".og-grid,.crowns,.classement,.stiles,.grid,.nw-grid,.ins-grid,.pc-grid,.cal-l").forEach(g=>{[...g.children].forEach((c,i)=>c.style.setProperty("--i",Math.min(i,18)));});
   app.querySelectorAll("table.votes tr").forEach(tr=>{[...tr.children].forEach((c,i)=>c.style.setProperty("--c",Math.min(i,24)));});
@@ -504,6 +505,7 @@ function playEntrance(){
 }
 /* Titre de l'accueil : les lettres tombent une à une, puis un reflet passe (une fois par visite) */
 function heroLetters(){
+  return; // désactivé : effet décoratif retiré (sobriété)
   const t=app.querySelector(".hx-t");if(!t)return;
   try{if(sessionStorage.getItem("oc-hero"))return;sessionStorage.setItem("oc-hero","1");}catch(e){}
   const txt=t.textContent;t.setAttribute("aria-label",txt);
@@ -1400,7 +1402,7 @@ function seasonForm(s,orgId){
   if(!S.orgs.length){toast("Crée d'abord une ORG.",true);return;}
   const isNew=!s;s=s||{orgId:orgId||"",status:"annoncee",number:orgId?seasonsOf(orgId).length+1:1};
   openModal({title:isNew?"Nouvelle saison":"Modifier la saison",body:`
-    <div class="frow">${field("ORG *",sel("orgId",[["","— Choisir —"],...orgOpts()],s.orgId,'required data-label="ORG"'))}${field("Numéro de saison *",inp("number",s.number,'type="number" min="0" required data-label="Numéro"'))}</div>
+    <div class="frow">${field("ORG *",sel("orgId",[["","Choisir…"],...orgOpts()],s.orgId,'required data-label="ORG"'))}${field("Numéro de saison *",inp("number",s.number,'type="number" min="0" required data-label="Numéro"'))}</div>
     ${imageField("logo",s.logo,"Logo de la saison")}
     <p class="hint" style="margin-top:-6px">Le logo de l'ORG affiche automatiquement celui de la saison la plus récente.</p>
     ${field("Nom affiché (facultatif)",inp("customName",s.customName,'maxlength="30" placeholder="Automatique"'),"Laisse vide pour le nom automatique. Remplis seulement pour une exception, par exemple « Speed AS » ou « All Stars 2 ».")}
@@ -1492,7 +1494,7 @@ function castEditor(s){
   const tOpts=cur=>`<option value="">—</option>`+teams.map(t=>`<option value="${esc(t.id)}"${t.id===cur?" selected":""}>${esc(t.name||"Équipe sans nom")}</option>`).join("");
   const teamRows=()=>teams.length?teams.map((t,i)=>`<div class="trow" data-i="${i}"><input type="color" data-k="color" id="t-c-${i}" value="${esc(t.color)}" aria-label="Couleur de l'équipe ${i+1}"><input data-k="name" id="t-n-${i}" value="${esc(t.name)}" maxlength="30" placeholder="Nom de l'équipe" aria-label="Nom de l'équipe ${i+1}"><button type="button" class="icon-btn" data-rmt="${i}" aria-label="Retirer cette équipe">×</button></div>`).join(""):`<p class="muted">Pas d'équipes. Ajoutes-en si ta saison a des tribus ou des camps.</p>`;
   const rows=()=>draft.length?`<div class="crow head" aria-hidden="true"><span>Joueur</span><span>Place</span>${teams.length?"<span>Équipe 1</span><span>Équipe 2</span><span>Équipe 3</span>":""}<span>Mention</span><span></span></div>`+draft.map((c,i)=>`<div class="crow${teams.length?" wt":""}" data-i="${i}">
-    <select data-k="playerId" id="c-p-${i}" aria-label="Joueur ${i+1}"><option value="">— Choisir un joueur —</option>${plist().map(p=>`<option value="${esc(p.id)}"${p.id===c.playerId?" selected":""}>${esc(p.pseudo)}</option>`).join("")}</select>
+    <select data-k="playerId" id="c-p-${i}" aria-label="Joueur ${i+1}"><option value="">Choisir un joueur…</option>${plist().map(p=>`<option value="${esc(p.id)}"${p.id===c.playerId?" selected":""}>${esc(p.pseudo)}</option>`).join("")}</select>
     <input data-k="place" id="c-r-${i}" type="number" min="1" value="${esc(c.place)}" placeholder="Place" aria-label="Placement ${i+1}">
     ${teams.length?`<select data-k="team" id="c-t-${i}" aria-label="Équipe de départ ${i+1}">${tOpts(c.team)}</select><select data-k="team2" id="c-t2-${i}" aria-label="Équipe 2, ligne ${i+1}">${tOpts(c.team2)}</select><select data-k="team3" id="c-t3-${i}" aria-label="Équipe 3, ligne ${i+1}">${tOpts(c.team3)}</select>`:""}
     <input data-k="note" id="c-n-${i}" value="${esc(c.note)}" maxlength="60" placeholder="Mention (jury, abandon…)" aria-label="Mention ${i+1}">
@@ -1620,7 +1622,7 @@ function awardsEditor(s){
   if(!draft.length)draft.push({name:"",playerId:""});
   const rows=()=>draft.length?draft.map((a,i)=>`<div class="arow" data-i="${i}">
     <input data-k="name" id="a-n-${i}" list="award-ideas" value="${esc(a.name)}" maxlength="60" placeholder="Nom de l'award" aria-label="Nom de l'award ${i+1}">
-    <select data-k="playerId" id="a-p-${i}" aria-label="Gagnant de l'award ${i+1}"><option value="">— Gagnant —</option>${cast.map(c=>`<option value="${esc(c.playerId)}"${c.playerId===a.playerId?" selected":""}>${esc(pName(c.playerId))}</option>`).join("")}</select>
+    <select data-k="playerId" id="a-p-${i}" aria-label="Gagnant de l'award ${i+1}"><option value="">Gagnant…</option>${cast.map(c=>`<option value="${esc(c.playerId)}"${c.playerId===a.playerId?" selected":""}>${esc(pName(c.playerId))}</option>`).join("")}</select>
     <button type="button" class="icon-btn" data-rm="${i}" aria-label="Retirer cet award">×</button></div>`).join(""):`<p class="muted">Aucun award.</p>`;
   openModal({title:"Awards : "+seasonName(s),body:`
     <p class="hint">Écris le nom de l'award (des suggestions s'affichent) et choisis le joueur qui l'a reçu.</p>
@@ -2164,7 +2166,7 @@ function tkFormBody(){
   const msg=(req,ph)=>field("Explique"+(req?" *":" (facultatif)"),area("message","",`rows="4" maxlength="2000" placeholder="${esc(ph)}"`));
   let b="";
   if(k==="erreur"){const orgs=[...S.orgs].sort((a,b)=>String(a.name).localeCompare(String(b.name),"fr"));
-    b=`<div class="frow">${field("ORG *",`<select id="tk-org" name="org"><option value="">— Choisir —</option>${orgs.map(o=>`<option value="${esc(o.id)}">${esc(o.name)}</option>`).join("")}</select>`)}${field("Saison",`<select id="tk-season" name="season"><option value="">Toute l'ORG / je ne sais pas</option></select>`)}</div>${msg(true,"ex : en saison 3, c'est Lisa qui a gagné l'award Héros, pas Even.")}`;}
+    b=`<div class="frow">${field("ORG *",`<select id="tk-org" name="org"><option value="">Choisir…</option>${orgs.map(o=>`<option value="${esc(o.id)}">${esc(o.name)}</option>`).join("")}</select>`)}${field("Saison",`<select id="tk-season" name="season"><option value="">Toute l'ORG / je ne sais pas</option></select>`)}</div>${msg(true,"ex : en saison 3, c'est Lisa qui a gagné l'award Héros, pas Even.")}`;}
   if(k==="fusion"){b=`${dl}<p class="hint">Ajoute toutes les fiches qui sont en réalité la même personne (au moins 2).</p>
     <div class="tk-chips">${TK.players.map((id,i)=>`<span class="tk-chip">${esc(pName(id))}<button type="button" data-tkrm="${i}" aria-label="Retirer">×</button></span>`).join("")}</div>
     <div class="dayin"><input id="tk-padd" list="tk-players" placeholder="Pseudo d'une fiche…" autocomplete="off"><button type="button" class="btn" id="tk-add">Ajouter</button></div>${msg(false,"ex : c'est la même personne, elle a changé de pseudo.")}`;}
@@ -2173,7 +2175,7 @@ function tkFormBody(){
     ${p?(h.length?`<p class="hint">Coche les ORGs jouées par <b>l'autre personne</b> :</p><div class="checks">${h.map(({s,c})=>`<label class="chk"><input type="checkbox" name="sp" value="${esc(s.id)}"> ${esc(fullSeasonName(s))} <span class="muted">· ${placeLabel(c.place)}</span></label>`).join("")}</div>`:`<p class="muted">Cette fiche n'a aucune participation.</p>`)+field("Pseudo de l'autre personne",inp("other","",'maxlength="40" placeholder="si tu le connais"')):""}
     ${msg(false,"ex : le Panda d'Axioma n'est pas le même que celui de LaytORG.")}`;}
   if(k==="host"){const orgs=[...S.orgs].filter(o=>!S.hostOrgs.has(o.id)).sort((a,b)=>String(a.name).localeCompare(String(b.name),"fr"));
-    b=`<p class="hint">Une fois la demande validée par un admin, tu pourras publier les annonces de ton ORG, modifier sa page et gérer ses saisons et candidatures. <a href="#guide">En savoir plus</a></p>${field("Ton ORG *",`<select id="tk-horg" name="horg"><option value="">— Choisir —</option>${orgs.map(o=>`<option value="${esc(o.id)}"${TK.org===o.id?" selected":""}>${esc(o.name)}</option>`).join("")}</select>`,"Ton ORG n'est pas encore sur le site ? Ajoute-la d'abord avec « Ajouter une saison », ou précise son nom ci-dessous.")}${msg(false,"ex : j'organise cette ORG depuis la saison 2, tu peux vérifier sur notre Discord.")}`;}
+    b=`<p class="hint">Une fois la demande validée par un admin, tu pourras publier les annonces de ton ORG, modifier sa page et gérer ses saisons et candidatures. <a href="#guide">En savoir plus</a></p>${field("Ton ORG *",`<select id="tk-horg" name="horg"><option value="">Choisir…</option>${orgs.map(o=>`<option value="${esc(o.id)}"${TK.org===o.id?" selected":""}>${esc(o.name)}</option>`).join("")}</select>`,"Ton ORG n'est pas encore sur le site ? Ajoute-la d'abord avec « Ajouter une saison », ou précise son nom ci-dessous.")}${msg(false,"ex : j'organise cette ORG depuis la saison 2, tu peux vérifier sur notre Discord.")}`;}
   if(k==="autre")b=msg(true,"Décris ta demande.");
   return b+`<p class="ferr" id="tk-err" role="alert">${esc(TK.err||"")}</p><p><button type="submit" class="btn primary">Envoyer</button></p>`;
 }
@@ -2307,7 +2309,7 @@ function askRemoval(id){const p=player(id);if(!p)return;
     <label class="field"><span>Précision (facultatif)</span><textarea id="rm-msg" rows="3" maxlength="800" placeholder="Ex. : c'est moi, c'est un membre de ma famille, ou seulement la photo…"></textarea></label>
     ${S.me?"":`<p class="muted">Pas besoin de compte. Si tu te connectes avec Discord et que c'est ta fiche, tu peux aussi la retirer toi-même en un clic.</p>`}`,saveLabel:"Envoyer la demande",
     onSave:async()=>{const m=((document.getElementById("rm-msg")||{}).value||"").trim(),dc=((document.getElementById("rm-dc")||{}).value||"").trim();
-      const text="Demande de retrait du wiki — fiche « "+p.pseudo+" » (id "+p.id+")."+(dc?"\nDiscord : "+dc:"")+(m?"\n\n"+m:"");
+      const text="Demande de retrait du wiki : fiche « "+p.pseudo+" » (id "+p.id+")."+(dc?"\nDiscord : "+dc:"")+(m?"\n\n"+m:"");
       const {error}=await sb.from("tickets").insert({kind:"autre",status:"open",data:{message:text,playerId:p.id,removal:true,discord:dc||null,anonymous:!S.me}});
       if(error){if(S.me)throw sbErr(error);
         // la base n'accepte pas encore les demandes sans compte : on donne le texte à envoyer à la main
