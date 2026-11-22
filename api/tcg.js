@@ -63,31 +63,42 @@ const loader = (now) => `<!DOCTYPE html><html lang="fr"><head><meta charset="utf
       document.title="TCG fermé · ORG-Central";
       m.style.maxWidth="640px";m.style.textAlign="left";m.innerHTML='<b style="display:block;text-align:center;font-size:1.5rem;margin-bottom:14px">Le TCG est fermé</b>'+${JSON.stringify(CLOSED_MSG.map(t=>"<p style=\"opacity:.88;margin:0 0 12px\">"+t.replace(/&/g,"&amp;").replace(/</g,"&lt;")+"</p>").join(""))}+'<p style="text-align:center;margin-top:22px"><a href="/">Retour au site</a></p>'+(staff?'<br><br><button id="adm" style="font:inherit;padding:10px 18px;border-radius:999px;border:1px solid #EC6A3D;background:none;color:#EC6A3D;cursor:pointer">Accéder au TCG (admin)</button>':'');
       const b=document.getElementById("adm");if(b)b.onclick=()=>{try{sessionStorage.setItem("tcg-admin","1");}catch(e){}location.reload();};
-      // Autorisation d'apparaître en carte : enregistrée sur la fiche joueur reliée au compte (data.tcgConsent), pour une éventuelle réouverture.
+      // Refus d'apparaître dans le TCG : n'importe qui (connecté ou non) choisit sa fiche du wiki et indique son Discord ; la demande arrive aux admins (ticket).
       const box=document.createElement("div");box.style.cssText="margin:26px auto 0;padding:16px 18px;border:1px solid rgba(241,236,228,.18);border-radius:14px;text-align:center";
       m.insertBefore(box,m.querySelector("p[style*='margin-top:22px']"));
-      const btn=(t,id,main)=>'<button id="'+id+'" style="font:inherit;padding:10px 18px;border-radius:999px;cursor:pointer;border:1px solid #EC6A3D;'+(main?'background:#EC6A3D;color:#0e0d12;font-weight:600':'background:none;color:#EC6A3D')+'">'+t+'</button>';
-      const intro='<p style="opacity:.88;margin:0 0 14px">Si le TCG rouvre, seuls les joueurs qui l’ont accepté y apparaîtront. Tu peux retirer ton autorisation à tout moment.</p>';
-      const fdate=d=>{try{return new Date(d).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"});}catch(e){return "";}};
-      const draw=async()=>{
-        if(!s){box.innerHTML=intro+btn("Se connecter avec Discord pour donner mon autorisation","c-login",true);
-          document.getElementById("c-login").onclick=()=>sb.auth.signInWithOAuth({provider:"discord",options:{redirectTo:location.origin+"/tcg"}});return;}
-        box.innerHTML='<p style="opacity:.7;margin:0">Chargement…</p>';
-        const {data:pl,error}=await sb.from("players").select("id,data").eq("data->>ownerUid",s.user.id).limit(1);
-        if(error){box.innerHTML='<p style="margin:0">Impossible de charger ta fiche pour le moment. <a href="/tcg">Réessayer</a></p>';return;}
-        const p=pl&&pl[0];
-        if(!p){box.innerHTML=intro+'<p style="margin:0">Pour donner ton autorisation, relie d’abord ta fiche joueur à ton compte : ouvre ta fiche sur le site et clique sur « C’est moi ».</p>';return;}
-        const c=p.data&&p.data.tcgConsent;
-        box.innerHTML=intro+(c&&c.at?'<p style="margin:0 0 12px"><b>Tu as donné ton autorisation</b> le '+fdate(c.at)+'.</p>'+btn("Retirer mon autorisation","c-go",false):btn("Je donne mon autorisation pour apparaître en tant que carte TCG","c-go",true))+'<p id="c-err" style="color:#ff8a7a;margin:10px 0 0"></p>';
-        document.getElementById("c-go").onclick=async ev=>{ev.target.disabled=true;
-          const {data:cur,error:e1}=await sb.from("players").select("data").eq("id",p.id).maybeSingle();
-          if(e1||!cur){document.getElementById("c-err").textContent="L’enregistrement a échoué, réessaie dans un instant.";ev.target.disabled=false;return;}
-          const d=Object.assign({},cur.data);if(c&&c.at)delete d.tcgConsent;else d.tcgConsent={at:new Date().toISOString()};
-          const {error:e2}=await sb.from("players").update({data:d,updated_at:new Date().toISOString()}).eq("id",p.id);
-          if(e2){document.getElementById("c-err").textContent="L’enregistrement a échoué, réessaie dans un instant.";ev.target.disabled=false;return;}
-          draw();};
+      const B='font:inherit;padding:10px 18px;border-radius:999px;cursor:pointer;border:1px solid #EC6A3D;';
+      const I='font:inherit;width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid rgba(241,236,228,.25);background:#17151d;color:#F1ECE4';
+      const H=t=>String(t==null?"":t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+      const N=t=>String(t||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]/g,"");
+      let PL=null;
+      const loadPl=async()=>{if(PL)return PL;let out=[],from=0;for(let i=0;i<20;i++){const r=await fetch("/api/data?t=players&from="+from);if(!r.ok)throw 0;const j=await r.json();(j.rows||[]).forEach(x=>{if(x.data&&x.data.pseudo)out.push({id:x.id,n:x.data.pseudo,k:N(x.data.pseudo)});});if(j.next==null)break;from=j.next;}return PL=out;};
+      const start=()=>{box.innerHTML='<p style="opacity:.88;margin:0 0 14px">Si le TCG rouvre, tu peux demander dès maintenant à ne pas y apparaître.</p><button id="o-open" style="'+B+'background:none;color:#EC6A3D">Je ne veux pas apparaître dans le TCG</button>';
+        document.getElementById("o-open").onclick=form;};
+      const form=async()=>{let sel=null;
+        box.style.textAlign="left";
+        box.innerHTML='<b style="display:block;margin-bottom:10px">Ne pas apparaître dans le TCG</b>'
+          +'<label style="display:block;margin-bottom:12px"><span style="display:block;margin-bottom:4px">Ta fiche sur le wiki</span><input id="o-q" style="'+I+'" placeholder="Tape ton pseudo" autocomplete="off"><div id="o-sug" style="margin-top:6px"></div></label>'
+          +'<label style="display:block;margin-bottom:12px"><span style="display:block;margin-bottom:4px">Ton pseudo Discord</span><input id="o-dc" style="'+I+'" maxlength="60" autocomplete="off" placeholder="Pour que les admins puissent vérifier que c’est bien toi"></label>'
+          +'<p id="o-err" style="color:#ff8a7a;margin:0 0 10px"></p><p style="margin:0;display:flex;gap:10px;flex-wrap:wrap"><button id="o-send" style="'+B+'background:#EC6A3D;color:#0e0d12;font-weight:600">Envoyer la demande</button><button id="o-cancel" style="'+B+'background:none;color:#EC6A3D">Annuler</button></p>';
+        const q=document.getElementById("o-q"),sug=document.getElementById("o-sug"),err=document.getElementById("o-err");
+        document.getElementById("o-cancel").onclick=()=>{box.style.textAlign="center";start();};
+        try{await loadPl();}catch(e){err.textContent="La liste des joueurs n’a pas pu être chargée. Réessaie dans un instant.";}
+        const show=()=>{const k=N(q.value);sel=null;if(!k||!PL){sug.innerHTML="";return;}
+          const l=PL.filter(p=>p.k.includes(k)).sort((a,b)=>(a.k.startsWith(k)?0:1)-(b.k.startsWith(k)?0:1)||a.n.localeCompare(b.n,"fr")).slice(0,8);
+          sug.innerHTML=l.length?l.map(p=>'<button type="button" data-id="'+H(p.id)+'" style="font:inherit;display:block;width:100%;text-align:left;padding:8px 12px;margin-top:4px;border-radius:8px;border:1px solid rgba(241,236,228,.15);background:#1d1a24;color:#F1ECE4;cursor:pointer">'+H(p.n)+'</button>').join(""):'<p style="opacity:.7;margin:4px 0 0">Aucune fiche trouvée.</p>';
+          sug.querySelectorAll("button").forEach(b=>b.onclick=()=>{sel=PL.find(p=>p.id===b.dataset.id);q.value=sel.n;sug.innerHTML='<p style="opacity:.8;margin:4px 0 0">Fiche choisie : <b>'+H(sel.n)+'</b></p>';});};
+        q.oninput=show;
+        document.getElementById("o-send").onclick=async ev=>{err.textContent="";const dc=document.getElementById("o-dc").value.trim();
+          if(!sel){err.textContent="Choisis ta fiche dans la liste.";return;}
+          if(!dc){err.textContent="Indique ton pseudo Discord.";return;}
+          ev.target.disabled=true;
+          const text="Ne pas apparaître dans le TCG — fiche « "+sel.n+" » (id "+sel.id+").\\nDiscord : "+dc;
+          let ok=false;try{const {error}=await sb.from("tickets").insert({kind:"autre",status:"open",data:{message:text,playerId:sel.id,removal:true,tcgOptOut:true,discord:dc,anonymous:!s}});ok=!error;}catch(e){}
+          box.style.textAlign="center";
+          if(ok){box.innerHTML='<p style="margin:0"><b>Demande envoyée.</b> Ta fiche « '+H(sel.n)+' » n’apparaîtra pas dans le TCG. Les admins pourront te contacter sur Discord pour vérifier que c’est bien toi.</p>';return;}
+          box.innerHTML='<p style="margin:0 0 10px">La demande n’a pas pu être envoyée automatiquement. Copie ce message et envoie-le à <b>Naries</b> ou <b>Layte</b> sur Discord :</p><textarea readonly rows="3" style="'+I+'">'+H(text)+'</textarea>';};
       };
-      draw();
+      start();
       return;}
     // Fichiers du jeu servis en statique par le CDN de Vercel (pas de fonction, pas de transfert depuis l'origine à chaque visite).
     window.TCG_GET=p=>fetch("/tcg-files/"+p);
