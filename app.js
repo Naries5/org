@@ -2259,11 +2259,17 @@ function hideMe(id,on){const p=player(id);if(!p||!S.me||p.ownerUid!==S.me)return
   if(!on)return go();
   confirmModal("Me retirer du wiki","Ta fiche ne sera plus visible : ton profil et ta photo disparaissent, et ton nom est remplacé par « Joueur anonyme » dans les castings et les classements. Les résultats des saisons restent justes. Tu pourras la réafficher quand tu veux depuis ta fiche (toi seul la vois).","Retirer ma fiche",go);}
 function askRemoval(id){const p=player(id);if(!p)return;
-  if(!S.me){openModal({title:"Demander le retrait d'une fiche",body:`<p>Pour demander le retrait de la fiche <b>${esc(p.pseudo)}</b>, connecte-toi avec Discord : la demande arrive directement aux admins, qui la traitent rapidement.</p><p class="muted">Si c'est ta fiche, tu peux aussi cliquer sur « C'est moi » après connexion, puis la retirer toi-même en un clic.</p>`,saveLabel:"Se connecter",onSave:()=>login()});return;}
   openModal({title:"Demander le retrait d'une fiche",body:`<p>Tu demandes le retrait de la fiche <b>${esc(p.pseudo)}</b> (profil, photo et nom). Les admins la masqueront ; les résultats des saisons resteront justes mais anonymes.</p>
-    <label class="field"><span>Précision (facultatif)</span><textarea id="rm-msg" rows="3" placeholder="Ex. : c'est moi, ou c'est un membre de ma famille, ou seulement la photo…"></textarea></label>`,saveLabel:"Envoyer la demande",
-    onSave:async()=>{const m=(document.getElementById("rm-msg")||{}).value||"";const {error}=await sb.from("tickets").insert({kind:"autre",status:"open",data:{message:"Demande de retrait du wiki — fiche « "+p.pseudo+" » (id "+p.id+")."+(m.trim()?"\n\n"+m.trim():""),playerId:p.id,removal:true}});
-      if(error)throw sbErr(error);toast("Demande envoyée aux admins");}});}
+    ${S.me?"":`<label class="field"><span>Ton pseudo Discord (facultatif)</span><input id="rm-dc" maxlength="60" autocomplete="off" placeholder="Pour qu'on puisse te répondre"></label>`}
+    <label class="field"><span>Précision (facultatif)</span><textarea id="rm-msg" rows="3" maxlength="800" placeholder="Ex. : c'est moi, c'est un membre de ma famille, ou seulement la photo…"></textarea></label>
+    ${S.me?"":`<p class="muted">Pas besoin de compte. Si tu te connectes avec Discord et que c'est ta fiche, tu peux aussi la retirer toi-même en un clic.</p>`}`,saveLabel:"Envoyer la demande",
+    onSave:async()=>{const m=((document.getElementById("rm-msg")||{}).value||"").trim(),dc=((document.getElementById("rm-dc")||{}).value||"").trim();
+      const text="Demande de retrait du wiki — fiche « "+p.pseudo+" » (id "+p.id+")."+(dc?"\nDiscord : "+dc:"")+(m?"\n\n"+m:"");
+      const {error}=await sb.from("tickets").insert({kind:"autre",status:"open",data:{message:text,playerId:p.id,removal:true,discord:dc||null,anonymous:!S.me}});
+      if(error){if(S.me)throw sbErr(error);
+        // la base n'accepte pas encore les demandes sans compte : on donne le texte à envoyer à la main
+        setTimeout(()=>openModal({title:"Envoie ta demande sur Discord",body:`<p>Les demandes sans compte ne sont pas encore activées. Copie ce message et envoie-le à <b>Naries</b> sur Discord :</p><textarea readonly rows="5" style="width:100%">${esc(text)}</textarea>`,saveLabel:"Copier",onSave:async()=>{try{await navigator.clipboard.writeText(text);toast("Message copié");}catch(e){}}}),50);return;}
+      toast("Demande envoyée aux admins");}});}
 async function claimPlayer(id,on){
   const p=player(id);if(!p||!S.me)return;
   try{
