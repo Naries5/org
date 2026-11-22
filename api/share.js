@@ -1,6 +1,7 @@
 // Page d'aperçu pour les liens partagés : /s/<saison>, /o/<org>, /j/<joueur>.
 // Discord & co lisent les balises og:*, les visiteurs sont redirigés vers la vraie page.
 const { q, qv, enc, seasonName, dates, esc, pLabel } = require("./_lib");
+const HIDDEN_ORGS = ["osurvisland"];
 const STATUS = { annoncee: "Annoncée", inscriptions: "Inscriptions ouvertes", encours: "En cours", en_cours: "En cours", terminee: "Terminée" };
 
 async function players(ids) {
@@ -26,7 +27,7 @@ function actualWinners(s,o) {
 }
 async function season(id) {
   const [s] = await qv("seasons?select=" + SEL + ",logo:data->>logo&id=eq." + enc(id));
-  if (!s) return null;
+  if (!s || HIDDEN_ORGS.includes(s.orgId)) return null;
   const [o] = await qv("orgs?select=" + OSEL + ",logo:data->>logo&id=eq." + enc(s.orgId || ""));
   const cast = Array.isArray(s.cast) ? s.cast : [];
   const done = s.status === "terminee" && !s.external;
@@ -50,6 +51,7 @@ async function season(id) {
 }
 
 async function orgPage(id) {
+  if (HIDDEN_ORGS.includes(id)) return null;
   const [o] = await qv("orgs?select=" + OSEL + ",logo:data->>logo&id=eq." + enc(id));
   if (!o) return null;
   const ss = await qv("seasons?select=id,number:data->>number,taupeWins:data->taupeWins,external:data->>external,cast:data->cast,status:data->>status&data->>orgId=eq." + enc(id));
@@ -67,6 +69,11 @@ async function playerPage(id) {
   const [p] = await qv("players?select=id,pseudo:data->>pseudo,precision:data->>precision,tagline:data->>tagline,hasAv:data->>avatar&id=eq." + enc(id));
   if (!p) return null;
   const ss = await qv("seasons?select=id,orgId:data->>orgId,number:data->>number,taupeWins:data->taupeWins,title:data->>title,customName:data->>customName,status:data->>status,cast:data->cast&data->cast=cs." + enc(JSON.stringify([{ playerId: id }])));
+  const [ow] = await qv("players?select=o:data->>ownerUid&id=eq." + enc(id));
+  const inSv = ss.some(s => HIDDEN_ORGS.includes(s.orgId));
+  if (inSv && !(ow && ow.o)) p.hasAv = "";
+  if (inSv && ss.every(s => HIDDEN_ORGS.includes(s.orgId))) return null;
+  for (let i = ss.length - 1; i >= 0; i--) if (HIDDEN_ORGS.includes(ss[i].orgId)) ss.splice(i, 1);
   const orgIds = [...new Set(ss.map(s => s.orgId).filter(Boolean))];
   const os = orgIds.length ? await qv("orgs?select=id,name:data->>name,concept:data->>concept&id=in.(" + orgIds.map(i => '"' + i + '"').join(",") + ")") : [];
   const orgMap = Object.fromEntries(os.map(o=>[o.id,o]));

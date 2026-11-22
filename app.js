@@ -90,18 +90,28 @@ function seasonAvatarMap(){if(_sav.src===S.seasons)return _sav.map;const m={};co
   const k=s=>String(s.end||s.start||"")+"|"+(cr[s.status]??0)+"|"+String(Number(s.number)||0).padStart(4,"0");
   [...(S.seasons||[])].sort((a,b)=>k(a).localeCompare(k(b))).forEach(s=>(s.cast||[]).forEach(c=>{if(c.sAvatar)m[c.playerId]=c.sAvatar;}));
   _sav={src:S.seasons,map:m};return m;}
-/* Photos masquées : joueurs qui n'ont fait QUE Survisland */
-const NOPIC_ORGS=new Set(["osurvisland"]);let _np={src:null,set:null};
-function noPicSet(){if(_np.src===S.seasons&&_np.set)return _np.set;const orgsOf={};
-  (S.seasons||[]).forEach(se=>(se.cast||[]).forEach(c=>{(orgsOf[c.playerId]=orgsOf[c.playerId]||new Set()).add(se.orgId);}));
-  const set=new Set();Object.entries(orgsOf).forEach(([pid,os])=>{if([...os].every(o=>NOPIC_ORGS.has(o)))set.add(pid);});
-  _np={src:S.seasons,set};return set;}
+/* Survisland retiré du site pour le moment : ORG, saisons et annonces masquées (sauf pour les admins).
+   Photos masquées : joueurs qui n'ont fait QUE Survisland, et joueurs passés par Survisland dont la fiche n'est reliée à aucun compte. */
+const NOPIC_ORGS=new Set(["osurvisland"]),HIDDEN_ORGS=new Set(["osurvisland"]);let _np={src:null,pl:null,set:null,only:null};
+function svSets(){const ss=S.allSeasons||S.seasons||[],pl=S.allPlayers||S.players||[];
+  if(_np.src===ss&&_np.pl===pl&&_np.set)return _np;const orgsOf={};
+  ss.forEach(se=>(se.cast||[]).forEach(c=>{(orgsOf[c.playerId]=orgsOf[c.playerId]||new Set()).add(se.orgId);}));
+  const owner=new Set(pl.filter(p=>p.ownerUid).map(p=>p.id));
+  const only=new Set(),set=new Set();
+  Object.entries(orgsOf).forEach(([pid,os])=>{const l=[...os];
+    if(l.every(o=>NOPIC_ORGS.has(o))){only.add(pid);set.add(pid);}
+    else if(l.some(o=>NOPIC_ORGS.has(o))&&!owner.has(pid))set.add(pid);});
+  _np={src:ss,pl,set,only};return _np;}
+function noPicSet(){return svSets().set;}
 const noPic=id=>!!id&&noPicSet().has(id);
-/* Profils retirés du site : joueurs qui n'ont fait QUE Survisland. Les admins les voient encore (pour ne rien casser en modifiant une saison). */
-function applyHidden(){const all=S.allPlayers||S.players||[];const h=noPicSet();
-  // fiches masquées : seulement Survisland, ou retirées par le joueur lui-même (« Me retirer du wiki »)
+/* Fiches masquées : seulement Survisland, ou retirées par le joueur lui-même (« Me retirer du wiki »). Les admins voient tout (pour ne rien casser en modifiant une saison). */
+function applyHidden(){const all=S.allPlayers||S.players||[];const h=svSets().only;
   S.hiddenIds=new Set(all.filter(p=>h.has(p.id)||p.hidden).map(p=>p.id));
-  if(S.isAdmin){S.players=all;return;}S.players=all.filter(p=>!S.hiddenIds.has(p.id)||(S.me&&p.ownerUid===S.me));}
+  const adm=S.isAdmin;
+  if(S.allOrgs)S.orgs=adm?S.allOrgs:S.allOrgs.filter(o=>!HIDDEN_ORGS.has(o.id));
+  if(S.allSeasons)S.seasons=adm?S.allSeasons:S.allSeasons.filter(x=>!HIDDEN_ORGS.has(x.orgId));
+  if(S.allNews)S.news=adm?S.allNews:S.allNews.filter(x=>!HIDDEN_ORGS.has(x.orgId));
+  if(adm){S.players=all;return;}S.players=all.filter(p=>!S.hiddenIds.has(p.id)||(S.me&&p.ownerUid===S.me));}
 function avatarOf(p){return p?(noPic(p.id)||(p.hidden&&!S.isAdmin&&p.ownerUid!==S.me)?"":(p.avatar||seasonAvatarMap()[p.id]||"")):"";}
 function framing(f){if(!f||typeof f!=="object")return "";const x=Math.max(0,Math.min(100,+f.x||50)),y=Math.max(0,Math.min(100,+f.y||50)),z=Math.max(1,Math.min(4,+f.z||1));return `object-position:${x}% ${y}%;${z>1?`transform:scale(${z});transform-origin:${x}% ${y}%;`:""}`;}
 const ava=(p,size)=>pic(avatarOf(p),p&&p.pseudo,"avatar "+size,p&&p.avatar&&avatarOf(p)===p.avatar?framing(p.avatarPos):"");
@@ -418,11 +428,11 @@ function drawPresence(){const a=document.getElementById("pres-now"),b=document.g
   b.innerHTML=PRES_SEEN.length?`<div class="table-wrap"><table><thead><tr><th>Joueur</th><th>Dernière visite</th><th>Dernière page</th></tr></thead><tbody>${PRES_SEEN.map(r=>`<tr><td>${pageWho(r.user_id)}</td><td>${on(r)?`<b class="pres-on">En ligne</b>`:`<span title="${esc(new Date(r.at).toLocaleString("fr-FR"))}">${relTime(r.at)}</span>`}</td><td class="muted">${esc(presPageLabel(r.page))}</td></tr>`).join("")}</tbody></table></div>
   ${never.length?`<p class="hint">${never.length} compte${never.length>1?"s":""} sans visite enregistrée depuis la mise en place du suivi.</p>`:""}`:`<p class="muted">Aucune visite enregistrée pour l'instant.</p>`;}
 async function loadAuth(){
-  S.me=null;S.isAdmin=false;S.isHost=false;S.hostOrgs=new Set();S.profile=null;S.myClaims=[];S.banned=false;S.invites=null;if(S.allPlayers)applyHidden();
+  S.me=null;S.isAdmin=false;S.isHost=false;S.hostOrgs=new Set();S.profile=null;S.myClaims=[];S.banned=false;S.invites=null;applyHidden();
   const {data:{session}}=await sb.auth.getSession();
   if(session){S.me=session.user.id;
     const {data:prof}=await sb.from("profiles").select("*").eq("id",S.me).maybeSingle();S.profile=prof||{discord_name:session.user.user_metadata.full_name,avatar_url:session.user.user_metadata.avatar_url,role:"player"};
-    S.isAdmin=S.profile.role==="admin";S.isHost=S.isAdmin||S.profile.role==="host";if(S.allPlayers)applyHidden();
+    S.isAdmin=S.profile.role==="admin";S.isHost=S.isAdmin||S.profile.role==="host";applyHidden();
     const {data:h}=await sb.from("org_hosts").select("org_id").eq("user_id",S.me);(h||[]).forEach(x=>S.hostOrgs.add(x.org_id));
     const {data:cl}=await sb.from("claims").select("player_id,status").eq("user_id",S.me);S.myClaims=cl||[];
     try{const {data:bn,error:be}=await sb.from("bans").select("reason").eq("user_id",S.me).maybeSingle();S.banned=!be&&!!bn;}catch(e){}
@@ -458,7 +468,7 @@ async function init(){
   COLS.forEach(c=>{
     db.collection(c).onSnapshot(snap=>{
       S[c]=snap.docs.map(d=>Object.assign({id:d.id},d.data()));
-      if(c==="players"){S.allPlayers=S.players;}if(c==="players"||c==="seasons")applyHidden();
+      S["all"+c[0].toUpperCase()+c.slice(1)]=S[c];applyHidden();
       S.loaded.add(c);scheduleRender();
     },err=>{S.loaded.add(c);toast("Chargement impossible ("+c+") : "+errMsg(err),true);render();});
   });

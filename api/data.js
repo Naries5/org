@@ -3,6 +3,7 @@
 const SB = "https://czfgpgvkpxhmxyepvgzs.supabase.co";
 const KEY = "sb_publishable_3ubRuFBO_tVucgZYsHqG2w_AE11ccRW";
 const LIMIT = { orgs: 1000, seasons: 100, players: 1000, news: 500 };
+const HIDDEN_ORGS = ["osurvisland"];
 const ST = SB + "/storage/v1/object/public/images/";
 
 async function get(path) {
@@ -41,10 +42,19 @@ module.exports = async (req, res) => {
     if (!r.ok) { res.statusCode = r.status === 402 ? 503 : 502; res.setHeader("Cache-Control", "no-store"); res.end(JSON.stringify({ error: "supabase " + r.status })); return; }
     rows = await r.json();
   } catch (e) { res.statusCode = 502; res.setHeader("Cache-Control", "no-store"); res.end(JSON.stringify({ error: String(e) })); return; }
+  const next = rows.length === lim ? from + lim : null;
   rows = rows.map(x => ({ id: x.id, data: viaView ? storage(x.data || {}) : strip(x.data || {}, t, x.id, "") }));
+  // Survisland retiré du site pour le moment : ORG, saisons et annonces non servies, photos des joueurs non reliés à un compte retirées
+  if (t === "orgs") rows = rows.filter(x => !HIDDEN_ORGS.includes(x.id));
+  if (t === "seasons" || t === "news") rows = rows.filter(x => !HIDDEN_ORGS.includes(x.data.orgId));
+  if (t === "players") {
+    let sv = null;
+    try { const r = await get("seasons?select=cast:data->cast&data->>orgId=in.(" + HIDDEN_ORGS.join(",") + ")"); if (r.ok) sv = new Set((await r.json()).flatMap(s => (Array.isArray(s.cast) ? s.cast : []).map(c => c.playerId))); } catch (e) {}
+    if (sv) rows.forEach(x => { if (sv.has(x.id) && !x.data.ownerUid) { delete x.data.avatar; delete x.data.banner; } });
+  }
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.setHeader("Cache-Control", "public, max-age=60, s-maxage=600, stale-while-revalidate=86400");
-  res.end(JSON.stringify({ rows, next: rows.length === lim ? from + lim : null }));
+  res.end(JSON.stringify({ rows, next }));
 };
 module.exports.strip = strip;
 module.exports.hash = hash;

@@ -3,19 +3,22 @@ const { q, enc } = require("./_lib");
 async function value(t, id) {
   if (t === "s") {
     const [s] = await q("seasons?select=logo:data->>logo,orgId:data->>orgId&id=eq." + enc(id));
-    if (!s) return "";
+    if (!s || s.orgId === "osurvisland") return "";
     if (s.logo) return s.logo;
     return value("o", s.orgId);
   }
   if (t === "o") {
+    if (id === "osurvisland") return "";
     const [s] = await q("seasons?select=logo:data->>logo&data->>orgId=eq." + enc(id) + "&data->>logo=neq.&order=updated_at.desc&limit=1");
     if (s && s.logo) return s.logo;
     const [o] = await q("orgs?select=logo:data->>logo&id=eq." + enc(id));
     return (o && o.logo) || "";
   }
   if (t === "j") {
-    const [p] = await q("players?select=avatar:data->>avatar&id=eq." + enc(id));
-    return (p && p.avatar) || "";
+    const [p] = await q("players?select=avatar:data->>avatar,o:data->>ownerUid&id=eq." + enc(id));
+    if (!p || !p.avatar) return "";
+    if (!p.o) { const sv = await q("seasons?select=id&data->>orgId=eq.osurvisland&data->cast=cs." + enc(JSON.stringify([{ playerId: id }])) + "&limit=1"); if (sv.length) return ""; }
+    return p.avatar;
   }
   return "";
 }
