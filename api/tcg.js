@@ -63,6 +63,31 @@ const loader = (now) => `<!DOCTYPE html><html lang="fr"><head><meta charset="utf
       document.title="TCG fermé · ORG-Central";
       m.style.maxWidth="640px";m.style.textAlign="left";m.innerHTML='<b style="display:block;text-align:center;font-size:1.5rem;margin-bottom:14px">Le TCG est fermé</b>'+${JSON.stringify(CLOSED_MSG.map(t=>"<p style=\"opacity:.88;margin:0 0 12px\">"+t.replace(/&/g,"&amp;").replace(/</g,"&lt;")+"</p>").join(""))}+'<p style="text-align:center;margin-top:22px"><a href="/">Retour au site</a></p>'+(staff?'<br><br><button id="adm" style="font:inherit;padding:10px 18px;border-radius:999px;border:1px solid #EC6A3D;background:none;color:#EC6A3D;cursor:pointer">Accéder au TCG (admin)</button>':'');
       const b=document.getElementById("adm");if(b)b.onclick=()=>{try{sessionStorage.setItem("tcg-admin","1");}catch(e){}location.reload();};
+      // Autorisation d'apparaître en carte : enregistrée sur la fiche joueur reliée au compte (data.tcgConsent), pour une éventuelle réouverture.
+      const box=document.createElement("div");box.style.cssText="margin:26px auto 0;padding:16px 18px;border:1px solid rgba(241,236,228,.18);border-radius:14px;text-align:center";
+      m.insertBefore(box,m.querySelector("p[style*='margin-top:22px']"));
+      const btn=(t,id,main)=>'<button id="'+id+'" style="font:inherit;padding:10px 18px;border-radius:999px;cursor:pointer;border:1px solid #EC6A3D;'+(main?'background:#EC6A3D;color:#0e0d12;font-weight:600':'background:none;color:#EC6A3D')+'">'+t+'</button>';
+      const intro='<p style="opacity:.88;margin:0 0 14px">Si le TCG rouvre, seuls les joueurs qui l’ont accepté y apparaîtront. Tu peux retirer ton autorisation à tout moment.</p>';
+      const fdate=d=>{try{return new Date(d).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"});}catch(e){return "";}};
+      const draw=async()=>{
+        if(!s){box.innerHTML=intro+btn("Se connecter avec Discord pour donner mon autorisation","c-login",true);
+          document.getElementById("c-login").onclick=()=>sb.auth.signInWithOAuth({provider:"discord",options:{redirectTo:location.origin+"/tcg"}});return;}
+        box.innerHTML='<p style="opacity:.7;margin:0">Chargement…</p>';
+        const {data:pl,error}=await sb.from("players").select("id,data").eq("data->>ownerUid",s.user.id).limit(1);
+        if(error){box.innerHTML='<p style="margin:0">Impossible de charger ta fiche pour le moment. <a href="/tcg">Réessayer</a></p>';return;}
+        const p=pl&&pl[0];
+        if(!p){box.innerHTML=intro+'<p style="margin:0">Pour donner ton autorisation, relie d’abord ta fiche joueur à ton compte : ouvre ta fiche sur le site et clique sur « C’est moi ».</p>';return;}
+        const c=p.data&&p.data.tcgConsent;
+        box.innerHTML=intro+(c&&c.at?'<p style="margin:0 0 12px"><b>Tu as donné ton autorisation</b> le '+fdate(c.at)+'.</p>'+btn("Retirer mon autorisation","c-go",false):btn("Je donne mon autorisation pour apparaître en tant que carte TCG","c-go",true))+'<p id="c-err" style="color:#ff8a7a;margin:10px 0 0"></p>';
+        document.getElementById("c-go").onclick=async ev=>{ev.target.disabled=true;
+          const {data:cur,error:e1}=await sb.from("players").select("data").eq("id",p.id).maybeSingle();
+          if(e1||!cur){document.getElementById("c-err").textContent="L’enregistrement a échoué, réessaie dans un instant.";ev.target.disabled=false;return;}
+          const d=Object.assign({},cur.data);if(c&&c.at)delete d.tcgConsent;else d.tcgConsent={at:new Date().toISOString()};
+          const {error:e2}=await sb.from("players").update({data:d,updated_at:new Date().toISOString()}).eq("id",p.id);
+          if(e2){document.getElementById("c-err").textContent="L’enregistrement a échoué, réessaie dans un instant.";ev.target.disabled=false;return;}
+          draw();};
+      };
+      draw();
       return;}
     // Fichiers du jeu servis en statique par le CDN de Vercel (pas de fonction, pas de transfert depuis l'origine à chaque visite).
     window.TCG_GET=p=>fetch("/tcg-files/"+p);
