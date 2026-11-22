@@ -1388,3 +1388,4 @@ html[data-vt="back"]::view-transition-new(root){animation:vt-in-l .42s var(--eas
 .tcgbtn:hover{filter:brightness(1.08)}
 
 .infonote ol{margin:.4em 0 1em;padding-left:1.4em;display:grid;gap:.6em}.infonote h3{margin:1.2em 0 .5em;font-size:1rem}.infonote p{margin:.5em 0}
+.adm-view{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:900;display:flex;align-items:center;gap:10px;padding:8px 10px 8px 14px;border-radius:999px;background:#2a1a12;color:#fff;border:1px solid #EC6A3D;font-size:.88rem;box-shadow:0 6px 24px rgba(0,0,0,.35)}

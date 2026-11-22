@@ -74,7 +74,7 @@ function today(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth
 function strip(o){const r=Object.assign({},o||{});delete r.id;return r;}
 const _idx=new WeakMap();const byId=(arr,id)=>{if(!arr)return undefined;let m=_idx.get(arr);if(!m){m=new Map();for(const x of arr)m.set(x.id,x);_idx.set(arr,m);}return m.get(id);};
 const org=id=>byId(S.orgs,id), player=id=>byId(S.players,id), season=id=>byId(S.seasons,id), newsItem=id=>byId(S.news,id);
-const pName=id=>{if(S.hiddenIds&&S.hiddenIds.has(id)&&!S.isAdmin)return "Joueur anonyme";const p=player(id);return p?(p.pseudo||"Sans pseudo"):"Joueur supprimé";};
+const pName=id=>{if(S.hiddenIds&&S.hiddenIds.has(id)&&!seeAll())return "Joueur anonyme";const p=player(id);return p?(p.pseudo||"Sans pseudo"):"Joueur supprimé";};
 function initials(n){n=String(n||"?").trim();const parts=n.split(/\s+/).filter(Boolean);return ((parts[0]||"?")[0]+(parts[1]?parts[1][0]:(parts[0]||"")[1]||"")).toUpperCase();}
 function imgSrc(v){if(!v)return "";v=String(v);
   // images du stockage : chargées directement chez Supabase (CDN) au lieu de passer par une fonction Vercel
@@ -103,16 +103,23 @@ function svSets(){const ss=S.allSeasons||S.seasons||[],pl=S.allPlayers||S.player
     else if(l.some(o=>NOPIC_ORGS.has(o))&&!owner.has(pid))set.add(pid);});
   _np={src:ss,pl,set,only};return _np;}
 function noPicSet(){return svSets().set;}
-const noPic=id=>!!id&&noPicSet().has(id);
+const noPic=id=>!!id&&!seeAll()&&noPicSet().has(id);
 /* Fiches masquées : seulement Survisland, ou retirées par le joueur lui-même (« Me retirer du wiki »). Les admins voient tout (pour ne rien casser en modifiant une saison). */
+/* Les admins voient le site comme les visiteurs ; le « mode admin » (Administration) affiche aussi ce qui est masqué. Valable pour l'onglet en cours. */
+S.adminView=(()=>{try{return sessionStorage.getItem("oc-admin-view")==="1";}catch(e){return false;}})();
+function seeAll(){return !!(S.isAdmin&&S.adminView);}
+function setAdminView(on){S.adminView=!!on;try{on?sessionStorage.setItem("oc-admin-view","1"):sessionStorage.removeItem("oc-admin-view");}catch(e){}applyHidden();render();}
+function adminBadge(){let b=document.getElementById("adm-view");
+  if(!seeAll()){if(b)b.remove();return;}
+  if(!b){b=document.createElement("div");b.id="adm-view";b.className="adm-view";b.innerHTML='Mode admin : les contenus masqués sont visibles <button type="button" class="btn sm">Revenir à la vue normale</button>';b.querySelector("button").onclick=()=>setAdminView(false);document.body.appendChild(b);}}
 function applyHidden(){const all=S.allPlayers||S.players||[];const h=svSets().only;
   S.hiddenIds=new Set(all.filter(p=>h.has(p.id)||p.hidden).map(p=>p.id));
-  const adm=S.isAdmin;
+  const adm=seeAll();adminBadge();
   if(S.allOrgs)S.orgs=adm?S.allOrgs:S.allOrgs.filter(o=>!HIDDEN_ORGS.has(o.id));
   if(S.allSeasons)S.seasons=adm?S.allSeasons:S.allSeasons.filter(x=>!HIDDEN_ORGS.has(x.orgId));
   if(S.allNews)S.news=adm?S.allNews:S.allNews.filter(x=>!HIDDEN_ORGS.has(x.orgId));
   if(adm){S.players=all;return;}S.players=all.filter(p=>!S.hiddenIds.has(p.id)||(S.me&&p.ownerUid===S.me));}
-function avatarOf(p){return p?(noPic(p.id)||(p.hidden&&!S.isAdmin&&p.ownerUid!==S.me)?"":(p.avatar||seasonAvatarMap()[p.id]||"")):"";}
+function avatarOf(p){return p?(noPic(p.id)||(p.hidden&&!seeAll()&&p.ownerUid!==S.me)?"":(p.avatar||seasonAvatarMap()[p.id]||"")):"";}
 function framing(f){if(!f||typeof f!=="object")return "";const x=Math.max(0,Math.min(100,+f.x||50)),y=Math.max(0,Math.min(100,+f.y||50)),z=Math.max(1,Math.min(4,+f.z||1));return `object-position:${x}% ${y}%;${z>1?`transform:scale(${z});transform-origin:${x}% ${y}%;`:""}`;}
 const ava=(p,size)=>pic(avatarOf(p),p&&p.pseudo,"avatar "+size,p&&p.avatar&&avatarOf(p)===p.avatar?framing(p.avatarPos):"");
 function safeUrl(u){u=String(u||"").trim();return /^https?:\/\//i.test(u)?u:"";}
@@ -637,8 +644,8 @@ function infobox(img,title,rows,picAct,picId,canPic){
 }
 function bigImg(v,label){const u=imgSrc(v);return u?`<img src="${esc(u)}" alt="">`:`<span class="ib-ph">${esc(initials(label))}</span>`;}
 function castEntry(s,id){return s&&(s.cast||[]).find(c=>c.playerId===id)||null;}
-function sName(s,id){if(S.hiddenIds&&S.hiddenIds.has(id)&&!S.isAdmin)return "Joueur anonyme";const c=castEntry(s,id);return c&&c.sPseudo?c.sPseudo:pName(id);}
-function sAvatar(s,id){if(noPic(id)||(S.hiddenIds&&S.hiddenIds.has(id)&&!S.isAdmin))return "";const c=castEntry(s,id);const p=player(id);return (c&&c.sAvatar)||avatarOf(p);}
+function sName(s,id){if(S.hiddenIds&&S.hiddenIds.has(id)&&!seeAll())return "Joueur anonyme";const c=castEntry(s,id);return c&&c.sPseudo?c.sPseudo:pName(id);}
+function sAvatar(s,id){if(noPic(id)||(S.hiddenIds&&S.hiddenIds.has(id)&&!seeAll()))return "";const c=castEntry(s,id);const p=player(id);return (c&&c.sAvatar)||avatarOf(p);}
 function sAva(s,id,size){return pic(sAvatar(s,id),sName(s,id),"avatar "+size);}
 function splink(s,id){return id?`<a href="#joueur-${esc(id)}">${esc(sName(s,id))}</a>`:"";}
 function plink(id){return id?`<a href="#joueur-${esc(id)}">${esc(pName(id))}</a>`:"";}
@@ -1481,7 +1488,7 @@ function castEditor(s){
   const teams=(s.teams||[]).map(t=>({id:t.id,name:t.name||"",color:t.color||"#888888"}));
   const draft=(s.cast||[]).map(c=>({playerId:c.playerId||"",place:c.place==null?"":c.place,note:c.note||"",team:c.team||"",team2:c.team2||"",team3:c.team3||""}));
   const extra=[];
-  const plist=()=>{const all=[...S.players];extra.forEach(x=>{if(!all.some(p=>p.id===x.id))all.push(x);});return all.sort((a,b)=>String(a.pseudo).localeCompare(String(b.pseudo),"fr"));};
+  const plist=()=>{const all=[...(S.isAdmin&&S.allPlayers?S.allPlayers:S.players)];extra.forEach(x=>{if(!all.some(p=>p.id===x.id))all.push(x);});return all.sort((a,b)=>String(a.pseudo).localeCompare(String(b.pseudo),"fr"));};
   const tOpts=cur=>`<option value="">—</option>`+teams.map(t=>`<option value="${esc(t.id)}"${t.id===cur?" selected":""}>${esc(t.name||"Équipe sans nom")}</option>`).join("");
   const teamRows=()=>teams.length?teams.map((t,i)=>`<div class="trow" data-i="${i}"><input type="color" data-k="color" id="t-c-${i}" value="${esc(t.color)}" aria-label="Couleur de l'équipe ${i+1}"><input data-k="name" id="t-n-${i}" value="${esc(t.name)}" maxlength="30" placeholder="Nom de l'équipe" aria-label="Nom de l'équipe ${i+1}"><button type="button" class="icon-btn" data-rmt="${i}" aria-label="Retirer cette équipe">×</button></div>`).join(""):`<p class="muted">Pas d'équipes. Ajoutes-en si ta saison a des tribus ou des camps.</p>`;
   const rows=()=>draft.length?`<div class="crow head" aria-hidden="true"><span>Joueur</span><span>Place</span>${teams.length?"<span>Équipe 1</span><span>Équipe 2</span><span>Équipe 3</span>":""}<span>Mention</span><span></span></div>`+draft.map((c,i)=>`<div class="crow${teams.length?" wt":""}" data-i="${i}">
@@ -2416,6 +2423,7 @@ function pageAdmin(){
   if(!S.isAdmin)return `<div class="empty"><h2>Réservé à l'admin</h2><p class="muted">Connecte-toi avec le compte admin.</p></div>`;
   setTimeout(loadAdmin,0);
   return `<section class="block"><div class="block-head"><h1>Administration</h1><span class="actions"><a class="btn" href="#comptes">Comptes inscrits</a><a class="btn primary" href="#qualite">Qualité des données</a></span></div>
+  <section class="block"><div class="block-head"><h2>Affichage du site</h2></div><p class="hint">${S.adminView?"Mode admin activé : tu vois aussi Survisland, les fiches retirées et les photos masquées.":"Tu vois le site comme les visiteurs : Survisland, les fiches retirées et les photos masquées n'apparaissent pas."} Le réglage ne vaut que pour cet onglet.</p><p><button class="btn${S.adminView?"":" primary"}" data-act="admin-view">${S.adminView?"Revenir à la vue normale":"Voir le site en mode admin"}</button></p></section>
   <section class="block"><div class="block-head"><h2>Demandes « C'est moi »</h2></div><div id="adm-claims"><p class="muted">Chargement…</p></div></section>
 
   <section class="block"><div class="block-head"><h2>Importer des données</h2></div><p class="hint">Choisis le fichier <b>org-central-export.json</b> téléchargé depuis l'ancien site. Les éléments déjà présents avec le même identifiant sont remplacés. Tu peux aussi y mettre un fichier de <b>classements</b> (JSON) : il remplit les castings et crée seulement les joueurs qui n'existent pas encore.</p><p><button class="btn" data-act="export-all">Télécharger une sauvegarde complète</button> <button class="btn" data-act="optimize-images">Alléger les images (accélère le site)</button></p><input type="file" id="f-import" accept="application/json,.json"><p id="imp-log" class="muted">${esc(S.impLog||"")}</p></section></section>`;
@@ -2907,7 +2915,7 @@ document.addEventListener("click",e=>{
     "ct-fill":()=>ctFill(b.dataset.o,b.dataset.n),
     "share":()=>shareLink(b.dataset.k,id),"restore":()=>restoreLog(id),
     "sc-edit":()=>secretEditor(season(id)),"sc-viewers":()=>scViewers(season(id)),"sc-reveal":()=>scReveal(id,b.dataset.e),"sc-reveal-all":()=>scReveal(id,null),"sc-ask":()=>scAsk(id,true),"sc-unask":()=>scAsk(id,false),
-    "clear-examples":clearExamples
+    "admin-view":()=>setAdminView(!S.adminView),"clear-examples":clearExamples
   };
   if(A[b.dataset.act])A[b.dataset.act]();
 });
