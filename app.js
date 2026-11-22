@@ -2419,11 +2419,17 @@ function pageAccounts(){
   setTimeout(loadAdmin,0);
   return `<div class="crumbs"><a href="#admin">Administration</a><span>/</span><span>Comptes inscrits</span></div>
   <section class="block"><div class="block-head"><h1>Comptes inscrits</h1></div>  <p class="hint">Un <b>host</b> peut créer des joueurs et modifier uniquement les ORGs cochées. Un <b>admin</b> peut tout faire.</p><div id="adm-users"><p class="muted">Chargement…</p></div></section>`;}
+function tcgConsentBlock(){
+  const l=(S.allPlayers||S.players).filter(p=>p.tcgConsent&&p.tcgConsent.at).sort((a,b)=>String(b.tcgConsent.at).localeCompare(String(a.tcgConsent.at)));
+  const d=x=>{const t=new Date(x);return isNaN(t)?"":t.toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"})+" à "+t.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});};
+  return `<section class="block"><div class="block-head"><h2>Autorisations TCG <span class="muted">(${l.length})</span></h2></div><p class="hint">Joueurs qui ont accepté d'apparaître en carte si le TCG rouvre (bouton sur la page du TCG). Un joueur peut retirer son autorisation à tout moment : il disparaît alors de cette liste.</p>
+  ${l.length?`<div class="table-wrap"><table><thead><tr><th>Joueur</th><th>Autorisation donnée le</th></tr></thead><tbody>${l.map(p=>`<tr><td><a href="#joueur-${esc(p.id)}">${esc(p.pseudo||"Sans pseudo")}</a></td><td>${esc(d(p.tcgConsent.at))}</td></tr>`).join("")}</tbody></table></div>`:`<p class="muted">Aucune autorisation pour le moment.</p>`}</section>`;}
 function pageAdmin(){
   if(!S.isAdmin)return `<div class="empty"><h2>Réservé à l'admin</h2><p class="muted">Connecte-toi avec le compte admin.</p></div>`;
   setTimeout(loadAdmin,0);
   return `<section class="block"><div class="block-head"><h1>Administration</h1><span class="actions"><a class="btn" href="#comptes">Comptes inscrits</a><a class="btn primary" href="#qualite">Qualité des données</a></span></div>
   <section class="block"><div class="block-head"><h2>Affichage du site</h2></div><p class="hint">${S.adminView?"Mode admin activé : tu vois aussi Survisland, les fiches retirées et les photos masquées.":"Tu vois le site comme les visiteurs : Survisland, les fiches retirées et les photos masquées n'apparaissent pas."} Le réglage ne vaut que pour cet onglet.</p><p><button class="btn${S.adminView?"":" primary"}" data-act="admin-view">${S.adminView?"Revenir à la vue normale":"Voir le site en mode admin"}</button></p></section>
+  ${tcgConsentBlock()}
   <section class="block"><div class="block-head"><h2>Demandes « C'est moi »</h2></div><div id="adm-claims"><p class="muted">Chargement…</p></div></section>
 
   <section class="block"><div class="block-head"><h2>Importer des données</h2></div><p class="hint">Choisis le fichier <b>org-central-export.json</b> téléchargé depuis l'ancien site. Les éléments déjà présents avec le même identifiant sont remplacés. Tu peux aussi y mettre un fichier de <b>classements</b> (JSON) : il remplit les castings et crée seulement les joueurs qui n'existent pas encore.</p><p><button class="btn" data-act="export-all">Télécharger une sauvegarde complète</button> <button class="btn" data-act="optimize-images">Alléger les images (accélère le site)</button></p><input type="file" id="f-import" accept="application/json,.json"><p id="imp-log" class="muted">${esc(S.impLog||"")}</p></section></section>`;
