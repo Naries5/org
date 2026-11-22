@@ -372,7 +372,8 @@ async function loadPresence(){if(!ADM_PROFS.length){const {data}=await sb.from("
 document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest("a[href]");if(!a||!sb)return;const h=a.getAttribute("href")||"";
   if(!/^https?:\/\//i.test(h))return;try{if(new URL(h).host===location.host)return;}catch(err){return;}
   const row={url:h.slice(0,600),label:(a.innerText||a.textContent||"").replace(/[↗]/g,"").replace(/\s+/g," ").trim().slice(0,120),page:routeStr().slice(0,120),vid:S.me?"":presVid()};
-  /* historique des clics désactivé (confidentialité) */ void row;},true);
+  // clics vers les serveurs des ORGs gardés 30 jours : sécurité, pour retrouver l'origine d'un raid
+  try{sb.from("link_clicks").insert(row).then(()=>{},()=>{});}catch(err){}},true);
 const CLK={f:"all"};
 function pageClicks(){
   if(!S.isOwner)return `<div class="empty"><h2>Page privée</h2></div>`;
@@ -1891,7 +1892,8 @@ function pageLegal(){
   <ul>
     <li><b>Fiches des joueurs</b> : pseudo, photo éventuelle, participations, classements, votes et awards des ORGs. But : garder une mémoire des ORGs de la communauté. Ces informations viennent des hosts, des contributeurs et des wikis cités sur chaque page.</li>
     <li><b>Compte</b> (si tu te connectes) : identifiant, pseudo et photo Discord. But : te permettre de contribuer, de relier ta fiche, d'ajouter des amis et d'envoyer des messages privés. Tes messages privés et ta liste d'amis ne sont visibles que de toi et des personnes concernées.</li>
-    <li><b>Présence</b> (« qui est en ligne ») : la dernière page ouverte et l'heure. But : modération et statistiques de fréquentation. Ces traces sont effacées au bout de 30 jours.</li>
+    <li><b>Présence</b> (« qui est en ligne ») : la dernière page ouverte et l'heure. But : modération et statistiques de fréquentation. Ces données sont supprimées après 30 jours.</li>
+    <li><b>Clics vers les liens extérieurs</b> (invitations aux serveurs Discord des ORGs, sites des ORGs) : le lien, la date et, si tu es connecté, ton compte. But : sécurité, pour pouvoir retrouver l'origine d'un raid ou d'un abus sur le serveur d'une ORG. Ces données ne sont consultables que par les administrateurs et sont supprimées après 30 jours.</li>
   </ul>
   <p>Le site n'affiche pas de publicité et ne vend ni ne partage tes données. Il n'utilise pas de cookies publicitaires ; seul le stockage du navigateur sert à garder ta connexion et tes préférences.</p>
   <h2>Tes droits</h2>
