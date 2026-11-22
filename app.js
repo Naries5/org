@@ -90,7 +90,14 @@ function seasonAvatarMap(){if(_sav.src===S.seasons)return _sav.map;const m={};co
   const k=s=>String(s.end||s.start||"")+"|"+(cr[s.status]??0)+"|"+String(Number(s.number)||0).padStart(4,"0");
   [...(S.seasons||[])].sort((a,b)=>k(a).localeCompare(k(b))).forEach(s=>(s.cast||[]).forEach(c=>{if(c.sAvatar)m[c.playerId]=c.sAvatar;}));
   _sav={src:S.seasons,map:m};return m;}
-function avatarOf(p){return p?(p.avatar||seasonAvatarMap()[p.id]||""):"";}
+/* Photos masquées : joueurs qui n'ont fait QUE Survisland */
+const NOPIC_ORGS=new Set(["osurvisland"]);let _np={src:null,set:null};
+function noPicSet(){if(_np.src===S.seasons&&_np.set)return _np.set;const orgsOf={};
+  (S.seasons||[]).forEach(se=>(se.cast||[]).forEach(c=>{(orgsOf[c.playerId]=orgsOf[c.playerId]||new Set()).add(se.orgId);}));
+  const set=new Set();Object.entries(orgsOf).forEach(([pid,os])=>{if([...os].every(o=>NOPIC_ORGS.has(o)))set.add(pid);});
+  _np={src:S.seasons,set};return set;}
+const noPic=id=>!!id&&noPicSet().has(id);
+function avatarOf(p){return p?(noPic(p.id)?"":(p.avatar||seasonAvatarMap()[p.id]||"")):"";}
 function framing(f){if(!f||typeof f!=="object")return "";const x=Math.max(0,Math.min(100,+f.x||50)),y=Math.max(0,Math.min(100,+f.y||50)),z=Math.max(1,Math.min(4,+f.z||1));return `object-position:${x}% ${y}%;${z>1?`transform:scale(${z});transform-origin:${x}% ${y}%;`:""}`;}
 const ava=(p,size)=>pic(avatarOf(p),p&&p.pseudo,"avatar "+size,p&&p.avatar&&avatarOf(p)===p.avatar?framing(p.avatarPos):"");
 function safeUrl(u){u=String(u||"").trim();return /^https?:\/\//i.test(u)?u:"";}
@@ -612,7 +619,7 @@ function infobox(img,title,rows,picAct,picId,canPic){
 function bigImg(v,label){const u=imgSrc(v);return u?`<img src="${esc(u)}" alt="">`:`<span class="ib-ph">${esc(initials(label))}</span>`;}
 function castEntry(s,id){return s&&(s.cast||[]).find(c=>c.playerId===id)||null;}
 function sName(s,id){const c=castEntry(s,id);return c&&c.sPseudo?c.sPseudo:pName(id);}
-function sAvatar(s,id){const c=castEntry(s,id);const p=player(id);return (c&&c.sAvatar)||avatarOf(p);}
+function sAvatar(s,id){if(noPic(id))return "";const c=castEntry(s,id);const p=player(id);return (c&&c.sAvatar)||avatarOf(p);}
 function sAva(s,id,size){return pic(sAvatar(s,id),sName(s,id),"avatar "+size);}
 function splink(s,id){return id?`<a href="#joueur-${esc(id)}">${esc(sName(s,id))}</a>`:"";}
 function plink(id){return id?`<a href="#joueur-${esc(id)}">${esc(pName(id))}</a>`:"";}
