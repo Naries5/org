@@ -91,7 +91,7 @@ function seasonAvatarMap(){if(_sav.src===S.seasons)return _sav.map;const m={};co
   [...(S.seasons||[])].sort((a,b)=>k(a).localeCompare(k(b))).forEach(s=>(s.cast||[]).forEach(c=>{if(c.sAvatar)m[c.playerId]=c.sAvatar;}));
   _sav={src:S.seasons,map:m};return m;}
 /* Survisland retiré du site pour le moment : ORG, saisons et annonces masquées (sauf pour les admins).
-   Photos masquées : joueurs qui n'ont fait QUE Survisland, et joueurs passés par Survisland dont la fiche n'est reliée à aucun compte. */
+   Joueurs passés par Survisland sans compte relié : photo masquée ; fiche retirée s'ils n'ont fait que Survisland. */
 const NOPIC_ORGS=new Set(["osurvisland"]),HIDDEN_ORGS=new Set(["osurvisland"]);let _np={src:null,pl:null,set:null,only:null};
 function svSets(){const ss=S.allSeasons||S.seasons||[],pl=S.allPlayers||S.players||[];
   if(_np.src===ss&&_np.pl===pl&&_np.set)return _np;const orgsOf={};
@@ -99,8 +99,8 @@ function svSets(){const ss=S.allSeasons||S.seasons||[],pl=S.allPlayers||S.player
   const owner=new Set(pl.filter(p=>p.ownerUid).map(p=>p.id));
   const only=new Set(),set=new Set();
   Object.entries(orgsOf).forEach(([pid,os])=>{const l=[...os];
-    if(l.every(o=>NOPIC_ORGS.has(o))){only.add(pid);set.add(pid);}
-    else if(l.some(o=>NOPIC_ORGS.has(o))&&!owner.has(pid))set.add(pid);});
+    if(!l.some(o=>NOPIC_ORGS.has(o))||owner.has(pid))return;
+    set.add(pid);if(l.every(o=>NOPIC_ORGS.has(o)))only.add(pid);});
   _np={src:ss,pl,set,only};return _np;}
 function noPicSet(){return svSets().set;}
 const noPic=id=>!!id&&!seeAll()&&noPicSet().has(id);

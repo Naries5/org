@@ -72,7 +72,7 @@ async function playerPage(id) {
   const [ow] = await qv("players?select=o:data->>ownerUid&id=eq." + enc(id));
   const inSv = ss.some(s => HIDDEN_ORGS.includes(s.orgId));
   if (inSv && !(ow && ow.o)) p.hasAv = "";
-  if (inSv && ss.every(s => HIDDEN_ORGS.includes(s.orgId))) return null;
+  if (inSv && !(ow && ow.o) && ss.every(s => HIDDEN_ORGS.includes(s.orgId))) return null;
   for (let i = ss.length - 1; i >= 0; i--) if (HIDDEN_ORGS.includes(ss[i].orgId)) ss.splice(i, 1);
   const orgIds = [...new Set(ss.map(s => s.orgId).filter(Boolean))];
   const os = orgIds.length ? await qv("orgs?select=id,name:data->>name,concept:data->>concept&id=in.(" + orgIds.map(i => '"' + i + '"').join(",") + ")") : [];

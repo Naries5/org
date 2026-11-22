@@ -4,6 +4,22 @@ const SB = "https://czfgpgvkpxhmxyepvgzs.supabase.co";
 const KEY = "sb_publishable_3ubRuFBO_tVucgZYsHqG2w_AE11ccRW";
 const LIMIT = { orgs: 1000, seasons: 100, players: 1000, news: 500 };
 const HIDDEN_ORGS = ["osurvisland"];
+// Joueurs passés par Survisland : any = au moins une saison, only = uniquement Survisland, nopic = passés par Survisland sans compte relié
+let SV = null;
+async function svInfo() {
+  if (SV && Date.now() - SV.t < 300000) return SV;
+  try {
+    const [r1, r2] = await Promise.all([get("seasons?select=orgId:data->>orgId,cast:data->cast&limit=5000"), get("players?select=id&data->>ownerUid=not.is.null&limit=10000")]);
+    if (!r1.ok || !r2.ok) return SV;
+    const orgsOf = {};
+    (await r1.json()).forEach(s => (Array.isArray(s.cast) ? s.cast : []).forEach(c => { if (c && c.playerId) (orgsOf[c.playerId] = orgsOf[c.playerId] || new Set()).add(s.orgId); }));
+    const linked = new Set((await r2.json()).map(p => p.id));
+    const any = new Set(), only = new Set(), nopic = new Set();
+    Object.entries(orgsOf).forEach(([id, os]) => { const l = [...os]; if (!l.some(o => HIDDEN_ORGS.includes(o))) return; any.add(id); if (l.every(o => HIDDEN_ORGS.includes(o))) only.add(id); if (!linked.has(id)) nopic.add(id); });
+    SV = { t: Date.now(), any, only, nopic };
+  } catch (e) {}
+  return SV;
+}
 const ST = SB + "/storage/v1/object/public/images/";
 
 async function get(path) {
@@ -47,10 +63,16 @@ module.exports = async (req, res) => {
   // Survisland retiré du site pour le moment : ORG, saisons et annonces non servies, photos des joueurs non reliés à un compte retirées
   if (t === "orgs") rows = rows.filter(x => !HIDDEN_ORGS.includes(x.id));
   if (t === "seasons" || t === "news") rows = rows.filter(x => !HIDDEN_ORGS.includes(x.data.orgId));
-  if (t === "players") {
-    let sv = null;
-    try { const r = await get("seasons?select=cast:data->cast&data->>orgId=in.(" + HIDDEN_ORGS.join(",") + ")"); if (r.ok) sv = new Set((await r.json()).flatMap(s => (Array.isArray(s.cast) ? s.cast : []).map(c => c.playerId))); } catch (e) {}
-    if (sv) rows.forEach(x => { if (sv.has(x.id) && !x.data.ownerUid) { delete x.data.avatar; delete x.data.banner; } });
+  if (t === "players" || t === "seasons") {
+    const sv = await svInfo();
+    if (!sv) { res.statusCode = 502; res.setHeader("Cache-Control", "no-store"); res.end(JSON.stringify({ error: "survisland" })); return; }
+    if (t === "players") {
+      // fiches des joueurs qui n'ont fait que Survisland et ne sont reliées à aucun compte : retirées
+      rows = rows.filter(x => !(sv.only.has(x.id) && !x.data.ownerUid));
+      rows.forEach(x => { if (sv.any.has(x.id) && !x.data.ownerUid) { delete x.data.avatar; delete x.data.banner; } });
+    } else {
+      rows.forEach(x => { if (Array.isArray(x.data.cast)) x.data.cast.forEach(c => { if (c && sv.nopic.has(c.playerId)) delete c.sAvatar; }); });
+    }
   }
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.setHeader("Cache-Control", "public, max-age=60, s-maxage=600, stale-while-revalidate=86400");
