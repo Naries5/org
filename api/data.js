@@ -2,7 +2,7 @@
 // GET /api/data?t=orgs|seasons|players|news&from=0
 const SB = "https://czfgpgvkpxhmxyepvgzs.supabase.co";
 const KEY = "sb_publishable_3ubRuFBO_tVucgZYsHqG2w_AE11ccRW";
-const LIMIT = { orgs: 1000, seasons: 100, players: 1000, news: 500 };
+const LIMIT = { orgs: 1000, seasons: 100, players: 1000, news: 500, site: 20 };
 const HIDDEN_ORGS = ["osurvisland"];
 // Joueurs passés par Survisland : any = au moins une saison, only = uniquement Survisland, nopic = passés par Survisland sans compte relié
 let SV = null;
@@ -53,8 +53,9 @@ module.exports = async (req, res) => {
   const qs = "select=id,data&order=id&offset=" + from + "&limit=" + lim;
   let rows, viaView = true;
   try {
-    let r = await get("oc_" + t + "?" + qs);
-    if (!r.ok) { viaView = false; r = await get(t + "?" + qs); }
+    let r = t === "site" ? null : await get("oc_" + t + "?" + qs);
+    if (t === "site") { viaView = false; r = await get("site?select=id,data&limit=20"); if (!r.ok) { res.setHeader("Content-Type", "application/json"); res.setHeader("Cache-Control", "public, s-maxage=600"); res.end(JSON.stringify({ rows: [], next: null })); return; } }
+    else if (!r.ok) { viaView = false; r = await get(t + "?" + qs); }
     if (!r.ok) { res.statusCode = r.status === 402 ? 503 : 502; res.setHeader("Cache-Control", "no-store"); res.end(JSON.stringify({ error: "supabase " + r.status })); return; }
     rows = await r.json();
   } catch (e) { res.statusCode = 502; res.setHeader("Cache-Control", "no-store"); res.end(JSON.stringify({ error: String(e) })); return; }

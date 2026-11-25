@@ -307,6 +307,8 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"){const d=document.qu
 const CFG=window.ORG_CENTRAL_CONFIG||{};
 const sb=(window.supabase&&CFG.supabaseUrl&&!/XXXX/.test(CFG.supabaseUrl))?window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseAnonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:"pkce",storageKey:"org-central-auth",storage:(()=>{try{localStorage.setItem("__t","1");localStorage.removeItem("__t");return localStorage;}catch(e){return undefined;}})()}}):null;
 S.isAdmin=false;S.hostOrgs=new Set();S.isHost=false;S.profile=null;S.myClaims=[];
+/* Passerelle vers edit.js (mode édition des admins) */
+window.OC={isAdmin:()=>!!S.isAdmin,sb,toast:(m,e)=>toast(m,e)};
 function sbErr(e){const m=(e&&e.message)||String(e);const x=new Error(/row-level security|permission|42501/i.test(m)?"Tu n'as pas le droit de faire ça (réservé aux hosts de cette ORG ou à l'admin).":m);x.code=e&&e.code;return x;}
 let DIRECT=false;const ST_PUB="/storage/v1/object/public/images/";
 function bust(){try{const b=Number(localStorage.getItem("oc-bust")||0);return Date.now()-b<15*60e3?b:0;}catch(e){return 0;}}
@@ -439,7 +441,7 @@ async function loadAuth(){
   const {data:{session}}=await sb.auth.getSession();
   if(session){S.me=session.user.id;
     const {data:prof}=await sb.from("profiles").select("*").eq("id",S.me).maybeSingle();S.profile=prof||{discord_name:session.user.user_metadata.full_name,avatar_url:session.user.user_metadata.avatar_url,role:"player"};
-    S.isAdmin=S.profile.role==="admin";S.isHost=S.isAdmin||S.profile.role==="host";applyHidden();
+    S.isAdmin=S.profile.role==="admin";S.isHost=S.isAdmin||S.profile.role==="host";applyHidden();try{window.OCEdit&&OCEdit.resume();}catch(e){}
     const {data:h}=await sb.from("org_hosts").select("org_id").eq("user_id",S.me);(h||[]).forEach(x=>S.hostOrgs.add(x.org_id));
     const {data:cl}=await sb.from("claims").select("player_id,status").eq("user_id",S.me);S.myClaims=cl||[];
     try{const {data:bn,error:be}=await sb.from("bans").select("reason").eq("user_id",S.me).maybeSingle();S.banned=!be&&!!bn;}catch(e){}
@@ -2458,6 +2460,7 @@ function pageAdmin(){
   setTimeout(loadAdmin,0);
   return `<section class="block"><div class="block-head"><h1>Administration</h1><span class="actions"><a class="btn" href="#comptes">Comptes inscrits</a><a class="btn primary" href="#qualite">Qualité des données</a></span></div>
   <section class="block"><div class="block-head"><h2>Affichage du site</h2></div><p class="hint">${S.adminView?"Mode admin activé : tu vois aussi Survisland, les fiches retirées et les photos masquées.":"Tu vois le site comme les visiteurs : Survisland, les fiches retirées et les photos masquées n'apparaissent pas."} Le réglage ne vaut que pour cet onglet.</p><p><button class="btn${S.adminView?"":" primary"}" data-act="admin-view">${S.adminView?"Revenir à la vue normale":"Voir le site en mode admin"}</button></p></section>
+  <section class="block"><div class="block-head"><h2>Modifier le site</h2></div><p class="hint">Change n'importe quel texte en cliquant dessus, et règle l'apparence du site (couleurs, polices, arrondis, CSS). Les changements sont enregistrés pour tout le monde.</p><p><button class="btn primary" data-act="site-edit">Passer en mode édition</button></p></section>
   ${tcgOptOutBlock()}
   <section class="block"><div class="block-head"><h2>Demandes « C'est moi »</h2></div><div id="adm-claims"><p class="muted">Chargement…</p></div></section>
 
@@ -2950,7 +2953,7 @@ document.addEventListener("click",e=>{
     "ct-fill":()=>ctFill(b.dataset.o,b.dataset.n),
     "share":()=>shareLink(b.dataset.k,id),"restore":()=>restoreLog(id),
     "sc-edit":()=>secretEditor(season(id)),"sc-viewers":()=>scViewers(season(id)),"sc-reveal":()=>scReveal(id,b.dataset.e),"sc-reveal-all":()=>scReveal(id,null),"sc-ask":()=>scAsk(id,true),"sc-unask":()=>scAsk(id,false),
-    "admin-view":()=>setAdminView(!S.adminView),"clear-examples":clearExamples
+    "admin-view":()=>setAdminView(!S.adminView),"site-edit":()=>{if(window.OCEdit)OCEdit.start();},"clear-examples":clearExamples
   };
   if(A[b.dataset.act])A[b.dataset.act]();
 });
