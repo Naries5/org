@@ -899,9 +899,9 @@ function orgNumbers(o,ss,st){
     ["Vainqueurs différents",winners.size||"—",multi.length?"Multi-titrés : "+multi.slice(0,4).map(x=>`${plink(x.id)} (${x.wins})`).join(", "):""],
     ["Depuis",first?String(first).slice(0,4):"—",first&&ss.length>1?`${ss.length} saisons en ${Math.max(1,new Date().getFullYear()-Number(String(first).slice(0,4))+1)} an${new Date().getFullYear()-Number(String(first).slice(0,4))>0?"s":""}`:""]];
   if(ss.every(x=>x.external))tiles.splice(4,1);
-  const hosts=splitNames(o.hosts||"");
-  const hostRows=hosts.map(h=>{const p=S.players.find(p=>normName(p.pseudo)===normName(h)||aliasesOf(p).some(a=>normName(a)===normName(h)));const x=p&&st.find(y=>y.id===p.id);
-    return `<span class="on-host">${p?`<a class="who" href="#joueur-${esc(p.id)}">${ava(p,"xs")}${esc(p.pseudo)}</a>`:`<b>${esc(h)}</b>`}<small>${x?`a aussi joué ${x.part} saison${x.part>1?"s":""}${x.wins?`, ${x.wins} victoire${x.wins>1?"s":""}`:""}`:"host"}</small></span>`;}).join("");
+  const shm=seasonHostMap(o.id);const hosts=[...new Set([...[...shm.values()].map(x=>x.name),...splitNames(o.hosts||"").filter(h=>!shm.has(normName(h)))])];
+  const hostRows=hosts.map(h=>{const sr=shm.get(normName(h));const p=S.players.find(p=>normName(p.pseudo)===normName(h)||aliasesOf(p).some(a=>normName(a)===normName(h)));const x=p&&st.find(y=>y.id===p.id);
+    return `<span class="on-host">${p?`<a class="who" href="#joueur-${esc(p.id)}">${ava(p,"xs")}${esc(p.pseudo)}</a>`:`<b>${esc(h)}</b>`}<small>${sr?esc(rangeLabel(sr.ss))+(x?" · ":""):""}${x?`a aussi joué ${x.part} saison${x.part>1?"s":""}${x.wins?`, ${x.wins} victoire${x.wins>1?"s":""}`:""}`:sr?"":"host"}</small></span>`;}).join("");
   return `<section class="block"><div class="block-head"><h2>En chiffres</h2></div>
   <div class="on-grid">${tiles.map(([l,v,sub])=>`<div class="on-tile"><span class="on-l">${l}</span><b class="on-v">${v}</b>${sub?`<small>${sub}</small>`:""}</div>`).join("")}</div>
   ${hosts.length?`<div class="on-hosts"><span class="on-l">Hosts</span>${hostRows}</div>`:""}</section>`;}
@@ -914,13 +914,13 @@ function pageOrg(id){
   const extOrg=ss.length&&ss.every(x=>x.external);
   const champ=extOrg?null:[...st].sort((a,b)=>b.wins-a.wins||b.top3-a.top3)[0];
   const box=infobox(bigImg(orgLogoVal(o),o.name),o.name,[
-    ["Sigle",esc(o.tag||"")],["Jeu",esc(conceptLabel(o))],["Host(s)",hostLinks(o.hosts||"")],["Format",FORMATS[o.format]||""],["Plateforme",PLATFORMS[o.platform]||""],
+    ["Sigle",esc(o.tag||"")],["Jeu",esc(conceptLabel(o))],["Host(s)",orgHostsHtml(o)],["Format",FORMATS[o.format]||""],["Plateforme",PLATFORMS[o.platform]||""],
     ["Création",o.founded?fmtDate(o.founded):""],["Saisons",String(ss.length)],["Joueurs",String(st.length)],
     ["Plus titré",champ&&champ.wins?`${plink(champ.id)} (${champ.wins})`:""],["Discord",discordCell(o)],["Site officiel",safeUrl(o.website)?`<a href="${esc(safeUrl(o.website))}" target="_blank" rel="noopener">${esc(safeUrl(o.website).replace(/^https?:\/\/(www\.)?/,"").replace(/\/$/,""))} ↗</a>`:""]],"pic-org",o.id);
   const web=safeUrl(o.website);
   const webCard=web?`<a class="ext-site" href="${esc(web)}" target="_blank" rel="noopener"><span class="ext-ic">↗</span><span><b>${ss.length?"Voir aussi le site officiel":"Tout est sur leur site officiel"}</b><small>${esc(web.replace(/^https?:\/\/(www\.)?/,"").replace(/\/$/,""))}</small></span></a>`:"";
   return `<div class="crumbs"><a href="#orgs">ORGs</a><span>/</span><span>${esc(o.name)}</span>${shareBtn("o",o.id)}</div>
-  <div class="page-head"><h1>${esc(o.name)}</h1>${edit(`<div class="actions"><button class="btn" data-act="edit-org" data-id="${esc(o.id)}">Modifier</button>${S.isAdmin?`<button class="btn danger" data-act="del-org" data-id="${esc(o.id)}">Supprimer</button>`:""}</div>`)}</div>
+  <div class="page-head"><h1>${esc(o.name)}</h1>${edit(`<div class="actions"><button class="btn" data-act="edit-org" data-id="${esc(o.id)}">Modifier</button>${ss.length?`<button class="btn" data-act="season-hosts" data-id="${esc(o.id)}">Hosts par saison</button>`:""}${S.isAdmin?`<button class="btn danger" data-act="del-org" data-id="${esc(o.id)}">Supprimer</button>`:""}</div>`)}</div>
   <div class="wiki"><div class="wiki-main">
   ${o.description?`<p class="desc">${richText(o.description)}</p>`:""}
   ${webCard}
@@ -958,7 +958,7 @@ function pageSeason(id){
     return `<a class="ccard${pl&&pl<=3&&!tw?" p"+pl:""}${dq?" dq":""}" style="--rot:${rot}deg" href="#joueur-${esc(c.playerId)}"><span class="cpic">${u?`<img src="${esc(u)}" alt="" loading="lazy">`:esc(initials(sName(s,c.playerId)))}</span>${pl||dq?`<span class="cnum">${pl?String(pl).padStart(2,"0"):"DQ"}</span>`:""}<span class="cname">${esc(sName(s,c.playerId))}</span>${real&&real!==c.sPseudo?`<span class="creal">${esc(real)}</span>`:""}${sub?`<span class="csub">${sub}</span>`:""}</a>`;}).join("")}</div>`:`<p class="muted">${secretOf(s).n?"Le casting est encore secret : les joueurs apparaîtront ici au fur et à mesure qu'ils sont révélés.":"Le casting n'a pas encore été renseigné."}</p>`;
   const sib=seasonsOf(s.orgId);const ix=sib.indexOf(s);const prv=sib[ix-1],nxt=sib[ix+1];
   const box=infobox(bigImg(s.logo||o.logo,o.name),fullSeasonName(s),[
-    ["ORG",o.id?`<a href="#org-${esc(o.id)}">${esc(o.name)}</a>`:esc(o.name)],["Saison",esc(seasonShort(s))],["Thème",esc(s.title||"")],["La taupe",taupes.length?taupes.map(c=>splink(s,c.playerId)).join(", "):""],["Résultat",isTaupeOrg(o)?(taupeWins(s)?"Victoire de la taupe":"Victoire des enquêteurs"):""],
+    ["ORG",o.id?`<a href="#org-${esc(o.id)}">${esc(o.name)}</a>`:esc(o.name)],["Saison",esc(seasonShort(s))],["Thème",esc(s.title||"")],["Host(s)",hostLinks(s.hosts||"")],["La taupe",taupes.length?taupes.map(c=>splink(s,c.playerId)).join(", "):""],["Résultat",isTaupeOrg(o)?(taupeWins(s)?"Victoire de la taupe":"Victoire des enquêteurs"):""],
     ["Statut",chip(s.status)],["Dates",dateRange(s)],["Format",FORMATS[o.format]||""],["Joueurs",(cast.length+secretOf(s).n)?String(cast.length+secretOf(s).n):(s.slots?esc(s.slots)+" places":"")],
     ...(ext?[]:[[winnersOf(s).length>1?"Vainqueurs":"Vainqueur",winnersOf(s).map(x=>splink(s,x)).join(" & ")],...(isTaupeOrg(o)?[["Meilleur enquêteur",by(1)],["2e enquêteur",by(2)],["3e enquêteur",by(3)]]:[["2e",by(2)],["3e",by(3)]])]),["Précédente",prv?`<a href="#saison-${esc(prv.id)}">${esc(seasonShort(prv))}</a>`:""],["Suivante",nxt?`<a href="#saison-${esc(nxt.id)}">${esc(seasonShort(nxt))}</a>`:""]],"pic-season",s.id);
   return `<div class="crumbs"><a href="#orgs">ORGs</a><span>/</span><a href="#org-${esc(o.id||"")}">${esc(o.name)}</a><span>/</span><span>${esc(seasonShort(s))}</span>${shareBtn("s",s.id)}</div>
@@ -1027,6 +1027,14 @@ function pagePlayers(){
 
 function playerByName(n){const k=normName(n);if(!k)return null;let r=null;for(const p of S.players){if(normName(p.pseudo)===k)return p;if(!r&&aliasesOf(p).some(a=>normName(a)===k))r=p;}return r;}
 function splitNames(t){return String(t||"").split(/\s*(?:,|&|\/|\bet\b|\(|\)|assist[ée]e?s? par|avec l'aide de)\s*/).map(x=>x.trim()).filter(Boolean);}
+/* Hosts par saison : champ « hosts » de chaque saison (pseudos séparés par des virgules) */
+function rangeLabel(ss){const nums=[],other=[];ss.forEach(x=>{const n=Number(x.number);if(Number.isFinite(n)&&!(x.customName&&String(x.customName).trim()))nums.push(n);else other.push(seasonShort(x));});
+  const u=[...new Set(nums)].sort((a,b)=>a-b),parts=[];for(let i=0;i<u.length;){let j=i;while(j+1<u.length&&u[j+1]===u[j]+1)j++;parts.push(j>i?u[i]+" à "+u[j]:String(u[i]));i=j+1;}
+  const n=u.length;let t=n?(n>1?"saisons ":"saison ")+parts.join(", "):"";if(other.length)t+=(t?", ":"")+other.join(", ");return t;}
+function seasonHostMap(orgId){const m=new Map();seasonsOf(orgId).forEach(x=>splitNames(x.hosts).forEach(h=>{const k=normName(h);if(!m.has(k))m.set(k,{name:h,ss:[]});m.get(k).ss.push(x);}));return m;}
+function orgHostsHtml(o){const m=seasonHostMap(o.id);if(!m.size)return hostLinks(o.hosts||"");
+  const extra=splitNames(o.hosts).filter(h=>!m.has(normName(h)));
+  return [...[...m.values()].map(x=>hostLinks(x.name)+` <span class="muted">(${esc(rangeLabel(x.ss))})</span>`),...extra.map(h=>hostLinks(h))].join("<br>");}
 function hostLinks(t){if(!t)return "";return String(t).split(/(\s*(?:,|&|\/|\bet\b|\(|\)|assist[ée]e?s? par|avec l'aide de)\s*)/).map(part=>{const q=part.trim();if(!q||/^(,|&|\/|et|\(|\)|assist[ée]e?s? par|avec l'aide de)$/.test(q))return esc(part);const pl=playerByName(q);return pl?`<a href="#joueur-${esc(pl.id)}">${esc(part)}</a>`:esc(part);}).join("");}
 function richText(t){let h=esc(String(t||""));const links=[];
   h=h.replace(/\[([^\]\n]{1,200})\]\((https?:\/\/[^\s)]+|#[\w\-]+)\)/g,(m,a,u)=>{links.push(`<a href="${u}"${u[0]==="#"?"":' target="_blank" rel="noopener noreferrer"'}>${a}</a>`);return "\u0000"+(links.length-1)+"\u0000";});
@@ -1055,7 +1063,7 @@ document.addEventListener("focusout",e=>{if(e.target.dataset&&e.target.dataset.m
 function descHtml(t){const e=String(t||"");const m=e.match(/^(.*?(?:Organis[ée]e? par|Affiche par)\s*)([^.\n]*)(\..*)?$/s);if(!m)return richText(e);
   return richText(m[1])+hostLinks(m[2])+descHtml(m[3]||"");}
 function hostedBy(p){const keys=new Set([p.pseudo,...aliasesOf(p)].map(normName));const orgs=S.orgs.filter(o=>splitNames(o.hosts).some(n=>keys.has(normName(n))));
-  const seas=S.seasons.filter(s=>{const m=String(s.description||"").match(/Organis[ée]e? par\s*([^.]*)/);return m&&splitNames(m[1]).some(n=>keys.has(normName(n)));});
+  const seas=S.seasons.filter(s=>{if(splitNames(s.hosts).some(n=>keys.has(normName(n))))return true;const m=String(s.description||"").match(/Organis[ée]e? par\s*([^.]*)/);return m&&splitNames(m[1]).some(n=>keys.has(normName(n)));});
   const ids=new Set(orgs.map(o=>o.id));seas.forEach(x=>ids.add(x.orgId));return {orgs:[...ids].map(org).filter(Boolean),seasons:seas.sort(byRecent)};}
 function statBlock(h,pid){
   const grp=f=>h.filter(x=>f((org(x.s.orgId)||{}).format));
@@ -1112,7 +1120,7 @@ function pagePlayer(id){
   const awc={};aw.forEach(({a})=>{const k=awardLabel(a.name);awc[k]=(awc[k]||0)+1;});
   const trophies=Object.keys(awc).length?`<section class="block"><div class="block-head"><h2>Awards</h2><span class="count">${aw.length}</span></div><div class="pp-aw">${Object.entries(awc).sort((x,y)=>y[1]-x[1]||x[0].localeCompare(y[0],"fr")).map(([n,c])=>`<span class="pp-awc">${esc(n)}${c>1?` <b>×${c}</b>`:""}</span>`).join("")}</div></section>`:"";
   const hb=hostedBy(p);
-  const host=hb.orgs.length?`<section class="block"><div class="block-head"><h2>Host</h2><span class="count">${hb.orgs.length}</span></div><div class="pp-hosts">${hb.orgs.map(o=>{const ss=hb.seasons.filter(x=>x.orgId===o.id);return `<a class="pp-host" href="#org-${esc(o.id)}">${pic(orgLogoVal(o),o.name,"pp-hl")}<span><b>${esc(o.name)}</b><small>${ss.length?ss.length+" saison"+(ss.length>1?"s":"")+" organisée"+(ss.length>1?"s":""):(FORMATS[o.format]||"ORG")}</small></span></a>`;}).join("")}</div></section>`:"";
+  const host=hb.orgs.length?`<section class="block"><div class="block-head"><h2>Host</h2><span class="count">${hb.orgs.length}</span></div><div class="pp-hosts">${hb.orgs.map(o=>{const ss=hb.seasons.filter(x=>x.orgId===o.id);return `<a class="pp-host" href="#org-${esc(o.id)}">${pic(orgLogoVal(o),o.name,"pp-hl")}<span><b>${esc(o.name)}</b><small>${ss.length?esc(rangeLabel(ss)):(FORMATS[o.format]||"ORG")}</small></span></a>`;}).join("")}</div></section>`:"";
   const runs=h.map(({s,c})=>{const o=org(s.orgId)||{};const n=rankedContestants(s).length;const pl=Number(c.place);const mole=isTaupeCast(s,c);const sa=(s.awards||[]).filter(a=>a.playerId===p.id);
     const lg=imgSrc(s.logo||o.logo||orgLogoVal(o));const won=isSeasonWinner(s,c);const med=won?" m1":pl===1?" q1":pl===2?" m2":pl===3?" m3":"";const fb=!mole&&n>1&&pl===n;
     return `<a class="pc${med}${fb?" fb":""}${mole?" taupe":""}${won?" season-winner":""}" data-fmt="${o.format==="speed"?"speed":"long"}" href="#saison-${esc(s.id)}" title="${esc(fullSeasonName(s))}"${lg&&!med?` data-pc-src="${esc(lg)}"`:""}>
@@ -1398,6 +1406,20 @@ function orgForm(o){
     }});
 }
 
+function seasonHostsForm(orgId){const o=org(orgId);if(!o)return;const ss=seasonsOf(orgId);
+  openModal({title:"Hosts par saison : "+o.name,wide:true,saveLabel:"Enregistrer",body:`
+    <p class="hint">Indique qui a hosté chaque saison. Une case vide signifie : les hosts habituels de l'ORG (${esc(o.hosts||"non renseignés")}).</p>
+    <fieldset class="sh-fill" style="border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:0 0 16px"><legend>Remplir plusieurs saisons d'un coup</legend>
+      <div class="frow">${field("Pseudo du host",inp("sh_name","",'maxlength="40" placeholder="ex : Layte"'))}${field("De la saison",inp("sh_from","",'type="number" min="0"'))}${field("À la saison",inp("sh_to","",'type="number" min="0"'))}</div>
+      <button type="button" class="btn sm" id="sh-apply">Ajouter ce host à ces saisons</button></fieldset>
+    <div class="sh-list" style="display:grid;gap:8px">${ss.map(x=>`<label style="display:grid;grid-template-columns:minmax(120px,220px) 1fr;gap:10px;align-items:center"><span>${esc(seasonName(x))}</span><input name="h_${esc(x.id)}" data-n="${esc(x.number)}" value="${esc(x.hosts||"")}" maxlength="160" placeholder="Hosts habituels"></label>`).join("")}</div>`,
+    onMount:()=>{const b=modalRoot.querySelector("#sh-apply");if(b)b.onclick=()=>{const f=modalRoot.querySelector("form")||modalRoot;const name=(f.querySelector('[name="sh_name"]').value||"").trim();const a=Number(f.querySelector('[name="sh_from"]').value),z=Number(f.querySelector('[name="sh_to"]').value||a);
+      if(!name||!Number.isFinite(a)||!f.querySelector('[name="sh_from"]').value){toast("Indique un pseudo et une saison de départ.",true);return;}
+      let n=0;f.querySelectorAll('.sh-list input').forEach(i=>{const k=Number(i.dataset.n);if(k>=Math.min(a,z)&&k<=Math.max(a,z)){const cur=splitNames(i.value);if(!cur.some(c=>normName(c)===normName(name))){i.value=[...cur,name].join(", ");n++;}}});
+      toast(n?n+" saison"+(n>1?"s":"")+" complétée"+(n>1?"s":"")+". Pense à enregistrer.":"Aucune saison modifiée.");};},
+    onSave:async(f)=>{const v=vals(f);const t=nowIso();let n=0;
+      for(const x of ss){const nv=v["h_"+x.id]||"";if(nv!==(x.hosts||"")){await db.doc("seasons/"+x.id).update({hosts:nv,updatedAt:t});n++;}}
+      toast(n?n+" saison"+(n>1?"s":"")+" mise"+(n>1?"s":"")+" à jour.":"Rien à enregistrer.");}});}
 function seasonForm(s,orgId){
   if(!S.orgs.length){toast("Crée d'abord une ORG.",true);return;}
   const isNew=!s;s=s||{orgId:orgId||"",status:"annoncee",number:orgId?seasonsOf(orgId).length+1:1};
@@ -1407,6 +1429,7 @@ function seasonForm(s,orgId){
     <p class="hint" style="margin-top:-6px">Le logo de l'ORG affiche automatiquement celui de la saison la plus récente.</p>
     ${field("Nom affiché (facultatif)",inp("customName",s.customName,'maxlength="30" placeholder="Automatique"'),"Laisse vide pour le nom automatique. Remplis seulement pour une exception, par exemple « Speed AS » ou « All Stars 2 ».")}
     ${field("Titre ou thème",inp("title",s.title,'maxlength="100" placeholder="ex : Les chasseurs de références"'),"Le nom complet s'affiche comme « LaytORG Speed I : Les chasseurs de références », selon les réglages de l'ORG.")}
+    ${field("Host(s) de cette saison",inp("hosts",s.hosts,'maxlength="160" placeholder="Pseudos séparés par des virgules"'),"Laisse vide si ce sont les hosts habituels de l'ORG.")}
     ${isTaupeOrg(org(s.orgId))?field("Qui a remporté la saison ?",sel("taupeWins",[["false","Les enquêteurs (1er du classement)"],["true","La Taupe"]],String(taupeWins(s))),"Le vainqueur peut être différent du premier enquêteur."):""}
     <div class="frow">${field("Statut",sel("status",statusOpts,s.status))}${field("Nombre de places",inp("slots",s.slots,'type="number" min="0" placeholder="ex : 18"'))}</div>
     <div class="frow">${field("Date de début",dayInp("start",s.start))}${field("Date de fin",dayInp("end",s.end))}</div>
@@ -1416,7 +1439,7 @@ function seasonForm(s,orgId){
     ${field("Description",area("description",s.description,'rows="4" maxlength="4000" placeholder="Format, twists, infos pratiques…"'),"Tape @ pour mentionner un joueur. Liens : [texte](https://…) ou colle l'adresse. Gras : **texte**.")}`,
     onSave:async f=>{
       const v=vals(f);v.start=isoDay(v.start,"de début");v.end=isoDay(v.end,"de fin");const id=s.id||uid("s");const t=nowIso();
-      const data=Object.assign(strip(s),{external:v.external||"",orgId:v.orgId,number:Number(v.number),title:v.title,status:v.status,slots:v.slots?Number(v.slots):null,customName:v.customName,start:v.start,end:v.end,period:v.period,logo:await resolveImage(f,"logo",s.logo),signup:v.signup,description:v.description,cast:s.cast||[],rounds:s.rounds||[],awards:s.awards||[],updatedAt:t});
+      const data=Object.assign(strip(s),{external:v.external||"",orgId:v.orgId,number:Number(v.number),title:v.title,status:v.status,slots:v.slots?Number(v.slots):null,customName:v.customName,hosts:v.hosts||"",start:v.start,end:v.end,period:v.period,logo:await resolveImage(f,"logo",s.logo),signup:v.signup,description:v.description,cast:s.cast||[],rounds:s.rounds||[],awards:s.awards||[],updatedAt:t});
       if(isTaupeOrg(org(v.orgId))&&f.querySelector("#f-taupeWins"))data.taupeWins=v.taupeWins==="true";
       if(isNew)data.createdAt=t;
       await db.doc("seasons/"+id).set(data);
@@ -2915,7 +2938,7 @@ document.addEventListener("click",e=>{
   if(!b){const tr=e.target.closest("tr[data-href]");if(tr&&!e.target.closest("a"))location.hash=tr.dataset.href.slice(1);return;}
   const id=b.dataset.id;
   const A={
-    "new-org":()=>orgForm(),"reorder-seasons":()=>startReorder(id),"claim-org":()=>{if(!S.me){login();return;}TK.kind="host";TK.org=id||"";TK.err="";if(routeStr()==="contribuer")render();else location.hash="contribuer";},"pic-org":()=>picForm("org",org(id)),"pic-player":()=>picForm("player",player(id)),"frame-banner":()=>frameEditor(player(id),"banner"),"edit-banner":()=>{playerForm(player(id));setTimeout(()=>{const z=document.querySelector('[data-drop="banner"]');if(z)z.scrollIntoView({block:"center"});},120);},"frame-avatar":()=>frameEditor(player(id),"avatar"),"pic-season":()=>picForm("season",season(id)),"edit-org":()=>orgForm(org(id)),"del-org":()=>delOrg(id),
+    "new-org":()=>orgForm(),"season-hosts":()=>seasonHostsForm(id),"reorder-seasons":()=>startReorder(id),"claim-org":()=>{if(!S.me){login();return;}TK.kind="host";TK.org=id||"";TK.err="";if(routeStr()==="contribuer")render();else location.hash="contribuer";},"pic-org":()=>picForm("org",org(id)),"pic-player":()=>picForm("player",player(id)),"frame-banner":()=>frameEditor(player(id),"banner"),"edit-banner":()=>{playerForm(player(id));setTimeout(()=>{const z=document.querySelector('[data-drop="banner"]');if(z)z.scrollIntoView({block:"center"});},120);},"frame-avatar":()=>frameEditor(player(id),"avatar"),"pic-season":()=>picForm("season",season(id)),"edit-org":()=>orgForm(org(id)),"del-org":()=>delOrg(id),
     "new-season":()=>seasonForm(null,b.dataset.org),"edit-season":()=>seasonForm(season(id)),"del-season":()=>delSeason(id),
     "cast":()=>castEditor(season(id)),"tierlist":()=>tierList(season(id)),"optimize-images":()=>optimizeImages(),"export-all":async()=>{try{await exportAll();toast("Sauvegarde téléchargée");}catch(e){toast(errMsg(e),true);}},"slooks":()=>seasonLooksEditor(season(id)),"awards":()=>awardsEditor(season(id)),
     "filter":()=>{S.f[b.dataset.k]=b.dataset.v;render();},"opal":()=>{S.f.opal=b.dataset.v;render();},"votes":()=>votesEditor(season(id)),
