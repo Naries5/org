@@ -1428,3 +1428,7 @@ html[data-vt="back"]::view-transition-new(root){animation:vt-in-l .42s var(--eas
   .ph-av{width:92px!important;height:92px!important;border-width:4px!important}
   .ph-bio,.ph-orgs{margin-left:12px!important;margin-right:12px!important}
 }
+.ph .pin-card{border:1px solid var(--line)!important;background:var(--surface)!important;box-shadow:none!important}
+.ph .pin-card:hover{border-color:color-mix(in srgb,var(--ink) 35%,var(--line))!important}
+.ph .pin-row{margin-left:20px;margin-right:20px}
+@media (max-width:640px){.ph .pin-row{margin-left:12px;margin-right:12px}.ph-row>.actions{margin-left:0;flex-basis:auto}}
