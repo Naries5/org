@@ -800,10 +800,15 @@ function orgListHtml(){
         <div class="og-section-title"><h2 id="og-section-${g.key}">${g.title}</h2><p>${g.subtitle}</p></div>
         <span class="og-section-count">${g.items.length} ORG${g.items.length>1?"s":""}</span>
       </header>
-      <div class="og-grid">${g.items.map(x=>orgPoster(x.o)).join("")}</div>
+      ${orgTable(g.items.map(x=>x.o))}
     </section>`).join("")}
   </div>`;
 }
+function orgTable(list){
+  const st={en_cours:"Saison en cours",inscriptions:"Inscriptions",annoncee:"Prochaine saison",terminee:"Dernière saison"};
+  return `<div class="table-wrap"><table class="list-t"><thead><tr><th>ORG</th><th>Jeu</th><th>Format</th><th class="num">Saisons</th><th>Activité</th><th>Dernier vainqueur</th></tr></thead><tbody>${list.map(o=>{
+    const ss=seasonsOf(o.id),last=orgActivity(o).season;const fin=[...ss].reverse().find(x=>x.status==="terminee"&&shownWinner(x));
+    return `<tr class="link" data-href="#org-${esc(o.id)}"><td><a class="who" href="#org-${esc(o.id)}">${logo(o,"xs")}<b>${esc(o.name)}</b></a></td><td>${esc(CONCEPTS[o.concept]||"")}</td><td>${esc(FORMATS[o.format]||"")}</td><td class="num">${ss.length||""}</td><td>${last?`<span class="muted">${st[last.status]||"Saison"} :</span> ${esc(seasonShort(last))}`:`<span class="muted">Aucune saison</span>`}</td><td>${fin?esc(winnersOf(fin).map(x=>sName(fin,x)).join(" & ")):""}</td></tr>`;}).join("")}</tbody></table></div>`;}
 function orgPoster(o){
   const ss=seasonsOf(o.id);const last=orgActivity(o).season;const lg=orgLogoVal(o);const u=imgSrc(lg);
   const fin=[...ss].reverse().find(s=>s.status==="terminee"&&shownWinner(s));const w=fin?winnerOf(fin):null;
@@ -826,7 +831,7 @@ function playerListHtml(){const st={};const g=id=>st[id]||(st[id]={n:0,w:0,a:0})
   let arr=[...S.players];if(S.plink==="linked")arr=arr.filter(p=>p.ownerUid);if(S.plink==="free")arr=arr.filter(p=>!p.ownerUid);
   arr.sort(k?(a,b)=>(g(b.id)[k]-g(a.id)[k])||(g(b.id).n-g(a.id).n)||nm(a,b):nm);
   const list=filtered(arr,S.q.joueurs,"pseudo");
-  const lim=S.plim||120;return `<p class="muted pl-count">${list.length} joueur${list.length>1?"s":""}</p>`+(list.length?`<div class="grid small">${list.slice(0,lim).map(playerCard).join("")}</div>${list.length>lim?`<p style="text-align:center;margin-top:16px"><button type="button" class="btn" data-pmore="1">Afficher plus (${list.length-lim} restants)</button></p>`:""}`:`<p class="muted">Aucun joueur ne correspond.</p>`);}
+  const lim=S.plim||120;return `<p class="muted pl-count">${list.length} joueur${list.length>1?"s":""}</p>`+(list.length?`<div class="table-wrap"><table class="list-t"><thead><tr><th>Joueur</th><th class="num">Saisons</th><th class="num">Victoires</th><th class="num">Awards</th><th>Compte</th></tr></thead><tbody>${list.slice(0,lim).map(p=>{const x=g(p.id);return `<tr class="link" data-href="#joueur-${esc(p.id)}"><td><a class="who" href="#joueur-${esc(p.id)}">${ava(p,"xs")}<b>${esc(p.pseudo)}</b></a></td><td class="num">${x.n||""}</td><td class="num">${x.w||""}</td><td class="num">${x.a||""}</td><td>${p.ownerUid?`<span class="muted">Inscrit</span>`:""}</td></tr>`;}).join("")}</tbody></table></div>${list.length>lim?`<p style="text-align:center;margin-top:16px"><button type="button" class="btn" data-pmore="1">Afficher plus (${list.length-lim} restants)</button></p>`:""}`:`<p class="muted">Aucun joueur ne correspond.</p>`);}
 document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest("[data-pmore]")){S.plim=(S.plim||120)+240;const l=document.getElementById("list");if(l)l.innerHTML=playerListHtml();}});
 function playerTools(){const seg=(key,opts)=>`<span class="seg pl-seg">${opts.map(([v,l])=>`<button type="button" data-${key}="${v}" aria-pressed="${S[key]===v}">${l}</button>`).join("")}</span>`;
   const linked=S.players.filter(p=>p.ownerUid).length;
