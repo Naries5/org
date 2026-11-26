@@ -1492,3 +1492,6 @@ footer.site{background:var(--bg)!important;border-top:1px solid var(--line)!impo
 .og-directory-controls{border:0!important;padding:0!important}
 table.list-t td{padding:7px 12px;vertical-align:middle}
 table.list-t .who{line-height:1.2}
+.table-wrap th{background:none!important;color:var(--muted)!important;font-weight:600!important;font-size:.8rem!important;border-bottom:1px solid var(--line)!important}
+.table-wrap td{border-right:0!important;border-bottom:1px solid var(--line-soft)}
+.table-wrap td a{text-decoration:none}
